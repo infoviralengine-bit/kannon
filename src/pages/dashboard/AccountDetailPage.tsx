@@ -104,6 +104,8 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
 
   const addVideoMutation = useMutation({
     mutationFn: async () => {
+      const publishedAt = new Date(pubDate);
+      const windowExpiresAt = new Date(publishedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
       const { error } = await supabase.from("videos").insert({
         tiktok_account_id: data.account!.id,
         tiktok_video_id: videoId,
@@ -111,6 +113,7 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
         views: parseInt(views) || 0,
         likes: parseInt(likes) || 0,
         comments: parseInt(comments) || 0,
+        window_expires_at: windowExpiresAt.toISOString(),
       });
       if (error) throw error;
     },
