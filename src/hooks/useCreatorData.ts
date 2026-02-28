@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViews, countByWindowStatus } from "@/lib/videoWindow";
+import { isFixedEarnedMonthly, getMonthlyTarget, getProgressData } from "@/lib/fixedEarned";
 
 function todayRange() {
   const now = new Date();
@@ -36,13 +37,17 @@ export interface CreatorTableRow {
   status: string;
   activeCampaigns: number;
   totalViews: number;
-  todayVideos: number;
-  minVideos: number;
+  monthVideos: number;
+  monthlyTarget: number;
+  alertLevel: "green" | "yellow" | "red";
   isOnTrack: boolean;
 }
 
 export function useCreatorTable() {
-  const { start: tStart, end: tEnd } = todayRange();
+  const { start: mStart, end: mEnd } = currentMonthRange();
+  const now = new Date();
+  const year = now.getFullYear();
+  const month0 = now.getMonth();
 
   return useQuery({
     queryKey: ["creator-table"],
@@ -68,10 +73,12 @@ export function useCreatorTable() {
       return creators.map((c): CreatorTableRow => {
         const accIds = new Set(accountsByCreator.get(c.id) ?? []);
         const vids = (allVideos ?? []).filter(v => accIds.has(v.tiktok_account_id));
-        const todayVideos = vids.filter(v => v.published_at >= tStart && v.published_at < tEnd).length;
+        const monthVideos = vids.filter(v => v.published_at >= mStart && v.published_at < mEnd).length;
         const totalViews = vids.reduce((s, v) => s + (v.views ?? 0), 0);
         const activeCampaigns = (ccRows ?? []).filter(r => r.creator_id === c.id && activeCampaignIds.has(r.campaign_id)).length;
         const min = c.min_videos_per_day ?? 5;
+        const target = getMonthlyTarget(min, year, month0);
+        const progress = getProgressData(monthVideos, min, year, month0);
 
         return {
           id: c.id,
@@ -79,9 +86,10 @@ export function useCreatorTable() {
           status: c.status,
           activeCampaigns,
           totalViews,
-          todayVideos,
-          minVideos: min,
-          isOnTrack: todayVideos >= min,
+          monthVideos,
+          monthlyTarget: target,
+          alertLevel: progress.alertLevel,
+          isOnTrack: progress.alertLevel === "green",
         };
       });
     },
@@ -152,53 +160,36 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
       const { data: accounts } = await supabase.from("tiktok_accounts").select("id").eq("creator_id", creatorId);
       const accIds = (accounts ?? []).map(a => a.id);
 
-      let monthViews = 0;
-      let daysUnderMin: { date: string; count: number; min: number }[] = [];
       const min = creator?.min_videos_per_day ?? 5;
-
       let monthVids: any[] = [];
+      let monthViews = 0;
+
       if (accIds.length) {
         const { data: vids } = await supabase.from("videos").select("views, views_final, window_closed, window_expires_at, published_at").in("tiktok_account_id", accIds).gte("published_at", mStart).lt("published_at", mEnd);
         monthVids = vids ?? [];
         monthViews = sumEffectiveViews(monthVids);
-
-        // Group by day for fixed check
-        const byDay = new Map<string, number>();
-        monthVids.forEach(v => {
-          const day = v.published_at.slice(0, 10);
-          byDay.set(day, (byDay.get(day) ?? 0) + 1);
-        });
-
-        // Check each working day (Mon-Sat) up to yesterday
-        const now = new Date();
-        const lastDay = year === now.getFullYear() && month === now.getMonth()
-          ? now.getDate() - 1
-          : new Date(year, month + 1, 0).getDate();
-        for (let d = 1; d <= lastDay; d++) {
-          const date = new Date(year, month, d);
-          if (date.getDay() === 0) continue;
-          const dayStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-          const count = byDay.get(dayStr) ?? 0;
-          if (count < min) {
-            daysUnderMin.push({ date: dayStr, count, min });
-          }
-        }
       }
+
+      const monthVideoCount = monthVids.length;
+      const target = getMonthlyTarget(min, year, month);
+      const fixedEarned = isFixedEarnedMonthly(monthVideoCount, min, year, month);
+      const progress = getProgressData(monthVideoCount, min, year, month);
 
       const windowStats = countByWindowStatus(monthVids);
       const creatorFixed = creator?.creator_fixed ?? 200;
       const creatorCpm = creator?.creator_cpm ?? 0.5;
       const cpmAmount = creatorCpm * (monthViews / 1000);
-      const fixedAtRisk = daysUnderMin.length > 0;
 
       return {
         monthViews,
         creatorFixed,
         creatorCpm,
         cpmAmount,
-        total: (fixedAtRisk ? 0 : creatorFixed) + cpmAmount,
-        fixedAtRisk,
-        daysUnderMin,
+        total: (fixedEarned ? creatorFixed : 0) + cpmAmount,
+        fixedEarned,
+        monthVideoCount,
+        monthlyTarget: target,
+        progress,
         min,
         windowOpen: windowStats.open,
         windowClosed: windowStats.closed,

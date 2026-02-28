@@ -5,8 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { LogOut, Video, Eye, Calendar, CheckCircle, AlertTriangle } from "lucide-react";
 import { formatCurrency, formatViews } from "@/lib/format";
+
+function progressColor(level: "green" | "yellow" | "red") {
+  if (level === "green") return "[&>div]:bg-success";
+  if (level === "yellow") return "[&>div]:bg-warning";
+  return "[&>div]:bg-destructive";
+}
 
 export default function CreatorArea() {
   const { profile, signOut } = useAuth();
@@ -107,18 +114,31 @@ export default function CreatorArea() {
           </Card>
         </div>
 
-        {/* Payoff */}
+        {/* Payoff with progress bar */}
         <Card>
           <CardHeader><CardTitle className="text-lg">Payoff mese corrente</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Fisso</span>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold">{formatCurrency(data.creatorFixed)}</span>
+            {/* Progress bar */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span>Video pubblicati: {data.progress.videosSoFar} / {data.monthlyTarget}</span>
                 <Badge variant={data.fixedEarned ? "default" : "secondary"}>
-                  {data.fixedEarned ? "✅ Maturato" : "⚠️ A rischio"}
+                  {data.fixedEarned ? "✅ Maturato" :
+                    data.progress.alertLevel === "yellow" ? "🟡 In ritardo" : "🔴 Non maturato"}
                 </Badge>
               </div>
+              <Progress value={data.progress.percent} className={progressColor(data.progress.alertLevel)} />
+              <p className="text-xs text-muted-foreground">
+                Media giornaliera attuale: {data.progress.avgCurrent.toFixed(1)} video/giorno — necessaria: {data.min.toFixed(0)} video/giorno
+                {data.progress.workingDaysLeft > 0 && !data.fixedEarned && (
+                  <> (per recuperare: {data.progress.avgNeeded.toFixed(1)} video/giorno)</>
+                )}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Fisso</span>
+              <span className="font-semibold">{formatCurrency(data.fixedEarned ? data.creatorFixed : 0)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">CPM maturato</span>

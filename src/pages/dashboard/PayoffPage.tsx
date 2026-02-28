@@ -206,6 +206,9 @@ export default function PayoffPage() {
                       <Badge variant={cr.fixedEarned ? "default" : "destructive"} className="text-xs">
                         {cr.fixedEarned ? "✅ Maturato" : "❌ Non maturato"}
                       </Badge>
+                      <span className="block text-xs text-muted-foreground mt-1">
+                        {cr.monthVideoCount}/{cr.monthlyTarget} video
+                      </span>
                     </TableCell>
                     <TableCell className="text-right">{formatCurrency(cr.cpmAmount)}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(cr.total)}</TableCell>

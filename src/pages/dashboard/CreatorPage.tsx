@@ -29,6 +29,12 @@ const statusLabel: Record<string, string> = {
   inactive: "Inattivo",
 };
 
+const alertBadge = {
+  green: { className: "bg-success/20 text-success border-success/30", label: "🟢 In regola" },
+  yellow: { className: "bg-warning/20 text-warning border-warning/30", label: "🟡 Attenzione" },
+  red: { className: "bg-destructive/20 text-destructive border-destructive/30", label: "🔴 A rischio" },
+};
+
 function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -151,8 +157,8 @@ export default function CreatorPage() {
                   <TableHead>Nome</TableHead>
                   <TableHead className="text-right">Campagne attive</TableHead>
                   <TableHead className="text-right">Views totali</TableHead>
-                  <TableHead className="text-right">Video oggi</TableHead>
-                  <TableHead>Obiettivo</TableHead>
+                  <TableHead className="text-right">Video mese</TableHead>
+                  <TableHead>Obiettivo mensile</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead />
                 </TableRow>
@@ -163,10 +169,10 @@ export default function CreatorPage() {
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell className="text-right">{c.activeCampaigns}</TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
-                    <TableCell className="text-right">{c.todayVideos}</TableCell>
+                    <TableCell className="text-right">{c.monthVideos} / {c.monthlyTarget}</TableCell>
                     <TableCell>
-                      <Badge className={c.isOnTrack ? "bg-success/20 text-success border-success/30" : "bg-destructive/20 text-destructive border-destructive/30"}>
-                        {c.isOnTrack ? "🟢 In regola" : "🔴 A rischio"}
+                      <Badge className={alertBadge[c.alertLevel].className}>
+                        {alertBadge[c.alertLevel].label}
                       </Badge>
                     </TableCell>
                     <TableCell>

@@ -9,7 +9,7 @@ import {
   useCreatorDetail, useCreatorKpi, useCreatorPayoff,
   useCreatorAccounts, useCreatorCampaigns,
 } from "@/hooks/useCreatorData";
-
+import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -85,6 +85,13 @@ function EditCreatorModal({ open, onOpenChange, creator }: {
       </DialogContent>
     </Dialog>
   );
+}
+
+/* ── Progress bar color helper ── */
+function progressColor(level: "green" | "yellow" | "red") {
+  if (level === "green") return "[&>div]:bg-success";
+  if (level === "yellow") return "[&>div]:bg-warning";
+  return "[&>div]:bg-destructive";
 }
 
 /* ── Detail Page ── */
@@ -202,14 +209,30 @@ export default function CreatorDetailPage() {
         <CardContent className="space-y-3">
           {payoff ? (
             <>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Fisso</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">{formatCurrency(payoff.creatorFixed)}</span>
-                  <Badge className={payoff.fixedAtRisk ? "bg-destructive/20 text-destructive border-destructive/30" : "bg-success/20 text-success border-success/30"}>
-                    {payoff.fixedAtRisk ? "⚠️ A rischio" : "✅ Maturato"}
+              {/* Progress bar */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Video pubblicati questo mese: {payoff.monthVideoCount} / {payoff.monthlyTarget}</span>
+                  <Badge className={
+                    payoff.progress.alertLevel === "green" ? "bg-success/20 text-success border-success/30" :
+                    payoff.progress.alertLevel === "yellow" ? "bg-warning/20 text-warning border-warning/30" :
+                    "bg-destructive/20 text-destructive border-destructive/30"
+                  }>
+                    {payoff.fixedEarned ? "✅ Maturato" : payoff.progress.alertLevel === "yellow" ? "🟡 In ritardo" : "🔴 Non maturato"}
                   </Badge>
                 </div>
+                <Progress value={payoff.progress.percent} className={progressColor(payoff.progress.alertLevel)} />
+                <p className="text-xs text-muted-foreground">
+                  Media giornaliera attuale: {payoff.progress.avgCurrent.toFixed(1)} video/giorno — necessaria: {payoff.min.toFixed(0)} video/giorno
+                  {payoff.progress.workingDaysLeft > 0 && !payoff.fixedEarned && (
+                    <> (per recuperare: {payoff.progress.avgNeeded.toFixed(1)} video/giorno)</>
+                  )}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Fisso</span>
+                <span className="font-semibold">{formatCurrency(payoff.fixedEarned ? payoff.creatorFixed : 0)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">CPM maturato</span>
@@ -229,27 +252,6 @@ export default function CreatorDetailPage() {
           ) : (
             <Skeleton className="h-20 w-full" />
           )}
-        </CardContent>
-      </Card>
-
-      {/* Alerts */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Alert — Giorni sotto il minimo</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {payoff && payoff.daysUnderMin.length === 0 ? (
-            <p className="text-sm text-success">Nessun giorno sotto il minimo questo mese ✓</p>
-          ) : payoff ? (
-            <div className="space-y-1">
-              {payoff.daysUnderMin.map(d => (
-                <div key={d.date} className="flex items-center justify-between text-sm py-1 border-b border-border last:border-0">
-                  <span>{d.date}</span>
-                  <span className="text-destructive">{d.count} / {d.min} video</span>
-                </div>
-              ))}
-            </div>
-          ) : <Skeleton className="h-16 w-full" />}
         </CardContent>
       </Card>
 

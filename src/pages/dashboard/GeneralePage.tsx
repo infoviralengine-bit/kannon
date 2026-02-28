@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Eye, TrendingUp, Megaphone, Users, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Eye, TrendingUp, Megaphone, Users, AlertTriangle, CheckCircle2, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,21 @@ const statusLabel: Record<string, string> = {
   active: "Attiva",
   paused: "In pausa",
   completed: "Completata",
+};
+
+const alertIcon = {
+  red: <AlertTriangle className="h-4 w-4" />,
+  yellow: <AlertCircle className="h-4 w-4" />,
+};
+
+const alertColor = {
+  red: "text-destructive",
+  yellow: "text-warning",
+};
+
+const alertLabel = {
+  red: "Critico",
+  yellow: "Attenzione",
 };
 
 export default function GeneralePage() {
@@ -108,14 +123,18 @@ export default function GeneralePage() {
         <Card className="border-destructive/40 bg-destructive/5">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-4 w-4" /> Alert Creator
+              <AlertTriangle className="h-4 w-4" /> Alert Creator — Proiezione mensile
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1">
+          <CardContent className="space-y-2">
             {alerts.data!.map((a) => (
-              <p key={a.creatorName} className="text-sm">
-                <span className="font-semibold">{a.creatorName}</span> — {a.published}/{a.minimum} video pubblicati oggi
-              </p>
+              <div key={a.creatorName} className="flex items-center gap-2 text-sm">
+                <span className={alertColor[a.alertLevel]}>
+                  {a.alertLevel === "red" ? "🔴" : "🟡"} {alertLabel[a.alertLevel]}
+                </span>
+                <span className="font-semibold">{a.creatorName}</span>
+                <span className="text-muted-foreground">— {a.videosSoFar}/{a.totalRequired} video nel mese</span>
+              </div>
             ))}
           </CardContent>
         </Card>
@@ -123,7 +142,7 @@ export default function GeneralePage() {
         <Card className="border-success/30 bg-success/5">
           <CardContent className="flex items-center gap-2 py-4">
             <CheckCircle2 className="h-4 w-4 text-success" />
-            <span className="text-sm text-success">Tutti i creator sono in regola oggi ✓</span>
+            <span className="text-sm text-success">Tutti i creator sono in regola questo mese ✓</span>
           </CardContent>
         </Card>
       )}

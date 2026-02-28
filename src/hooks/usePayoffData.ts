@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViews } from "@/lib/videoWindow";
+import { isFixedEarnedMonthly, getWorkingDaysInMonth } from "@/lib/fixedEarned";
 
 function monthRange(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString();
@@ -33,6 +34,8 @@ export interface CreatorPayoffRow {
   isPaid: boolean;
   paidAt: string | null;
   paymentId: string | null;
+  monthVideoCount: number;
+  monthlyTarget: number;
 }
 
 export interface PaymentHistoryRow {
@@ -52,7 +55,6 @@ export function usePayoffData(year: number, month: number) {
   return useQuery({
     queryKey: ["payoff", year, month],
     queryFn: async () => {
-      // Fetch all needed data in parallel
       const [
         { data: creators },
         { data: campaigns },
@@ -76,7 +78,7 @@ export function usePayoffData(year: number, month: number) {
       const allVideos = videos ?? [];
       const allPayments = payments ?? [];
 
-      // Map: accountId -> effective views this month (using 30-day window logic)
+      // Map: accountId -> effective views this month
       const viewsByAccount = new Map<string, number>();
       allVideos.forEach((v) => {
         const effectiveViews = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
@@ -101,34 +103,18 @@ export function usePayoffData(year: number, month: number) {
         accountsByCampaign.set(a.campaign_id, list);
       });
 
-      // Check if creator earned fixed (all days >= min_videos_per_day)
-      const videosByDay = new Map<string, Map<string, number>>(); // creatorId -> day -> count
+      // Count month videos per creator (across ALL their accounts)
+      const monthVideoCountByCreator = new Map<string, number>();
       allVideos.forEach((v) => {
-        const day = v.published_at.slice(0, 10);
         allAccounts
           .filter((a) => a.id === v.tiktok_account_id && a.creator_id)
           .forEach((a) => {
-            const creatorMap = videosByDay.get(a.creator_id!) ?? new Map();
-            creatorMap.set(day, (creatorMap.get(day) ?? 0) + 1);
-            videosByDay.set(a.creator_id!, creatorMap);
+            monthVideoCountByCreator.set(
+              a.creator_id!,
+              (monthVideoCountByCreator.get(a.creator_id!) ?? 0) + 1
+            );
           });
       });
-
-      const now = new Date();
-      const endDay = year === now.getFullYear() && month === now.getMonth()
-        ? now.getDate() - 1 // yesterday
-        : new Date(year, month + 1, 0).getDate();
-
-      function isFixedEarned(creatorId: string, minPerDay: number): boolean {
-        const dayMap = videosByDay.get(creatorId) ?? new Map();
-        for (let d = 1; d <= endDay; d++) {
-          const date = new Date(year, month, d);
-          if (date.getDay() === 0) continue; // skip Sunday
-          const dayStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-          if ((dayMap.get(dayStr) ?? 0) < minPerDay) return false;
-        }
-        return true;
-      }
 
       // Creator views month (across all accounts)
       function creatorMonthViews(creatorId: string): number {
@@ -147,15 +133,15 @@ export function usePayoffData(year: number, month: number) {
         const clientCpm = (camp.client_cpm ?? 2) * (viewsMonth / 1000);
         const clientIncome = clientFixed + clientCpm;
 
-        // Creator cost for this campaign
         let creatorCost = 0;
         creatorIds.forEach((cid) => {
           const cr = allCreators.find((c) => c.id === cid);
           if (!cr) return;
-          // Creator accounts on THIS campaign
           const crAccIds = allAccounts.filter((a) => a.creator_id === cid && a.campaign_id === camp.id).map((a) => a.id);
           const crViews = crAccIds.reduce((s, id) => s + (viewsByAccount.get(id) ?? 0), 0);
-          const earned = isFixedEarned(cid, cr.min_videos_per_day ?? 5);
+          const min = cr.min_videos_per_day ?? 5;
+          const videoCount = monthVideoCountByCreator.get(cid) ?? 0;
+          const earned = isFixedEarnedMonthly(videoCount, min, year, month);
           creatorCost += (earned ? (cr.creator_fixed ?? 200) : 0) + (cr.creator_cpm ?? 0.5) * (crViews / 1000);
         });
 
@@ -172,10 +158,12 @@ export function usePayoffData(year: number, month: number) {
       });
 
       // ── Creator Payoff ──
+      const workingDays = getWorkingDaysInMonth(year, month);
       const creatorRows: CreatorPayoffRow[] = allCreators.map((cr) => {
         const views = creatorMonthViews(cr.id);
         const min = cr.min_videos_per_day ?? 5;
-        const earned = isFixedEarned(cr.id, min);
+        const videoCount = monthVideoCountByCreator.get(cr.id) ?? 0;
+        const earned = isFixedEarnedMonthly(videoCount, min, year, month);
         const fixedAmt = cr.creator_fixed ?? 200;
         const cpmAmt = (cr.creator_cpm ?? 0.5) * (views / 1000);
         const total = (earned ? fixedAmt : 0) + cpmAmt;
@@ -196,6 +184,8 @@ export function usePayoffData(year: number, month: number) {
           isPaid: payment?.is_paid ?? false,
           paidAt: payment?.paid_at ?? null,
           paymentId: payment?.id ?? null,
+          monthVideoCount: videoCount,
+          monthlyTarget: min * workingDays,
         };
       });
 
