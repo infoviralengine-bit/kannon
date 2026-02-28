@@ -100,6 +100,125 @@ export type Database = {
           },
         ]
       }
+      client_payments: {
+        Row: {
+          campaign_id: string
+          cpm_amount: number
+          cpm_views: number
+          created_at: string
+          cycle_id: string
+          cycle_number: number
+          due_date: string
+          fixed_amount: number
+          id: string
+          is_paid: boolean
+          notes: string | null
+          paid_at: string | null
+          total_amount: number
+          views_snapshot_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          cpm_amount?: number
+          cpm_views?: number
+          created_at?: string
+          cycle_id: string
+          cycle_number: number
+          due_date: string
+          fixed_amount?: number
+          id?: string
+          is_paid?: boolean
+          notes?: string | null
+          paid_at?: string | null
+          total_amount?: number
+          views_snapshot_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          cpm_amount?: number
+          cpm_views?: number
+          created_at?: string
+          cycle_id?: string
+          cycle_number?: number
+          due_date?: string
+          fixed_amount?: number
+          id?: string
+          is_paid?: boolean
+          notes?: string | null
+          paid_at?: string | null
+          total_amount?: number
+          views_snapshot_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_payments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_payments_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "payment_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creator_payments: {
+        Row: {
+          cpm_amount: number
+          created_at: string
+          creator_id: string
+          fixed_amount: number
+          fixed_earned: boolean
+          id: string
+          is_paid: boolean
+          notes: string | null
+          paid_at: string | null
+          period_month: number
+          period_year: number
+          total_amount: number
+        }
+        Insert: {
+          cpm_amount?: number
+          created_at?: string
+          creator_id: string
+          fixed_amount?: number
+          fixed_earned?: boolean
+          id?: string
+          is_paid?: boolean
+          notes?: string | null
+          paid_at?: string | null
+          period_month: number
+          period_year: number
+          total_amount?: number
+        }
+        Update: {
+          cpm_amount?: number
+          created_at?: string
+          creator_id?: string
+          fixed_amount?: number
+          fixed_earned?: boolean
+          id?: string
+          is_paid?: boolean
+          notes?: string | null
+          paid_at?: string | null
+          period_month?: number
+          period_year?: number
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_payments_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creators: {
         Row: {
           created_at: string
@@ -178,6 +297,44 @@ export type Database = {
             columns: ["tiktok_account_id"]
             isOneToOne: false
             referencedRelation: "tiktok_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_cycles: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          cycle_end_date: string
+          cycle_number: number
+          cycle_start_date: string
+          id: string
+          is_last_cycle: boolean
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          cycle_end_date: string
+          cycle_number: number
+          cycle_start_date: string
+          id?: string
+          is_last_cycle?: boolean
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          cycle_end_date?: string
+          cycle_number?: number
+          cycle_start_date?: string
+          id?: string
+          is_last_cycle?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_cycles_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -354,6 +511,7 @@ export type Database = {
           tiktok_account_id: string
           tiktok_video_id: string
           views: number | null
+          views_at_last_payment: number
           views_final: number | null
           window_closed: boolean
           window_expires_at: string | null
@@ -368,6 +526,7 @@ export type Database = {
           tiktok_account_id: string
           tiktok_video_id: string
           views?: number | null
+          views_at_last_payment?: number
           views_final?: number | null
           window_closed?: boolean
           window_expires_at?: string | null
@@ -382,6 +541,7 @@ export type Database = {
           tiktok_account_id?: string
           tiktok_video_id?: string
           views?: number | null
+          views_at_last_payment?: number
           views_final?: number | null
           window_closed?: boolean
           window_expires_at?: string | null
