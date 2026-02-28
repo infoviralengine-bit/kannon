@@ -133,15 +133,13 @@ export function useCampaignMargin(campaignId: string) {
       // Fetch all videos for the month (for both views and fixed-earned check)
       const { data: monthVideosAll } = await supabase
         .from("videos")
-        .select("tiktok_account_id, views, published_at")
+        .select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at")
         .gte("published_at", mStart)
         .lt("published_at", mEnd);
       const monthVids = monthVideosAll ?? [];
 
       const monthViews = campAccIds.length
-        ? monthVids
-            .filter((v) => campAccIds.includes(v.tiktok_account_id))
-            .reduce((s, v) => s + (v.views ?? 0), 0)
+        ? sumEffectiveViews(monthVids.filter((v) => campAccIds.includes(v.tiktok_account_id)))
         : 0;
 
       // Build per-creator video-by-day map (across ALL their accounts, not just this campaign)
