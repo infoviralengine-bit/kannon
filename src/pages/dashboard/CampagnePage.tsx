@@ -80,15 +80,16 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
 
       // Create client payment for cycle 1 (fixed only, 0 CPM)
       const fixedPerCreator = parseFloat(clientFixed) || 200;
+      const fixedTotal = fixedPerCreator * numPlanned;
       await supabase.from("client_payments").insert({
         campaign_id: newCamp.id,
         cycle_id: cycle.id,
         cycle_number: 1,
         due_date: startStr,
-        fixed_amount: fixedPerCreator, // will be recalculated when creators are added
+        fixed_amount: fixedTotal,
         cpm_views: 0,
         cpm_amount: 0,
-        total_amount: fixedPerCreator,
+        total_amount: fixedTotal,
       });
 
       return newCamp;
