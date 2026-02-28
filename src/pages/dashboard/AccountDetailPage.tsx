@@ -212,7 +212,10 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.videos.map((v) => (
+                {data.videos.map((v) => {
+                  const wStatus = getWindowStatus(v as any);
+                  const daysLeft = getWindowDaysRemaining(v as any);
+                  return (
                   <TableRow key={v.id}>
                     <TableCell>
                       <a
@@ -228,11 +231,23 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
                     <TableCell className="text-right">{formatViews(v.views || 0)}</TableCell>
                     <TableCell className="text-right">{formatViews(v.likes || 0)}</TableCell>
                     <TableCell className="text-right">{formatViews(v.comments || 0)}</TableCell>
+                    <TableCell>
+                      {wStatus === "open" && (
+                        <span className="text-sm">🟢 {daysLeft}g rimasti</span>
+                      )}
+                      {wStatus === "closing" && (
+                        <span className="text-sm text-warning">⏳ &lt;24h</span>
+                      )}
+                      {wStatus === "closed" && (
+                        <span className="text-sm text-muted-foreground">🔴 Chiusa{v.window_expires_at ? ` ${format(new Date(v.window_expires_at), "dd/MM")}` : ""}</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {v.last_scraped_at ? format(new Date(v.last_scraped_at), "dd/MM HH:mm") : "—"}
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           )}

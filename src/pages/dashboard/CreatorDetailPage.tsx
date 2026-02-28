@@ -218,6 +218,9 @@ export default function CreatorDetailPage() {
               <p className="text-xs text-muted-foreground">
                 {formatViews(payoff.monthViews)} views × {formatCurrency(payoff.creatorCpm)} / 1.000 = {formatCurrency(payoff.cpmAmount)}
               </p>
+              <p className="text-xs text-muted-foreground italic">
+                {payoff.windowOpen} video con finestra aperta (views provvisorie) — {payoff.windowClosed} video con finestra chiusa (views definitive)
+              </p>
               <div className="flex items-center justify-between border-t border-border pt-3">
                 <span className="text-sm font-semibold">Totale mese</span>
                 <span className="text-lg font-bold">{formatCurrency(payoff.total)}</span>
