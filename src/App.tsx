@@ -16,6 +16,7 @@ import CampagnePage from "@/pages/dashboard/CampagnePage";
 import CreatorPage from "@/pages/dashboard/CreatorPage";
 import AccountPage from "@/pages/dashboard/AccountPage";
 import PayoffPage from "@/pages/dashboard/PayoffPage";
+import CampaignDetailPage from "@/pages/dashboard/CampaignDetailPage";
 import {
   PipelinePage, MediaPage, ReportsPage, RecruitingPage,
   ContractsPage, CalendarPage, FinancePage, SettingsPage
