@@ -21,8 +21,9 @@ import PayoffPage from "@/pages/dashboard/PayoffPage";
 import CampaignDetailPage from "@/pages/dashboard/CampaignDetailPage";
 import {
   PipelinePage, MediaPage, ReportsPage, RecruitingPage,
-  ContractsPage, CalendarPage, FinancePage, SettingsPage
+  ContractsPage, CalendarPage, FinancePage
 } from "@/pages/dashboard/ComingSoonPages";
+import SettingsPage from "@/pages/dashboard/SettingsPage";
 
 const queryClient = new QueryClient();
 

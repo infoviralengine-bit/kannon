@@ -8,4 +8,4 @@ export function RecruitingPage() { return <ComingSoon icon={Search} title="Recru
 export function ContractsPage() { return <ComingSoon icon={FileText} title="Contratti" />; }
 export function CalendarPage() { return <ComingSoon icon={CalendarDays} title="Calendario" />; }
 export function FinancePage() { return <ComingSoon icon={Landmark} title="Finanza" />; }
-export function SettingsPage() { return <ComingSoon icon={Settings} title="Impostazioni" />; }
+// SettingsPage moved to dedicated file
