@@ -428,14 +428,7 @@ export function useCampaignAlerts(campaignId: string) {
   });
 }
 
-// Helper to avoid circular import
-function require_working_days(year: number, month: number): number {
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  let count = 0;
-  for (let d = 1; d <= daysInMonth; d++) {
-    if (new Date(year, month, d).getDay() !== 0) count++;
-  }
-  return count;
+
 }
 
 export function useAllCreatorsForSelect() {
