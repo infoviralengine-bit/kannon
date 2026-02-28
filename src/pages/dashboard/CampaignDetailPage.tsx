@@ -81,6 +81,7 @@ function EditCampaignModal({
     id: string; name: string; client_name: string;
     client_cpm: number | null; client_fixed_per_creator: number | null;
     start_date: string; end_date: string | null; notes: string | null;
+    planned_creators?: number;
   };
 }) {
   const { toast } = useToast();
@@ -92,6 +93,7 @@ function EditCampaignModal({
   const [startDate, setStartDate] = useState<Date | undefined>(new Date(campaign.start_date));
   const [endDate, setEndDate] = useState<Date | undefined>(campaign.end_date ? new Date(campaign.end_date) : undefined);
   const [notes, setNotes] = useState(campaign.notes ?? "");
+  const [plannedCreators, setPlannedCreators] = useState(String((campaign as any).planned_creators ?? 1));
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -104,7 +106,8 @@ function EditCampaignModal({
         start_date: format(startDate, "yyyy-MM-dd"),
         end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
         notes: notes || null,
-      }).eq("id", campaign.id);
+        planned_creators: Math.max(1, parseInt(plannedCreators) || 1),
+      } as any).eq("id", campaign.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -170,6 +173,10 @@ function EditCampaignModal({
                 </PopoverContent>
               </Popover>
             </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>N° creator previsti</Label>
+            <Input type="number" min="1" step="1" value={plannedCreators} onChange={(e) => setPlannedCreators(e.target.value)} />
           </div>
           <div className="grid gap-1.5">
             <Label>Note</Label>
@@ -272,9 +279,11 @@ function CyclesSection({ campaignId, campaign, cycles }: {
       }).select().single();
       if (cycleErr) throw cycleErr;
 
-      // Get creator count for fixed
+      // Get creator count for fixed — use actual count, fallback to planned_creators
       const { data: cc } = await supabase.from("campaign_creators").select("creator_id").eq("campaign_id", campaignId);
-      const creatorCount = (cc ?? []).length;
+      const actualCreatorCount = (cc ?? []).length;
+      const plannedCount = (campaign as any).planned_creators ?? 1;
+      const creatorCount = actualCreatorCount > 0 ? actualCreatorCount : plannedCount;
 
       // Get views for CPM calculation: total current views - views already paid
       const { data: accounts } = await supabase.from("tiktok_accounts").select("id").eq("campaign_id", campaignId);
@@ -506,7 +515,7 @@ export default function CampaignDetailPage() {
       <Card>
         <CardHeader><CardTitle className="text-lg">Condizioni Economiche</CardTitle></CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground">CPM Cliente</p>
               <p className="font-semibold">{formatCurrency(campaign.client_cpm ?? 0)} / 1.000 views</p>
@@ -516,12 +525,30 @@ export default function CampaignDetailPage() {
               <p className="font-semibold">{formatCurrency(campaign.client_fixed_per_creator ?? 0)} / mese</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Data inizio</p>
-              <p className="font-semibold">{format(new Date(campaign.start_date), "dd/MM/yyyy")}</p>
+              <p className="text-muted-foreground">Creator previsti</p>
+              <p className="font-semibold">{(campaign as any).planned_creators ?? 1}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Data fine</p>
-              <p className="font-semibold">{campaign.end_date ? format(new Date(campaign.end_date), "dd/MM/yyyy") : "—"}</p>
+              <p className="text-muted-foreground">Creator effettivi</p>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold">{kpi.data?.creatorCount ?? 0}</p>
+                {!kpi.isLoading && (() => {
+                  const planned = (campaign as any).planned_creators ?? 1;
+                  const actual = kpi.data?.creatorCount ?? 0;
+                  if (actual >= planned) {
+                    return <Badge className="bg-success/20 text-success border-success/30 text-xs">✅ Completi</Badge>;
+                  }
+                  return <Badge className="bg-warning/20 text-warning border-warning/30 text-xs">⚠️ Mancano {planned - actual}</Badge>;
+                })()}
+              </div>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Date</p>
+              <p className="font-semibold">
+                {format(new Date(campaign.start_date), "dd/MM/yyyy")}
+                {" — "}
+                {campaign.end_date ? format(new Date(campaign.end_date), "dd/MM/yyyy") : "In corso"}
+              </p>
             </div>
           </div>
           {campaign.notes && (

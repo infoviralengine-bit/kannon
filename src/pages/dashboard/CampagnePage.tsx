@@ -48,11 +48,13 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [notes, setNotes] = useState("");
+  const [plannedCreators, setPlannedCreators] = useState("1");
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!name || !clientName || !startDate) throw new Error("Compila i campi obbligatori");
       const startStr = format(startDate, "yyyy-MM-dd");
+      const numPlanned = Math.max(1, parseInt(plannedCreators) || 1);
       const { data: newCamp, error } = await supabase.from("campaigns").insert({
         name,
         client_name: clientName,
@@ -61,7 +63,8 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
         start_date: startStr,
         end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
         notes: notes || null,
-      }).select().single();
+        planned_creators: numPlanned,
+      } as any).select().single();
       if (error) throw error;
 
       // Auto-generate Cycle 1
@@ -77,15 +80,16 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
 
       // Create client payment for cycle 1 (fixed only, 0 CPM)
       const fixedPerCreator = parseFloat(clientFixed) || 200;
+      const fixedTotal = fixedPerCreator * numPlanned;
       await supabase.from("client_payments").insert({
         campaign_id: newCamp.id,
         cycle_id: cycle.id,
         cycle_number: 1,
         due_date: startStr,
-        fixed_amount: fixedPerCreator, // will be recalculated when creators are added
+        fixed_amount: fixedTotal,
         cpm_views: 0,
         cpm_amount: 0,
-        total_amount: fixedPerCreator,
+        total_amount: fixedTotal,
       });
 
       return newCamp;
@@ -96,7 +100,7 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
       qc.invalidateQueries({ queryKey: ["active-campaigns-count"] });
       onOpenChange(false);
       setName(""); setClientName(""); setClientCpm("2.00"); setClientFixed("200.00");
-      setStartDate(undefined); setEndDate(undefined); setNotes("");
+      setStartDate(undefined); setEndDate(undefined); setNotes(""); setPlannedCreators("1");
     },
     onError: (e: Error) => {
       toast({ title: "Errore", description: e.message, variant: "destructive" });
@@ -157,6 +161,10 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
                 </PopoverContent>
               </Popover>
             </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>N° creator previsti</Label>
+            <Input type="number" min="1" step="1" value={plannedCreators} onChange={(e) => setPlannedCreators(e.target.value)} />
           </div>
           <div className="grid gap-1.5">
             <Label>Note</Label>
