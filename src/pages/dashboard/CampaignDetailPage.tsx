@@ -279,9 +279,11 @@ function CyclesSection({ campaignId, campaign, cycles }: {
       }).select().single();
       if (cycleErr) throw cycleErr;
 
-      // Get creator count for fixed
+      // Get creator count for fixed — use actual count, fallback to planned_creators
       const { data: cc } = await supabase.from("campaign_creators").select("creator_id").eq("campaign_id", campaignId);
-      const creatorCount = (cc ?? []).length;
+      const actualCreatorCount = (cc ?? []).length;
+      const plannedCount = (campaign as any).planned_creators ?? 1;
+      const creatorCount = actualCreatorCount > 0 ? actualCreatorCount : plannedCount;
 
       // Get views for CPM calculation: total current views - views already paid
       const { data: accounts } = await supabase.from("tiktok_accounts").select("id").eq("campaign_id", campaignId);
