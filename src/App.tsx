@@ -16,6 +16,7 @@ import CampagnePage from "@/pages/dashboard/CampagnePage";
 import CreatorPage from "@/pages/dashboard/CreatorPage";
 import CreatorDetailPage from "@/pages/dashboard/CreatorDetailPage";
 import AccountPage from "@/pages/dashboard/AccountPage";
+import AccountDetailPage from "@/pages/dashboard/AccountDetailPage";
 import PayoffPage from "@/pages/dashboard/PayoffPage";
 import CampaignDetailPage from "@/pages/dashboard/CampaignDetailPage";
 import {
@@ -48,6 +49,7 @@ const App = () => (
               <Route path="creators" element={<CreatorPage />} />
               <Route path="creators/:id" element={<CreatorDetailPage />} />
               <Route path="accounts" element={<AccountPage />} />
+              <Route path="accounts/:id" element={<AccountDetailPage />} />
               <Route path="payoff" element={<PayoffPage />} />
               <Route path="pipeline" element={<PipelinePage />} />
               <Route path="media" element={<MediaPage />} />
