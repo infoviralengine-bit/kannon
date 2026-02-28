@@ -410,14 +410,15 @@ export function useCampaignAlerts(campaignId: string) {
         const accIds = new Set(accountsByCreator.get(c.id) ?? []);
         const videosSoFar = (videos ?? []).filter((v) => accIds.has(v.tiktok_account_id)).length;
         const min = c.min_videos_per_day ?? 5;
+        const totalRequired = getMonthlyTarget(min, year, month0);
         const alertLevel = getCreatorAlertLevel(videosSoFar, min, year, month0);
-        const totalRequired = min * (new Date(year, month0 + 1, 0).getDate()); // approx
         if (alertLevel !== "green") {
           alerts.push({
             creatorName: c.name,
             videosSoFar,
-            totalRequired: min * require_working_days(year, month0),
+            totalRequired,
             alertLevel,
+          });
           });
         }
       });
