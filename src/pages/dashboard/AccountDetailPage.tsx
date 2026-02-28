@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { formatViews, formatCurrency } from "@/lib/format";
 import { format } from "date-fns";
+import { getWindowStatus, getWindowDaysRemaining } from "@/lib/videoWindow";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
