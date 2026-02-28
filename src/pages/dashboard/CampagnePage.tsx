@@ -163,6 +163,10 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
             </div>
           </div>
           <div className="grid gap-1.5">
+            <Label>N° creator previsti</Label>
+            <Input type="number" min="1" step="1" value={plannedCreators} onChange={(e) => setPlannedCreators(e.target.value)} />
+          </div>
+          <div className="grid gap-1.5">
             <Label>Note</Label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Note opzionali..." />
           </div>
