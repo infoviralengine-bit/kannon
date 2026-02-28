@@ -772,6 +772,24 @@ export default function CampaignDetailPage() {
       </Card>
       {/* Payment Cycles */}
       <CyclesSection campaignId={campaignId} campaign={campaign} cycles={cycles} />
+
+      {/* Delete Campaign (admin only) */}
+      {role === "admin" && (
+        <Card className="border-destructive/30">
+          <CardContent className="flex items-center justify-between py-4">
+            <div>
+              <p className="text-sm font-medium">Zona pericolosa</p>
+              <p className="text-xs text-muted-foreground">Elimina questa campagna e tutti i dati collegati</p>
+            </div>
+            <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+              <Trash2 className="mr-2 h-4 w-4" /> Elimina Campagna
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+      {campaign && deleteOpen && (
+        <DeleteCampaignModal open={deleteOpen} onOpenChange={setDeleteOpen} campaign={campaign} />
+      )}
     </div>
   );
 }
