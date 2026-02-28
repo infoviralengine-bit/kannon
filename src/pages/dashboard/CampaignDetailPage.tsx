@@ -524,6 +524,8 @@ export default function CampaignDetailPage() {
           )}
         </CardContent>
       </Card>
+      {/* Payment Cycles */}
+      <CyclesSection campaignId={campaignId} campaign={campaign} cycles={cycles} />
     </div>
   );
 }
