@@ -100,7 +100,7 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
       qc.invalidateQueries({ queryKey: ["active-campaigns-count"] });
       onOpenChange(false);
       setName(""); setClientName(""); setClientCpm("2.00"); setClientFixed("200.00");
-      setStartDate(undefined); setEndDate(undefined); setNotes("");
+      setStartDate(undefined); setEndDate(undefined); setNotes(""); setPlannedCreators("1");
     },
     onError: (e: Error) => {
       toast({ title: "Errore", description: e.message, variant: "destructive" });
