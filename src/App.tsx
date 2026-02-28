@@ -46,6 +46,7 @@ const App = () => (
               <Route path="campaigns" element={<CampagnePage />} />
               <Route path="campaigns/:id" element={<CampaignDetailPage />} />
               <Route path="creators" element={<CreatorPage />} />
+              <Route path="creators/:id" element={<CreatorDetailPage />} />
               <Route path="accounts" element={<AccountPage />} />
               <Route path="payoff" element={<PayoffPage />} />
               <Route path="pipeline" element={<PipelinePage />} />
