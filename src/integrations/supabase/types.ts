@@ -55,6 +55,7 @@ export type Database = {
           client_cpm: number | null
           client_fixed_per_creator: number | null
           client_name: string
+          client_profile_id: string | null
           created_at: string
           end_date: string | null
           id: string
@@ -67,6 +68,7 @@ export type Database = {
           client_cpm?: number | null
           client_fixed_per_creator?: number | null
           client_name: string
+          client_profile_id?: string | null
           created_at?: string
           end_date?: string | null
           id?: string
@@ -79,6 +81,7 @@ export type Database = {
           client_cpm?: number | null
           client_fixed_per_creator?: number | null
           client_name?: string
+          client_profile_id?: string | null
           created_at?: string
           end_date?: string | null
           id?: string
@@ -87,7 +90,15 @@ export type Database = {
           start_date?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_client_profile_id_fkey"
+            columns: ["client_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       creators: {
         Row: {

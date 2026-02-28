@@ -1,0 +1,1 @@
+ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS client_profile_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL;
