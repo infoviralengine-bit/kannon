@@ -249,6 +249,8 @@ export default function CampaignDetailPage() {
   const creators = useCampaignCreators(campaignId);
   const accounts = useCampaignAccounts(campaignId);
   const alerts = useCampaignAlerts(campaignId);
+  const cycles = useCampaignCycles(campaignId);
+  const alerts = useCampaignAlerts(campaignId);
 
   const [editOpen, setEditOpen] = useState(false);
   const [addCreatorOpen, setAddCreatorOpen] = useState(false);
