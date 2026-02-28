@@ -48,11 +48,13 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [notes, setNotes] = useState("");
+  const [plannedCreators, setPlannedCreators] = useState("1");
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!name || !clientName || !startDate) throw new Error("Compila i campi obbligatori");
       const startStr = format(startDate, "yyyy-MM-dd");
+      const numPlanned = Math.max(1, parseInt(plannedCreators) || 1);
       const { data: newCamp, error } = await supabase.from("campaigns").insert({
         name,
         client_name: clientName,
@@ -61,7 +63,8 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
         start_date: startStr,
         end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
         notes: notes || null,
-      }).select().single();
+        planned_creators: numPlanned,
+      } as any).select().single();
       if (error) throw error;
 
       // Auto-generate Cycle 1
