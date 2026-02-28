@@ -120,10 +120,10 @@ export default function GeneralePage() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="border-green-600/30 bg-green-600/5">
+        <Card className="border-success/30 bg-success/5">
           <CardContent className="flex items-center gap-2 py-4">
-            <CheckCircle2 className="h-4 w-4 text-green-400" />
-            <span className="text-sm text-green-400">Tutti i creator sono in regola oggi ✓</span>
+            <CheckCircle2 className="h-4 w-4 text-success" />
+            <span className="text-sm text-success">Tutti i creator sono in regola oggi ✓</span>
           </CardContent>
         </Card>
       )}
