@@ -468,6 +468,7 @@ export default function CampaignDetailPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { role } = useAuth();
 
   const campaignId = id!;
   const { data: campaign, isLoading: campLoading } = useCampaignDetail(campaignId);
@@ -480,6 +481,7 @@ export default function CampaignDetailPage() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [addCreatorOpen, setAddCreatorOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const statusMutation = useMutation({
     mutationFn: async (status: string) => {
