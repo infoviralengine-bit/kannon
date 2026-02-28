@@ -1,0 +1,1 @@
+ALTER TABLE public.campaigns ADD COLUMN planned_creators integer NOT NULL DEFAULT 1;

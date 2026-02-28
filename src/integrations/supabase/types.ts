@@ -61,6 +61,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          planned_creators: number
           start_date: string
           status: string
         }
@@ -74,6 +75,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          planned_creators?: number
           start_date: string
           status?: string
         }
@@ -87,6 +89,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          planned_creators?: number
           start_date?: string
           status?: string
         }
