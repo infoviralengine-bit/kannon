@@ -16,6 +16,7 @@ import {
   useCampaignCreators, useCampaignAccounts, useCampaignAlerts,
   useAllCreatorsForSelect,
 } from "@/hooks/useCampaignData";
+import { useCampaignCycles, type ClientPaymentRow } from "@/hooks/usePaymentsData";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

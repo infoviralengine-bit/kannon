@@ -52,19 +52,46 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
   const mutation = useMutation({
     mutationFn: async () => {
       if (!name || !clientName || !startDate) throw new Error("Compila i campi obbligatori");
-      const { error } = await supabase.from("campaigns").insert({
+      const startStr = format(startDate, "yyyy-MM-dd");
+      const { data: newCamp, error } = await supabase.from("campaigns").insert({
         name,
         client_name: clientName,
         client_cpm: parseFloat(clientCpm) || 2,
         client_fixed_per_creator: parseFloat(clientFixed) || 200,
-        start_date: format(startDate, "yyyy-MM-dd"),
+        start_date: startStr,
         end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
         notes: notes || null,
-      });
+      }).select().single();
       if (error) throw error;
+
+      // Auto-generate Cycle 1
+      const cycleEnd = new Date(startDate);
+      cycleEnd.setDate(cycleEnd.getDate() + 30);
+      const { data: cycle, error: cycleErr } = await supabase.from("payment_cycles").insert({
+        campaign_id: newCamp.id,
+        cycle_number: 1,
+        cycle_start_date: startStr,
+        cycle_end_date: format(cycleEnd, "yyyy-MM-dd"),
+      }).select().single();
+      if (cycleErr) throw cycleErr;
+
+      // Create client payment for cycle 1 (fixed only, 0 CPM)
+      const fixedPerCreator = parseFloat(clientFixed) || 200;
+      await supabase.from("client_payments").insert({
+        campaign_id: newCamp.id,
+        cycle_id: cycle.id,
+        cycle_number: 1,
+        due_date: startStr,
+        fixed_amount: fixedPerCreator, // will be recalculated when creators are added
+        cpm_views: 0,
+        cpm_amount: 0,
+        total_amount: fixedPerCreator,
+      });
+
+      return newCamp;
     },
     onSuccess: () => {
-      toast({ title: "Campagna creata con successo" });
+      toast({ title: "Campagna creata", description: "Ciclo 1 generato automaticamente." });
       qc.invalidateQueries({ queryKey: ["campaign-table"] });
       qc.invalidateQueries({ queryKey: ["active-campaigns-count"] });
       onOpenChange(false);
