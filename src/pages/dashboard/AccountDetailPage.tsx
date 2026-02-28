@@ -144,9 +144,9 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
 
       {/* Alert */}
       {!ok && (
-        <Card className="border-amber-500/50 bg-amber-500/10">
+        <Card className="border-destructive/50 bg-destructive/10">
           <CardContent className="py-4 flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            <AlertTriangle className="h-5 w-5 text-destructive" />
             <span>Oggi: <strong>{data.videosToday}</strong> video pubblicati — minimo richiesto: <strong>{min}</strong></span>
           </CardContent>
         </Card>
