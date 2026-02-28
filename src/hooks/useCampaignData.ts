@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { sumEffectiveViews } from "@/lib/videoWindow";
 
 function todayRange() {
   const now = new Date();
@@ -132,15 +133,13 @@ export function useCampaignMargin(campaignId: string) {
       // Fetch all videos for the month (for both views and fixed-earned check)
       const { data: monthVideosAll } = await supabase
         .from("videos")
-        .select("tiktok_account_id, views, published_at")
+        .select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at")
         .gte("published_at", mStart)
         .lt("published_at", mEnd);
       const monthVids = monthVideosAll ?? [];
 
       const monthViews = campAccIds.length
-        ? monthVids
-            .filter((v) => campAccIds.includes(v.tiktok_account_id))
-            .reduce((s, v) => s + (v.views ?? 0), 0)
+        ? sumEffectiveViews(monthVids.filter((v) => campAccIds.includes(v.tiktok_account_id)))
         : 0;
 
       // Build per-creator video-by-day map (across ALL their accounts, not just this campaign)
@@ -200,9 +199,9 @@ export function useCampaignMargin(campaignId: string) {
         const crCampAccIds = (allAccounts ?? [])
           .filter((a) => a.creator_id === cr.id && a.campaign_id === campaignId)
           .map((a) => a.id);
-        const crViews = monthVids
-          .filter((v) => crCampAccIds.includes(v.tiktok_account_id))
-          .reduce((s, v) => s + (v.views ?? 0), 0);
+        const crViews = sumEffectiveViews(
+          monthVids.filter((v) => crCampAccIds.includes(v.tiktok_account_id))
+        );
         cost += (cr.creator_cpm ?? 0) * (crViews / 1000);
       });
 

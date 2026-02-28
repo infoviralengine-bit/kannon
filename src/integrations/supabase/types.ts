@@ -354,6 +354,9 @@ export type Database = {
           tiktok_account_id: string
           tiktok_video_id: string
           views: number | null
+          views_final: number | null
+          window_closed: boolean
+          window_expires_at: string | null
         }
         Insert: {
           comments?: number | null
@@ -365,6 +368,9 @@ export type Database = {
           tiktok_account_id: string
           tiktok_video_id: string
           views?: number | null
+          views_final?: number | null
+          window_closed?: boolean
+          window_expires_at?: string | null
         }
         Update: {
           comments?: number | null
@@ -376,6 +382,9 @@ export type Database = {
           tiktok_account_id?: string
           tiktok_video_id?: string
           views?: number | null
+          views_final?: number | null
+          window_closed?: boolean
+          window_expires_at?: string | null
         }
         Relationships: [
           {

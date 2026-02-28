@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { sumEffectiveViews } from "@/lib/videoWindow";
 
 function monthRange(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString();
@@ -64,7 +65,7 @@ export function usePayoffData(year: number, month: number) {
         supabase.from("campaigns").select("*").eq("status", "active"),
         supabase.from("campaign_creators").select("*"),
         supabase.from("tiktok_accounts").select("*"),
-        supabase.from("videos").select("tiktok_account_id, views, published_at").gte("published_at", mStart).lt("published_at", mEnd),
+        supabase.from("videos").select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at").gte("published_at", mStart).lt("published_at", mEnd),
         supabase.from("payments").select("*").eq("period_month", month + 1).eq("period_year", year),
       ]);
 
@@ -75,10 +76,11 @@ export function usePayoffData(year: number, month: number) {
       const allVideos = videos ?? [];
       const allPayments = payments ?? [];
 
-      // Map: accountId -> views this month
+      // Map: accountId -> effective views this month (using 30-day window logic)
       const viewsByAccount = new Map<string, number>();
       allVideos.forEach((v) => {
-        viewsByAccount.set(v.tiktok_account_id, (viewsByAccount.get(v.tiktok_account_id) ?? 0) + (v.views ?? 0));
+        const effectiveViews = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
+        viewsByAccount.set(v.tiktok_account_id, (viewsByAccount.get(v.tiktok_account_id) ?? 0) + effectiveViews);
       });
 
       // Map: creatorId -> accountIds

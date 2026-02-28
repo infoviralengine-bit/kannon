@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { sumEffectiveViews } from "@/lib/videoWindow";
 
 function todayRange() {
   const now = new Date();
@@ -75,9 +76,8 @@ export function useCreatorAreaData() {
       const weekVideos = allVideos.filter((v) => v.published_at >= wStart && v.published_at < wEnd).length;
       const monthVideos = allVideos.filter((v) => v.published_at >= mStart && v.published_at < mEnd).length;
       const totalViews = allVideos.reduce((s, v) => s + (v.views ?? 0), 0);
-      const monthViews = allVideos
-        .filter((v) => v.published_at >= mStart && v.published_at < mEnd)
-        .reduce((s, v) => s + (v.views ?? 0), 0);
+      const monthVidsForCpm = allVideos.filter((v) => v.published_at >= mStart && v.published_at < mEnd);
+      const monthViews = sumEffectiveViews(monthVidsForCpm);
 
       const min = creator.min_videos_per_day ?? 5;
 
