@@ -114,12 +114,14 @@ export function usePayoffData(year: number, month: number) {
 
       const now = new Date();
       const endDay = year === now.getFullYear() && month === now.getMonth()
-        ? now.getDate()
+        ? now.getDate() - 1 // yesterday
         : new Date(year, month + 1, 0).getDate();
 
       function isFixedEarned(creatorId: string, minPerDay: number): boolean {
         const dayMap = videosByDay.get(creatorId) ?? new Map();
         for (let d = 1; d <= endDay; d++) {
+          const date = new Date(year, month, d);
+          if (date.getDay() === 0) continue; // skip Sunday
           const dayStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
           if ((dayMap.get(dayStr) ?? 0) < minPerDay) return false;
         }
