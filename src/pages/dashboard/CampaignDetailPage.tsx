@@ -513,7 +513,7 @@ export default function CampaignDetailPage() {
       <Card>
         <CardHeader><CardTitle className="text-lg">Condizioni Economiche</CardTitle></CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground">CPM Cliente</p>
               <p className="font-semibold">{formatCurrency(campaign.client_cpm ?? 0)} / 1.000 views</p>
@@ -523,12 +523,30 @@ export default function CampaignDetailPage() {
               <p className="font-semibold">{formatCurrency(campaign.client_fixed_per_creator ?? 0)} / mese</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Data inizio</p>
-              <p className="font-semibold">{format(new Date(campaign.start_date), "dd/MM/yyyy")}</p>
+              <p className="text-muted-foreground">Creator previsti</p>
+              <p className="font-semibold">{(campaign as any).planned_creators ?? 1}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Data fine</p>
-              <p className="font-semibold">{campaign.end_date ? format(new Date(campaign.end_date), "dd/MM/yyyy") : "—"}</p>
+              <p className="text-muted-foreground">Creator effettivi</p>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold">{kpi.data?.creatorCount ?? 0}</p>
+                {!kpi.isLoading && (() => {
+                  const planned = (campaign as any).planned_creators ?? 1;
+                  const actual = kpi.data?.creatorCount ?? 0;
+                  if (actual >= planned) {
+                    return <Badge className="bg-success/20 text-success border-success/30 text-xs">✅ Completi</Badge>;
+                  }
+                  return <Badge className="bg-warning/20 text-warning border-warning/30 text-xs">⚠️ Mancano {planned - actual}</Badge>;
+                })()}
+              </div>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Date</p>
+              <p className="font-semibold">
+                {format(new Date(campaign.start_date), "dd/MM/yyyy")}
+                {" — "}
+                {campaign.end_date ? format(new Date(campaign.end_date), "dd/MM/yyyy") : "In corso"}
+              </p>
             </div>
           </div>
           {campaign.notes && (
