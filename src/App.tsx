@@ -14,6 +14,7 @@ import ClientArea from "@/pages/ClientArea";
 import GeneralePage from "@/pages/dashboard/GeneralePage";
 import CampagnePage from "@/pages/dashboard/CampagnePage";
 import CreatorPage from "@/pages/dashboard/CreatorPage";
+import CreatorDetailPage from "@/pages/dashboard/CreatorDetailPage";
 import AccountPage from "@/pages/dashboard/AccountPage";
 import PayoffPage from "@/pages/dashboard/PayoffPage";
 import CampaignDetailPage from "@/pages/dashboard/CampaignDetailPage";
