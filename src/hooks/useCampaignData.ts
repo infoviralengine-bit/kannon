@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViews } from "@/lib/videoWindow";
-import { isFixedEarnedMonthly, getCreatorAlertLevel, type AlertLevel } from "@/lib/fixedEarned";
+import { isFixedEarnedMonthly, getCreatorAlertLevel, getMonthlyTarget, type AlertLevel } from "@/lib/fixedEarned";
 
 function todayRange() {
   const now = new Date();
