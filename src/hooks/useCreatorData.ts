@@ -156,13 +156,15 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
       let daysUnderMin: { date: string; count: number; min: number }[] = [];
       const min = creator?.min_videos_per_day ?? 5;
 
+      let monthVids: any[] = [];
       if (accIds.length) {
-        const { data: vids } = await supabase.from("videos").select("views, published_at").in("tiktok_account_id", accIds).gte("published_at", mStart).lt("published_at", mEnd);
-        monthViews = (vids ?? []).reduce((s, v) => s + (v.views ?? 0), 0);
+        const { data: vids } = await supabase.from("videos").select("views, views_final, window_closed, window_expires_at, published_at").in("tiktok_account_id", accIds).gte("published_at", mStart).lt("published_at", mEnd);
+        monthVids = vids ?? [];
+        monthViews = sumEffectiveViews(monthVids);
 
-        // Group by day
+        // Group by day for fixed check
         const byDay = new Map<string, number>();
-        (vids ?? []).forEach(v => {
+        monthVids.forEach(v => {
           const day = v.published_at.slice(0, 10);
           byDay.set(day, (byDay.get(day) ?? 0) + 1);
         });
@@ -170,11 +172,11 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
         // Check each working day (Mon-Sat) up to yesterday
         const now = new Date();
         const lastDay = year === now.getFullYear() && month === now.getMonth()
-          ? now.getDate() - 1 // yesterday
+          ? now.getDate() - 1
           : new Date(year, month + 1, 0).getDate();
         for (let d = 1; d <= lastDay; d++) {
           const date = new Date(year, month, d);
-          if (date.getDay() === 0) continue; // skip Sunday
+          if (date.getDay() === 0) continue;
           const dayStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
           const count = byDay.get(dayStr) ?? 0;
           if (count < min) {
@@ -183,6 +185,7 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
         }
       }
 
+      const windowStats = countByWindowStatus(monthVids);
       const creatorFixed = creator?.creator_fixed ?? 200;
       const creatorCpm = creator?.creator_cpm ?? 0.5;
       const cpmAmount = creatorCpm * (monthViews / 1000);
@@ -193,10 +196,12 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
         creatorFixed,
         creatorCpm,
         cpmAmount,
-        total: creatorFixed + cpmAmount,
+        total: (fixedAtRisk ? 0 : creatorFixed) + cpmAmount,
         fixedAtRisk,
         daysUnderMin,
         min,
+        windowOpen: windowStats.open,
+        windowClosed: windowStats.closed,
       };
     },
     enabled: !!creatorId,

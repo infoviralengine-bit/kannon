@@ -76,10 +76,11 @@ export function usePayoffData(year: number, month: number) {
       const allVideos = videos ?? [];
       const allPayments = payments ?? [];
 
-      // Map: accountId -> views this month
+      // Map: accountId -> effective views this month (using 30-day window logic)
       const viewsByAccount = new Map<string, number>();
       allVideos.forEach((v) => {
-        viewsByAccount.set(v.tiktok_account_id, (viewsByAccount.get(v.tiktok_account_id) ?? 0) + (v.views ?? 0));
+        const effectiveViews = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
+        viewsByAccount.set(v.tiktok_account_id, (viewsByAccount.get(v.tiktok_account_id) ?? 0) + effectiveViews);
       });
 
       // Map: creatorId -> accountIds

@@ -199,9 +199,9 @@ export function useCampaignMargin(campaignId: string) {
         const crCampAccIds = (allAccounts ?? [])
           .filter((a) => a.creator_id === cr.id && a.campaign_id === campaignId)
           .map((a) => a.id);
-        const crViews = monthVids
-          .filter((v) => crCampAccIds.includes(v.tiktok_account_id))
-          .reduce((s, v) => s + (v.views ?? 0), 0);
+        const crViews = sumEffectiveViews(
+          monthVids.filter((v) => crCampAccIds.includes(v.tiktok_account_id))
+        );
         cost += (cr.creator_cpm ?? 0) * (crViews / 1000);
       });
 
