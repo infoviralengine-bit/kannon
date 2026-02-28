@@ -207,6 +207,7 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
                   <TableHead className="text-right">Views</TableHead>
                   <TableHead className="text-right">Likes</TableHead>
                   <TableHead className="text-right">Commenti</TableHead>
+                  <TableHead>Finestra</TableHead>
                   <TableHead>Ultimo scraping</TableHead>
                 </TableRow>
               </TableHeader>
