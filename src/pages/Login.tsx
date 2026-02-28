@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,18 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user, role } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && role) {
+      if (role === "creator") navigate("/creator", { replace: true });
+      else if (role === "client") navigate("/client", { replace: true });
+      else navigate("/dashboard", { replace: true });
+    }
+  }, [user, role, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +32,6 @@ export default function Login() {
     if (error) {
       toast({ title: "Errore di accesso", description: error.message, variant: "destructive" });
     }
-    // Redirect handled by ProtectedRoute
   };
 
   return (
