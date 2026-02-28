@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import {
   Eye, TrendingUp, Video, DollarSign, Users, AlertTriangle, CheckCircle2,
-  ChevronRight, Pencil, CalendarIcon,
+  ChevronRight, Pencil, CalendarIcon, RefreshCw, Check,
 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
