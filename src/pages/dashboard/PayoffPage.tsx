@@ -1,19 +1,18 @@
 import { useState } from "react";
-import { Wallet, TrendingUp, TrendingDown, DollarSign, Check } from "lucide-react";
+import { Eye, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { usePayoffData, usePaymentHistory, type CreatorPayoffRow } from "@/hooks/usePayoffData";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
 import { formatCurrency, formatViews } from "@/lib/format";
 import { useNavigate } from "react-router-dom";
+import { useCpmPayoffData } from "@/hooks/useCpmPayoffData";
+import {
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid,
+} from "recharts";
 
 const MONTHS = [
   "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -24,58 +23,16 @@ export default function PayoffPage() {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth());
   const [year, setYear] = useState(now.getFullYear());
-  const { data, isLoading } = usePayoffData(year, month);
-  const { data: history, isLoading: historyLoading } = usePaymentHistory();
-  const { toast } = useToast();
-  const qc = useQueryClient();
+  const { data, isLoading } = useCpmPayoffData(year, month);
   const navigate = useNavigate();
-
-  const [confirmCreator, setConfirmCreator] = useState<CreatorPayoffRow | null>(null);
-  const [paying, setPaying] = useState(false);
-
-  async function handleMarkPaid(cr: CreatorPayoffRow) {
-    setPaying(true);
-    try {
-      const payload = {
-        creator_id: cr.creatorId,
-        period_month: month + 1,
-        period_year: year,
-        fixed_amount: cr.fixedEarned ? cr.fixedAmount : 0,
-        fixed_earned: cr.fixedEarned,
-        cpm_amount: cr.cpmAmount,
-        total_amount: cr.total,
-        is_paid: true,
-        paid_at: new Date().toISOString(),
-      };
-
-      if (cr.paymentId) {
-        const { error } = await supabase.from("creator_payments").update(payload).eq("id", cr.paymentId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("creator_payments").insert(payload);
-        if (error) throw error;
-      }
-
-      toast({ title: "Pagamento registrato", description: `${cr.name} segnato come pagato.` });
-      qc.invalidateQueries({ queryKey: ["payoff"] });
-      qc.invalidateQueries({ queryKey: ["payment-history"] });
-      qc.invalidateQueries({ queryKey: ["creator-payments"] });
-      qc.invalidateQueries({ queryKey: ["payment-summary"] });
-    } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
-    } finally {
-      setPaying(false);
-      setConfirmCreator(null);
-    }
-  }
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <Wallet className="h-7 w-7 text-primary" />
-          <h1 className="text-2xl font-bold">Payoff</h1>
+          <Eye className="h-7 w-7 text-primary" />
+          <h1 className="text-2xl font-bold">Payoff CPM</h1>
         </div>
         <div className="flex items-center gap-2">
           <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
@@ -97,44 +54,100 @@ export default function PayoffPage() {
         </div>
       </div>
 
-      {/* Section 1: Agency Summary */}
+      {/* Section 1: KPI Cards */}
       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-3">
-          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-28" />)}
+        <div className="grid gap-4 md:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28" />)}
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Entrata Totale</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Views Totali Periodo</CardTitle>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{formatViews(data?.kpi.totalViews ?? 0)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">CPM Cliente (€)</CardTitle>
               <TrendingUp className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{formatCurrency(data?.totalIncome ?? 0)}</p>
+              <p className="text-2xl font-bold text-success">{formatCurrency(data?.kpi.clientCpmTotal ?? 0)}</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Uscita Totale</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">CPM Creator (€)</CardTitle>
               <TrendingDown className="h-4 w-4 text-destructive" />
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold">{formatCurrency(data?.totalCost ?? 0)}</p>
+              <p className="text-2xl font-bold text-destructive">{formatCurrency(data?.kpi.creatorCpmTotal ?? 0)}</p>
             </CardContent>
           </Card>
-          <Card className={(data?.netMargin ?? 0) >= 0 ? "border-success/50" : "border-destructive/50"}>
+          <Card className={(data?.kpi.marginCpm ?? 0) >= 0 ? "border-success/50" : "border-destructive/50"}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Margine Netto</CardTitle>
-              <DollarSign className={`h-4 w-4 ${(data?.netMargin ?? 0) >= 0 ? "text-success" : "text-destructive"}`} />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Margine CPM (€)</CardTitle>
+              <DollarSign className={`h-4 w-4 ${(data?.kpi.marginCpm ?? 0) >= 0 ? "text-success" : "text-destructive"}`} />
             </CardHeader>
             <CardContent>
-              <p className={`text-2xl font-bold ${(data?.netMargin ?? 0) >= 0 ? "text-success" : "text-destructive"}`}>
-                {formatCurrency(data?.netMargin ?? 0)}
+              <p className={`text-2xl font-bold ${(data?.kpi.marginCpm ?? 0) >= 0 ? "text-success" : "text-destructive"}`}>
+                {formatCurrency(data?.kpi.marginCpm ?? 0)}
               </p>
             </CardContent>
           </Card>
         </div>
       )}
+
+      {/* Line chart: daily views */}
+      {isLoading ? (
+        <Skeleton className="h-64" />
+      ) : (data?.dailyViews?.length ?? 0) > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Views Giornaliere — {MONTHS[month]} {year}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={data!.dailyViews}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis
+                  dataKey="date"
+                  className="text-xs"
+                  tickFormatter={(v: string) => {
+                    const d = parseInt(v.split("-")[2], 10);
+                    return String(d);
+                  }}
+                />
+                <YAxis className="text-xs" tickFormatter={(v) => formatViews(v)} />
+                <Tooltip
+                  formatter={(value: number) => [formatViews(value), "Views"]}
+                  labelFormatter={(label: string) => {
+                    const parts = label.split("-");
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                  }}
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "var(--radius)",
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="views"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* Section 2: Campaign Detail */}
       <div className="space-y-3">
@@ -142,93 +155,137 @@ export default function PayoffPage() {
         {isLoading ? (
           <Skeleton className="h-48" />
         ) : !data?.campaignRows.length ? (
-          <Card><CardContent className="py-8 text-center text-muted-foreground">Nessuna campagna attiva</CardContent></Card>
-        ) : (
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Campagna</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead className="text-right">Creator</TableHead>
-                  <TableHead className="text-right">Views mese</TableHead>
-                  <TableHead className="text-right">Entrata (€)</TableHead>
-                  <TableHead className="text-right">Uscita (€)</TableHead>
-                  <TableHead className="text-right">Margine (€)</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.campaignRows.map((r) => (
-                  <TableRow key={r.campaignId} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/dashboard/campaigns/${r.campaignId}`)}>
-                    <TableCell className="font-medium">{r.name}</TableCell>
-                    <TableCell>{r.clientName}</TableCell>
-                    <TableCell className="text-right">{r.creatorCount}</TableCell>
-                    <TableCell className="text-right">{formatViews(r.viewsMonth)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(r.clientIncome)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(r.creatorCost)}</TableCell>
-                    <TableCell className={`text-right font-semibold ${r.margin >= 0 ? "text-success" : "text-destructive"}`}>
-                      {formatCurrency(r.margin)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              Nessuna campagna attiva nel periodo selezionato
+            </CardContent>
           </Card>
+        ) : (
+          <Accordion type="multiple" className="space-y-3">
+            {data.campaignRows.map((camp) => (
+              <AccordionItem key={camp.campaignId} value={camp.campaignId} className="border rounded-lg overflow-hidden">
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex items-center justify-between w-full mr-4">
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold">{camp.name}</span>
+                      <Badge variant="secondary" className="text-xs font-normal">{camp.clientName}</Badge>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-muted-foreground">{formatViews(camp.viewsPeriod)} views</span>
+                      <span className={camp.marginCpm >= 0 ? "text-success font-semibold" : "text-destructive font-semibold"}>
+                        {formatCurrency(camp.marginCpm)}
+                      </span>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4 space-y-4">
+                  {/* Campaign CPM metrics */}
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Views periodo</p>
+                      <p className="font-semibold text-lg">{formatViews(camp.viewsPeriod)}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">CPM Cliente (€{camp.clientCpm}/1k)</p>
+                      <p className="font-semibold text-lg text-success">{formatCurrency(camp.clientCpmAmount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">CPM Creator</p>
+                      <p className="font-semibold text-lg text-destructive">{formatCurrency(camp.creatorCpmAmount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Margine CPM</p>
+                      <p className={`font-semibold text-lg ${camp.marginCpm >= 0 ? "text-success" : "text-destructive"}`}>
+                        {formatCurrency(camp.marginCpm)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Views</p>
+                      <p className="text-sm">
+                        <span className="text-success">{formatViews(camp.viewsDefinitive)} definitive</span>
+                        {" · "}
+                        <span className="text-warning">{formatViews(camp.viewsProvvisorie)} provvisorie</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Weekly bar chart */}
+                  {camp.weeklyViews.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Views per settimana</p>
+                      <ResponsiveContainer width="100%" height={160}>
+                        <BarChart data={camp.weeklyViews}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                          <XAxis dataKey="week" className="text-xs" />
+                          <YAxis className="text-xs" tickFormatter={(v) => formatViews(v)} />
+                          <Tooltip
+                            formatter={(value: number) => [formatViews(value), "Views"]}
+                            contentStyle={{
+                              backgroundColor: "hsl(var(--card))",
+                              border: "1px solid hsl(var(--border))",
+                              borderRadius: "var(--radius)",
+                            }}
+                          />
+                          <Bar dataKey="views" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
         )}
       </div>
 
-      {/* Section 3: Creator Payments */}
+      {/* Section 3: Creator CPM Detail */}
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Pagamenti Creator</h2>
+        <h2 className="text-lg font-semibold">Dettaglio CPM per Creator</h2>
         {isLoading ? (
           <Skeleton className="h-48" />
         ) : !data?.creatorRows.length ? (
-          <Card><CardContent className="py-8 text-center text-muted-foreground">Nessun creator attivo</CardContent></Card>
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              Nessun creator con views nel periodo selezionato
+            </CardContent>
+          </Card>
         ) : (
           <Card>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Creator</TableHead>
-                  <TableHead className="text-right">Fisso (€)</TableHead>
+                  <TableHead>Campagna</TableHead>
+                  <TableHead className="text-right">Views totali</TableHead>
+                  <TableHead className="text-right">Definitive</TableHead>
+                  <TableHead className="text-right">Provvisorie</TableHead>
                   <TableHead className="text-right">CPM maturato (€)</TableHead>
-                  <TableHead className="text-right">Totale (€)</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Azioni</TableHead>
+                  <TableHead>Dettaglio</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.creatorRows.map((cr) => (
-                  <TableRow key={cr.creatorId}>
-                    <TableCell className="font-medium cursor-pointer hover:underline" onClick={() => navigate(`/dashboard/creators/${cr.creatorId}`)}>
-                      {cr.name}
+                {data.creatorRows.map((cr, idx) => (
+                  <TableRow key={`${cr.creatorId}-${cr.campaignId}-${idx}`}>
+                    <TableCell
+                      className="font-medium cursor-pointer hover:underline"
+                      onClick={() => navigate(`/dashboard/creators/${cr.creatorId}`)}
+                    >
+                      {cr.creatorName}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <span className="mr-2">{formatCurrency(cr.fixedAmount)}</span>
-                      <Badge variant={cr.fixedEarned ? "default" : "destructive"} className="text-xs">
-                        {cr.fixedEarned ? "✅ Maturato" : "❌ Non maturato"}
-                      </Badge>
-                      <span className="block text-xs text-muted-foreground mt-1">
-                        {cr.monthVideoCount}/{cr.monthlyTarget} video
-                      </span>
+                    <TableCell
+                      className="cursor-pointer hover:underline"
+                      onClick={() => navigate(`/dashboard/campaigns/${cr.campaignId}`)}
+                    >
+                      {cr.campaignName}
                     </TableCell>
-                    <TableCell className="text-right">{formatCurrency(cr.cpmAmount)}</TableCell>
-                    <TableCell className="text-right font-semibold">{formatCurrency(cr.total)}</TableCell>
+                    <TableCell className="text-right">{formatViews(cr.viewsPeriod)}</TableCell>
+                    <TableCell className="text-right text-success">{formatViews(cr.viewsDefinitive)}</TableCell>
+                    <TableCell className="text-right text-warning">{formatViews(cr.viewsProvvisorie)}</TableCell>
+                    <TableCell className="text-right font-semibold">{formatCurrency(cr.cpmAmount)}</TableCell>
                     <TableCell>
-                      <Badge variant={cr.isPaid ? "default" : "secondary"}>
-                        {cr.isPaid ? "✅ Pagato" : "⏳ Da pagare"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {cr.isPaid ? (
-                        <span className="text-xs text-muted-foreground">
-                          {cr.paidAt ? new Date(cr.paidAt).toLocaleDateString("it-IT") : "—"}
-                        </span>
-                      ) : (
-                        <Button size="sm" variant="outline" onClick={() => setConfirmCreator(cr)}>
-                          <Check className="mr-1 h-3 w-3" /> Segna Pagato
-                        </Button>
-                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {cr.videoDefinitivi} definitivi + {cr.videoProvvisori} provvisori
+                      </span>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -237,84 +294,6 @@ export default function PayoffPage() {
           </Card>
         )}
       </div>
-
-      {/* Section 4: Payment History */}
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Storico Pagamenti</h2>
-        {historyLoading ? (
-          <Skeleton className="h-32" />
-        ) : !history?.length ? (
-          <Card><CardContent className="py-8 text-center text-muted-foreground">Nessun pagamento registrato</CardContent></Card>
-        ) : (
-          <Accordion type="single" collapsible>
-            <AccordionItem value="history">
-              <AccordionTrigger className="px-4">
-                Mostra storico ({history.length} pagamenti)
-              </AccordionTrigger>
-              <AccordionContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Creator</TableHead>
-                      <TableHead>Periodo</TableHead>
-                      <TableHead className="text-right">Fisso (€)</TableHead>
-                      <TableHead className="text-right">CPM (€)</TableHead>
-                      <TableHead className="text-right">Totale (€)</TableHead>
-                      <TableHead>Data pagamento</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {history.map((p) => (
-                      <TableRow key={p.id}>
-                        <TableCell className="font-medium">{p.creatorName}</TableCell>
-                        <TableCell>{MONTHS[p.periodMonth - 1]} {p.periodYear}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(p.fixedAmount)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(p.cpmAmount)}</TableCell>
-                        <TableCell className="text-right font-semibold">{formatCurrency(p.totalAmount)}</TableCell>
-                        <TableCell>{new Date(p.paidAt).toLocaleDateString("it-IT")}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        )}
-      </div>
-
-      {/* Confirm Payment Dialog */}
-      <Dialog open={!!confirmCreator} onOpenChange={(o) => !o && setConfirmCreator(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Conferma pagamento</DialogTitle>
-            <DialogDescription>
-              Vuoi segnare come pagato {confirmCreator?.name} per {MONTHS[month]} {year}?
-            </DialogDescription>
-          </DialogHeader>
-          {confirmCreator && (
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Fisso</span>
-                <span>{confirmCreator.fixedEarned ? formatCurrency(confirmCreator.fixedAmount) : "€ 0,00 (non maturato)"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">CPM</span>
-                <span>{formatCurrency(confirmCreator.cpmAmount)}</span>
-              </div>
-              <div className="flex justify-between font-semibold border-t border-border pt-2">
-                <span>Totale</span>
-                <span>{formatCurrency(confirmCreator.total)}</span>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmCreator(null)}>Annulla</Button>
-            <Button onClick={() => confirmCreator && handleMarkPaid(confirmCreator)} disabled={paying}>
-              {paying ? "Salvataggio..." : "Conferma Pagamento"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
