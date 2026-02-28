@@ -204,7 +204,7 @@ export function usePaymentHistory() {
     queryKey: ["payment-history"],
     queryFn: async () => {
       const { data: payments, error } = await supabase
-        .from("payments")
+        .from("creator_payments")
         .select("*")
         .eq("is_paid", true)
         .order("paid_at", { ascending: false });
