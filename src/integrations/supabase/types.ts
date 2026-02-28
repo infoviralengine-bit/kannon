@@ -14,16 +14,366 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      campaign_creators: {
+        Row: {
+          campaign_id: string
+          creator_id: string
+          id: string
+          joined_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          creator_id: string
+          id?: string
+          joined_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          creator_id?: string
+          id?: string
+          joined_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_creators_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_creators_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          client_cpm: number | null
+          client_fixed_per_creator: number | null
+          client_name: string
+          created_at: string
+          end_date: string | null
+          id: string
+          name: string
+          notes: string | null
+          start_date: string
+          status: string
+        }
+        Insert: {
+          client_cpm?: number | null
+          client_fixed_per_creator?: number | null
+          client_name: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          start_date: string
+          status?: string
+        }
+        Update: {
+          client_cpm?: number | null
+          client_fixed_per_creator?: number | null
+          client_name?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          start_date?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      creators: {
+        Row: {
+          created_at: string
+          creator_cpm: number | null
+          creator_fixed: number | null
+          email: string | null
+          id: string
+          min_videos_per_day: number | null
+          name: string
+          phone: string | null
+          profile_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          creator_cpm?: number | null
+          creator_fixed?: number | null
+          email?: string | null
+          id?: string
+          min_videos_per_day?: number | null
+          name: string
+          phone?: string | null
+          profile_id?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          creator_cpm?: number | null
+          creator_fixed?: number | null
+          email?: string | null
+          id?: string
+          min_videos_per_day?: number | null
+          name?: string
+          phone?: string | null
+          profile_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creators_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      outreach_stats: {
+        Row: {
+          created_at: string
+          date: string
+          dm_sent: number | null
+          id: string
+          replies_received: number | null
+          tiktok_account_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          dm_sent?: number | null
+          id?: string
+          replies_received?: number | null
+          tiktok_account_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          dm_sent?: number | null
+          id?: string
+          replies_received?: number | null
+          tiktok_account_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_stats_tiktok_account_id_fkey"
+            columns: ["tiktok_account_id"]
+            isOneToOne: false
+            referencedRelation: "tiktok_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          cpm_amount: number | null
+          created_at: string
+          creator_id: string
+          fixed_amount: number | null
+          fixed_earned: boolean | null
+          id: string
+          is_paid: boolean | null
+          notes: string | null
+          paid_at: string | null
+          period_month: number
+          period_year: number
+          total_amount: number | null
+        }
+        Insert: {
+          cpm_amount?: number | null
+          created_at?: string
+          creator_id: string
+          fixed_amount?: number | null
+          fixed_earned?: boolean | null
+          id?: string
+          is_paid?: boolean | null
+          notes?: string | null
+          paid_at?: string | null
+          period_month: number
+          period_year: number
+          total_amount?: number | null
+        }
+        Update: {
+          cpm_amount?: number | null
+          created_at?: string
+          creator_id?: string
+          fixed_amount?: number | null
+          fixed_earned?: boolean | null
+          id?: string
+          is_paid?: boolean | null
+          notes?: string | null
+          paid_at?: string | null
+          period_month?: number
+          period_year?: number
+          total_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      tiktok_accounts: {
+        Row: {
+          account_type: string
+          campaign_id: string | null
+          created_at: string
+          creator_id: string | null
+          id: string
+          is_active: boolean | null
+          username: string
+        }
+        Insert: {
+          account_type: string
+          campaign_id?: string | null
+          created_at?: string
+          creator_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          username: string
+        }
+        Update: {
+          account_type?: string
+          campaign_id?: string | null
+          created_at?: string
+          creator_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tiktok_accounts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tiktok_accounts_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      videos: {
+        Row: {
+          comments: number | null
+          created_at: string
+          id: string
+          last_scraped_at: string | null
+          likes: number | null
+          published_at: string
+          tiktok_account_id: string
+          tiktok_video_id: string
+          views: number | null
+        }
+        Insert: {
+          comments?: number | null
+          created_at?: string
+          id?: string
+          last_scraped_at?: string | null
+          likes?: number | null
+          published_at: string
+          tiktok_account_id: string
+          tiktok_video_id: string
+          views?: number | null
+        }
+        Update: {
+          comments?: number | null
+          created_at?: string
+          id?: string
+          last_scraped_at?: string | null
+          likes?: number | null
+          published_at?: string
+          tiktok_account_id?: string
+          tiktok_video_id?: string
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_tiktok_account_id_fkey"
+            columns: ["tiktok_account_id"]
+            isOneToOne: false
+            referencedRelation: "tiktok_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "team" | "creator" | "client"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +500,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "team", "creator", "client"],
+    },
   },
 } as const
