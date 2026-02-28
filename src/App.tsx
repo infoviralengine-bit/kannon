@@ -18,6 +18,7 @@ import CreatorDetailPage from "@/pages/dashboard/CreatorDetailPage";
 import AccountPage from "@/pages/dashboard/AccountPage";
 import AccountDetailPage from "@/pages/dashboard/AccountDetailPage";
 import PayoffPage from "@/pages/dashboard/PayoffPage";
+import PaymentsPage from "@/pages/dashboard/PaymentsPage";
 import CampaignDetailPage from "@/pages/dashboard/CampaignDetailPage";
 import {
   PipelinePage, MediaPage, ReportsPage, RecruitingPage,
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="accounts" element={<AccountPage />} />
               <Route path="accounts/:id" element={<AccountDetailPage />} />
               <Route path="payoff" element={<PayoffPage />} />
+              <Route path="payments" element={<PaymentsPage />} />
               <Route path="pipeline" element={<PipelinePage />} />
               <Route path="media" element={<MediaPage />} />
               <Route path="reports" element={<ReportsPage />} />

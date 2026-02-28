@@ -49,16 +49,18 @@ export default function PayoffPage() {
       };
 
       if (cr.paymentId) {
-        const { error } = await supabase.from("payments").update(payload).eq("id", cr.paymentId);
+        const { error } = await supabase.from("creator_payments").update(payload).eq("id", cr.paymentId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("payments").insert(payload);
+        const { error } = await supabase.from("creator_payments").insert(payload);
         if (error) throw error;
       }
 
       toast({ title: "Pagamento registrato", description: `${cr.name} segnato come pagato.` });
       qc.invalidateQueries({ queryKey: ["payoff"] });
       qc.invalidateQueries({ queryKey: ["payment-history"] });
+      qc.invalidateQueries({ queryKey: ["creator-payments"] });
+      qc.invalidateQueries({ queryKey: ["payment-summary"] });
     } catch (e: any) {
       toast({ title: "Errore", description: e.message, variant: "destructive" });
     } finally {

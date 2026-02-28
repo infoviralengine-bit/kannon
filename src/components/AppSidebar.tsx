@@ -1,5 +1,5 @@
 import {
-  Globe, Megaphone, Users, Smartphone, Wallet,
+  Globe, Megaphone, Users, Smartphone, Wallet, CreditCard,
   BarChart3, Film, TrendingUp, Search, FileText,
   CalendarDays, Landmark, Settings, LogOut
 } from "lucide-react";
@@ -29,6 +29,7 @@ const mainItems = [
   { title: "Creator", url: "/dashboard/creators", icon: Users },
   { title: "Account", url: "/dashboard/accounts", icon: Smartphone },
   { title: "Payoff", url: "/dashboard/payoff", icon: Wallet },
+  { title: "Pagamenti", url: "/dashboard/payments", icon: CreditCard },
 ];
 
 const comingSoonItems = [

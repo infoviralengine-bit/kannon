@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import {
   Eye, TrendingUp, Video, DollarSign, Users, AlertTriangle, CheckCircle2,
-  ChevronRight, Pencil, CalendarIcon,
+  ChevronRight, Pencil, CalendarIcon, RefreshCw, Check,
 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -16,6 +16,7 @@ import {
   useCampaignCreators, useCampaignAccounts, useCampaignAlerts,
   useAllCreatorsForSelect,
 } from "@/hooks/useCampaignData";
+import { useCampaignCycles, type ClientPaymentRow } from "@/hooks/usePaymentsData";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -235,6 +236,158 @@ function AddCreatorModal({ open, onOpenChange, campaignId }: {
   );
 }
 
+/* ── Cycles Section ── */
+function CyclesSection({ campaignId, campaign, cycles }: {
+  campaignId: string;
+  campaign: { start_date: string; end_date: string | null; client_fixed_per_creator: number | null; client_cpm: number | null };
+  cycles: ReturnType<typeof useCampaignCycles>;
+}) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [generating, setGenerating] = useState(false);
+
+  async function handleGenerateNextCycle() {
+    setGenerating(true);
+    try {
+      const existingCycles = cycles.data ?? [];
+      const lastCycle = existingCycles[existingCycles.length - 1];
+      const nextNumber = lastCycle ? lastCycle.cycleNumber + 1 : 1;
+
+      let startDate: string;
+      if (lastCycle) {
+        startDate = lastCycle.endDate;
+      } else {
+        startDate = campaign.start_date;
+      }
+
+      const endD = new Date(startDate);
+      endD.setDate(endD.getDate() + 30);
+      const endDate = format(endD, "yyyy-MM-dd");
+
+      const { data: cycle, error: cycleErr } = await supabase.from("payment_cycles").insert({
+        campaign_id: campaignId,
+        cycle_number: nextNumber,
+        cycle_start_date: startDate,
+        cycle_end_date: endDate,
+      }).select().single();
+      if (cycleErr) throw cycleErr;
+
+      // Get creator count for fixed
+      const { data: cc } = await supabase.from("campaign_creators").select("creator_id").eq("campaign_id", campaignId);
+      const creatorCount = (cc ?? []).length;
+
+      // Get views for CPM calculation: total current views - views already paid
+      const { data: accounts } = await supabase.from("tiktok_accounts").select("id").eq("campaign_id", campaignId);
+      const accIds = (accounts ?? []).map((a) => a.id);
+
+      let cpmViews = 0;
+      if (accIds.length) {
+        const { data: videos } = await supabase.from("videos").select("views, views_at_last_payment").in("tiktok_account_id", accIds);
+        cpmViews = (videos ?? []).reduce((s, v) => s + ((v.views ?? 0) - (v.views_at_last_payment ?? 0)), 0);
+      }
+
+      const fixedAmount = (campaign.client_fixed_per_creator ?? 200) * creatorCount;
+      const cpmAmount = (campaign.client_cpm ?? 2) * (cpmViews / 1000);
+
+      // For cycle 1: no CPM. For others: use calculated CPM from previous cycle's views
+      const isFirstCycle = nextNumber === 1;
+      const finalCpmViews = isFirstCycle ? 0 : cpmViews;
+      const finalCpmAmount = isFirstCycle ? 0 : cpmAmount;
+
+      await supabase.from("client_payments").insert({
+        campaign_id: campaignId,
+        cycle_id: cycle.id,
+        cycle_number: nextNumber,
+        due_date: startDate,
+        fixed_amount: fixedAmount,
+        cpm_views: finalCpmViews,
+        cpm_amount: finalCpmAmount,
+        total_amount: fixedAmount + finalCpmAmount,
+        views_snapshot_at: new Date().toISOString(),
+      });
+
+      // Update views_at_last_payment for all videos of this campaign
+      if (!isFirstCycle && accIds.length) {
+        const { data: videos } = await supabase.from("videos").select("id, views").in("tiktok_account_id", accIds);
+        for (const v of (videos ?? [])) {
+          await supabase.from("videos").update({ views_at_last_payment: v.views ?? 0 }).eq("id", v.id);
+        }
+      }
+
+      toast({ title: `Ciclo ${nextNumber} generato`, description: `Pagamento cliente di ${formatCurrency(fixedAmount + finalCpmAmount)} previsto per il ${new Date(startDate).toLocaleDateString("it-IT")}` });
+      qc.invalidateQueries({ queryKey: ["campaign-cycles", campaignId] });
+      qc.invalidateQueries({ queryKey: ["client-payments"] });
+    } catch (e: any) {
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-lg">Cicli di Pagamento</CardTitle>
+        <Button size="sm" onClick={handleGenerateNextCycle} disabled={generating}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${generating ? "animate-spin" : ""}`} />
+          {generating ? "Generazione..." : "Genera Prossimo Ciclo"}
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {cycles.isLoading ? (
+          <Skeleton className="h-24" />
+        ) : !(cycles.data ?? []).length ? (
+          <p className="text-sm text-muted-foreground text-center py-6">Nessun ciclo di pagamento generato.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Ciclo</TableHead>
+                <TableHead>Periodo</TableHead>
+                <TableHead className="text-right">Fisso (€)</TableHead>
+                <TableHead className="text-right">Views</TableHead>
+                <TableHead className="text-right">CPM (€)</TableHead>
+                <TableHead className="text-right">Totale (€)</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(cycles.data ?? []).map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-medium">
+                    Ciclo {c.cycleNumber}
+                    {c.isLastCycle && <Badge variant="secondary" className="ml-2 text-xs">Post-campagna</Badge>}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(c.startDate).toLocaleDateString("it-IT")} — {new Date(c.endDate).toLocaleDateString("it-IT")}
+                  </TableCell>
+                  <TableCell className="text-right">{c.payment ? formatCurrency(c.payment.fixedAmount) : "—"}</TableCell>
+                  <TableCell className="text-right">{c.payment ? formatViews(c.payment.cpmViews) : "—"}</TableCell>
+                  <TableCell className="text-right">{c.payment ? formatCurrency(c.payment.cpmAmount) : "—"}</TableCell>
+                  <TableCell className="text-right font-semibold">{c.payment ? formatCurrency(c.payment.totalAmount) : "—"}</TableCell>
+                  <TableCell>
+                    {c.payment ? (
+                      c.payment.isPaid ? (
+                        <Badge className="bg-success/20 text-success border-success/30">✅ Pagato</Badge>
+                      ) : c.payment.isOverdue ? (
+                        <Badge variant="destructive">🔴 Scaduto</Badge>
+                      ) : (
+                        <Badge variant="secondary">⏳ In attesa</Badge>
+                      )
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function CampaignDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -248,6 +401,7 @@ export default function CampaignDetailPage() {
   const creators = useCampaignCreators(campaignId);
   const accounts = useCampaignAccounts(campaignId);
   const alerts = useCampaignAlerts(campaignId);
+  const cycles = useCampaignCycles(campaignId);
 
   const [editOpen, setEditOpen] = useState(false);
   const [addCreatorOpen, setAddCreatorOpen] = useState(false);
@@ -521,6 +675,8 @@ export default function CampaignDetailPage() {
           )}
         </CardContent>
       </Card>
+      {/* Payment Cycles */}
+      <CyclesSection campaignId={campaignId} campaign={campaign} cycles={cycles} />
     </div>
   );
 }

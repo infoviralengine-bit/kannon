@@ -68,7 +68,7 @@ export function usePayoffData(year: number, month: number) {
         supabase.from("campaign_creators").select("*"),
         supabase.from("tiktok_accounts").select("*"),
         supabase.from("videos").select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at").gte("published_at", mStart).lt("published_at", mEnd),
-        supabase.from("payments").select("*").eq("period_month", month + 1).eq("period_year", year),
+        supabase.from("creator_payments").select("*").eq("period_month", month + 1).eq("period_year", year),
       ]);
 
       const allCreators = creators ?? [];
@@ -204,7 +204,7 @@ export function usePaymentHistory() {
     queryKey: ["payment-history"],
     queryFn: async () => {
       const { data: payments, error } = await supabase
-        .from("payments")
+        .from("creator_payments")
         .select("*")
         .eq("is_paid", true)
         .order("paid_at", { ascending: false });
