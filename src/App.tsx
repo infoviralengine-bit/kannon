@@ -18,6 +18,7 @@ import CreatorDetailPage from "@/pages/dashboard/CreatorDetailPage";
 import AccountPage from "@/pages/dashboard/AccountPage";
 import AccountDetailPage from "@/pages/dashboard/AccountDetailPage";
 import PayoffPage from "@/pages/dashboard/PayoffPage";
+import PaymentsPage from "@/pages/dashboard/PaymentsPage";
 import CampaignDetailPage from "@/pages/dashboard/CampaignDetailPage";
 import {
   PipelinePage, MediaPage, ReportsPage, RecruitingPage,
