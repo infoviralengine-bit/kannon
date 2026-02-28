@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { sumEffectiveViews } from "@/lib/videoWindow";
 
 function todayRange() {
   const now = new Date();
