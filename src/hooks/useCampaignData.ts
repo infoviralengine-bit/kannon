@@ -111,38 +111,99 @@ export function useCampaignMargin(campaignId: string) {
 
       const { data: creators } = await supabase
         .from("creators")
-        .select("id, creator_cpm, creator_fixed, status")
+        .select("id, creator_cpm, creator_fixed, min_videos_per_day, status")
         .in("id", creatorIds)
         .eq("status", "active");
 
       const activeCreators = creators ?? [];
 
-      // Month views for this campaign
-      const { data: accounts } = await supabase
+      // Get ALL accounts for these creators (needed for fixed-earned check)
+      const { data: allAccounts } = await supabase
+        .from("tiktok_accounts")
+        .select("id, creator_id, campaign_id");
+
+      // Month views for this campaign's accounts
+      const { data: campAccounts } = await supabase
         .from("tiktok_accounts")
         .select("id")
         .eq("campaign_id", campaignId);
-      const accIds = (accounts ?? []).map((a) => a.id);
+      const campAccIds = (campAccounts ?? []).map((a) => a.id);
 
-      let monthViews = 0;
-      if (accIds.length) {
-        const { data: videos } = await supabase
-          .from("videos")
-          .select("views, published_at")
-          .in("tiktok_account_id", accIds);
-        monthViews = (videos ?? [])
-          .filter((v) => v.published_at >= mStart && v.published_at < mEnd)
-          .reduce((s, v) => s + (v.views ?? 0), 0);
+      // Fetch all videos for the month (for both views and fixed-earned check)
+      const { data: monthVideosAll } = await supabase
+        .from("videos")
+        .select("tiktok_account_id, views, published_at")
+        .gte("published_at", mStart)
+        .lt("published_at", mEnd);
+      const monthVids = monthVideosAll ?? [];
+
+      const monthViews = campAccIds.length
+        ? monthVids
+            .filter((v) => campAccIds.includes(v.tiktok_account_id))
+            .reduce((s, v) => s + (v.views ?? 0), 0)
+        : 0;
+
+      // Build per-creator video-by-day map (across ALL their accounts, not just this campaign)
+      const accountsByCreator = new Map<string, string[]>();
+      (allAccounts ?? []).forEach((a) => {
+        if (!a.creator_id) return;
+        const list = accountsByCreator.get(a.creator_id) ?? [];
+        list.push(a.id);
+        accountsByCreator.set(a.creator_id, list);
+      });
+
+      const videosByCreatorDay = new Map<string, Map<string, number>>();
+      monthVids.forEach((v) => {
+        const day = v.published_at.slice(0, 10);
+        (allAccounts ?? [])
+          .filter((a) => a.id === v.tiktok_account_id && a.creator_id)
+          .forEach((a) => {
+            const creatorMap = videosByCreatorDay.get(a.creator_id!) ?? new Map();
+            creatorMap.set(day, (creatorMap.get(day) ?? 0) + 1);
+            videosByCreatorDay.set(a.creator_id!, creatorMap);
+          });
+      });
+
+      // Determine end day for fixed-earned check (up to yesterday)
+      const now = new Date();
+      const year = now.getFullYear();
+      const month0 = now.getMonth();
+      const endDay = year === now.getFullYear() && month0 === now.getMonth()
+        ? now.getDate() - 1
+        : new Date(year, month0 + 1, 0).getDate();
+
+      function isFixedEarned(creatorId: string, minPerDay: number): boolean {
+        if (endDay < 1) return true; // month just started, no past days
+        const dayMap = videosByCreatorDay.get(creatorId) ?? new Map();
+        for (let d = 1; d <= endDay; d++) {
+          const date = new Date(year, month0, d);
+          if (date.getDay() === 0) continue; // skip Sunday
+          const dayStr = `${year}-${String(month0 + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+          if ((dayMap.get(dayStr) ?? 0) < minPerDay) return false;
+        }
+        return true;
       }
 
       const clientFixed = (campaign?.client_fixed_per_creator ?? 0) * activeCreators.length;
       const clientCpm = (campaign?.client_cpm ?? 0) * (monthViews / 1000);
       const revenue = clientFixed + clientCpm;
 
+      // Creator cost: per-creator views on THIS campaign only
       let cost = 0;
       activeCreators.forEach((cr) => {
-        cost += cr.creator_fixed ?? 0;
-        cost += (cr.creator_cpm ?? 0) * (monthViews / 1000);
+        const min = cr.min_videos_per_day ?? 5;
+        const earned = isFixedEarned(cr.id, min);
+        if (earned) {
+          cost += cr.creator_fixed ?? 0;
+        }
+        // CPM based on this creator's accounts on THIS campaign
+        const crCampAccIds = (allAccounts ?? [])
+          .filter((a) => a.creator_id === cr.id && a.campaign_id === campaignId)
+          .map((a) => a.id);
+        const crViews = monthVids
+          .filter((v) => crCampAccIds.includes(v.tiktok_account_id))
+          .reduce((s, v) => s + (v.views ?? 0), 0);
+        cost += (cr.creator_cpm ?? 0) * (crViews / 1000);
       });
 
       return { revenue, cost, margin: revenue - cost };
