@@ -45,6 +45,7 @@ import {
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList,
   BreadcrumbPage, BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { useAuth } from "@/contexts/AuthContext";
 
 const statusColor: Record<string, string> = {
   active: "bg-success/20 text-success border-success/30",
