@@ -106,7 +106,8 @@ function EditCampaignModal({
         start_date: format(startDate, "yyyy-MM-dd"),
         end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
         notes: notes || null,
-      }).eq("id", campaign.id);
+        planned_creators: Math.max(1, parseInt(plannedCreators) || 1),
+      } as any).eq("id", campaign.id);
       if (error) throw error;
     },
     onSuccess: () => {
