@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { sumEffectiveViews } from "@/lib/videoWindow";
 
 function monthRange(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString();
