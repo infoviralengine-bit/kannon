@@ -1,5 +1,5 @@
 import {
-  Globe, Megaphone, Users, Smartphone, Wallet,
+  Globe, Megaphone, Users, Smartphone, Wallet, CreditCard,
   BarChart3, Film, TrendingUp, Search, FileText,
   CalendarDays, Landmark, Settings, LogOut
 } from "lucide-react";
