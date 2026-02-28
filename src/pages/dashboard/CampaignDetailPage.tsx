@@ -81,6 +81,7 @@ function EditCampaignModal({
     id: string; name: string; client_name: string;
     client_cpm: number | null; client_fixed_per_creator: number | null;
     start_date: string; end_date: string | null; notes: string | null;
+    planned_creators?: number;
   };
 }) {
   const { toast } = useToast();
@@ -92,6 +93,7 @@ function EditCampaignModal({
   const [startDate, setStartDate] = useState<Date | undefined>(new Date(campaign.start_date));
   const [endDate, setEndDate] = useState<Date | undefined>(campaign.end_date ? new Date(campaign.end_date) : undefined);
   const [notes, setNotes] = useState(campaign.notes ?? "");
+  const [plannedCreators, setPlannedCreators] = useState(String((campaign as any).planned_creators ?? 1));
 
   const mutation = useMutation({
     mutationFn: async () => {
