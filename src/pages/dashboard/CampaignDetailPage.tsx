@@ -399,6 +399,70 @@ function CyclesSection({ campaignId, campaign, cycles }: {
   );
 }
 
+/* ── Delete Campaign Modal ── */
+function DeleteCampaignModal({ open, onOpenChange, campaign }: {
+  open: boolean; onOpenChange: (v: boolean) => void;
+  campaign: { id: string; name: string };
+}) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const [confirmed, setConfirmed] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+
+  const canDelete = confirmed && nameInput === campaign.name;
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      // Delete in order: client_payments, payment_cycles, campaign_creators, then campaign (cascade)
+      const { error: e1 } = await supabase.from("client_payments").delete().eq("campaign_id", campaign.id);
+      if (e1) throw e1;
+      const { error: e2 } = await supabase.from("payment_cycles").delete().eq("campaign_id", campaign.id);
+      if (e2) throw e2;
+      const { error: e3 } = await supabase.from("campaign_creators").delete().eq("campaign_id", campaign.id);
+      if (e3) throw e3;
+      // Delete tiktok accounts linked to this campaign
+      const { error: e4 } = await supabase.from("tiktok_accounts").delete().eq("campaign_id", campaign.id);
+      if (e4) throw e4;
+      const { error: e5 } = await supabase.from("campaigns").delete().eq("id", campaign.id);
+      if (e5) throw e5;
+    },
+    onSuccess: () => {
+      toast({ title: "Campagna eliminata" });
+      qc.invalidateQueries({ queryKey: ["campaign-table"] });
+      qc.invalidateQueries({ queryKey: ["active-campaigns-count"] });
+      navigate("/dashboard/campaigns");
+    },
+    onError: (e: Error) => {
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setConfirmed(false); setNameInput(""); } }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle className="text-destructive">Elimina Campagna</DialogTitle></DialogHeader>
+        <div className="grid gap-4 py-2">
+          <p className="text-sm text-muted-foreground">
+            Sei sicuro di voler eliminare la campagna <strong>{campaign.name}</strong>? Questa azione è irreversibile e cancellerà anche tutti i dati collegati (creator, account, video, cicli di pagamento).
+          </p>
+          <div className="flex items-center gap-2">
+            <Checkbox id="confirm-delete" checked={confirmed} onCheckedChange={(v) => setConfirmed(v === true)} />
+            <label htmlFor="confirm-delete" className="text-sm">Ho capito che questa azione è irreversibile</label>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Scrivi "<strong>{campaign.name}</strong>" per confermare</Label>
+            <Input value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder={campaign.name} />
+          </div>
+          <Button variant="destructive" onClick={() => mutation.mutate()} disabled={!canDelete || mutation.isPending}>
+            {mutation.isPending ? "Eliminazione..." : "Elimina definitivamente"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function CampaignDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
