@@ -16,6 +16,7 @@ import CampagnePage from "@/pages/dashboard/CampagnePage";
 import CreatorPage from "@/pages/dashboard/CreatorPage";
 import CreatorDetailPage from "@/pages/dashboard/CreatorDetailPage";
 import AccountPage from "@/pages/dashboard/AccountPage";
+import AccountDetailPage from "@/pages/dashboard/AccountDetailPage";
 import PayoffPage from "@/pages/dashboard/PayoffPage";
 import CampaignDetailPage from "@/pages/dashboard/CampaignDetailPage";
 import {
