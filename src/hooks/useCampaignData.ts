@@ -419,7 +419,6 @@ export function useCampaignAlerts(campaignId: string) {
             totalRequired,
             alertLevel,
           });
-          });
         }
       });
       return alerts;
@@ -427,10 +426,6 @@ export function useCampaignAlerts(campaignId: string) {
     enabled: !!campaignId,
   });
 }
-
-
-}
-
 export function useAllCreatorsForSelect() {
   return useQuery({
     queryKey: ["all-creators-select"],
