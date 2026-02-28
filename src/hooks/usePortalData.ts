@@ -156,11 +156,11 @@ export function useClientAreaData() {
     queryFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
-      // Find campaigns linked to this client profile
+      // Find campaigns linked to this client profile (client_profile_id not in generated types yet)
       const { data: campaigns, error } = await supabase
         .from("campaigns")
         .select("*")
-        .eq("client_profile_id" as any, user.id);
+        .filter("client_profile_id", "eq", user.id);
       if (error) throw error;
       if (!campaigns?.length) return null;
 
