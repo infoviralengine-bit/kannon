@@ -166,11 +166,14 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
           byDay.set(day, (byDay.get(day) ?? 0) + 1);
         });
 
-        // Check each day of the month up to today
-        const start = new Date(year, month, 1);
+        // Check each working day (Mon-Sat) up to yesterday
         const now = new Date();
-        const endDay = year === now.getFullYear() && month === now.getMonth() ? now.getDate() : new Date(year, month + 1, 0).getDate();
-        for (let d = 1; d <= endDay; d++) {
+        const lastDay = year === now.getFullYear() && month === now.getMonth()
+          ? now.getDate() - 1 // yesterday
+          : new Date(year, month + 1, 0).getDate();
+        for (let d = 1; d <= lastDay; d++) {
+          const date = new Date(year, month, d);
+          if (date.getDay() === 0) continue; // skip Sunday
           const dayStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
           const count = byDay.get(dayStr) ?? 0;
           if (count < min) {
