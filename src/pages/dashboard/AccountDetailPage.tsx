@@ -133,7 +133,7 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
         <KPICard
           title="Video oggi"
           value={data.videosToday}
-          icon={ok ? <CheckCircle className="h-5 w-5 text-emerald-500" /> : <AlertTriangle className="h-5 w-5 text-amber-500" />}
+          icon={ok ? <CheckCircle className="h-5 w-5 text-primary" /> : <AlertTriangle className="h-5 w-5 text-destructive" />}
         />
         <KPICard title="Video settimana" value={data.videosWeek} />
         <KPICard title="Video mese" value={data.videosMonth} />
