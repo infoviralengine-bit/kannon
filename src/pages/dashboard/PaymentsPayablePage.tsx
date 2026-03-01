@@ -89,7 +89,7 @@ export default function PaymentsPayablePage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <ArrowUpCircle className="h-7 w-7 text-primary" />
-        <h1 className="text-2xl font-bold">Pagamenti Da Pagare</h1>
+        <h1 className="text-2xl font-bold">Pagamenti da fare</h1>
       </div>
 
       <div className="flex items-center justify-between">

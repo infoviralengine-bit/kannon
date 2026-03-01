@@ -34,7 +34,7 @@ const creatorItems = [
   { title: "Contratti", url: "/dashboard/contracts", icon: FileText },
   { title: "Creator", url: "/dashboard/creators", icon: Users },
   { title: "Account", url: "/dashboard/accounts", icon: Smartphone },
-  { title: "Pagamenti Da Pagare", url: "/dashboard/payments-payable", icon: ArrowUpCircle },
+  { title: "Pagamenti da fare", url: "/dashboard/payments-payable", icon: ArrowUpCircle },
 ];
 
 const altroItems = [
