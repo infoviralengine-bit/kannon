@@ -306,6 +306,9 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* SECTION 3 — SCRAPING LOGS */}
+      <ScrapingLogsSection />
+
       {/* SECTION 4 — SYSTEM TEST */}
       <SystemTest />
 
