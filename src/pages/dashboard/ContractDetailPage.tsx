@@ -142,6 +142,68 @@ function AddCreatorModal({ open, onOpenChange, contractId, existingCreatorIds }:
   );
 }
 
+/* ── Edit Contract Modal ── */
+function EditContractModal({ open, onOpenChange, contract }: {
+  open: boolean; onOpenChange: (v: boolean) => void;
+  contract: { id: string; creator_fixed: number; creator_cpm: number; min_videos_per_day: number; name: string; type: string; is_active: boolean };
+}) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [fixed, setFixed] = useState(String(contract.creator_fixed));
+  const [cpm, setCpm] = useState(String(contract.creator_cpm));
+  const [minVpd, setMinVpd] = useState(String(contract.min_videos_per_day));
+  const [name, setName] = useState(contract.name);
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("contracts").update({
+        name,
+        creator_fixed: parseFloat(fixed) || 0,
+        creator_cpm: parseFloat(cpm) || 0,
+        min_videos_per_day: parseInt(minVpd) || 1,
+      }).eq("id", contract.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Contratto aggiornato" });
+      qc.invalidateQueries({ queryKey: ["contract-detail", contract.id] });
+      onOpenChange(false);
+    },
+    onError: (e: Error) => {
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader><DialogTitle>Modifica Contratto</DialogTitle></DialogHeader>
+        <div className="grid gap-4 py-2">
+          <div className="space-y-1.5">
+            <Label>Nome</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Fisso mensile (€)</Label>
+            <Input type="number" step="0.01" value={fixed} onChange={(e) => setFixed(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>CPM (€)</Label>
+            <Input type="number" step="0.01" value={cpm} onChange={(e) => setCpm(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Min video/giorno</Label>
+            <Input type="number" step="1" value={minVpd} onChange={(e) => setMinVpd(e.target.value)} />
+          </div>
+          <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+            {mutation.isPending ? "Salvataggio..." : "Salva modifiche"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function ContractDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
