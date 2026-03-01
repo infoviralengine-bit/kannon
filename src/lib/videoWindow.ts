@@ -18,13 +18,27 @@ export interface VideoWithWindow {
  * - window_closed = true → views_final (frozen)
  * - window expired but not yet closed → views (current, treat as final)
  * - window still open → views (provisional)
+ * If cap is provided, views are capped per video.
  */
-export function getEffectiveViews(video: VideoWithWindow): number {
+export function getEffectiveViews(video: VideoWithWindow, cap?: number | null): number {
+  let views: number;
   if (video.window_closed) {
-    return video.views_final ?? video.views ?? 0;
+    views = video.views_final ?? video.views ?? 0;
+  } else {
+    views = video.views ?? 0;
   }
-  // Window expired but not marked closed yet → use current views
-  return video.views ?? 0;
+  if (cap != null && cap > 0) {
+    views = Math.min(views, cap);
+  }
+  return views;
+}
+
+/**
+ * Sum effective views for a list of videos (for CPM calculation).
+ * If cap is provided, each video's views are capped individually.
+ */
+export function sumEffectiveViewsCapped(videos: VideoWithWindow[], cap?: number | null): number {
+  return videos.reduce((sum, v) => sum + getEffectiveViews(v, cap), 0);
 }
 
 /**
