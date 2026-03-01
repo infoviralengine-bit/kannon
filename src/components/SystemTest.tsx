@@ -340,7 +340,7 @@ async function runModule3(skipCleanup = false): Promise<TestLog[]> {
 
 // ─── MODULE 4: Fisso creator ───
 
-async function runModule4(): Promise<TestLog[]> {
+async function runModule4(skipCleanup = false): Promise<TestLog[]> {
   const logs: TestLog[] = [];
   let campaignId = "";
   const creatorIds: string[] = [];
