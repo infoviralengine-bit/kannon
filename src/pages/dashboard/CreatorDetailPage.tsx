@@ -258,7 +258,7 @@ export default function CreatorDetailPage() {
       {/* Accounts */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Account TikTok</CardTitle>
+          <CardTitle className="text-base">Account</CardTitle>
         </CardHeader>
         <CardContent>
           {!accounts ? (
