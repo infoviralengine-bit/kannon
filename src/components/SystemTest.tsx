@@ -1004,6 +1004,7 @@ export default function SystemTest() {
       { name: "M7 — planned_creators & valori zero", fn: () => runModule7(skip) },
       { name: "M8 — Simulazione E2E margine", fn: () => runModule8(skip) },
       { name: "M9 — Finestra chiusa tra cicli", fn: () => runModule9(skip) },
+      { name: "M10 — Cap video e cap di spesa", fn: () => runModule10(skip) },
     ];
 
     const moduleResults: ModuleResult[] = [];
