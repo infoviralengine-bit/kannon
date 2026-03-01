@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Eye, EyeOff, Users, Cpu } from "lucide-react";
 import SystemTest from "@/components/SystemTest";
+import ScrapingLogsSection from "@/components/ScrapingLogsSection";
 
 type AppUser = { id: string; full_name: string; email: string; role: string; created_at: string };
 
