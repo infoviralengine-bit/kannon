@@ -146,23 +146,6 @@ export default function SettingsPage() {
     await supabase.from("settings").update({ value, updated_at: new Date().toISOString() }).eq("key", key);
   }
 
-  async function handleSaveEconomics() {
-    setSavingEcon(true);
-    try {
-      await Promise.all([
-        saveSetting("client_cpm_default", settings.client_cpm_default || "2.00"),
-        saveSetting("creator_fixed_default", settings.creator_fixed_default || "200.00"),
-        saveSetting("creator_cpm_default", settings.creator_cpm_default || "0.50"),
-        saveSetting("creator_monthly_fixed_default", settings.creator_monthly_fixed_default || "200.00"),
-        saveSetting("creator_min_videos_default", settings.creator_min_videos_default || "5"),
-      ]);
-      toast({ title: "Impostazioni salvate" });
-    } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
-    }
-    setSavingEcon(false);
-  }
-
   async function handleSaveApify() {
     setSavingApify(true);
     try {
