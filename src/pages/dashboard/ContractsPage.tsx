@@ -92,17 +92,6 @@ function NewContractModal({ open, onOpenChange }: { open: boolean; onOpenChange:
             <Label>Nome contratto *</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder='es. "Contratto FZ"' />
           </div>
-          <div className="grid gap-1.5">
-            <Label>Tipo</Label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="solo_cpm">Solo CPM</SelectItem>
-                <SelectItem value="premium">Premium</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="grid gap-1.5">
               <Label>Fisso mensile (€)</Label>
