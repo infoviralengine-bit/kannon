@@ -60,19 +60,15 @@ const statusLabel: Record<string, string> = {
   completed: "Conclusa",
 };
 
-function KpiCard({ icon: Icon, label, value, loading }: {
-  icon: React.ElementType; label: string; value: string; loading: boolean;
+function StatItem({ label, value, sub, accent }: {
+  label: string; value: string; sub?: string; accent?: boolean;
 }) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        {loading ? <Skeleton className="h-8 w-24" /> : <p className="text-2xl font-bold">{value}</p>}
-      </CardContent>
-    </Card>
+    <div className="space-y-1">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+      <p className={cn("text-lg font-bold", accent && "text-primary")}>{value}</p>
+      {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
+    </div>
   );
 }
 
