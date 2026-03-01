@@ -121,7 +121,7 @@ function ClientPaymentsTab() {
                     {p.isPaid ? (
                       <Badge className="bg-success/20 text-success border-success/30">✅</Badge>
                     ) : p.isOverdue ? (
-                      <Badge variant="destructive">🔴 Scaduto</Badge>
+                      <Badge variant="destructive">🔴</Badge>
                     ) : (
                       <Badge variant="secondary">⏳ In attesa</Badge>
                     )}
