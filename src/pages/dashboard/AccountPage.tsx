@@ -121,10 +121,17 @@ export default function AccountPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Account TikTok</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" /> Nuovo Account</Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          {role === "admin" && (
+            <Button variant="outline" onClick={handleScrapeNow} disabled={scraping}>
+              {scraping ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+              {scraping ? "Scraping..." : "🔄 Scrapa Ora"}
+            </Button>
+          )}
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button><Plus className="mr-2 h-4 w-4" /> Nuovo Account</Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Nuovo Account TikTok</DialogTitle></DialogHeader>
             <div className="space-y-4">
