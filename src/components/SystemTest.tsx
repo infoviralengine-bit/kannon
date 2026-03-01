@@ -1125,6 +1125,22 @@ export default function SystemTest() {
     setCleaning(false);
   }
 
+  async function handleSeedCap() {
+    setSeeding(true);
+    setSeedResult(null);
+    try {
+      // Cleanup previous seed
+      await doCleanup();
+      const id = await seedCapScenario(setProgress);
+      setSeedResult({ id, ok: true, msg: `Scenario creato! Vai alla campagna per verificare.` });
+      setProgress("");
+    } catch (e: any) {
+      setSeedResult({ id: "", ok: false, msg: `Errore: ${e.message}` });
+      setProgress("");
+    }
+    setSeeding(false);
+  }
+
   const totalPassed = results.reduce((s, r) => s + r.passed, 0);
   const totalTests = results.reduce((s, r) => s + r.total, 0);
   const pct = totalTests > 0 ? Math.round((totalPassed / totalTests) * 100) : 0;
