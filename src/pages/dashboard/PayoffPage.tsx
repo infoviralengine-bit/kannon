@@ -259,7 +259,7 @@ export default function PayoffPage() {
                 <TableRow>
                   <TableHead>Creator</TableHead>
                   <TableHead>Campagna</TableHead>
-                  <TableHead className="text-right">Views totali</TableHead>
+                  <TableHead className="text-right">Views totali <CappedBadge /></TableHead>
                   <TableHead className="text-right">Definitive</TableHead>
                   <TableHead className="text-right">Provvisorie</TableHead>
                   <TableHead className="text-right">CPM maturato (€)</TableHead>
