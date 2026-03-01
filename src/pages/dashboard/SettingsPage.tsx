@@ -388,11 +388,8 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* SECTION 4 — E2E TEST */}
-      <PaymentsE2ETest />
-
-      {/* SECTION 5 — 3-MONTH SIMULATION */}
-      <CampaignSimulation3Months />
+      {/* SECTION 4 — SYSTEM TEST */}
+      <SystemTest />
 
       {/* NEW USER MODAL */}
       <Dialog open={showNewUser} onOpenChange={setShowNewUser}>
