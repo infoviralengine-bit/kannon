@@ -133,7 +133,7 @@ export default function AccountPage() {
               <Button><Plus className="mr-2 h-4 w-4" /> Nuovo Account</Button>
             </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Nuovo Account TikTok</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Nuovo Account</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div>
                 <Label>Username TikTok</Label>
