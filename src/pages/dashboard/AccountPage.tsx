@@ -212,7 +212,7 @@ export default function AccountPage() {
           <DialogHeader>
             <DialogTitle>Elimina Account</DialogTitle>
             <DialogDescription>
-              Sei sicuro di voler eliminare <strong>@{deleteTarget?.username}</strong>? Verranno eliminati anche tutti i video e le statistiche di outreach associate. Questa azione è irreversibile.
+              Sei sicuro di voler eliminare <strong>@{deleteTarget?.username?.replace(/^@/, '')}</strong>? Verranno eliminati anche tutti i video e le statistiche di outreach associate. Questa azione è irreversibile.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
