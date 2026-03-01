@@ -22,8 +22,10 @@ import PaymentsPage from "@/pages/dashboard/PaymentsPage";
 import CampaignDetailPage from "@/pages/dashboard/CampaignDetailPage";
 import {
   PipelinePage, MediaPage, ReportsPage, RecruitingPage,
-  ContractsPage, CalendarPage, FinancePage
+  CalendarPage, FinancePage
 } from "@/pages/dashboard/ComingSoonPages";
+import ContractsPage from "@/pages/dashboard/ContractsPage";
+import ContractDetailPage from "@/pages/dashboard/ContractDetailPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
 
 const queryClient = new QueryClient();
@@ -59,6 +61,7 @@ const App = () => (
               <Route path="reports" element={<ReportsPage />} />
               <Route path="recruiting" element={<RecruitingPage />} />
               <Route path="contracts" element={<ContractsPage />} />
+              <Route path="contracts/:id" element={<ContractDetailPage />} />
               <Route path="calendar" element={<CalendarPage />} />
               <Route path="finance" element={<FinancePage />} />
               <Route path="settings" element={<SettingsPage />} />

@@ -13,6 +13,7 @@ import {
   useClientPayments, useCreatorPayments, usePaymentHistory, usePaymentSummary,
   type ClientPaymentRow, type CreatorPaymentRow,
 } from "@/hooks/usePaymentsData";
+import { useContractPayments, type ContractPaymentRow } from "@/hooks/useContractData";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -278,39 +279,54 @@ function CreatorPaymentsTab() {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth());
   const [year, setYear] = useState(now.getFullYear());
-  const { data, isLoading } = useCreatorPayments(year, month);
+  const { data: legacyData, isLoading: legacyLoading } = useCreatorPayments(year, month);
+  const { data: contractData, isLoading: contractLoading } = useContractPayments(year, month);
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [confirm, setConfirm] = useState<CreatorPaymentRow | null>(null);
+  const [confirm, setConfirm] = useState<CreatorPaymentRow | ContractPaymentRow | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const pendingTotal = (data ?? []).filter((p) => !p.isPaid).reduce((s, p) => s + p.totalAmount, 0);
+  const isLoading = legacyLoading || contractLoading;
 
-  async function handleMarkPaid(cr: CreatorPaymentRow) {
+  // Creators that are in contracts
+  const contractCreatorIds = new Set((contractData ?? []).map((r) => r.creatorId));
+  // Legacy rows excluding those handled by contracts
+  const legacyRows = (legacyData ?? []).filter((r) => !contractCreatorIds.has(r.creatorId));
+
+  const allRows = [
+    ...(contractData ?? []).map((r) => ({ ...r, source: "contract" as const })),
+    ...legacyRows.map((r) => ({ ...r, source: "legacy" as const, contractName: "—" })),
+  ];
+
+  const pendingTotal = allRows.filter((p) => !p.isPaid).reduce((s, p) => s + p.totalAmount, 0);
+
+  async function handleMarkPaid(row: any) {
     setSaving(true);
     try {
       const payload = {
-        creator_id: cr.creatorId,
+        creator_id: row.creatorId,
         period_month: month + 1,
         period_year: year,
-        fixed_amount: cr.fixedEarned ? cr.fixedAmount : 0,
-        fixed_earned: cr.fixedEarned,
-        cpm_amount: cr.cpmAmount,
-        total_amount: cr.totalAmount,
+        fixed_amount: row.fixedEarned ? row.fixedAmount : 0,
+        fixed_earned: row.fixedEarned,
+        cpm_amount: row.cpmAmount,
+        total_amount: row.totalAmount,
         is_paid: true,
         paid_at: new Date().toISOString(),
       };
 
-      if (cr.id) {
-        const { error } = await supabase.from("creator_payments").update(payload).eq("id", cr.id);
+      if (row.id || row.paymentId) {
+        const id = row.id || row.paymentId;
+        const { error } = await supabase.from("creator_payments").update(payload).eq("id", id);
         if (error) throw error;
       } else {
         const { error } = await supabase.from("creator_payments").insert(payload);
         if (error) throw error;
       }
 
-      toast({ title: "Pagamento registrato", description: `${cr.creatorName} segnato come pagato.` });
+      toast({ title: "Pagamento registrato", description: `${row.creatorName} segnato come pagato.` });
       qc.invalidateQueries({ queryKey: ["creator-payments"] });
+      qc.invalidateQueries({ queryKey: ["contract-payments"] });
       qc.invalidateQueries({ queryKey: ["payment-history-all"] });
       qc.invalidateQueries({ queryKey: ["payment-summary"] });
     } catch (e: any) {
@@ -345,7 +361,7 @@ function CreatorPaymentsTab() {
 
       {isLoading ? (
         <Skeleton className="h-48" />
-      ) : !data?.length ? (
+      ) : !allRows.length ? (
         <Card><CardContent className="py-8 text-center text-muted-foreground">Nessun creator attivo</CardContent></Card>
       ) : (
         <Card>
@@ -353,7 +369,9 @@ function CreatorPaymentsTab() {
             <TableHeader>
               <TableRow>
                 <TableHead>Creator</TableHead>
+                <TableHead>Contratto</TableHead>
                 <TableHead>Periodo</TableHead>
+                <TableHead className="text-right">Video mese</TableHead>
                 <TableHead className="text-right">Fisso (€)</TableHead>
                 <TableHead className="text-right">CPM (€) <CappedBadge /></TableHead>
                 <TableHead className="text-right">Totale (€)</TableHead>
@@ -362,26 +380,32 @@ function CreatorPaymentsTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((cr) => (
-                <TableRow key={cr.creatorId}>
+              {allRows.map((cr, idx) => (
+                <TableRow key={`${cr.creatorId}-${(cr as any).contractId ?? "legacy"}-${idx}`}>
                   <TableCell className="font-medium cursor-pointer hover:underline" onClick={() => navigate(`/dashboard/creators/${cr.creatorId}`)}>
                     {cr.creatorName}
                   </TableCell>
+                  <TableCell>
+                    {cr.source === "contract" ? (
+                      <span className="cursor-pointer hover:underline" onClick={() => navigate(`/dashboard/contracts/${(cr as any).contractId}`)}>
+                        {(cr as any).contractName}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>{MONTHS[month]} {year}</TableCell>
+                  <TableCell className="text-right">
+                    {cr.monthVideoCount}/{cr.monthlyTarget}
+                  </TableCell>
                   <TableCell className="text-right">
                     <span className="mr-2">{formatCurrency(cr.fixedEarned ? cr.fixedAmount : 0)}</span>
                     <Badge variant={cr.fixedEarned ? "default" : "destructive"} className="text-xs">
                       {cr.fixedEarned ? "✅" : "❌"}
                     </Badge>
-                    <span className="block text-xs text-muted-foreground mt-1">
-                      {cr.monthVideoCount}/{cr.monthlyTarget} video
-                    </span>
                   </TableCell>
                   <TableCell className="text-right">
                     {formatCurrency(cr.cpmAmount)}
-                    <span className="block text-xs text-muted-foreground mt-1">
-                      {cr.windowClosed} definitivi, {cr.windowOpen} provvisori
-                    </span>
                   </TableCell>
                   <TableCell className="text-right font-semibold">{formatCurrency(cr.totalAmount)}</TableCell>
                   <TableCell>
@@ -395,7 +419,7 @@ function CreatorPaymentsTab() {
                         {cr.paidAt ? new Date(cr.paidAt).toLocaleDateString("it-IT") : "—"}
                       </span>
                     ) : (
-                      <Button size="sm" variant="outline" onClick={() => setConfirm(cr)}>
+                      <Button size="sm" variant="outline" onClick={() => setConfirm(cr as any)}>
                         <Check className="mr-1 h-3 w-3" /> Segna Pagato
                       </Button>
                     )}
@@ -412,17 +436,17 @@ function CreatorPaymentsTab() {
           <DialogHeader>
             <DialogTitle>Conferma pagamento</DialogTitle>
             <DialogDescription>
-              Vuoi segnare come pagato {confirm?.creatorName} per {MONTHS[month]} {year}?
+              Vuoi segnare come pagato {(confirm as any)?.creatorName} per {MONTHS[month]} {year}?
             </DialogDescription>
           </DialogHeader>
           {confirm && (
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Fisso</span>
-                <span>{confirm.fixedEarned ? formatCurrency(confirm.fixedAmount) : "€ 0,00 (non maturato)"}</span>
+                <span>{(confirm as any).fixedEarned ? formatCurrency((confirm as any).fixedAmount) : "€ 0,00 (non maturato)"}</span>
               </div>
-              <div className="flex justify-between"><span className="text-muted-foreground">CPM</span><span>{formatCurrency(confirm.cpmAmount)}</span></div>
-              <div className="flex justify-between font-semibold border-t border-border pt-2"><span>Totale</span><span>{formatCurrency(confirm.totalAmount)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">CPM</span><span>{formatCurrency((confirm as any).cpmAmount)}</span></div>
+              <div className="flex justify-between font-semibold border-t border-border pt-2"><span>Totale</span><span>{formatCurrency((confirm as any).totalAmount)}</span></div>
             </div>
           )}
           <DialogFooter>

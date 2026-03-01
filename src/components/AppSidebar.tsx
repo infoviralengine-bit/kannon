@@ -27,6 +27,7 @@ const mainItems = [
   { title: "Generale", url: "/dashboard", icon: Globe },
   { title: "Campagne", url: "/dashboard/campaigns", icon: Megaphone },
   { title: "Creator", url: "/dashboard/creators", icon: Users },
+  { title: "Contratti", url: "/dashboard/contracts", icon: FileText },
   { title: "Account", url: "/dashboard/accounts", icon: Smartphone },
   { title: "Payoff", url: "/dashboard/payoff", icon: Wallet },
   { title: "Pagamenti", url: "/dashboard/payments", icon: CreditCard },
@@ -37,7 +38,6 @@ const comingSoonItems = [
   { title: "Media Library", url: "/dashboard/media", icon: Film },
   { title: "Report", url: "/dashboard/reports", icon: TrendingUp },
   { title: "Recruiting", url: "/dashboard/recruiting", icon: Search },
-  { title: "Contratti", url: "/dashboard/contracts", icon: FileText },
   { title: "Calendario", url: "/dashboard/calendar", icon: CalendarDays },
   { title: "Finanza", url: "/dashboard/finance", icon: Landmark },
 ];
