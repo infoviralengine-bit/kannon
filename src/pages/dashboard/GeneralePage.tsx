@@ -310,18 +310,18 @@ export default function GeneralePage() {
                       </div>
                     </div>
 
-                    {c.viewsCap && (
+                    {c.spendCap && (
                       <div className="mb-3">
                         <div className="flex justify-between text-[10px] text-[#64748b] mb-1">
-                          <span>Views {formatViews(c.viewsMonth)}</span>
-                          <span>Cap {formatViews(c.viewsCap)}</span>
+                          <span>Spesa {formatCurrency(c.revenueMonth)}</span>
+                          <span>Cap {formatCurrency(c.spendCap)}</span>
                         </div>
                         <div className="h-1.5 rounded-full bg-[#1a1a28] overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
                               capReached ? "bg-red-500" : capWarning ? "bg-amber-400" : "bg-[#7c3aed]"
                             }`}
-                            style={{ width: `${Math.min(100, c.capPercent ?? 0)}%` }}
+                            style={{ width: `${Math.min(100, c.spendCapPercent ?? 0)}%` }}
                           />
                         </div>
                       </div>
