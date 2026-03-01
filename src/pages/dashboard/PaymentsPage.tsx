@@ -224,7 +224,7 @@ function ClientPaymentsTab() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </React.Fragment>
                 );
               })}
             </TableBody>
