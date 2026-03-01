@@ -1027,7 +1027,7 @@ export default function CampaignDetailPage() {
       {/* Account Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Account TikTok</CardTitle>
+          <CardTitle className="text-lg">Account</CardTitle>
         </CardHeader>
         <CardContent>
           {accounts.isLoading ? (
