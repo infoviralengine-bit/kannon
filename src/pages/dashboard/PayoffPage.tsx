@@ -174,7 +174,7 @@ export default function PayoffPage() {
                       <Badge variant="secondary" className="text-xs font-normal">{camp.clientName}</Badge>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
-                      <span className="text-muted-foreground">{formatViews(camp.viewsPeriod)} views</span>
+                      <span className="text-muted-foreground">{formatViews(camp.viewsPeriod)} views <CappedBadge /></span>
                       <span className={camp.marginCpm >= 0 ? "text-success font-semibold" : "text-destructive font-semibold"}>
                         {formatCurrency(camp.marginCpm)}
                       </span>
