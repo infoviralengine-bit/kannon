@@ -76,7 +76,7 @@ function NewContractModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       toast({ title: "Contratto creato" });
       qc.invalidateQueries({ queryKey: ["contract-list"] });
       onOpenChange(false);
-      setName(""); setType("custom"); setFixed("0"); setCpm("0.50"); setMinVpd("5"); setSelectedCampaigns([]);
+      setName(""); setFixed("0"); setCpm("0.50"); setMinVpd("5"); setSelectedCampaigns([]);
     },
     onError: (e: Error) => {
       toast({ title: "Errore", description: e.message, variant: "destructive" });
