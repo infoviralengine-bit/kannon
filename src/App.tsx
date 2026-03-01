@@ -18,7 +18,8 @@ import CreatorDetailPage from "@/pages/dashboard/CreatorDetailPage";
 import AccountPage from "@/pages/dashboard/AccountPage";
 import AccountDetailPage from "@/pages/dashboard/AccountDetailPage";
 import PayoffPage from "@/pages/dashboard/PayoffPage";
-import PaymentsPage from "@/pages/dashboard/PaymentsPage";
+import PaymentsReceivablePage from "@/pages/dashboard/PaymentsReceivablePage";
+import PaymentsPayablePage from "@/pages/dashboard/PaymentsPayablePage";
 import CampaignDetailPage from "@/pages/dashboard/CampaignDetailPage";
 import {
   PipelinePage, MediaPage, ReportsPage, RecruitingPage,
@@ -55,7 +56,8 @@ const App = () => (
               <Route path="accounts" element={<AccountPage />} />
               <Route path="accounts/:id" element={<AccountDetailPage />} />
               <Route path="payoff" element={<PayoffPage />} />
-              <Route path="payments" element={<PaymentsPage />} />
+              <Route path="payments-receivable" element={<PaymentsReceivablePage />} />
+              <Route path="payments-payable" element={<PaymentsPayablePage />} />
               <Route path="pipeline" element={<PipelinePage />} />
               <Route path="media" element={<MediaPage />} />
               <Route path="reports" element={<ReportsPage />} />
@@ -65,6 +67,8 @@ const App = () => (
               <Route path="calendar" element={<CalendarPage />} />
               <Route path="finance" element={<FinancePage />} />
               <Route path="settings" element={<SettingsPage />} />
+              {/* Redirect old payments route */}
+              <Route path="payments" element={<Navigate to="/dashboard/payments-receivable" replace />} />
             </Route>
 
             {/* Creator area */}

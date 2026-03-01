@@ -702,7 +702,7 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Contratto</TableHead>
-                <TableHead>Account TikTok</TableHead>
+                <TableHead>Account</TableHead>
                 <TableHead className="text-right">Oggi</TableHead>
                 <TableHead className="text-right">Settimana</TableHead>
                 <TableHead className="text-right">Mese</TableHead>
@@ -1027,13 +1027,13 @@ export default function CampaignDetailPage() {
       {/* Account Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Account TikTok</CardTitle>
+          <CardTitle className="text-lg">Account</CardTitle>
         </CardHeader>
         <CardContent>
           {accounts.isLoading ? (
             <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
           ) : !accounts.data?.length ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Nessun account TikTok associato.</p>
+            <p className="text-sm text-muted-foreground text-center py-6">Nessun account associato.</p>
           ) : (
             <Table>
               <TableHeader>

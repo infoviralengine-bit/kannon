@@ -120,7 +120,7 @@ export default function AccountPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Account TikTok</h1>
+        <h1 className="text-2xl font-bold">Account</h1>
         <div className="flex items-center gap-2">
           {role === "admin" && (
             <Button variant="outline" onClick={handleScrapeNow} disabled={scraping}>
@@ -133,7 +133,7 @@ export default function AccountPage() {
               <Button><Plus className="mr-2 h-4 w-4" /> Nuovo Account</Button>
             </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Nuovo Account TikTok</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Nuovo Account</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div>
                 <Label>Username TikTok</Label>
@@ -210,7 +210,7 @@ export default function AccountPage() {
 
         <TabsContent value="all">
           {accounts.length === 0 ? (
-            <Card><CardContent className="py-12 text-center text-muted-foreground">Nessun account TikTok. Crea il primo!</CardContent></Card>
+            <Card><CardContent className="py-12 text-center text-muted-foreground">Nessun account. Crea il primo!</CardContent></Card>
           ) : (
             <div className="space-y-6">
               {creatorAccounts.length > 0 && <CreatorTable accounts={creatorAccounts} creators={creators} campaigns={campaigns} getVideosToday={getCreatorVideosToday} getTotalViews={getAccountTotalViews} navigate={navigate} onDelete={setDeleteTarget} />}

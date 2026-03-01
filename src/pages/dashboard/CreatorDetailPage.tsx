@@ -258,13 +258,13 @@ export default function CreatorDetailPage() {
       {/* Accounts */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Account TikTok</CardTitle>
+          <CardTitle className="text-base">Account</CardTitle>
         </CardHeader>
         <CardContent>
           {!accounts ? (
             <Skeleton className="h-16 w-full" />
           ) : !accounts.length ? (
-            <p className="text-sm text-muted-foreground text-center py-4">Nessun account TikTok collegato.</p>
+            <p className="text-sm text-muted-foreground text-center py-4">Nessun account collegato.</p>
           ) : (
             <Table>
               <TableHeader>

@@ -257,7 +257,7 @@ export default function CreatorPage() {
           <DialogHeader>
             <DialogTitle>Elimina Creator</DialogTitle>
             <DialogDescription>
-              Sei sicuro di voler eliminare <strong>{deleteTarget?.name}</strong>? Verranno eliminati anche tutti i video, account TikTok, pagamenti e associazioni alle campagne. Questa azione è irreversibile.
+              Sei sicuro di voler eliminare <strong>{deleteTarget?.name}</strong>? Verranno eliminati anche tutti i video, account, pagamenti e associazioni alle campagne. Questa azione è irreversibile.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
