@@ -108,7 +108,15 @@ async function generateCycle(
 
   let totalCurrentViews = 0;
   if (accIds.length) {
-    const { data: videos } = await supabase.from("videos").select("views, views_final, window_closed").in("tiktok_account_id", accIds);
+    // Fetch ALL videos (paginate to avoid 1000-row limit)
+    let allVideos: { views: number | null; views_final: number | null; window_closed: boolean }[] = [];
+    for (let offset = 0; ; offset += 1000) {
+      const { data: batch } = await supabase.from("videos").select("views, views_final, window_closed").in("tiktok_account_id", accIds).range(offset, offset + 999);
+      if (!batch?.length) break;
+      allVideos.push(...batch);
+      if (batch.length < 1000) break;
+    }
+    const videos = allVideos;
     totalCurrentViews = (videos ?? []).reduce((s, v) => {
       return s + (v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0));
     }, 0);
