@@ -705,10 +705,18 @@ export default function CampaignDetailPage() {
   const videoViewsCap = campAny.video_views_cap as number | null;
   const monthlySpendCap = campAny.monthly_spend_cap as number | null;
 
-  // Compute current cycle spend for progress bar
-  const currentCyclePayment = (cycles.data ?? []).at(-1)?.payment;
-  const currentSpend = currentCyclePayment ? currentCyclePayment.totalAmount : 0;
-  const spendPercent = monthlySpendCap && monthlySpendCap > 0 ? Math.min(100, (currentSpend / monthlySpendCap) * 100) : 0;
+  // Compute all cycles spend for progress bars
+  const allCyclesWithSpend = (cycles.data ?? [])
+    .filter((c) => c.payment != null)
+    .map((c) => {
+      const p = c.payment!;
+      return {
+        label: p.cycleLabel,
+        spend: p.totalAmount,
+        percent: monthlySpendCap && monthlySpendCap > 0 ? Math.min(100, (p.totalAmount / monthlySpendCap) * 100) : 0,
+        isCurrent: c === (cycles.data ?? []).at(-1),
+      };
+    });
 
   return (
     <div className="space-y-6">
