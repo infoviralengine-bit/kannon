@@ -297,7 +297,7 @@ function OutreachTable({ accounts, getOutreachToday, getOutreachMonth, navigate,
             const dmMonth = getOutreachMonth(a.id);
             return (
               <TableRow key={a.id}>
-                <TableCell className="font-medium">@{a.username}</TableCell>
+                <TableCell className="font-medium">@{a.username?.replace(/^@/, '')}</TableCell>
                 <TableCell className="text-right">{dm}</TableCell>
                 <TableCell className="text-right">{replies}</TableCell>
                 <TableCell className="text-right">{rate}%</TableCell>
