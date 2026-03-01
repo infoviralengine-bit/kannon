@@ -450,6 +450,7 @@ export function useCampaignCycles(campaignId: string) {
             isPaid: p.is_paid,
             paidAt: p.paid_at,
             isOverdue: !p.is_paid && dueDate < todayStr,
+            viewsPaidCumulative: (p as any).views_paid_cumulative ?? 0,
             cycleStartDate: c.cycle_start_date,
             cycleEndDate: c.cycle_end_date,
             isLastCycle: c.is_last_cycle,
