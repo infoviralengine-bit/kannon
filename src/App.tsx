@@ -17,7 +17,7 @@ import CreatorPage from "@/pages/dashboard/CreatorPage";
 import CreatorDetailPage from "@/pages/dashboard/CreatorDetailPage";
 import AccountPage from "@/pages/dashboard/AccountPage";
 import AccountDetailPage from "@/pages/dashboard/AccountDetailPage";
-import PayoffPage from "@/pages/dashboard/PayoffPage";
+
 import PaymentsReceivablePage from "@/pages/dashboard/PaymentsReceivablePage";
 import PaymentsPayablePage from "@/pages/dashboard/PaymentsPayablePage";
 import CampaignDetailPage from "@/pages/dashboard/CampaignDetailPage";
@@ -55,7 +55,7 @@ const App = () => (
               <Route path="creators/:id" element={<CreatorDetailPage />} />
               <Route path="accounts" element={<AccountPage />} />
               <Route path="accounts/:id" element={<AccountDetailPage />} />
-              <Route path="payoff" element={<PayoffPage />} />
+              <Route path="payoff" element={<Navigate to="/dashboard" replace />} />
               <Route path="payments-receivable" element={<PaymentsReceivablePage />} />
               <Route path="payments-payable" element={<PaymentsPayablePage />} />
               <Route path="pipeline" element={<PipelinePage />} />

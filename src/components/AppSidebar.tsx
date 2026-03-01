@@ -1,7 +1,7 @@
 import {
   Globe, Megaphone, Users, Smartphone, Wallet, CreditCard,
   BarChart3, Film, TrendingUp, Search, FileText,
-  CalendarDays, Landmark, Settings, LogOut, ArrowDownCircle, ArrowUpCircle, Eye
+  CalendarDays, Landmark, Settings, LogOut, ArrowDownCircle, ArrowUpCircle
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -35,7 +35,6 @@ const creatorItems = [
   { title: "Creator", url: "/dashboard/creators", icon: Users },
   { title: "Account", url: "/dashboard/accounts", icon: Smartphone },
   { title: "Pagamenti Da Pagare", url: "/dashboard/payments-payable", icon: ArrowUpCircle },
-  { title: "Payoff CPM", url: "/dashboard/payoff", icon: Eye },
 ];
 
 const altroItems = [
