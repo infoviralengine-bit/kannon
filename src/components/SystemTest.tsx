@@ -155,7 +155,7 @@ async function bulkInsertVideos(specs: any[]): Promise<string[]> {
 
 // ─── MODULE 1: Cicli di pagamento base ───
 
-async function runModule1(): Promise<TestLog[]> {
+async function runModule1(skipCleanup = false): Promise<TestLog[]> {
   const logs: TestLog[] = [];
   let campaignId = "";
   const creatorIds: string[] = [];
