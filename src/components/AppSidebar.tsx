@@ -27,6 +27,7 @@ const mainItems = [
   { title: "Generale", url: "/dashboard", icon: Globe },
   { title: "Campagne", url: "/dashboard/campaigns", icon: Megaphone },
   { title: "Creator", url: "/dashboard/creators", icon: Users },
+  { title: "Contratti", url: "/dashboard/contracts", icon: FileText },
   { title: "Account", url: "/dashboard/accounts", icon: Smartphone },
   { title: "Payoff", url: "/dashboard/payoff", icon: Wallet },
   { title: "Pagamenti", url: "/dashboard/payments", icon: CreditCard },
