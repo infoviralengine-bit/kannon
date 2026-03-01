@@ -951,7 +951,89 @@ async function runModule10(skipCleanup = false): Promise<TestLog[]> {
   return logs;
 }
 
-const ALL_TEST_NAMES = ["TEST_M1", "TEST_M2", "TEST_M3", "TEST_M4", "TEST_M5", "TEST_M6", "TEST_M7", "TEST_M7_ZERO", "TEST_M8", "TEST_M9", "TEST_M10_CAP", "TEST_M10_SPEND", "SIMUL_3MESI", "TEST_E2E"];
+const ALL_TEST_NAMES = ["TEST_M1", "TEST_M2", "TEST_M3", "TEST_M4", "TEST_M5", "TEST_M6", "TEST_M7", "TEST_M7_ZERO", "TEST_M8", "TEST_M9", "TEST_M10_CAP", "TEST_M10_SPEND", "SIMUL_3MESI", "TEST_E2E", "SEED_CAP_E2E"];
+
+// ═══════════════════════════════════════════════════════════════
+// SEED SCENARIO: Campagna realistica con Cap Views + Cap Spesa
+// ═══════════════════════════════════════════════════════════════
+
+async function seedCapScenario(onProgress: (msg: string) => void): Promise<string> {
+  onProgress("Creazione campagna con cap views 100k e cap spesa 5000€...");
+
+  const { data: camp } = await supabase.from("campaigns").insert({
+    name: "SEED_CAP_E2E",
+    client_name: "Cliente Premium Test",
+    start_date: "2026-01-01",
+    end_date: "2026-07-01",
+    client_cpm: 2,
+    client_fixed_per_creator: 300,
+    planned_creators: 3,
+    status: "active",
+    video_views_cap: 100000,
+    monthly_spend_cap: 5000,
+  } as any).select().single();
+  if (!camp) throw new Error("Campagna non creata");
+  const campaignId = camp.id;
+
+  // 3 creator con fasce diverse
+  const creatorsSpec = [
+    { name: "Creator Cap Star", cpm: 1.0, fixed: 500, min: 3 },
+    { name: "Creator Cap Mid", cpm: 0.5, fixed: 200, min: 5 },
+    { name: "Creator Cap Junior", cpm: 0.3, fixed: 100, min: 8 },
+  ];
+
+  for (const spec of creatorsSpec) {
+    onProgress(`Creazione ${spec.name}...`);
+    const { data: cr } = await supabase.from("creators").insert({
+      name: spec.name, status: "active", creator_cpm: spec.cpm, creator_fixed: spec.fixed, min_videos_per_day: spec.min,
+    }).select().single();
+
+    await supabase.from("campaign_creators").insert({ campaign_id: campaignId, creator_id: cr!.id });
+
+    const { data: acc } = await supabase.from("tiktok_accounts").insert({
+      username: `cap_${spec.name.split(" ").pop()!.toLowerCase()}`,
+      account_type: "creator",
+      campaign_id: campaignId,
+      creator_id: cr!.id,
+    }).select().single();
+
+    // Video con views diverse per testare il cap
+    const videos = [];
+    const viewsPerVideo = spec.name.includes("Star")
+      ? [150000, 120000, 80000, 50000, 200000, 30000, 95000, 110000] // Star: molti sopra cap
+      : spec.name.includes("Mid")
+      ? [60000, 45000, 100000, 130000, 20000, 75000, 90000, 110000, 55000, 40000] // Mid: mix
+      : [15000, 25000, 10000, 35000, 8000, 12000, 50000, 70000, 5000, 18000, 22000, 30000]; // Junior: molti sotto cap
+
+    for (let i = 0; i < viewsPerVideo.length; i++) {
+      const day = 1 + Math.floor(i * 3); // spread across month
+      const d = new Date(Date.UTC(2026, 0, Math.min(day, 28), 8 + (i % 8)));
+      // Some videos with window closed (older ones)
+      const isOld = i < 3;
+      videos.push({
+        tiktok_account_id: acc!.id,
+        published_at: d.toISOString(),
+        tiktok_video_id: `seed_cap_${spec.name.split(" ").pop()!.toLowerCase()}_v${i}`,
+        views: viewsPerVideo[i],
+        window_closed: isOld,
+        views_final: isOld ? viewsPerVideo[i] : null,
+        window_expires_at: isOld ? d.toISOString() : new Date(d.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      });
+    }
+
+    onProgress(`Inserimento ${videos.length} video per ${spec.name}...`);
+    await bulkInsertVideos(videos);
+  }
+
+  // Genera 3 cicli di pagamento
+  const p = { start_date: "2026-01-01", end_date: "2026-07-01", client_fixed_per_creator: 300, client_cpm: 2, planned_creators: 3 };
+  for (let i = 1; i <= 3; i++) {
+    onProgress(`Generazione ciclo ${i}/3...`);
+    await generateCycle(campaignId, p);
+  }
+
+  return campaignId;
+}
 
 export default function SystemTest() {
   const [running, setRunning] = useState(false);
@@ -962,6 +1044,8 @@ export default function SystemTest() {
   const [progress, setProgress] = useState("");
   const [keepData, setKeepData] = useState(true);
   const [cleaning, setCleaning] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState<{ id: string; ok: boolean; msg: string } | null>(null);
 
   async function doCleanup() {
     for (const name of ALL_TEST_NAMES) {
