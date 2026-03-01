@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { sumEffectiveViews } from "@/lib/videoWindow";
+import { sumEffectiveViews, sumEffectiveViewsCapped } from "@/lib/videoWindow";
 import { isFixedEarnedMonthly, getWorkingDaysInMonth } from "@/lib/fixedEarned";
 
 function monthRange(year: number, month: number) {

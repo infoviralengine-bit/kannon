@@ -151,9 +151,11 @@ export function useCreatorPayments(year: number, month: number) {
         { data: accounts },
         { data: videos },
         { data: existingPayments },
+        { data: campaigns },
+        { data: ccRows },
       ] = await Promise.all([
         supabase.from("creators").select("*").eq("status", "active"),
-        supabase.from("tiktok_accounts").select("id, creator_id"),
+        supabase.from("tiktok_accounts").select("id, creator_id, campaign_id"),
         supabase
           .from("videos")
           .select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at")
@@ -164,6 +166,8 @@ export function useCreatorPayments(year: number, month: number) {
           .select("*")
           .eq("period_month", month + 1)
           .eq("period_year", year),
+        supabase.from("campaigns").select("id, video_views_cap"),
+        supabase.from("campaign_creators").select("campaign_id, creator_id"),
       ]);
 
       const allCreators = creators ?? [];
