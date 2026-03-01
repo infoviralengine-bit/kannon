@@ -49,6 +49,8 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
   const [endDate, setEndDate] = useState<Date>();
   const [notes, setNotes] = useState("");
   const [plannedCreators, setPlannedCreators] = useState("1");
+  const [videoViewsCap, setVideoViewsCap] = useState("");
+  const [monthlySpendCap, setMonthlySpendCap] = useState("");
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -56,6 +58,8 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
       const startStr = format(startDate, "yyyy-MM-dd");
       const parsedPlanned = parseInt(plannedCreators);
       const numPlanned = Math.max(1, isNaN(parsedPlanned) ? 1 : parsedPlanned);
+      const parsedViewsCap = videoViewsCap.trim() ? parseInt(videoViewsCap) : null;
+      const parsedSpendCap = monthlySpendCap.trim() ? parseFloat(monthlySpendCap) : null;
       const { data: newCamp, error } = await supabase.from("campaigns").insert({
         name,
         client_name: clientName,
@@ -65,6 +69,8 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
         end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
         notes: notes || null,
         planned_creators: numPlanned,
+        video_views_cap: parsedViewsCap,
+        monthly_spend_cap: parsedSpendCap,
       } as any).select().single();
       if (error) throw error;
 
@@ -102,6 +108,7 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
       onOpenChange(false);
       setName(""); setClientName(""); setClientCpm("2.00"); setClientFixed("200.00");
       setStartDate(undefined); setEndDate(undefined); setNotes(""); setPlannedCreators("1");
+      setVideoViewsCap(""); setMonthlySpendCap("");
     },
     onError: (e: Error) => {
       toast({ title: "Errore", description: e.message, variant: "destructive" });
