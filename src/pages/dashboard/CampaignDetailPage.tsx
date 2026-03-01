@@ -431,8 +431,8 @@ function DeleteCampaignModal({ open, onOpenChange, campaign }: {
       if (e2) throw e2;
       const { error: e3 } = await supabase.from("campaign_creators").delete().eq("campaign_id", campaign.id);
       if (e3) throw e3;
-      // Delete tiktok accounts linked to this campaign
-      const { error: e4 } = await supabase.from("tiktok_accounts").delete().eq("campaign_id", campaign.id);
+      // Unlink tiktok accounts (set campaign_id = null, don't delete)
+      const { error: e4 } = await supabase.from("tiktok_accounts").update({ campaign_id: null }).eq("campaign_id", campaign.id);
       if (e4) throw e4;
       const { error: e5 } = await supabase.from("campaigns").delete().eq("id", campaign.id);
       if (e5) throw e5;
@@ -454,7 +454,7 @@ function DeleteCampaignModal({ open, onOpenChange, campaign }: {
         <DialogHeader><DialogTitle className="text-destructive">Elimina Campagna</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
           <p className="text-sm text-muted-foreground">
-            Sei sicuro di voler eliminare la campagna <strong>{campaign.name}</strong>? Questa azione è irreversibile e cancellerà anche tutti i dati collegati (creator, account, video, cicli di pagamento).
+            Sei sicuro di voler eliminare la campagna <strong>{campaign.name}</strong>? Questa azione è irreversibile e cancellerà i cicli di pagamento e scollegherà creator e account dalla campagna. Creator, account e video rimarranno nel sistema.
           </p>
           <div className="flex items-center gap-2">
             <Checkbox id="confirm-delete" checked={confirmed} onCheckedChange={(v) => setConfirmed(v === true)} />
