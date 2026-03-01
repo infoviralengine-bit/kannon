@@ -801,20 +801,26 @@ export default function CampaignDetailPage() {
               </div>
 
               {/* Spend progress bar */}
-              {monthlySpendCap != null && (
-                <div className="rounded-lg bg-secondary/50 p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Spesa ciclo corrente</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold">{formatCurrency(currentSpend)}</span>
-                      <span className="text-xs text-muted-foreground">/ {formatCurrency(monthlySpendCap)}</span>
-                      {spendPercent >= 100 && <Badge variant="destructive" className="text-xs">CAP</Badge>}
+              {monthlySpendCap != null && allCyclesWithSpend.length > 0 && (
+                <div className="space-y-3">
+                  {allCyclesWithSpend.map((cycle, idx) => (
+                    <div key={idx} className={cn("rounded-lg p-4", cycle.isCurrent ? "bg-secondary/50" : "bg-secondary/30")}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          {cycle.isCurrent ? "Spesa ciclo corrente" : cycle.label}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold">{formatCurrency(cycle.spend)}</span>
+                          <span className="text-xs text-muted-foreground">/ {formatCurrency(monthlySpendCap)}</span>
+                          {cycle.percent >= 100 && <Badge variant="destructive" className="text-xs">CAP</Badge>}
+                        </div>
+                      </div>
+                      <Progress
+                        value={cycle.percent}
+                        className={cn("h-2", cycle.percent >= 90 && "bg-destructive/20")}
+                      />
                     </div>
-                  </div>
-                  <Progress
-                    value={spendPercent}
-                    className={cn("h-2", spendPercent >= 90 && "bg-destructive/20")}
-                  />
+                  ))}
                 </div>
               )}
 
