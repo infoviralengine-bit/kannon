@@ -102,7 +102,16 @@ async function generateCycle(
   const viewsPaidCumulative = prevViewsPaidCumulative + newViews;
   const fixedAmount = isLastCycle ? 0 : campaign.client_fixed_per_creator * creatorCount;
   const cpmAmount = isFirstCycle ? 0 : campaign.client_cpm * (newViews / 1000);
-  const totalAmount = fixedAmount + cpmAmount;
+  let totalAmount = fixedAmount + cpmAmount;
+
+  // Apply monthly spend cap
+  const { data: campFull } = await supabase.from("campaigns").select("monthly_spend_cap, name, client_profile_id").eq("id", campaignId).single();
+  const spendCap = (campFull as any)?.monthly_spend_cap as number | null;
+  let capReached = false;
+  if (spendCap != null && spendCap > 0 && totalAmount >= spendCap) {
+    totalAmount = spendCap;
+    capReached = true;
+  }
 
   const { error: payErr } = await supabase.from("client_payments").insert({
     campaign_id: campaignId, cycle_id: cycle!.id, cycle_number: nextNumber, due_date: startDate,
@@ -111,6 +120,26 @@ async function generateCycle(
   } as any);
   if (payErr) throw payErr;
 
+  // If spend cap reached, pause campaign and create notifications
+  if (capReached) {
+    await supabase.from("campaigns").update({ status: "paused" } as any).eq("id", campaignId);
+
+    const { data: roles } = await supabase.from("user_roles").select("user_id").in("role", ["admin", "team"]);
+    const userIds = new Set((roles ?? []).map(r => r.user_id));
+    if (campFull?.client_profile_id) userIds.add(campFull.client_profile_id);
+
+    const message = `Cap di spesa raggiunto per "${campFull?.name ?? "campagna"}" (€${spendCap}). Campagna in pausa.`;
+    const notifs = Array.from(userIds).map(uid => ({
+      campaign_id: campaignId,
+      type: "spend_cap_reached",
+      message,
+      user_id: uid,
+    }));
+    if (notifs.length) {
+      await supabase.from("notifications").insert(notifs);
+    }
+  }
+
   return { cycleNumber: nextNumber, fixedAmount, cpmViews: newViews, cpmAmount, totalAmount, viewsPaidCumulative, isLastCycle };
 }
 
@@ -118,6 +147,7 @@ async function cleanupCampaign(campaignId: string, creatorIds: string[] = []) {
   const { data: accounts } = await supabase.from("tiktok_accounts").select("id").eq("campaign_id", campaignId);
   const accIds = (accounts ?? []).map(a => a.id);
   if (accIds.length) await supabase.from("videos").delete().in("tiktok_account_id", accIds);
+  await supabase.from("notifications").delete().eq("campaign_id", campaignId);
   await supabase.from("client_payments").delete().eq("campaign_id", campaignId);
   await supabase.from("payment_cycles").delete().eq("campaign_id", campaignId);
   await supabase.from("campaign_creators").delete().eq("campaign_id", campaignId);
