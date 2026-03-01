@@ -568,6 +568,7 @@ export default function SystemTest() {
   const [results, setResults] = useState<ModuleResult[]>([]);
   const [elapsed, setElapsed] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [progress, setProgress] = useState("");
 
   async function handleRun() {
     setRunning(true);
