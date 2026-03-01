@@ -276,8 +276,8 @@ export default function GeneralePage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {campaignCards.data.map((c) => {
-              const capWarning = c.capPercent !== null && c.capPercent >= 80;
-              const capReached = c.capPercent !== null && c.capPercent >= 100;
+              const capWarning = c.spendCapPercent !== null && c.spendCapPercent >= 80;
+              const capReached = c.spendCapPercent !== null && c.spendCapPercent >= 100;
               const borderClass = capReached
                 ? "border-red-500/40"
                 : capWarning
@@ -310,18 +310,18 @@ export default function GeneralePage() {
                       </div>
                     </div>
 
-                    {c.viewsCap && (
+                    {c.spendCap && (
                       <div className="mb-3">
                         <div className="flex justify-between text-[10px] text-[#64748b] mb-1">
-                          <span>Views {formatViews(c.viewsMonth)}</span>
-                          <span>Cap {formatViews(c.viewsCap)}</span>
+                          <span>Spesa {formatCurrency(c.revenueMonth)}</span>
+                          <span>Cap {formatCurrency(c.spendCap)}</span>
                         </div>
                         <div className="h-1.5 rounded-full bg-[#1a1a28] overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
                               capReached ? "bg-red-500" : capWarning ? "bg-amber-400" : "bg-[#7c3aed]"
                             }`}
-                            style={{ width: `${Math.min(100, c.capPercent ?? 0)}%` }}
+                            style={{ width: `${Math.min(100, c.spendCapPercent ?? 0)}%` }}
                           />
                         </div>
                       </div>
