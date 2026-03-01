@@ -23,6 +23,7 @@ export interface ClientPaymentRow {
   isPaid: boolean;
   paidAt: string | null;
   isOverdue: boolean;
+  viewsPaidCumulative: number;
   // enriched fields
   cycleStartDate: string;
   cycleEndDate: string;
