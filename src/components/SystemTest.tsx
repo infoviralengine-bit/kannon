@@ -1065,7 +1065,7 @@ export default function SystemTest() {
             <div>
               <CardTitle className="text-lg">Test Completo Sistema</CardTitle>
               <CardDescription>
-                9 moduli: cicli con fisso cliente, views cumulative, multi-video, fisso creator, finestra 30gg, campagna completa, planned_creators, simulazione E2E margine, finestra tra cicli.
+                10 moduli: cicli con fisso cliente, views cumulative, multi-video, fisso creator, finestra 30gg, campagna completa, planned_creators, simulazione E2E margine, finestra tra cicli, cap video e cap di spesa.
               </CardDescription>
             </div>
           </div>
