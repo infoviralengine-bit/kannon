@@ -388,6 +388,9 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* SECTION 4 — E2E TEST */}
+      <PaymentsE2ETest />
+
       {/* NEW USER MODAL */}
       <Dialog open={showNewUser} onOpenChange={setShowNewUser}>
         <DialogContent>
