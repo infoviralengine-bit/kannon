@@ -676,7 +676,7 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
   const contractsByCreator = new Map<string, { id: string; name: string }>();
   if (contractCampaigns && !Array.isArray(contractCampaigns)) {
     const { contracts, creatorLinks } = contractCampaigns;
-    const contractMap = new Map((contracts ?? []).map((c: any) => [c.id, c]));
+    const contractMap = new Map((contracts ?? []).map((c: any) => [c.id, c as { id: string; name: string }]));
     (creatorLinks ?? []).forEach((l: any) => {
       const contract = contractMap.get(l.contract_id);
       if (contract) contractsByCreator.set(l.creator_id, contract);
