@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Eye, EyeOff, Shield, Users, Cpu } from "lucide-react";
 import PaymentsE2ETest from "@/components/PaymentsE2ETest";
+import CampaignSimulation3Months from "@/components/CampaignSimulation3Months";
 
 type AppUser = { id: string; full_name: string; email: string; role: string; created_at: string };
 
@@ -390,6 +391,9 @@ export default function SettingsPage() {
 
       {/* SECTION 4 — E2E TEST */}
       <PaymentsE2ETest />
+
+      {/* SECTION 5 — 3-MONTH SIMULATION */}
+      <CampaignSimulation3Months />
 
       {/* NEW USER MODAL */}
       <Dialog open={showNewUser} onOpenChange={setShowNewUser}>
