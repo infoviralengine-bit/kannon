@@ -225,7 +225,7 @@ function CreatorTable({ accounts, creators, campaigns, getVideosToday, getTotalV
                 <TableCell className="text-right">{formatViews(getTotalViews(a.id))}</TableCell>
                 <TableCell>
                   <Badge variant={ok ? "default" : "destructive"}>
-                    {ok ? "✅ In regola" : "⚠️ Sotto minimo"}
+                    {ok ? "✅" : "⚠️"}
                   </Badge>
                 </TableCell>
                 <TableCell>
