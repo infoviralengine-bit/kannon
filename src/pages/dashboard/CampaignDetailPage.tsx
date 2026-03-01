@@ -454,7 +454,7 @@ function DeleteCampaignModal({ open, onOpenChange, campaign }: {
         <DialogHeader><DialogTitle className="text-destructive">Elimina Campagna</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
           <p className="text-sm text-muted-foreground">
-            Sei sicuro di voler eliminare la campagna <strong>{campaign.name}</strong>? Questa azione è irreversibile e cancellerà anche tutti i dati collegati (creator, account, video, cicli di pagamento).
+            Sei sicuro di voler eliminare la campagna <strong>{campaign.name}</strong>? Questa azione è irreversibile e cancellerà i cicli di pagamento e scollegherà creator e account dalla campagna. Creator, account e video rimarranno nel sistema.
           </p>
           <div className="flex items-center gap-2">
             <Checkbox id="confirm-delete" checked={confirmed} onCheckedChange={(v) => setConfirmed(v === true)} />
