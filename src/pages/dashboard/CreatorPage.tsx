@@ -182,12 +182,23 @@ export default function CreatorPage() {
 
       <CreateCreatorModal open={modalOpen} onOpenChange={setModalOpen} />
 
-      <div className="flex gap-2">
-        {(["all", "active", "inactive"] as const).map(f => (
-          <Button key={f} size="sm" variant={filter === f ? "default" : "outline"} onClick={() => setFilter(f)}>
-            {f === "all" ? "Tutti" : f === "active" ? "Attivi" : "Inattivi"}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          {(["all", "active", "inactive"] as const).map(f => (
+            <Button key={f} size="sm" variant={filter === f ? "default" : "outline"} onClick={() => setFilter(f)}>
+              {f === "all" ? "Tutti" : f === "active" ? "Attivi" : "Inattivi"}
+            </Button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevMonth}>
+            <ChevronLeft className="h-4 w-4" />
           </Button>
-        ))}
+          <span className="text-sm font-medium capitalize min-w-[140px] text-center">{monthLabel}</span>
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextMonth} disabled={isCurrentMonth}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <Card>
