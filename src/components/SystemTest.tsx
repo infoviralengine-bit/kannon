@@ -574,6 +574,30 @@ export default function SystemTest() {
     setResults([]);
     const start = Date.now();
 
+    // Cleanup legacy test data first
+    const legacyNames = ["SIMUL_3MESI", "TEST_E2E", "TEST_M1", "TEST_M2", "TEST_M3", "TEST_M4", "TEST_M5", "TEST_M6"];
+    for (const name of legacyNames) {
+      const { data: camps } = await supabase.from("campaigns").select("id").eq("name", name);
+      for (const c of (camps ?? [])) {
+        const { data: accs } = await supabase.from("tiktok_accounts").select("id").eq("campaign_id", c.id);
+        const accIds = (accs ?? []).map(a => a.id);
+        if (accIds.length) await supabase.from("videos").delete().in("tiktok_account_id", accIds);
+        await supabase.from("client_payments").delete().eq("campaign_id", c.id);
+        await supabase.from("payment_cycles").delete().eq("campaign_id", c.id);
+        const { data: ccData } = await supabase.from("campaign_creators").select("creator_id").eq("campaign_id", c.id);
+        const crIds = (ccData ?? []).map(x => x.creator_id);
+        await supabase.from("campaign_creators").delete().eq("campaign_id", c.id);
+        for (const id of accIds) await supabase.from("tiktok_accounts").delete().eq("id", id);
+        for (const id of crIds) {
+          const { data: cr } = await supabase.from("creators").select("name").eq("id", id).single();
+          if (cr?.name && (cr.name.startsWith("Simul ") || cr.name.startsWith("Creator E2E") || cr.name.startsWith("Creator M"))) {
+            await supabase.from("creators").delete().eq("id", id);
+          }
+        }
+        await supabase.from("campaigns").delete().eq("id", c.id);
+      }
+    }
+
     const modules: { name: string; fn: () => Promise<TestLog[]> }[] = [
       { name: "Modulo 1 — Cicli di pagamento base", fn: runModule1 },
       { name: "Modulo 2 — Views cumulative", fn: runModule2 },
