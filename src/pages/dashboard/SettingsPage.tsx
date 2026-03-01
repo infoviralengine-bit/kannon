@@ -392,6 +392,9 @@ export default function SettingsPage() {
       {/* SECTION 4 — E2E TEST */}
       <PaymentsE2ETest />
 
+      {/* SECTION 5 — 3-MONTH SIMULATION */}
+      <CampaignSimulation3Months />
+
       {/* NEW USER MODAL */}
       <Dialog open={showNewUser} onOpenChange={setShowNewUser}>
         <DialogContent>
