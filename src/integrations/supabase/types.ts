@@ -118,6 +118,7 @@ export type Database = {
           notes: string | null
           paid_at: string | null
           total_amount: number
+          views_paid_cumulative: number
           views_snapshot_at: string | null
         }
         Insert: {
@@ -134,6 +135,7 @@ export type Database = {
           notes?: string | null
           paid_at?: string | null
           total_amount?: number
+          views_paid_cumulative?: number
           views_snapshot_at?: string | null
         }
         Update: {
@@ -150,6 +152,7 @@ export type Database = {
           notes?: string | null
           paid_at?: string | null
           total_amount?: number
+          views_paid_cumulative?: number
           views_snapshot_at?: string | null
         }
         Relationships: [

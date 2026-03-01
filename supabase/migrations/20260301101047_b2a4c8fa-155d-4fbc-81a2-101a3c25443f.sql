@@ -1,0 +1,1 @@
+ALTER TABLE public.client_payments ADD COLUMN IF NOT EXISTS views_paid_cumulative integer NOT NULL DEFAULT 0;
