@@ -473,7 +473,7 @@ async function runModule5(skipCleanup = false): Promise<TestLog[]> {
 
 // ─── MODULE 6: Simulazione 3 mesi ───
 
-async function runModule6(): Promise<TestLog[]> {
+async function runModule6(skipCleanup = false): Promise<TestLog[]> {
   const logs: TestLog[] = [];
   let campaignId = "";
   const creatorIds: string[] = [];
