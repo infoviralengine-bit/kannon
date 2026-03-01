@@ -545,7 +545,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
                 <TableHead>Ciclo</TableHead>
                 <TableHead>Periodo</TableHead>
                 <TableHead className="text-right">Fisso (€)</TableHead>
-                <TableHead className="text-right">Views</TableHead>
+                <TableHead className="text-right">Views <CappedBadge /></TableHead>
                 <TableHead className="text-right">CPM (€)</TableHead>
                 <TableHead className="text-right">Totale (€)</TableHead>
                 <TableHead>Status</TableHead>

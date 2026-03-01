@@ -125,7 +125,7 @@ function ClientPaymentsTab() {
                 <TableHead>Mese</TableHead>
                 <TableHead>Scadenza</TableHead>
                 <TableHead className="text-right">Fisso (€)</TableHead>
-                <TableHead className="text-right">Views nuove</TableHead>
+                <TableHead className="text-right">Views nuove <CappedBadge /></TableHead>
                 <TableHead className="text-right">CPM (€)</TableHead>
                 <TableHead className="text-right">Totale (€)</TableHead>
                 <TableHead>Status</TableHead>
