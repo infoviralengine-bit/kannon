@@ -72,6 +72,7 @@ export function getWindowDaysRemaining(video: VideoWithWindow): number {
 
 /**
  * Sum effective views for a list of videos (for CPM calculation).
+ * Use sumEffectiveViewsCapped for cap support.
  */
 export function sumEffectiveViews(videos: VideoWithWindow[]): number {
   return videos.reduce((sum, v) => sum + getEffectiveViews(v), 0);
