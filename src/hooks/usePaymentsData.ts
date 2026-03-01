@@ -102,6 +102,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           isPaid: p.is_paid,
           paidAt: p.paid_at,
           isOverdue: !p.is_paid && dueDate < todayStr,
+          viewsPaidCumulative: p.views_paid_cumulative ?? 0,
           cycleStartDate: cycle?.cycle_start_date ?? dueDate,
           cycleEndDate: cycle?.cycle_end_date ?? dueDate,
           isLastCycle: cycle?.is_last_cycle ?? false,
