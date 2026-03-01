@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAccountDetail } from "@/hooks/useAccountData";
 import { supabase } from "@/integrations/supabase/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { formatViews, formatCurrency } from "@/lib/format";
 import { format } from "date-fns";
@@ -44,7 +44,6 @@ export default function AccountDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem><BreadcrumbLink asChild><Link to="/dashboard/accounts">Account</Link></BreadcrumbLink></BreadcrumbItem>
@@ -102,6 +101,19 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
   const min = data.creator?.min_videos_per_day || 5;
   const ok = data.videosToday >= min;
 
+  // Fetch campaign's video_views_cap
+  const campaignId = data.account?.campaign_id;
+  const { data: campData } = useQuery({
+    queryKey: ["campaign-cap", campaignId],
+    queryFn: async () => {
+      if (!campaignId) return null;
+      const { data: c } = await supabase.from("campaigns").select("video_views_cap").eq("id", campaignId).single();
+      return c;
+    },
+    enabled: !!campaignId,
+  });
+  const videoCap = (campData as any)?.video_views_cap as number | null;
+
   const addVideoMutation = useMutation({
     mutationFn: async () => {
       const publishedAt = new Date(pubDate);
@@ -129,6 +141,16 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
   const chartConfig = {
     views: { label: "Views", color: "hsl(var(--primary))" },
   };
+
+  function renderCapCell(videoViews: number) {
+    if (videoCap == null) return "—";
+    if (videoViews >= videoCap) {
+      return <span className="text-warning font-semibold">⚠️ CAP RAGGIUNTO</span>;
+    }
+    const vk = videoViews >= 1000 ? `${(videoViews / 1000).toFixed(0)}k` : String(videoViews);
+    const ck = videoCap >= 1000 ? `${(videoCap / 1000).toFixed(0)}k` : String(videoCap);
+    return <span className="text-success">{vk} / {ck}</span>;
+  }
 
   return (
     <>
@@ -207,6 +229,7 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
                   <TableHead className="text-right">Views</TableHead>
                   <TableHead className="text-right">Likes</TableHead>
                   <TableHead className="text-right">Commenti</TableHead>
+                  <TableHead>Cap</TableHead>
                   <TableHead>Finestra</TableHead>
                   <TableHead>Ultimo scraping</TableHead>
                 </TableRow>
@@ -231,6 +254,7 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
                     <TableCell className="text-right">{formatViews(v.views || 0)}</TableCell>
                     <TableCell className="text-right">{formatViews(v.likes || 0)}</TableCell>
                     <TableCell className="text-right">{formatViews(v.comments || 0)}</TableCell>
+                    <TableCell>{renderCapCell(v.views || 0)}</TableCell>
                     <TableCell>
                       {wStatus === "open" && (
                         <span className="text-sm">🟢 {daysLeft}g rimasti</span>
@@ -285,7 +309,6 @@ function OutreachDetail({ data }: { data: ReturnType<typeof useAccountDetail> })
 
   return (
     <>
-      {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <KPICard title="DM oggi" value={data.dmToday} />
         <KPICard title="DM settimana" value={data.dmWeek} />
@@ -295,7 +318,6 @@ function OutreachDetail({ data }: { data: ReturnType<typeof useAccountDetail> })
         <KPICard title="Tasso risposta %" value={`${data.responseRateMonth.toFixed(1)}%`} />
       </div>
 
-      {/* DM History */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Storico DM</CardTitle>
