@@ -251,7 +251,7 @@ function CreatorTable({ accounts, creators, campaigns, getVideosToday, getTotalV
             const ok = videosToday >= min;
             return (
               <TableRow key={a.id}>
-                <TableCell className="font-medium">@{a.username}</TableCell>
+                <TableCell className="font-medium">@{a.username?.replace(/^@/, '')}</TableCell>
                 <TableCell>{creator?.name || "—"}</TableCell>
                 <TableCell>{campaign?.name || "—"}</TableCell>
                 <TableCell className="text-right">{videosToday}</TableCell>
