@@ -275,7 +275,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
 
       // Check if this is the last cycle (post-campaign)
       const campEndDate = campaign.end_date;
-      const isLastCycle = campEndDate ? new Date(startDate) >= new Date(campEndDate) : false;
+      const isLastCycle = campEndDate ? startDate >= campEndDate : false;
 
       const { data: cycle, error: cycleErr } = await supabase.from("payment_cycles").insert({
         campaign_id: campaignId,

@@ -39,7 +39,7 @@ async function generateCycle(campaignId: string, campaign: { start_date: string;
   endD.setDate(endD.getDate() + 30);
   const endDate = endD.toISOString().slice(0, 10);
 
-  const isLastCycle = new Date(startDate) >= new Date(campaign.end_date);
+  const isLastCycle = startDate >= campaign.end_date;
 
   const { data: cycle, error: cycleErr } = await supabase.from("payment_cycles").insert({
     campaign_id: campaignId,
