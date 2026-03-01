@@ -123,7 +123,7 @@ function ClientPaymentsTab() {
                     ) : p.isOverdue ? (
                       <Badge variant="destructive">🔴</Badge>
                     ) : (
-                      <Badge variant="secondary">⏳ In attesa</Badge>
+                      <Badge variant="secondary">⏳</Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
