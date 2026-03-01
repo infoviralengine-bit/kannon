@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { FlaskConical, ChevronDown, Copy, Check } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FlaskConical, ChevronDown, Copy, Check, Trash2 } from "lucide-react";
 
 // ─── Types ───
 
@@ -155,7 +156,7 @@ async function bulkInsertVideos(specs: any[]): Promise<string[]> {
 
 // ─── MODULE 1: Cicli di pagamento base ───
 
-async function runModule1(): Promise<TestLog[]> {
+async function runModule1(skipCleanup = false): Promise<TestLog[]> {
   const logs: TestLog[] = [];
   let campaignId = "";
   const creatorIds: string[] = [];
@@ -214,14 +215,14 @@ async function runModule1(): Promise<TestLog[]> {
   } catch (e: any) {
     logs.push({ step: `❌ ERRORE: ${e.message}`, ok: false });
   } finally {
-    if (campaignId) await cleanupCampaign(campaignId, creatorIds);
+    if (campaignId && !skipCleanup) await cleanupCampaign(campaignId, creatorIds);
   }
   return logs;
 }
 
 // ─── MODULE 2: Views cumulative ───
 
-async function runModule2(): Promise<TestLog[]> {
+async function runModule2(skipCleanup = false): Promise<TestLog[]> {
   const logs: TestLog[] = [];
   let campaignId = "";
   const creatorIds: string[] = [];
@@ -274,14 +275,14 @@ async function runModule2(): Promise<TestLog[]> {
   } catch (e: any) {
     logs.push({ step: `❌ ERRORE: ${e.message}`, ok: false });
   } finally {
-    if (campaignId) await cleanupCampaign(campaignId, creatorIds);
+    if (campaignId && !skipCleanup) await cleanupCampaign(campaignId, creatorIds);
   }
   return logs;
 }
 
 // ─── MODULE 3: Multi-video campagna ───
 
-async function runModule3(): Promise<TestLog[]> {
+async function runModule3(skipCleanup = false): Promise<TestLog[]> {
   const logs: TestLog[] = [];
   let campaignId = "";
   const creatorIds: string[] = [];
@@ -333,14 +334,14 @@ async function runModule3(): Promise<TestLog[]> {
   } catch (e: any) {
     logs.push({ step: `❌ ERRORE: ${e.message}`, ok: false });
   } finally {
-    if (campaignId) await cleanupCampaign(campaignId, creatorIds);
+    if (campaignId && !skipCleanup) await cleanupCampaign(campaignId, creatorIds);
   }
   return logs;
 }
 
 // ─── MODULE 4: Fisso creator ───
 
-async function runModule4(): Promise<TestLog[]> {
+async function runModule4(skipCleanup = false): Promise<TestLog[]> {
   const logs: TestLog[] = [];
   let campaignId = "";
   const creatorIds: string[] = [];
@@ -394,14 +395,14 @@ async function runModule4(): Promise<TestLog[]> {
   } catch (e: any) {
     logs.push({ step: `❌ ERRORE: ${e.message}`, ok: false });
   } finally {
-    if (campaignId) await cleanupCampaign(campaignId, creatorIds);
+    if (campaignId && !skipCleanup) await cleanupCampaign(campaignId, creatorIds);
   }
   return logs;
 }
 
 // ─── MODULE 5: Finestra 30 giorni creator ───
 
-async function runModule5(): Promise<TestLog[]> {
+async function runModule5(skipCleanup = false): Promise<TestLog[]> {
   const logs: TestLog[] = [];
   let campaignId = "";
   const creatorIds: string[] = [];
@@ -466,14 +467,14 @@ async function runModule5(): Promise<TestLog[]> {
   } catch (e: any) {
     logs.push({ step: `❌ ERRORE: ${e.message}`, ok: false });
   } finally {
-    if (campaignId) await cleanupCampaign(campaignId, creatorIds);
+    if (campaignId && !skipCleanup) await cleanupCampaign(campaignId, creatorIds);
   }
   return logs;
 }
 
 // ─── MODULE 6: Simulazione 3 mesi ───
 
-async function runModule6(): Promise<TestLog[]> {
+async function runModule6(skipCleanup = false): Promise<TestLog[]> {
   const logs: TestLog[] = [];
   let campaignId = "";
   const creatorIds: string[] = [];
@@ -555,7 +556,7 @@ async function runModule6(): Promise<TestLog[]> {
   } catch (e: any) {
     logs.push({ step: `❌ ERRORE: ${e.message}`, ok: false });
   } finally {
-    if (campaignId) await cleanupCampaign(campaignId, creatorIds);
+    if (campaignId && !skipCleanup) await cleanupCampaign(campaignId, creatorIds);
   }
   return logs;
 }
@@ -569,6 +570,8 @@ export default function SystemTest() {
   const [elapsed, setElapsed] = useState(0);
   const [copied, setCopied] = useState(false);
   const [progress, setProgress] = useState("");
+  const [keepData, setKeepData] = useState(true);
+  const [cleaning, setCleaning] = useState(false);
 
   async function handleRun() {
     setRunning(true);
@@ -605,13 +608,14 @@ export default function SystemTest() {
       console.warn("Legacy cleanup warning:", e.message);
     }
 
+    const skip = keepData;
     const modules: { name: string; fn: () => Promise<TestLog[]> }[] = [
-      { name: "Modulo 1 — Cicli di pagamento base", fn: runModule1 },
-      { name: "Modulo 2 — Views cumulative", fn: runModule2 },
-      { name: "Modulo 3 — Multi-video campagna", fn: runModule3 },
-      { name: "Modulo 4 — Fisso creator", fn: runModule4 },
-      { name: "Modulo 5 — Finestra 30 giorni", fn: runModule5 },
-      { name: "Modulo 6 — Simulazione 3 mesi", fn: runModule6 },
+      { name: "Modulo 1 — Cicli di pagamento base", fn: () => runModule1(skip) },
+      { name: "Modulo 2 — Views cumulative", fn: () => runModule2(skip) },
+      { name: "Modulo 3 — Multi-video campagna", fn: () => runModule3(skip) },
+      { name: "Modulo 4 — Fisso creator", fn: () => runModule4(skip) },
+      { name: "Modulo 5 — Finestra 30 giorni", fn: () => runModule5(skip) },
+      { name: "Modulo 6 — Simulazione 3 mesi", fn: () => runModule6(skip) },
     ];
 
     const moduleResults: ModuleResult[] = [];
@@ -622,10 +626,10 @@ export default function SystemTest() {
       moduleResults.push({ name: mod.name, logs, passed, total });
     }
 
-    // Cleanup confirmation
+    // Cleanup status
     moduleResults.push({
       name: "Cleanup",
-      logs: [{ step: "🧹 Cleanup completato — tutti i dati di test eliminati", ok: true }],
+      logs: [{ step: skip ? "ℹ️ Dati di test mantenuti per verifica manuale" : "🧹 Cleanup completato — tutti i dati di test eliminati", ok: true }],
       passed: 1, total: 1,
     });
 
@@ -634,6 +638,37 @@ export default function SystemTest() {
     setRunning(false);
     setProgress("");
     setShowResults(true);
+  }
+
+  async function handleCleanup() {
+    setCleaning(true);
+    try {
+      const testNames = ["TEST_M1", "TEST_M2", "TEST_M3", "TEST_M4", "TEST_M5", "TEST_M6", "SIMUL_3MESI", "TEST_E2E"];
+      for (const name of testNames) {
+        const { data: camps } = await supabase.from("campaigns").select("id").eq("name", name);
+        for (const c of (camps ?? [])) {
+          const { data: accs } = await supabase.from("tiktok_accounts").select("id").eq("campaign_id", c.id);
+          const accIds = (accs ?? []).map(a => a.id);
+          if (accIds.length) await supabase.from("videos").delete().in("tiktok_account_id", accIds);
+          await supabase.from("client_payments").delete().eq("campaign_id", c.id);
+          await supabase.from("payment_cycles").delete().eq("campaign_id", c.id);
+          const { data: ccData } = await supabase.from("campaign_creators").select("creator_id").eq("campaign_id", c.id);
+          const crIds = (ccData ?? []).map(x => x.creator_id);
+          await supabase.from("campaign_creators").delete().eq("campaign_id", c.id);
+          for (const id of accIds) await supabase.from("tiktok_accounts").delete().eq("id", id);
+          for (const id of crIds) {
+            const { data: cr } = await supabase.from("creators").select("name").eq("id", id).single();
+            if (cr?.name && (cr.name.startsWith("Simul ") || cr.name.startsWith("Creator E2E") || cr.name.startsWith("Creator M"))) {
+              await supabase.from("creators").delete().eq("id", id);
+            }
+          }
+          await supabase.from("campaigns").delete().eq("id", c.id);
+        }
+      }
+    } catch (e: any) {
+      console.warn("Cleanup error:", e.message);
+    }
+    setCleaning(false);
   }
 
   const totalPassed = results.reduce((s, r) => s + r.passed, 0);
@@ -672,12 +707,23 @@ export default function SystemTest() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <Button onClick={handleRun} disabled={running} variant="outline">
-            {running ? "⏳ Test in esecuzione..." : "🧪 Test Completo Sistema"}
-          </Button>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-4">
+            <Button onClick={handleRun} disabled={running || cleaning} variant="outline">
+              {running ? "⏳ Test in esecuzione..." : "🧪 Test Completo Sistema"}
+            </Button>
+            <Button onClick={handleCleanup} disabled={running || cleaning} variant="outline" size="sm">
+              {cleaning ? "⏳ Pulizia..." : <><Trash2 className="h-4 w-4 mr-1" /> Pulisci dati test</>}
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox id="keep-data" checked={keepData} onCheckedChange={(v) => setKeepData(!!v)} />
+            <label htmlFor="keep-data" className="text-sm text-muted-foreground cursor-pointer">
+              Mantieni dati di test per verifica manuale
+            </label>
+          </div>
           {running && progress && (
-            <p className="text-xs text-muted-foreground mt-2 animate-pulse">{progress}</p>
+            <p className="text-xs text-muted-foreground animate-pulse">{progress}</p>
           )}
         </CardContent>
       </Card>
