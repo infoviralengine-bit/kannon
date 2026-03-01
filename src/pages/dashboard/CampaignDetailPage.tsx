@@ -100,22 +100,66 @@ function EditCampaignModal({
   const mutation = useMutation({
     mutationFn: async () => {
       if (!name || !clientName || !startDate) throw new Error("Compila i campi obbligatori");
+      const newCpm = parseFloat(clientCpm) || 2;
+      const newFixed = parseFloat(clientFixed) || 200;
+      const newPlanned = Math.max(1, parseInt(plannedCreators) || 1);
+
       const { error } = await supabase.from("campaigns").update({
         name,
         client_name: clientName,
-        client_cpm: parseFloat(clientCpm) || 2,
-        client_fixed_per_creator: parseFloat(clientFixed) || 200,
+        client_cpm: newCpm,
+        client_fixed_per_creator: newFixed,
         start_date: format(startDate, "yyyy-MM-dd"),
         end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
         notes: notes || null,
-        planned_creators: Math.max(1, parseInt(plannedCreators) || 1),
+        planned_creators: newPlanned,
       } as any).eq("id", campaign.id);
       if (error) throw error;
+
+      // Recalculate unpaid cycles
+      const { data: unpaidPayments } = await supabase
+        .from("client_payments")
+        .select("id, cycle_id, cpm_views")
+        .eq("campaign_id", campaign.id)
+        .eq("is_paid", false);
+
+      if (unpaidPayments && unpaidPayments.length > 0) {
+        // Get cycle info for is_last_cycle
+        const cycleIds = unpaidPayments.map((p) => p.cycle_id);
+        const { data: cycles } = await supabase
+          .from("payment_cycles")
+          .select("id, is_last_cycle")
+          .in("id", cycleIds);
+        const cycleMap = new Map((cycles ?? []).map((c) => [c.id, c.is_last_cycle]));
+
+        // Get actual creator count
+        const { data: cc } = await supabase
+          .from("campaign_creators")
+          .select("creator_id")
+          .eq("campaign_id", campaign.id);
+        const actualCreators = (cc ?? []).length;
+        const creatorCount = actualCreators > 0 ? actualCreators : newPlanned;
+
+        for (const p of unpaidPayments) {
+          const isLast = cycleMap.get(p.cycle_id) ?? false;
+          const fixedAmount = isLast ? 0 : newFixed * creatorCount;
+          const cpmAmount = newCpm * (p.cpm_views / 1000);
+          const totalAmount = fixedAmount + cpmAmount;
+
+          await supabase.from("client_payments").update({
+            fixed_amount: fixedAmount,
+            cpm_amount: cpmAmount,
+            total_amount: totalAmount,
+          }).eq("id", p.id);
+        }
+      }
     },
     onSuccess: () => {
-      toast({ title: "Campagna aggiornata" });
+      toast({ title: "Campagna aggiornata", description: "Cicli di pagamento ricalcolati" });
       qc.invalidateQueries({ queryKey: ["campaign-detail", campaign.id] });
       qc.invalidateQueries({ queryKey: ["campaign-table"] });
+      qc.invalidateQueries({ queryKey: ["campaign-cycles", campaign.id] });
+      qc.invalidateQueries({ queryKey: ["client-payments"] });
       onOpenChange(false);
     },
     onError: (e: Error) => {
