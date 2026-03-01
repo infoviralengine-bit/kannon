@@ -9,6 +9,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { formatCurrency, formatViews } from "@/lib/format";
 import { useNavigate } from "react-router-dom";
 import { useCpmPayoffData } from "@/hooks/useCpmPayoffData";
+import { CappedBadge } from "@/components/CappedViewsBadge";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid,
