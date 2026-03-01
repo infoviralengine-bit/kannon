@@ -212,7 +212,7 @@ export default function AccountPage() {
           <DialogHeader>
             <DialogTitle>Elimina Account</DialogTitle>
             <DialogDescription>
-              Sei sicuro di voler eliminare <strong>@{deleteTarget?.username}</strong>? Verranno eliminati anche tutti i video e le statistiche di outreach associate. Questa azione è irreversibile.
+              Sei sicuro di voler eliminare <strong>@{deleteTarget?.username?.replace(/^@/, '')}</strong>? Verranno eliminati anche tutti i video e le statistiche di outreach associate. Questa azione è irreversibile.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -251,7 +251,7 @@ function CreatorTable({ accounts, creators, campaigns, getVideosToday, getTotalV
             const ok = videosToday >= min;
             return (
               <TableRow key={a.id}>
-                <TableCell className="font-medium">@{a.username}</TableCell>
+                <TableCell className="font-medium">@{a.username?.replace(/^@/, '')}</TableCell>
                 <TableCell>{creator?.name || "—"}</TableCell>
                 <TableCell>{campaign?.name || "—"}</TableCell>
                 <TableCell className="text-right">{videosToday}</TableCell>
@@ -297,7 +297,7 @@ function OutreachTable({ accounts, getOutreachToday, getOutreachMonth, navigate,
             const dmMonth = getOutreachMonth(a.id);
             return (
               <TableRow key={a.id}>
-                <TableCell className="font-medium">@{a.username}</TableCell>
+                <TableCell className="font-medium">@{a.username?.replace(/^@/, '')}</TableCell>
                 <TableCell className="text-right">{dm}</TableCell>
                 <TableCell className="text-right">{replies}</TableCell>
                 <TableCell className="text-right">{rate}%</TableCell>
