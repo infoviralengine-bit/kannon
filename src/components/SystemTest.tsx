@@ -1108,7 +1108,7 @@ export default function SystemTest() {
           for (const id of accIds) await supabase.from("tiktok_accounts").delete().eq("id", id);
           for (const id of crIds) {
             const { data: cr } = await supabase.from("creators").select("name").eq("id", id).single();
-            if (cr?.name && (cr.name.startsWith("Simul ") || cr.name.startsWith("Creator E2E") || cr.name.startsWith("Creator M"))) {
+            if (cr?.name && (cr.name.startsWith("Simul ") || cr.name.startsWith("Creator E2E") || cr.name.startsWith("Creator M") || cr.name.startsWith("Creator Test"))) {
               await supabase.from("creators").delete().eq("id", id);
             }
           }
