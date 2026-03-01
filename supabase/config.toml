@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.admin-update]
 verify_jwt = false
+
+[functions.scrape-tiktok]
+verify_jwt = false

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAccountList } from "@/hooks/useAccountData";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
@@ -15,16 +16,36 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, RefreshCw, Loader2 } from "lucide-react";
 
 export default function AccountPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { role } = useAuth();
   const {
     accounts, creators, campaigns, isLoading,
     getCreatorVideosToday, getAccountTotalViews,
     getOutreachToday, getOutreachMonth,
   } = useAccountList();
+
+  const [scraping, setScraping] = useState(false);
+
+  async function handleScrapeNow() {
+    setScraping(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("scrape-tiktok");
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      toast({
+        title: "Scraping completato",
+        description: `${data.created} nuovi video, ${data.updated} aggiornati (${data.accounts} account)`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["tiktok_accounts"] });
+    } catch (e: any) {
+      toast({ title: "Errore scraping", description: e.message, variant: "destructive" });
+    }
+    setScraping(false);
+  }
 
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("all");
@@ -100,10 +121,17 @@ export default function AccountPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Account TikTok</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" /> Nuovo Account</Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          {role === "admin" && (
+            <Button variant="outline" onClick={handleScrapeNow} disabled={scraping}>
+              {scraping ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+              {scraping ? "Scraping..." : "🔄 Scrapa Ora"}
+            </Button>
+          )}
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button><Plus className="mr-2 h-4 w-4" /> Nuovo Account</Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Nuovo Account TikTok</DialogTitle></DialogHeader>
             <div className="space-y-4">
@@ -157,6 +185,7 @@ export default function AccountPage() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
