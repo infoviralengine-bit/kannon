@@ -355,7 +355,7 @@ function CreatorPaymentsTab() {
                 <TableHead>Creator</TableHead>
                 <TableHead>Periodo</TableHead>
                 <TableHead className="text-right">Fisso (€)</TableHead>
-                <TableHead className="text-right">CPM (€)</TableHead>
+                <TableHead className="text-right">CPM (€) <CappedBadge /></TableHead>
                 <TableHead className="text-right">Totale (€)</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Azioni</TableHead>
