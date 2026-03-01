@@ -116,10 +116,28 @@ export default function CreatorPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const qc = useQueryClient();
-  const { data: creators, isLoading } = useCreatorTable();
+
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+
+  const { data: creators, isLoading } = useCreatorTable(selectedYear, selectedMonth);
   const [modalOpen, setModalOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+
+  const monthLabel = new Date(selectedYear, selectedMonth).toLocaleDateString("it-IT", { month: "long", year: "numeric" });
+  const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonth === now.getMonth();
+
+  function prevMonth() {
+    if (selectedMonth === 0) { setSelectedYear(y => y - 1); setSelectedMonth(11); }
+    else setSelectedMonth(m => m - 1);
+  }
+  function nextMonth() {
+    if (isCurrentMonth) return;
+    if (selectedMonth === 11) { setSelectedYear(y => y + 1); setSelectedMonth(0); }
+    else setSelectedMonth(m => m + 1);
+  }
 
   const deleteMutation = useMutation({
     mutationFn: async (creatorId: string) => {
