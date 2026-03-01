@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { sumEffectiveViews, countByWindowStatus } from "@/lib/videoWindow";
+import { sumEffectiveViews, sumEffectiveViewsCapped, countByWindowStatus } from "@/lib/videoWindow";
 import { isFixedEarnedMonthly, getMonthlyTarget } from "@/lib/fixedEarned";
 
 /* ═══════════════════════════════════════════════
@@ -151,9 +151,11 @@ export function useCreatorPayments(year: number, month: number) {
         { data: accounts },
         { data: videos },
         { data: existingPayments },
+        { data: campaigns },
+        { data: ccRows },
       ] = await Promise.all([
         supabase.from("creators").select("*").eq("status", "active"),
-        supabase.from("tiktok_accounts").select("id, creator_id"),
+        supabase.from("tiktok_accounts").select("id, creator_id, campaign_id"),
         supabase
           .from("videos")
           .select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at")
@@ -164,12 +166,28 @@ export function useCreatorPayments(year: number, month: number) {
           .select("*")
           .eq("period_month", month + 1)
           .eq("period_year", year),
+        supabase.from("campaigns").select("id, video_views_cap"),
+        supabase.from("campaign_creators").select("campaign_id, creator_id"),
       ]);
 
       const allCreators = creators ?? [];
       const allAccounts = accounts ?? [];
       const allVideos = videos ?? [];
       const allPayments = existingPayments ?? [];
+      const allCampaigns = campaigns ?? [];
+      const allCC = ccRows ?? [];
+
+      // Build cap map: campaignId -> video_views_cap
+      const capByCampaign = new Map<string, number | null>();
+      allCampaigns.forEach((c) => capByCampaign.set(c.id, (c as any).video_views_cap as number | null));
+
+      // Build creator -> campaigns map for cap lookup
+      const campaignsByCreator = new Map<string, string[]>();
+      allCC.forEach((r) => {
+        const list = campaignsByCreator.get(r.creator_id) ?? [];
+        list.push(r.campaign_id);
+        campaignsByCreator.set(r.creator_id, list);
+      });
 
       const accountsByCreator = new Map<string, string[]>();
       allAccounts.forEach((a) => {
@@ -186,8 +204,28 @@ export function useCreatorPayments(year: number, month: number) {
         const min = cr.min_videos_per_day ?? 5;
         const fixedEarned = isFixedEarnedMonthly(monthVideoCount, min, year, month);
         const monthlyTarget = getMonthlyTarget(min, year, month);
-        const monthViews = sumEffectiveViews(crVideos);
         const windowStats = countByWindowStatus(crVideos);
+
+        // Apply video cap: group videos by campaign account and apply per-campaign cap
+        let monthViews = 0;
+        const crCampaigns = campaignsByCreator.get(cr.id) ?? [];
+        if (crCampaigns.length > 0) {
+          crCampaigns.forEach((campId) => {
+            const cap = capByCampaign.get(campId) ?? null;
+            const campAccIds = allAccounts
+              .filter((a) => a.creator_id === cr.id && a.campaign_id === campId)
+              .map((a) => a.id);
+            const campAccSet = new Set(campAccIds);
+            const campVideos = crVideos.filter((v) => campAccSet.has(v.tiktok_account_id));
+            monthViews += sumEffectiveViewsCapped(campVideos, cap);
+          });
+          // Add views from accounts without campaign
+          const campAccIds = new Set(allAccounts.filter((a) => a.creator_id === cr.id && a.campaign_id).map((a) => a.id));
+          const noCampVideos = crVideos.filter((v) => !campAccIds.has(v.tiktok_account_id));
+          monthViews += sumEffectiveViews(noCampVideos);
+        } else {
+          monthViews = sumEffectiveViews(crVideos);
+        }
 
         const fixedAmt = cr.creator_fixed ?? 200;
         const cpmAmt = (cr.creator_cpm ?? 0.5) * (monthViews / 1000);
