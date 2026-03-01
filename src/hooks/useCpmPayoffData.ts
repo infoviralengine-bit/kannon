@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { sumEffectiveViews, countByWindowStatus, type VideoWithWindow } from "@/lib/videoWindow";
+import { sumEffectiveViewsCapped, countByWindowStatus, type VideoWithWindow } from "@/lib/videoWindow";
 
 function monthRange(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString();
@@ -119,7 +119,8 @@ export function useCpmPayoffData(year: number, month: number) {
       const campaignRows: CampaignCpmRow[] = allCampaigns.map((camp) => {
         const campAccIds = new Set(accountsByCampaign.get(camp.id) ?? []);
         const campVideos = allVideos.filter((v) => campAccIds.has(v.tiktok_account_id));
-        const viewsPeriod = sumEffectiveViews(campVideos);
+        const cap = (camp as any).video_views_cap as number | null;
+        const viewsPeriod = sumEffectiveViewsCapped(campVideos, cap);
         const windowStats = countByWindowStatus(campVideos);
 
         const clientCpmRate = camp.client_cpm ?? 2;
@@ -135,12 +136,12 @@ export function useCpmPayoffData(year: number, month: number) {
             .filter((a) => a.creator_id === cid && a.campaign_id === camp.id)
             .map((a) => a.id);
           const crAccSet = new Set(crAccIds);
-          const crViews = sumEffectiveViews(campVideos.filter((v) => crAccSet.has(v.tiktok_account_id)));
+          const crViews = sumEffectiveViewsCapped(campVideos.filter((v) => crAccSet.has(v.tiktok_account_id)), cap);
           creatorCpmAmount += (cr.creator_cpm ?? 0.5) * (crViews / 1000);
         });
 
         // Weekly views breakdown
-        const weeklyViews = getWeeklyViews(campVideos, year, month);
+        const weeklyViews = getWeeklyViews(campVideos, year, month, cap);
 
         return {
           campaignId: camp.id,
@@ -149,10 +150,10 @@ export function useCpmPayoffData(year: number, month: number) {
           clientCpm: clientCpmRate,
           viewsPeriod,
           viewsDefinitive: windowStats.closed > 0
-            ? sumEffectiveViews(campVideos.filter((v) => v.window_closed))
+            ? sumEffectiveViewsCapped(campVideos.filter((v) => v.window_closed), cap)
             : 0,
           viewsProvvisorie: windowStats.open > 0
-            ? sumEffectiveViews(campVideos.filter((v) => !v.window_closed))
+            ? sumEffectiveViewsCapped(campVideos.filter((v) => !v.window_closed), cap)
             : 0,
           clientCpmAmount,
           creatorCpmAmount,
@@ -172,12 +173,13 @@ export function useCpmPayoffData(year: number, month: number) {
           const camp = allCampaigns.find((c) => c.id === campId);
           if (!camp) return;
 
+          const cap = (camp as any).video_views_cap as number | null;
           const crAccIds = allAccounts
             .filter((a) => a.creator_id === cr.id && a.campaign_id === campId)
             .map((a) => a.id);
           const crAccSet = new Set(crAccIds);
           const crVideos = allVideos.filter((v) => crAccSet.has(v.tiktok_account_id));
-          const viewsPeriod = sumEffectiveViews(crVideos);
+          const viewsPeriod = sumEffectiveViewsCapped(crVideos, cap);
           const windowStats = countByWindowStatus(crVideos);
           const cpmRate = cr.creator_cpm ?? 0.5;
 
@@ -187,8 +189,8 @@ export function useCpmPayoffData(year: number, month: number) {
             campaignName: camp.name,
             campaignId: campId,
             viewsPeriod,
-            viewsDefinitive: sumEffectiveViews(crVideos.filter((v) => v.window_closed)),
-            viewsProvvisorie: sumEffectiveViews(crVideos.filter((v) => !v.window_closed)),
+            viewsDefinitive: sumEffectiveViewsCapped(crVideos.filter((v) => v.window_closed), cap),
+            viewsProvvisorie: sumEffectiveViewsCapped(crVideos.filter((v) => !v.window_closed), cap),
             cpmAmount: cpmRate * (viewsPeriod / 1000),
             videoDefinitivi: windowStats.closed,
             videoProvvisori: windowStats.open,
@@ -240,6 +242,7 @@ function getWeeklyViews(
   videos: VideoWithWindow[],
   year: number,
   month: number,
+  cap?: number | null,
 ): { week: string; views: number }[] {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const weeks: { week: string; views: number }[] = [];
@@ -251,9 +254,8 @@ function getWeeklyViews(
     const wStart = new Date(year, month, weekStart).toISOString();
     const wEnd = new Date(year, month, weekEnd + 1).toISOString();
 
-    const weekViews = videos
-      .filter((v) => v.published_at >= wStart && v.published_at < wEnd)
-      .reduce((s, v) => s + (v.views ?? 0), 0);
+    const weekVids = videos.filter((v) => v.published_at >= wStart && v.published_at < wEnd);
+    const weekViews = sumEffectiveViewsCapped(weekVids, cap);
 
     weeks.push({ week: label, views: weekViews });
     weekStart = weekEnd + 1;
