@@ -50,7 +50,6 @@ export default function SettingsPage() {
   const [showApiKey, setShowApiKey] = useState(false);
 
   // Saving flags
-  const [savingEcon, setSavingEcon] = useState(false);
   const [savingApify, setSavingApify] = useState(false);
 
   useEffect(() => {
