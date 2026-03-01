@@ -257,72 +257,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* SECTION 2 — DEFAULT ECONOMICS */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Shield className="h-5 w-5 text-primary" />
-            <div>
-              <CardTitle className="text-lg">Condizioni Economiche Default</CardTitle>
-              <CardDescription>Questi valori vengono precompilati quando crei una nuova campagna o un nuovo creator.</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-2">
-              <Label>CPM Cliente default (€)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={settings.client_cpm_default || ""}
-                onChange={(e) => setSettings({ ...settings, client_cpm_default: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Fisso per Creator default (€)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={settings.creator_fixed_default || ""}
-                onChange={(e) => setSettings({ ...settings, creator_fixed_default: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>CPM Creator default (€)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={settings.creator_cpm_default || ""}
-                onChange={(e) => setSettings({ ...settings, creator_cpm_default: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Fisso Mensile Creator default (€)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={settings.creator_monthly_fixed_default || ""}
-                onChange={(e) => setSettings({ ...settings, creator_monthly_fixed_default: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Minimo video/giorno Creator</Label>
-              <Input
-                type="number"
-                step="1"
-                value={settings.creator_min_videos_default || ""}
-                onChange={(e) => setSettings({ ...settings, creator_min_videos_default: e.target.value })}
-              />
-            </div>
-          </div>
-          <Button className="mt-6" onClick={handleSaveEconomics} disabled={savingEcon}>
-            {savingEcon ? "Salvataggio..." : "Salva Impostazioni"}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* SECTION 3 — APIFY */}
+      {/* SECTION 2 — APIFY */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
