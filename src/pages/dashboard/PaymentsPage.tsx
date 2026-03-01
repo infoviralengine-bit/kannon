@@ -135,9 +135,8 @@ function ClientPaymentsTab() {
               {filtered.map((p) => {
                 const isExpanded = expandedId === p.id;
                 return (
-                  <>
+                  <React.Fragment key={p.id}>
                     <TableRow
-                      key={p.id}
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => setExpandedId(isExpanded ? null : p.id)}
                     >
