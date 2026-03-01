@@ -174,6 +174,16 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
             <Label>N° creator previsti</Label>
             <Input type="number" min="1" step="1" value={plannedCreators} onChange={(e) => setPlannedCreators(e.target.value)} />
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-1.5">
+              <Label>Cap views per video</Label>
+              <Input type="number" min="0" step="1" value={videoViewsCap} onChange={(e) => setVideoViewsCap(e.target.value)} placeholder="es. 100000 — vuoto = nessun cap" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Cap di spesa per ciclo (€)</Label>
+              <Input type="number" min="0" step="0.01" value={monthlySpendCap} onChange={(e) => setMonthlySpendCap(e.target.value)} placeholder="es. 5000 — vuoto = nessun cap" />
+            </div>
+          </div>
           <div className="grid gap-1.5">
             <Label>Note</Label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Note opzionali..." />
