@@ -21,11 +21,31 @@ import { Plus, Trash2, RefreshCw, Loader2 } from "lucide-react";
 export default function AccountPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { role } = useAuth();
   const {
     accounts, creators, campaigns, isLoading,
     getCreatorVideosToday, getAccountTotalViews,
     getOutreachToday, getOutreachMonth,
   } = useAccountList();
+
+  const [scraping, setScraping] = useState(false);
+
+  async function handleScrapeNow() {
+    setScraping(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("scrape-tiktok");
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      toast({
+        title: "Scraping completato",
+        description: `${data.created} nuovi video, ${data.updated} aggiornati (${data.accounts} account)`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["tiktok_accounts"] });
+    } catch (e: any) {
+      toast({ title: "Errore scraping", description: e.message, variant: "destructive" });
+    }
+    setScraping(false);
+  }
 
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("all");
