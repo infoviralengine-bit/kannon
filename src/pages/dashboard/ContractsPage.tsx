@@ -35,7 +35,7 @@ function NewContractModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const qc = useQueryClient();
   const { data: campaigns } = useActiveCampaignsForSelect();
   const [name, setName] = useState("");
-  const [type, setType] = useState("custom");
+  const type = "custom";
   const [fixed, setFixed] = useState("0");
   const [cpm, setCpm] = useState("0.50");
   const [minVpd, setMinVpd] = useState("5");
@@ -76,7 +76,7 @@ function NewContractModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       toast({ title: "Contratto creato" });
       qc.invalidateQueries({ queryKey: ["contract-list"] });
       onOpenChange(false);
-      setName(""); setType("custom"); setFixed("0"); setCpm("0.50"); setMinVpd("5"); setSelectedCampaigns([]);
+      setName(""); setFixed("0"); setCpm("0.50"); setMinVpd("5"); setSelectedCampaigns([]);
     },
     onError: (e: Error) => {
       toast({ title: "Errore", description: e.message, variant: "destructive" });
@@ -91,17 +91,6 @@ function NewContractModal({ open, onOpenChange }: { open: boolean; onOpenChange:
           <div className="grid gap-1.5">
             <Label>Nome contratto *</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder='es. "Contratto FZ"' />
-          </div>
-          <div className="grid gap-1.5">
-            <Label>Tipo</Label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="solo_cpm">Solo CPM</SelectItem>
-                <SelectItem value="premium">Premium</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="grid gap-1.5">
