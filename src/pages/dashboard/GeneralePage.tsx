@@ -1,37 +1,81 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, TrendingUp, Megaphone, Users, AlertTriangle, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight,
+  AlertTriangle, AlertCircle, CheckCircle2, Trophy, Clock, Zap,
+  Calendar, Eye, Users, CreditCard,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
 import { formatViews, formatCurrency } from "@/lib/format";
+import { useCountUp } from "@/hooks/useCountUp";
 import {
-  useViewsToday, useViewsYesterday, useViewsMonth,
-  useActiveCampaigns, useActiveCreators,
-  useCampaignTable, useCreatorAlerts,
-} from "@/hooks/useDashboardData";
+  useFinancialKpis,
+  useViewsChart,
+  useActiveCampaignCards,
+  useCreatorStatus,
+  useDeadlinesAndAlerts,
+} from "@/hooks/useGeneraleDashboardData";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from "recharts";
 
-function KpiCard({
-  icon: Icon, label, value, sub, loading,
+/* ─── Skeleton ─── */
+function Shimmer({ className = "" }: { className?: string }) {
+  return <div className={`animate-pulse rounded-lg bg-[#1a1a28] ${className}`} />;
+}
+
+/* ─── KPI Card ─── */
+function KpiFinancialCard({
+  label, icon: Icon, value, prevValue, prefix = "€", accentClass, loading,
 }: {
-  icon: React.ElementType; label: string; value: string; sub?: string; loading: boolean;
+  label: string;
+  icon: React.ElementType;
+  value: number;
+  prevValue?: number;
+  prefix?: string;
+  accentClass: string;
+  loading: boolean;
 }) {
+  const animated = useCountUp(value, 1400, !loading);
+  const diff = prevValue !== undefined ? value - prevValue : undefined;
+  const diffPct = prevValue && prevValue > 0 ? ((diff ?? 0) / prevValue) * 100 : undefined;
+  const isPositive = (diff ?? 0) >= 0;
+
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
+    <Card className="relative overflow-hidden border-[#1e1e2e] bg-[#111118] hover:border-[#2a2a3e] transition-all duration-300 group">
+      <div className={`absolute inset-0 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity ${accentClass}`}
+        style={{ background: `radial-gradient(ellipse at top right, currentColor, transparent 70%)` }}
+      />
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-medium uppercase tracking-wider text-[#64748b]">{label}</span>
+          <div className={`p-2 rounded-lg ${accentClass} bg-opacity-10`} style={{ backgroundColor: 'currentColor', opacity: 0.08 }}>
+            <Icon className={`h-4 w-4 ${accentClass}`} />
+          </div>
+        </div>
         {loading ? (
-          <Skeleton className="h-8 w-28" />
+          <Shimmer className="h-9 w-36 mb-2" />
         ) : (
           <>
-            <p className="text-2xl font-bold">{value}</p>
-            {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
+            <p className="text-2xl font-bold text-[#f8fafc] tabular-nums tracking-tight">
+              {prefix}{animated.toLocaleString("it-IT", { minimumFractionDigits: prefix === "€" ? 2 : 0, maximumFractionDigits: 2 })}
+            </p>
+            {diff !== undefined && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                {isPositive ? (
+                  <ArrowUpRight className="h-3.5 w-3.5 text-emerald-400" />
+                ) : (
+                  <ArrowDownRight className="h-3.5 w-3.5 text-red-400" />
+                )}
+                <span className={`text-xs font-medium ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
+                  {isPositive ? "+" : ""}{diffPct?.toFixed(1)}%
+                </span>
+                <span className="text-xs text-[#64748b]">vs mese scorso</span>
+              </div>
+            )}
           </>
         )}
       </CardContent>
@@ -39,170 +83,460 @@ function KpiCard({
   );
 }
 
-const statusColor: Record<string, string> = {
-  active: "bg-green-600/20 text-green-400 border-green-600/30",
-  paused: "bg-yellow-600/20 text-yellow-400 border-yellow-600/30",
-  completed: "bg-muted text-muted-foreground border-border",
-};
+/* ─── Custom Tooltip for Chart ─── */
+function ChartTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-[#16161f] border border-[#2a2a3e] rounded-xl px-4 py-3 shadow-2xl">
+      <p className="text-xs text-[#64748b] mb-1">{label}</p>
+      <p className="text-sm font-semibold text-[#f8fafc]">{formatViews(payload[0].value)} views</p>
+    </div>
+  );
+}
 
-const statusLabel: Record<string, string> = {
-  active: "Attiva",
-  paused: "In pausa",
-  completed: "Completata",
-};
+/* ─── Period Selector ─── */
+function PeriodSelector({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const options = [
+    { label: "7gg", value: 7 },
+    { label: "30gg", value: 30 },
+    { label: "90gg", value: 90 },
+  ];
+  return (
+    <div className="flex gap-1 bg-[#0d0d14] rounded-lg p-1">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          onClick={() => onChange(o.value)}
+          className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+            value === o.value
+              ? "bg-[#7c3aed]/20 text-[#a78bfa]"
+              : "text-[#64748b] hover:text-[#94a3b8]"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
-const alertIcon = {
-  red: <AlertTriangle className="h-4 w-4" />,
-  yellow: <AlertCircle className="h-4 w-4" />,
-};
-
-const alertColor = {
-  red: "text-destructive",
-  yellow: "text-warning",
-};
-
-const alertLabel = {
-  red: "Critico",
-  yellow: "Attenzione",
-};
-
+/* ─── Main Page ─── */
 export default function GeneralePage() {
   const navigate = useNavigate();
-  const viewsToday = useViewsToday();
-  const viewsYesterday = useViewsYesterday();
-  const viewsMonth = useViewsMonth();
-  const activeCampaigns = useActiveCampaigns();
-  const activeCreators = useActiveCreators();
-  const campaignTable = useCampaignTable();
-  const alerts = useCreatorAlerts();
+  const [chartDays, setChartDays] = useState(30);
 
-  const todayVal = viewsToday.data ?? 0;
-  const yesterdayVal = viewsYesterday.data ?? 0;
-  const diff = todayVal - yesterdayVal;
-  const diffSign = diff >= 0 ? "+" : "";
+  const financial = useFinancialKpis();
+  const viewsChart = useViewsChart(chartDays);
+  const campaignCards = useActiveCampaignCards();
+  const creatorStatus = useCreatorStatus();
+  const deadlines = useDeadlinesAndAlerts();
 
-  const kpiLoading = viewsToday.isLoading || viewsYesterday.isLoading || viewsMonth.isLoading || activeCampaigns.isLoading || activeCreators.isLoading;
+  const kpi = financial.data;
+  const kpiLoading = financial.isLoading;
+
+  const totalChartViews = (viewsChart.data ?? []).reduce((s, d) => s + d.views, 0);
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+    <div className="space-y-6 max-w-[1400px] mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[#f8fafc] tracking-tight">Dashboard</h1>
+          <p className="text-sm text-[#64748b] mt-0.5">Panoramica in tempo reale</p>
+        </div>
+        <Badge variant="outline" className="border-[#1e1e2e] text-[#64748b] text-xs gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          Aggiornamento automatico
+        </Badge>
+      </div>
 
-      {/* KPI Cards */}
+      {/* ROW 1 — Financial KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          icon={Eye}
-          label="Views Oggi"
-          value={formatViews(todayVal)}
-          sub={`${diffSign}${formatViews(diff)} rispetto a ieri`}
-          loading={kpiLoading}
-        />
-        <KpiCard
+        <KpiFinancialCard
+          label="Entrate Mese"
           icon={TrendingUp}
-          label="Views Mese"
-          value={formatViews(viewsMonth.data ?? 0)}
+          value={kpi?.revenueMonth ?? 0}
+          prevValue={kpi?.revenuePrevMonth}
+          accentClass="text-emerald-400"
           loading={kpiLoading}
         />
-        <KpiCard
-          icon={Megaphone}
-          label="Campagne Attive"
-          value={String(activeCampaigns.data ?? 0)}
+        <KpiFinancialCard
+          label="Uscite Mese"
+          icon={TrendingDown}
+          value={kpi?.expenseMonth ?? 0}
+          prevValue={kpi?.expensePrevMonth}
+          accentClass="text-red-400"
           loading={kpiLoading}
         />
-        <KpiCard
-          icon={Users}
-          label="Creator Attivi"
-          value={String(activeCreators.data ?? 0)}
+        <KpiFinancialCard
+          label="Margine Mese"
+          icon={DollarSign}
+          value={kpi?.margin ?? 0}
+          accentClass="text-[#a78bfa]"
+          loading={kpiLoading}
+        />
+        <KpiFinancialCard
+          label="Entrate Future"
+          icon={Calendar}
+          value={kpi?.futureRevenue ?? 0}
+          accentClass="text-sky-400"
           loading={kpiLoading}
         />
       </div>
 
-      {/* Alerts */}
-      {alerts.isLoading ? (
-        <Skeleton className="h-16 w-full" />
-      ) : (alerts.data?.length ?? 0) > 0 ? (
-        <Card className="border-destructive/40 bg-destructive/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-4 w-4" /> Alert Creator — Proiezione mensile
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {alerts.data!.map((a) => (
-              <div key={a.creatorName} className="flex items-center gap-2 text-sm">
-                <span className={alertColor[a.alertLevel]}>
-                  {a.alertLevel === "red" ? "🔴" : "🟡"} {alertLabel[a.alertLevel]}
-                </span>
-                <span className="font-semibold">{a.creatorName}</span>
-                <span className="text-muted-foreground">— {a.videosSoFar}/{a.totalRequired} video nel mese</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="border-success/30 bg-success/5">
-          <CardContent className="flex items-center gap-2 py-4">
-            <CheckCircle2 className="h-4 w-4 text-success" />
-            <span className="text-sm text-success">Tutti i creator sono in regola questo mese ✓</span>
-          </CardContent>
-        </Card>
+      {/* Margin bar */}
+      {!kpiLoading && kpi && kpi.revenueMonth > 0 && (
+        <div className="flex items-center gap-3 px-1">
+          <span className="text-xs text-[#64748b]">Margine</span>
+          <div className="flex-1 h-1.5 rounded-full bg-[#1a1a28] overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] transition-all duration-700"
+              style={{ width: `${Math.max(0, Math.min(100, kpi.marginPercent))}%` }}
+            />
+          </div>
+          <span className="text-xs font-medium text-[#a78bfa]">{kpi.marginPercent.toFixed(1)}%</span>
+        </div>
       )}
 
-      {/* Campaign Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Campagne</CardTitle>
+      {/* ROW 2 — Views Chart */}
+      <Card className="border-[#1e1e2e] bg-[#111118]">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div>
+            <CardTitle className="text-base font-semibold text-[#f8fafc]">
+              Performance Views
+            </CardTitle>
+            <p className="text-xs text-[#64748b] mt-0.5">
+              {formatViews(totalChartViews)} views totali nel periodo
+            </p>
+          </div>
+          <PeriodSelector value={chartDays} onChange={setChartDays} />
         </CardHeader>
-        <CardContent>
-          {campaignTable.isLoading ? (
-            <div className="space-y-3">
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </div>
-          ) : !campaignTable.data?.length ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Nessuna campagna trovata.</p>
+        <CardContent className="pt-2">
+          {viewsChart.isLoading ? (
+            <Shimmer className="h-[280px] w-full" />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Views Totali</TableHead>
-                  <TableHead className="text-right">Margine Mese</TableHead>
-                  <TableHead className="text-right">Creator</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {campaignTable.data.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.name}</TableCell>
-                    <TableCell>{c.client_name}</TableCell>
-                    <TableCell>
-                      <Badge className={statusColor[c.status] ?? ""}>
-                        {statusLabel[c.status] ?? c.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(c.margin)}</TableCell>
-                    <TableCell className="text-right">{c.creatorCount}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate(`/dashboard/campaigns/${c.id}`)}
-                      >
-                        Apri
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <ResponsiveContainer width="100%" height={280}>
+              <AreaChart data={viewsChart.data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="viewsGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e1e2e" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  axisLine={false}
+                  tickLine={false}
+                  interval={chartDays <= 7 ? 0 : chartDays <= 30 ? 4 : 13}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
+                />
+                <Tooltip content={<ChartTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="views"
+                  stroke="#7c3aed"
+                  strokeWidth={2}
+                  fill="url(#viewsGradient)"
+                  dot={false}
+                  activeDot={{ r: 4, fill: "#a78bfa", stroke: "#111118", strokeWidth: 2 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           )}
         </CardContent>
       </Card>
+
+      {/* ROW 3 — Active Campaigns */}
+      <div>
+        <h2 className="text-lg font-semibold text-[#f8fafc] mb-4 flex items-center gap-2">
+          <Zap className="h-4 w-4 text-[#a78bfa]" />
+          Campagne Attive
+        </h2>
+        {campaignCards.isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => <Shimmer key={i} className="h-44" />)}
+          </div>
+        ) : !campaignCards.data?.length ? (
+          <Card className="border-[#1e1e2e] bg-[#111118]">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <Zap className="h-10 w-10 text-[#2a2a3e] mb-3" />
+              <p className="text-sm text-[#64748b] mb-4">Nessuna campagna attiva</p>
+              <Button onClick={() => navigate("/dashboard/campaigns")} size="sm">
+                Crea la tua prima campagna
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {campaignCards.data.map((c) => {
+              const capWarning = c.capPercent !== null && c.capPercent >= 80;
+              const capReached = c.capPercent !== null && c.capPercent >= 100;
+              const borderClass = capReached
+                ? "border-red-500/40"
+                : capWarning
+                  ? "border-amber-500/40"
+                  : "border-[#1e1e2e] hover:border-[#2a2a3e]";
+
+              return (
+                <Card
+                  key={c.id}
+                  className={`bg-[#111118] cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-[#7c3aed]/5 ${borderClass}`}
+                  onClick={() => navigate(`/dashboard/campaigns/${c.id}`)}
+                >
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="font-semibold text-[#f8fafc] text-sm">{c.name}</p>
+                        <p className="text-xs text-[#64748b] mt-0.5">{c.clientName}</p>
+                      </div>
+                      <div className="flex gap-1.5">
+                        {capReached && (
+                          <Badge className="bg-red-500/15 text-red-400 border-red-500/30 text-[10px]">
+                            🔴 Cap raggiunto
+                          </Badge>
+                        )}
+                        {capWarning && !capReached && (
+                          <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30 text-[10px]">
+                            ⚠️ Cap vicino
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {c.viewsCap && (
+                      <div className="mb-3">
+                        <div className="flex justify-between text-[10px] text-[#64748b] mb-1">
+                          <span>Views {formatViews(c.viewsMonth)}</span>
+                          <span>Cap {formatViews(c.viewsCap)}</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-[#1a1a28] overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              capReached ? "bg-red-500" : capWarning ? "bg-amber-400" : "bg-[#7c3aed]"
+                            }`}
+                            style={{ width: `${Math.min(100, c.capPercent ?? 0)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-3 gap-3 pt-2 border-t border-[#1e1e2e]">
+                      <div>
+                        <p className="text-[10px] text-[#64748b] uppercase">Views</p>
+                        <p className="text-sm font-semibold text-[#f8fafc]">{formatViews(c.viewsMonth)}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-[#64748b] uppercase">Entrata</p>
+                        <p className="text-sm font-semibold text-emerald-400">{formatCurrency(c.revenueMonth)}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-[#64748b] uppercase">Creator</p>
+                        <p className="text-sm font-semibold text-[#f8fafc]">{c.creatorCount}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ROW 4 — Creator Alerts + Top Performers */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Alerts */}
+        <Card className="border-[#1e1e2e] bg-[#111118]">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-[#f8fafc] flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-400" />
+              Alert Creator
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {creatorStatus.isLoading ? (
+              <div className="space-y-3">
+                {[1, 2].map((i) => <Shimmer key={i} className="h-10" />)}
+              </div>
+            ) : !creatorStatus.data?.alerts.length ? (
+              <div className="flex items-center gap-2 py-4 px-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <span className="text-sm text-emerald-400">Tutti i creator sono in regola ✓</span>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {creatorStatus.data.alerts.map((a) => (
+                  <div
+                    key={a.creatorName}
+                    className={`flex items-center justify-between p-3 rounded-lg border ${
+                      a.alertLevel === "red"
+                        ? "border-red-500/20 bg-red-500/5"
+                        : "border-amber-500/20 bg-amber-500/5"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {a.alertLevel === "red" ? (
+                        <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
+                      ) : (
+                        <AlertCircle className="h-3.5 w-3.5 text-amber-400" />
+                      )}
+                      <span className="text-sm font-medium text-[#f8fafc]">{a.creatorName}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs text-[#64748b]">
+                        {a.videosSoFar}/{a.totalRequired} video
+                      </span>
+                      <span className="text-[10px] text-[#64748b] ml-2">
+                        {a.daysRemaining}gg rimasti
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top Performers */}
+        <Card className="border-[#1e1e2e] bg-[#111118]">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-[#f8fafc] flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-amber-400" />
+              Top Performer del Mese
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {creatorStatus.isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => <Shimmer key={i} className="h-14" />)}
+              </div>
+            ) : !creatorStatus.data?.topPerformers.length ? (
+              <p className="text-sm text-[#64748b] text-center py-8">Nessun dato disponibile</p>
+            ) : (
+              <div className="space-y-2">
+                {creatorStatus.data.topPerformers.map((p, i) => {
+                  const medalColors = ["text-amber-400", "text-slate-400", "text-orange-400"];
+                  const bgColors = ["bg-amber-400/5", "bg-slate-400/5", "bg-orange-400/5"];
+                  return (
+                    <div
+                      key={p.creatorName}
+                      className={`flex items-center gap-3 p-3 rounded-lg border border-[#1e1e2e] ${bgColors[i]}`}
+                    >
+                      <span className={`text-lg font-bold ${medalColors[i]} w-7 text-center`}>
+                        #{i + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#f8fafc] truncate">{p.creatorName}</p>
+                        <p className="text-[10px] text-[#64748b] truncate">{p.contractName}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-[#f8fafc]">{formatViews(p.viewsMonth)}</p>
+                        <p className="text-[10px] text-emerald-400">{formatCurrency(p.cpmEarned)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ROW 5 — Deadlines + System Alerts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Payment Deadlines */}
+        <Card className="border-[#1e1e2e] bg-[#111118]">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-[#f8fafc] flex items-center gap-2">
+              <Clock className="h-4 w-4 text-[#64748b]" />
+              Scadenze Pagamenti (7 giorni)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {deadlines.isLoading ? (
+              <div className="space-y-2">
+                {[1, 2].map((i) => <Shimmer key={i} className="h-10" />)}
+              </div>
+            ) : !deadlines.data?.deadlines.length ? (
+              <p className="text-sm text-[#64748b] text-center py-6">Nessuna scadenza nei prossimi 7 giorni</p>
+            ) : (
+              <div className="space-y-2">
+                {deadlines.data.deadlines.map((d, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-3 rounded-lg border border-[#1e1e2e] bg-[#0d0d14]"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[#f8fafc] truncate">{d.campaignName}</p>
+                      <p className="text-[10px] text-[#64748b]">{d.clientName}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-semibold text-[#f8fafc]">{formatCurrency(d.amount)}</span>
+                      <Badge
+                        className={`text-[10px] ${
+                          d.isOverdue
+                            ? "bg-red-500/15 text-red-400 border-red-500/30"
+                            : d.daysUntil <= 3
+                              ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                              : "bg-[#1a1a28] text-[#64748b] border-[#2a2a3e]"
+                        }`}
+                      >
+                        {d.isOverdue ? "Scaduto" : `${d.daysUntil}gg`}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* System Alerts */}
+        <Card className="border-[#1e1e2e] bg-[#111118]">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-[#f8fafc] flex items-center gap-2">
+              <Zap className="h-4 w-4 text-[#64748b]" />
+              Alert Sistema
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {deadlines.isLoading ? (
+              <Shimmer className="h-16" />
+            ) : !deadlines.data?.systemAlerts.length ? (
+              <div className="flex items-center gap-2 py-4 px-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <span className="text-sm text-emerald-400">Nessun problema rilevato ✓</span>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {deadlines.data.systemAlerts.map((a, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-2 p-3 rounded-lg border ${
+                      a.severity === "red"
+                        ? "border-red-500/20 bg-red-500/5"
+                        : a.severity === "yellow"
+                          ? "border-amber-500/20 bg-amber-500/5"
+                          : "border-[#1e1e2e] bg-[#0d0d14]"
+                    }`}
+                  >
+                    <AlertTriangle className={`h-3.5 w-3.5 flex-shrink-0 ${
+                      a.severity === "red" ? "text-red-400" : a.severity === "yellow" ? "text-amber-400" : "text-[#64748b]"
+                    }`} />
+                    <span className="text-sm text-[#94a3b8]">{a.message}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
