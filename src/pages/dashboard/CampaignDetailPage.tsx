@@ -431,8 +431,8 @@ function DeleteCampaignModal({ open, onOpenChange, campaign }: {
       if (e2) throw e2;
       const { error: e3 } = await supabase.from("campaign_creators").delete().eq("campaign_id", campaign.id);
       if (e3) throw e3;
-      // Delete tiktok accounts linked to this campaign
-      const { error: e4 } = await supabase.from("tiktok_accounts").delete().eq("campaign_id", campaign.id);
+      // Unlink tiktok accounts (set campaign_id = null, don't delete)
+      const { error: e4 } = await supabase.from("tiktok_accounts").update({ campaign_id: null }).eq("campaign_id", campaign.id);
       if (e4) throw e4;
       const { error: e5 } = await supabase.from("campaigns").delete().eq("id", campaign.id);
       if (e5) throw e5;
