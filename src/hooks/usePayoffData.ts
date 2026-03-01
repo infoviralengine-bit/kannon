@@ -78,10 +78,26 @@ export function usePayoffData(year: number, month: number) {
       const allVideos = videos ?? [];
       const allPayments = payments ?? [];
 
-      // Map: accountId -> effective views this month
+      // Map: accountId -> campaignId (for cap lookup)
+      const campaignByAccount = new Map<string, string>();
+      allAccounts.forEach((a) => {
+        if (a.campaign_id) campaignByAccount.set(a.id, a.campaign_id);
+      });
+
+      // Map: campaignId -> video_views_cap
+      const capByCampaign = new Map<string, number | null>();
+      allCampaigns.forEach((c) => capByCampaign.set(c.id, (c as any).video_views_cap as number | null));
+
+      // Map: accountId -> effective views this month (with per-video cap)
       const viewsByAccount = new Map<string, number>();
       allVideos.forEach((v) => {
-        const effectiveViews = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
+        let effectiveViews = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
+        // Apply video cap from campaign
+        const campId = campaignByAccount.get(v.tiktok_account_id);
+        if (campId) {
+          const cap = capByCampaign.get(campId);
+          if (cap != null && cap > 0) effectiveViews = Math.min(effectiveViews, cap);
+        }
         viewsByAccount.set(v.tiktok_account_id, (viewsByAccount.get(v.tiktok_account_id) ?? 0) + effectiveViews);
       });
 
@@ -116,7 +132,7 @@ export function usePayoffData(year: number, month: number) {
           });
       });
 
-      // Creator views month (across all accounts)
+      // Creator views month (across all accounts, already capped)
       function creatorMonthViews(creatorId: string): number {
         const accIds = accountsByCreator.get(creatorId) ?? [];
         return accIds.reduce((s, id) => s + (viewsByAccount.get(id) ?? 0), 0);
