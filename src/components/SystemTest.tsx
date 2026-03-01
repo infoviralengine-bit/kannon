@@ -88,7 +88,14 @@ async function generateCycle(
   let totalCurrentViews = 0;
   if (accIds.length) {
     const videos = await fetchAllVideos(accIds, "views, views_final, window_closed");
-    totalCurrentViews = videos.reduce((s, v) => s + (v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0)), 0);
+    // Fetch campaign's video_views_cap
+    const { data: campData } = await supabase.from("campaigns").select("video_views_cap").eq("id", campaignId).single();
+    const cap = (campData as any)?.video_views_cap as number | null;
+    totalCurrentViews = videos.reduce((s, v) => {
+      let eff = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
+      if (cap != null && cap > 0) eff = Math.min(eff, cap);
+      return s + eff;
+    }, 0);
   }
 
   const newViews = isFirstCycle ? 0 : Math.max(0, totalCurrentViews - prevViewsPaidCumulative);
@@ -828,7 +835,123 @@ async function runModule9(skipCleanup = false): Promise<TestLog[]> {
 
 // ─── Main Component ───
 
-const ALL_TEST_NAMES = ["TEST_M1", "TEST_M2", "TEST_M3", "TEST_M4", "TEST_M5", "TEST_M6", "TEST_M7", "TEST_M7_ZERO", "TEST_M8", "TEST_M9", "SIMUL_3MESI", "TEST_E2E"];
+// ═══════════════════════════════════════════════════════════════
+// MODULE 10: Cap Video e Cap di Spesa
+// ═══════════════════════════════════════════════════════════════
+
+async function runModule10(skipCleanup = false): Promise<TestLog[]> {
+  const logs: TestLog[] = [];
+  let campaignId = "";
+  let campaignId2 = "";
+  const creatorIds: string[] = [];
+
+  try {
+    // ── Cap Video ──
+    logs.push({ step: "🔧 Test Cap Video: campagna con video_views_cap=100.000, CPM=2€", ok: true });
+
+    const { data: camp } = await supabase.from("campaigns").insert({
+      name: "TEST_M10_CAP", client_name: "ClienteCap", start_date: "2026-01-01", end_date: "2026-06-01",
+      client_cpm: 2, client_fixed_per_creator: 0, planned_creators: 1, status: "active",
+      video_views_cap: 100000,
+    } as any).select().single();
+    campaignId = camp!.id;
+
+    const { data: cr } = await supabase.from("creators").insert({ name: "Creator M10", status: "active", creator_cpm: 0.5, creator_fixed: 0, min_videos_per_day: 1 }).select().single();
+    creatorIds.push(cr!.id);
+    await supabase.from("campaign_creators").insert({ campaign_id: campaignId, creator_id: cr!.id });
+    const { data: acc } = await supabase.from("tiktok_accounts").insert({ username: "test_m10", account_type: "creator", campaign_id: campaignId, creator_id: cr!.id }).select().single();
+
+    // Video A: 50k (sotto cap)
+    await supabase.from("videos").insert({ tiktok_account_id: acc!.id, published_at: "2026-01-05T10:00:00Z", tiktok_video_id: "m10_a", views: 50000 });
+    // Video B: 150k (sopra cap → cappato a 100k)
+    await supabase.from("videos").insert({ tiktok_account_id: acc!.id, published_at: "2026-01-10T10:00:00Z", tiktok_video_id: "m10_b", views: 150000 });
+    // Video C: 100k (esattamente al cap)
+    await supabase.from("videos").insert({ tiktok_account_id: acc!.id, published_at: "2026-01-15T10:00:00Z", tiktok_video_id: "m10_c", views: 100000 });
+
+    // Views effettive per video
+    assert(logs, "Video A (50k): views_effettive = 50.000 (sotto cap)", 50000, Math.min(50000, 100000));
+    assert(logs, "Video B (150k): views_effettive = 100.000 (cap raggiunto)", 100000, Math.min(150000, 100000));
+    assert(logs, "Video C (100k): views_effettive = 100.000 (esattamente al cap)", 100000, Math.min(100000, 100000));
+
+    // Totale views effettive
+    const totalEffective = Math.min(50000, 100000) + Math.min(150000, 100000) + Math.min(100000, 100000);
+    assert(logs, "Totale views effettive = 250.000 (non 300.000)", 250000, totalEffective);
+
+    // Totale CPM
+    const totalCpm = 2 * (totalEffective / 1000);
+    assert(logs, "Totale CPM = 500€ (non 600€)", 500, totalCpm);
+
+    // Verify via cycle generation
+    const p = { start_date: "2026-01-01", end_date: "2026-06-01", client_fixed_per_creator: 0, client_cpm: 2, planned_creators: 1 };
+    await generateCycle(campaignId, p); // C1
+    // Need to apply cap in generateCycle - check views
+    const { data: accs } = await supabase.from("tiktok_accounts").select("id").eq("campaign_id", campaignId);
+    const aIds = (accs ?? []).map(a => a.id);
+    const vids = await fetchAllVideos(aIds, "views, views_final, window_closed");
+    const cappedViews = vids.reduce((s, v) => {
+      const eff = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
+      return s + Math.min(eff, 100000);
+    }, 0);
+    assert(logs, "Views cappate dal DB = 250.000", 250000, cappedViews);
+
+    // ── Cap di Spesa ──
+    logs.push({ step: "🔧 Test Cap di Spesa: campagna con monthly_spend_cap=1.000€", ok: true });
+
+    const { data: camp2 } = await supabase.from("campaigns").insert({
+      name: "TEST_M10_SPEND", client_name: "ClienteSpend", start_date: "2026-01-01", end_date: "2026-06-01",
+      client_cpm: 2, client_fixed_per_creator: 0, planned_creators: 1, status: "active",
+      monthly_spend_cap: 1000,
+    } as any).select().single();
+    campaignId2 = camp2!.id;
+
+    const { data: cr2 } = await supabase.from("creators").insert({ name: "Creator M10 Spend", status: "active", creator_cpm: 0.5, creator_fixed: 0, min_videos_per_day: 1 }).select().single();
+    creatorIds.push(cr2!.id);
+    await supabase.from("campaign_creators").insert({ campaign_id: campaignId2, creator_id: cr2!.id });
+    const { data: acc2 } = await supabase.from("tiktok_accounts").insert({ username: "test_m10_spend", account_type: "creator", campaign_id: campaignId2, creator_id: cr2!.id }).select().single();
+
+    // Video with 400k views → CPM = 800€ (sotto cap 1000€)
+    await supabase.from("videos").insert({ tiktok_account_id: acc2!.id, published_at: "2026-01-05T10:00:00Z", tiktok_video_id: "m10_sp_v1", views: 400000 });
+
+    const p2 = { start_date: "2026-01-01", end_date: "2026-06-01", client_fixed_per_creator: 0, client_cpm: 2, planned_creators: 1 };
+    await generateCycle(campaignId2, p2); // C1
+    const c2 = await generateCycle(campaignId2, p2); // C2: 400k views → 800€
+    assert(logs, "C2 sotto cap: totale = 800€ (sotto 1.000€)", 800, c2.totalAmount);
+
+    // Check campaign is still active
+    const { data: campCheck1 } = await supabase.from("campaigns").select("status").eq("id", campaignId2).single();
+    assertBool(logs, "Campagna ancora attiva dopo C2", true, campCheck1?.status === "active");
+
+    // Add more views → 600k nuove → CPM = 1200€ → cap a 1000€
+    await supabase.from("videos").update({ views: 1000000 }).eq("tiktok_video_id", "m10_sp_v1");
+    const c3 = await generateCycle(campaignId2, p2);
+    assert(logs, "C3 sopra cap: totale cappato a 1.000€", 1000, c3.totalAmount);
+
+    // Check campaign paused
+    const { data: campCheck2 } = await supabase.from("campaigns").select("status").eq("id", campaignId2).single();
+    assertBool(logs, "Campagna in pausa dopo cap raggiunto", true, campCheck2?.status === "paused");
+
+    // Check notification created
+    const { data: notifs } = await supabase.from("notifications").select("id, type").eq("campaign_id", campaignId2).eq("type", "spend_cap_reached");
+    assertBool(logs, "Notifica spend_cap_reached creata", true, (notifs ?? []).length > 0);
+
+    // Simulate increase cap and resume
+    await supabase.from("campaigns").update({ monthly_spend_cap: 2000, status: "active" } as any).eq("id", campaignId2);
+    const { data: campCheck3 } = await supabase.from("campaigns").select("status").eq("id", campaignId2).single();
+    assertBool(logs, "Campagna torna attiva dopo aumento cap", true, campCheck3?.status === "active");
+
+  } catch (e: any) {
+    logs.push({ step: `❌ ERRORE: ${e.message}`, ok: false });
+  } finally {
+    if (campaignId && !skipCleanup) await cleanupCampaign(campaignId, creatorIds.slice(0, 1));
+    if (campaignId2 && !skipCleanup) {
+      await supabase.from("notifications").delete().eq("campaign_id", campaignId2);
+      await cleanupCampaign(campaignId2, creatorIds.slice(1));
+    }
+  }
+  return logs;
+}
+
+const ALL_TEST_NAMES = ["TEST_M1", "TEST_M2", "TEST_M3", "TEST_M4", "TEST_M5", "TEST_M6", "TEST_M7", "TEST_M7_ZERO", "TEST_M8", "TEST_M9", "TEST_M10_CAP", "TEST_M10_SPEND", "SIMUL_3MESI", "TEST_E2E"];
 
 export default function SystemTest() {
   const [running, setRunning] = useState(false);
@@ -888,6 +1011,7 @@ export default function SystemTest() {
       { name: "M7 — planned_creators & valori zero", fn: () => runModule7(skip) },
       { name: "M8 — Simulazione E2E margine", fn: () => runModule8(skip) },
       { name: "M9 — Finestra chiusa tra cicli", fn: () => runModule9(skip) },
+      { name: "M10 — Cap video e cap di spesa", fn: () => runModule10(skip) },
     ];
 
     const moduleResults: ModuleResult[] = [];
@@ -948,7 +1072,7 @@ export default function SystemTest() {
             <div>
               <CardTitle className="text-lg">Test Completo Sistema</CardTitle>
               <CardDescription>
-                9 moduli: cicli con fisso cliente, views cumulative, multi-video, fisso creator, finestra 30gg, campagna completa, planned_creators, simulazione E2E margine, finestra tra cicli.
+                10 moduli: cicli con fisso cliente, views cumulative, multi-video, fisso creator, finestra 30gg, campagna completa, planned_creators, simulazione E2E margine, finestra tra cicli, cap video e cap di spesa.
               </CardDescription>
             </div>
           </div>

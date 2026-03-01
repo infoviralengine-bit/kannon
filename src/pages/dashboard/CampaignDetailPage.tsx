@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatViews, formatCurrency } from "@/lib/format";
+import { getEffectiveViews } from "@/lib/videoWindow";
 import {
   useCampaignDetail, useCampaignKpi, useCampaignMargin,
   useCampaignCreators, useCampaignAccounts, useCampaignAlerts,
@@ -22,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -84,6 +86,8 @@ function EditCampaignModal({
     client_cpm: number | null; client_fixed_per_creator: number | null;
     start_date: string; end_date: string | null; notes: string | null;
     planned_creators?: number;
+    video_views_cap?: number | null;
+    monthly_spend_cap?: number | null;
   };
 }) {
   const { toast } = useToast();
@@ -96,6 +100,8 @@ function EditCampaignModal({
   const [endDate, setEndDate] = useState<Date | undefined>(campaign.end_date ? new Date(campaign.end_date) : undefined);
   const [notes, setNotes] = useState(campaign.notes ?? "");
   const [plannedCreators, setPlannedCreators] = useState(String((campaign as any).planned_creators ?? 1));
+  const [videoViewsCap, setVideoViewsCap] = useState(campaign.video_views_cap != null ? String(campaign.video_views_cap) : "");
+  const [monthlySpendCap, setMonthlySpendCap] = useState(campaign.monthly_spend_cap != null ? String(campaign.monthly_spend_cap) : "");
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -106,6 +112,8 @@ function EditCampaignModal({
       const newFixed = isNaN(parsedFixed) ? 200 : parsedFixed;
       const parsedPlanned = parseInt(plannedCreators);
       const newPlanned = Math.max(1, isNaN(parsedPlanned) ? 1 : parsedPlanned);
+      const parsedViewsCap = videoViewsCap.trim() ? parseInt(videoViewsCap) : null;
+      const parsedSpendCap = monthlySpendCap.trim() ? parseFloat(monthlySpendCap) : null;
 
       const { error } = await supabase.from("campaigns").update({
         name,
@@ -116,6 +124,8 @@ function EditCampaignModal({
         end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
         notes: notes || null,
         planned_creators: newPlanned,
+        video_views_cap: parsedViewsCap,
+        monthly_spend_cap: parsedSpendCap,
       } as any).eq("id", campaign.id);
       if (error) throw error;
 
@@ -127,7 +137,6 @@ function EditCampaignModal({
         .eq("is_paid", false);
 
       if (unpaidPayments && unpaidPayments.length > 0) {
-        // Get cycle info for is_last_cycle
         const cycleIds = unpaidPayments.map((p) => p.cycle_id);
         const { data: cycles } = await supabase
           .from("payment_cycles")
@@ -135,7 +144,6 @@ function EditCampaignModal({
           .in("id", cycleIds);
         const cycleMap = new Map((cycles ?? []).map((c) => [c.id, c.is_last_cycle]));
 
-        // Get actual creator count
         const { data: cc } = await supabase
           .from("campaign_creators")
           .select("creator_id")
@@ -147,7 +155,12 @@ function EditCampaignModal({
           const isLast = cycleMap.get(p.cycle_id) ?? false;
           const fixedAmount = isLast ? 0 : newFixed * creatorCount;
           const cpmAmount = newCpm * (p.cpm_views / 1000);
-          const totalAmount = fixedAmount + cpmAmount;
+          let totalAmount = fixedAmount + cpmAmount;
+          
+          // Apply spend cap
+          if (parsedSpendCap != null && totalAmount > parsedSpendCap) {
+            totalAmount = parsedSpendCap;
+          }
 
           await supabase.from("client_payments").update({
             fixed_amount: fixedAmount,
@@ -172,7 +185,7 @@ function EditCampaignModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Modifica Campagna</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-1.5">
@@ -226,6 +239,18 @@ function EditCampaignModal({
           <div className="grid gap-1.5">
             <Label>N° creator previsti</Label>
             <Input type="number" min="1" step="1" value={plannedCreators} onChange={(e) => setPlannedCreators(e.target.value)} />
+          </div>
+          <Separator />
+          <p className="text-sm font-medium text-muted-foreground">Cap (opzionali)</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-1.5">
+              <Label>Cap views per video</Label>
+              <Input type="number" min="0" step="1" value={videoViewsCap} onChange={(e) => setVideoViewsCap(e.target.value)} placeholder="es. 100000 — vuoto = nessun cap" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Cap di spesa per ciclo (€)</Label>
+              <Input type="number" min="0" step="0.01" value={monthlySpendCap} onChange={(e) => setMonthlySpendCap(e.target.value)} placeholder="es. 5000 — vuoto = nessun cap" />
+            </div>
           </div>
           <div className="grid gap-1.5">
             <Label>Note</Label>
@@ -292,10 +317,82 @@ function AddCreatorModal({ open, onOpenChange, campaignId }: {
   );
 }
 
+/* ── Spend Cap Banner ── */
+function SpendCapBanner({ campaign, campaignId }: {
+  campaign: any;
+  campaignId: string;
+}) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [showModal, setShowModal] = useState(false);
+  const [newCap, setNewCap] = useState("");
+
+  const isPausedForCap = campaign.status === "paused" && campaign.monthly_spend_cap != null;
+
+  const resumeMutation = useMutation({
+    mutationFn: async () => {
+      const parsedCap = parseFloat(newCap);
+      if (isNaN(parsedCap) || parsedCap <= 0) throw new Error("Inserisci un cap valido");
+      const { error } = await supabase.from("campaigns").update({
+        monthly_spend_cap: parsedCap,
+        status: "active",
+      } as any).eq("id", campaignId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Campagna riattivata", description: `Nuovo cap: €${newCap}` });
+      qc.invalidateQueries({ queryKey: ["campaign-detail", campaignId] });
+      qc.invalidateQueries({ queryKey: ["campaign-table"] });
+      setShowModal(false);
+    },
+    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+  });
+
+  if (!isPausedForCap) return null;
+
+  return (
+    <>
+      <Card className="border-warning/50 bg-warning/10">
+        <CardContent className="py-4 flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-warning" />
+            <span className="text-sm">
+              ⚠️ Cap di spesa raggiunto ({formatCurrency(campaign.monthly_spend_cap)}) — Campagna in pausa.
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => { setNewCap(String(campaign.monthly_spend_cap * 1.5)); setShowModal(true); }}>
+              Aumenta cap e riprendi
+            </Button>
+            <Button size="sm" variant="outline">
+              Mantieni in pausa
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Aumenta Cap di Spesa</DialogTitle></DialogHeader>
+          <div className="grid gap-4 py-2">
+            <p className="text-sm text-muted-foreground">Cap attuale: {formatCurrency(campaign.monthly_spend_cap)}</p>
+            <div className="grid gap-1.5">
+              <Label>Nuovo cap (€)</Label>
+              <Input type="number" step="0.01" value={newCap} onChange={(e) => setNewCap(e.target.value)} />
+            </div>
+            <Button onClick={() => resumeMutation.mutate()} disabled={resumeMutation.isPending}>
+              {resumeMutation.isPending ? "Salvataggio..." : "Salva e Riattiva"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 /* ── Cycles Section ── */
 function CyclesSection({ campaignId, campaign, cycles }: {
   campaignId: string;
-  campaign: { start_date: string; end_date: string | null; client_fixed_per_creator: number | null; client_cpm: number | null };
+  campaign: { start_date: string; end_date: string | null; client_fixed_per_creator: number | null; client_cpm: number | null; video_views_cap?: number | null; monthly_spend_cap?: number | null };
   cycles: ReturnType<typeof useCampaignCycles>;
 }) {
   const { toast } = useToast();
@@ -320,7 +417,6 @@ function CyclesSection({ campaignId, campaign, cycles }: {
       endD.setUTCDate(endD.getUTCDate() + 30);
       const endDate = endD.toISOString().slice(0, 10);
 
-      // Check if this is the last cycle (post-campaign)
       const campEndDate = campaign.end_date;
       const isLastCycle = campEndDate ? startDate >= campEndDate : false;
 
@@ -333,41 +429,45 @@ function CyclesSection({ campaignId, campaign, cycles }: {
       }).select().single();
       if (cycleErr) throw cycleErr;
 
-      // Get creator count
       const { data: cc } = await supabase.from("campaign_creators").select("creator_id").eq("campaign_id", campaignId);
       const actualCreatorCount = (cc ?? []).length;
       const plannedCount = (campaign as any).planned_creators ?? 1;
       const isFirstCycle = nextNumber === 1;
-      // Cycle 1 uses planned_creators, subsequent cycles use actual (or planned as fallback)
       const creatorCount = isFirstCycle ? plannedCount : (actualCreatorCount > 0 ? actualCreatorCount : plannedCount);
 
-      // Get views_paid_cumulative from previous cycle's payment
       let prevViewsPaidCumulative = 0;
       if (lastCycle?.payment) {
         prevViewsPaidCumulative = lastCycle.payment.viewsPaidCumulative ?? 0;
       }
 
-      // Get total current views for all campaign videos
       const { data: accounts } = await supabase.from("tiktok_accounts").select("id").eq("campaign_id", campaignId);
       const accIds = (accounts ?? []).map((a) => a.id);
 
+      const cap = (campaign as any).video_views_cap as number | null;
       let totalCurrentViews = 0;
       if (accIds.length) {
         const { data: videos } = await supabase.from("videos").select("views, views_final, window_closed").in("tiktok_account_id", accIds);
         totalCurrentViews = (videos ?? []).reduce((s, v) => {
-          const effectiveViews = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
+          let effectiveViews = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
+          if (cap != null && cap > 0) effectiveViews = Math.min(effectiveViews, cap);
           return s + effectiveViews;
         }, 0);
       }
 
-      // Calculate new views for this cycle
       const newViews = isFirstCycle ? 0 : Math.max(0, totalCurrentViews - prevViewsPaidCumulative);
       const viewsPaidCumulative = prevViewsPaidCumulative + newViews;
 
-      // Fixed amount: 0 for last cycle (post-campaign), otherwise fixed × creators
       const fixedAmount = isLastCycle ? 0 : (campaign.client_fixed_per_creator ?? 200) * creatorCount;
       const cpmAmount = isFirstCycle ? 0 : (campaign.client_cpm ?? 2) * (newViews / 1000);
-      const totalAmount = fixedAmount + cpmAmount;
+      let totalAmount = fixedAmount + cpmAmount;
+
+      // Apply spend cap
+      const spendCap = (campaign as any).monthly_spend_cap as number | null;
+      let capReached = false;
+      if (spendCap != null && totalAmount >= spendCap) {
+        totalAmount = spendCap;
+        capReached = true;
+      }
 
       await supabase.from("client_payments").insert({
         campaign_id: campaignId,
@@ -382,8 +482,43 @@ function CyclesSection({ campaignId, campaign, cycles }: {
         views_paid_cumulative: viewsPaidCumulative,
       } as any);
 
-      toast({ title: `Ciclo ${nextNumber} generato`, description: `Da ricevere: ${formatCurrency(totalAmount)}` });
+      // If spend cap reached, pause campaign and create notifications
+      if (capReached) {
+        await supabase.from("campaigns").update({ status: "paused" } as any).eq("id", campaignId);
+
+        // Create notifications for admin/team
+        const { data: roles } = await supabase.from("user_roles").select("user_id").in("role", ["admin", "team"]);
+        const userIds = new Set((roles ?? []).map(r => r.user_id));
+
+        // Add client
+        const { data: campFull } = await supabase.from("campaigns").select("client_profile_id, name").eq("id", campaignId).single();
+        if (campFull?.client_profile_id) userIds.add(campFull.client_profile_id);
+
+        // Add creators
+        const creatorProfileIds = (cc ?? []).map(r => r.creator_id);
+        if (creatorProfileIds.length) {
+          const { data: crs } = await supabase.from("creators").select("profile_id").in("id", creatorProfileIds);
+          (crs ?? []).forEach(c => { if (c.profile_id) userIds.add(c.profile_id); });
+        }
+
+        const message = `Cap di spesa raggiunto per "${campFull?.name ?? "campagna"}" (${formatCurrency(spendCap)}). Campagna in pausa.`;
+        const notifs = Array.from(userIds).map(uid => ({
+          campaign_id: campaignId,
+          type: "spend_cap_reached",
+          message,
+          user_id: uid,
+        }));
+        if (notifs.length) {
+          await supabase.from("notifications").insert(notifs);
+        }
+
+        toast({ title: `Ciclo ${nextNumber} generato — CAP DI SPESA RAGGIUNTO`, description: `Campagna in pausa. Totale cappato a ${formatCurrency(spendCap)}`, variant: "destructive" });
+      } else {
+        toast({ title: `Ciclo ${nextNumber} generato`, description: `Da ricevere: ${formatCurrency(totalAmount)}` });
+      }
+
       qc.invalidateQueries({ queryKey: ["campaign-cycles", campaignId] });
+      qc.invalidateQueries({ queryKey: ["campaign-detail", campaignId] });
       qc.invalidateQueries({ queryKey: ["client-payments"] });
     } catch (e: any) {
       toast({ title: "Errore", description: e.message, variant: "destructive" });
@@ -471,16 +606,16 @@ function DeleteCampaignModal({ open, onOpenChange, campaign }: {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      // Delete in order: client_payments, payment_cycles, campaign_creators, then campaign (cascade)
       const { error: e1 } = await supabase.from("client_payments").delete().eq("campaign_id", campaign.id);
       if (e1) throw e1;
       const { error: e2 } = await supabase.from("payment_cycles").delete().eq("campaign_id", campaign.id);
       if (e2) throw e2;
       const { error: e3 } = await supabase.from("campaign_creators").delete().eq("campaign_id", campaign.id);
       if (e3) throw e3;
-      // Unlink tiktok accounts (set campaign_id = null, don't delete)
       const { error: e4 } = await supabase.from("tiktok_accounts").update({ campaign_id: null }).eq("campaign_id", campaign.id);
       if (e4) throw e4;
+      // Delete notifications
+      await supabase.from("notifications").delete().eq("campaign_id", campaign.id);
       const { error: e5 } = await supabase.from("campaigns").delete().eq("id", campaign.id);
       if (e5) throw e5;
     },
@@ -501,7 +636,7 @@ function DeleteCampaignModal({ open, onOpenChange, campaign }: {
         <DialogHeader><DialogTitle className="text-destructive">Elimina Campagna</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
           <p className="text-sm text-muted-foreground">
-            Sei sicuro di voler eliminare la campagna <strong>{campaign.name}</strong>? Questa azione è irreversibile e cancellerà i cicli di pagamento e scollegherà creator e account dalla campagna. Creator, account e video rimarranno nel sistema.
+            Sei sicuro di voler eliminare la campagna <strong>{campaign.name}</strong>? Questa azione è irreversibile e cancellerà i cicli di pagamento e scollegherà creator e account dalla campagna.
           </p>
           <div className="flex items-center gap-2">
             <Checkbox id="confirm-delete" checked={confirmed} onCheckedChange={(v) => setConfirmed(v === true)} />
@@ -570,6 +705,14 @@ export default function CampaignDetailPage() {
 
   const isCompleted = campaign.status === "completed";
   const kpiLoading = kpi.isLoading || margin.isLoading;
+  const campAny = campaign as any;
+  const videoViewsCap = campAny.video_views_cap as number | null;
+  const monthlySpendCap = campAny.monthly_spend_cap as number | null;
+
+  // Compute current cycle spend for progress bar
+  const currentCyclePayment = (cycles.data ?? []).at(-1)?.payment;
+  const currentSpend = currentCyclePayment ? currentCyclePayment.totalAmount : 0;
+  const spendPercent = monthlySpendCap && monthlySpendCap > 0 ? Math.min(100, (currentSpend / monthlySpendCap) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -594,6 +737,9 @@ export default function CampaignDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Spend cap banner */}
+      <SpendCapBanner campaign={campaign} campaignId={campaignId} />
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -623,7 +769,7 @@ export default function CampaignDetailPage() {
       </div>
 
       {campaign && editOpen && (
-        <EditCampaignModal open={editOpen} onOpenChange={setEditOpen} campaign={campaign} />
+        <EditCampaignModal open={editOpen} onOpenChange={setEditOpen} campaign={campaign as any} />
       )}
 
       {/* KPI Cards */}
@@ -639,7 +785,7 @@ export default function CampaignDetailPage() {
       {/* Economic conditions */}
       <Card>
         <CardHeader><CardTitle className="text-lg">Condizioni Economiche</CardTitle></CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground">CPM Cliente</p>
@@ -651,14 +797,14 @@ export default function CampaignDetailPage() {
             </div>
             <div>
               <p className="text-muted-foreground">Creator previsti</p>
-              <p className="font-semibold">{(campaign as any).planned_creators ?? 1}</p>
+              <p className="font-semibold">{campAny.planned_creators ?? 1}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Creator effettivi</p>
               <div className="flex items-center gap-2">
                 <p className="font-semibold">{kpi.data?.creatorCount ?? 0}</p>
                 {!kpi.isLoading && (() => {
-                  const planned = (campaign as any).planned_creators ?? 1;
+                  const planned = campAny.planned_creators ?? 1;
                   const actual = kpi.data?.creatorCount ?? 0;
                   if (actual >= planned) {
                     return <Badge className="bg-success/20 text-success border-success/30 text-xs">✅ Completi</Badge>;
@@ -676,9 +822,33 @@ export default function CampaignDetailPage() {
               </p>
             </div>
           </div>
+
+          {/* Cap section */}
+          <Separator />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <p className="text-muted-foreground">Cap per video</p>
+              <p className="font-semibold">{videoViewsCap != null ? `${formatViews(videoViewsCap)} views` : "Nessun cap"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Cap di spesa ciclo</p>
+              <p className="font-semibold">{monthlySpendCap != null ? formatCurrency(monthlySpendCap) : "Nessun cap"}</p>
+            </div>
+            {monthlySpendCap != null && campaign.status === "active" && (
+              <div className="col-span-2">
+                <p className="text-muted-foreground mb-1">Spesa ciclo corrente</p>
+                <div className="flex items-center gap-3">
+                  <Progress value={spendPercent} className="flex-1" />
+                  <span className="text-sm font-semibold">{formatCurrency(currentSpend)} / {formatCurrency(monthlySpendCap)}</span>
+                  {spendPercent >= 100 && <Badge variant="destructive" className="text-xs">CAP RAGGIUNTO</Badge>}
+                </div>
+              </div>
+            )}
+          </div>
+
           {campaign.notes && (
             <>
-              <Separator className="my-4" />
+              <Separator />
               <div>
                 <p className="text-muted-foreground text-sm mb-1">Note</p>
                 <p className="text-sm">{campaign.notes}</p>
@@ -828,7 +998,7 @@ export default function CampaignDetailPage() {
         </CardContent>
       </Card>
       {/* Payment Cycles */}
-      <CyclesSection campaignId={campaignId} campaign={campaign} cycles={cycles} />
+      <CyclesSection campaignId={campaignId} campaign={campaign as any} cycles={cycles} />
 
       {/* Delete Campaign (admin only) */}
       {role === "admin" && (

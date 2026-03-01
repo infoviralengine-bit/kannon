@@ -59,11 +59,13 @@ export type Database = {
           created_at: string
           end_date: string | null
           id: string
+          monthly_spend_cap: number | null
           name: string
           notes: string | null
           planned_creators: number
           start_date: string
           status: string
+          video_views_cap: number | null
         }
         Insert: {
           client_cpm?: number | null
@@ -73,11 +75,13 @@ export type Database = {
           created_at?: string
           end_date?: string | null
           id?: string
+          monthly_spend_cap?: number | null
           name: string
           notes?: string | null
           planned_creators?: number
           start_date: string
           status?: string
+          video_views_cap?: number | null
         }
         Update: {
           client_cpm?: number | null
@@ -87,11 +91,13 @@ export type Database = {
           created_at?: string
           end_date?: string | null
           id?: string
+          monthly_spend_cap?: number | null
           name?: string
           notes?: string | null
           planned_creators?: number
           start_date?: string
           status?: string
+          video_views_cap?: number | null
         }
         Relationships: [
           {
@@ -268,6 +274,44 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
         ]
