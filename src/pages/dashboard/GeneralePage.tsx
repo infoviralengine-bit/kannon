@@ -276,8 +276,8 @@ export default function GeneralePage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {campaignCards.data.map((c) => {
-              const capWarning = c.capPercent !== null && c.capPercent >= 80;
-              const capReached = c.capPercent !== null && c.capPercent >= 100;
+              const capWarning = c.spendCapPercent !== null && c.spendCapPercent >= 80;
+              const capReached = c.spendCapPercent !== null && c.spendCapPercent >= 100;
               const borderClass = capReached
                 ? "border-red-500/40"
                 : capWarning
