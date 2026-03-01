@@ -54,7 +54,8 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
     mutationFn: async () => {
       if (!name || !clientName || !startDate) throw new Error("Compila i campi obbligatori");
       const startStr = format(startDate, "yyyy-MM-dd");
-      const numPlanned = Math.max(1, parseInt(plannedCreators) || 1);
+      const parsedPlanned = parseInt(plannedCreators);
+      const numPlanned = Math.max(1, isNaN(parsedPlanned) ? 1 : parsedPlanned);
       const { data: newCamp, error } = await supabase.from("campaigns").insert({
         name,
         client_name: clientName,
