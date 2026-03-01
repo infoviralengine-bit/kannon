@@ -568,34 +568,41 @@ export default function SystemTest() {
   const [results, setResults] = useState<ModuleResult[]>([]);
   const [elapsed, setElapsed] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [progress, setProgress] = useState("");
 
   async function handleRun() {
     setRunning(true);
     setResults([]);
+    setShowResults(false);
+    setProgress("🧹 Pulizia dati precedenti...");
     const start = Date.now();
 
-    // Cleanup legacy test data first
-    const legacyNames = ["SIMUL_3MESI", "TEST_E2E", "TEST_M1", "TEST_M2", "TEST_M3", "TEST_M4", "TEST_M5", "TEST_M6"];
-    for (const name of legacyNames) {
-      const { data: camps } = await supabase.from("campaigns").select("id").eq("name", name);
-      for (const c of (camps ?? [])) {
-        const { data: accs } = await supabase.from("tiktok_accounts").select("id").eq("campaign_id", c.id);
-        const accIds = (accs ?? []).map(a => a.id);
-        if (accIds.length) await supabase.from("videos").delete().in("tiktok_account_id", accIds);
-        await supabase.from("client_payments").delete().eq("campaign_id", c.id);
-        await supabase.from("payment_cycles").delete().eq("campaign_id", c.id);
-        const { data: ccData } = await supabase.from("campaign_creators").select("creator_id").eq("campaign_id", c.id);
-        const crIds = (ccData ?? []).map(x => x.creator_id);
-        await supabase.from("campaign_creators").delete().eq("campaign_id", c.id);
-        for (const id of accIds) await supabase.from("tiktok_accounts").delete().eq("id", id);
-        for (const id of crIds) {
-          const { data: cr } = await supabase.from("creators").select("name").eq("id", id).single();
-          if (cr?.name && (cr.name.startsWith("Simul ") || cr.name.startsWith("Creator E2E") || cr.name.startsWith("Creator M"))) {
-            await supabase.from("creators").delete().eq("id", id);
+    // Cleanup legacy test data first (wrapped in try/catch)
+    try {
+      const legacyNames = ["SIMUL_3MESI", "TEST_E2E", "TEST_M1", "TEST_M2", "TEST_M3", "TEST_M4", "TEST_M5", "TEST_M6"];
+      for (const name of legacyNames) {
+        const { data: camps } = await supabase.from("campaigns").select("id").eq("name", name);
+        for (const c of (camps ?? [])) {
+          const { data: accs } = await supabase.from("tiktok_accounts").select("id").eq("campaign_id", c.id);
+          const accIds = (accs ?? []).map(a => a.id);
+          if (accIds.length) await supabase.from("videos").delete().in("tiktok_account_id", accIds);
+          await supabase.from("client_payments").delete().eq("campaign_id", c.id);
+          await supabase.from("payment_cycles").delete().eq("campaign_id", c.id);
+          const { data: ccData } = await supabase.from("campaign_creators").select("creator_id").eq("campaign_id", c.id);
+          const crIds = (ccData ?? []).map(x => x.creator_id);
+          await supabase.from("campaign_creators").delete().eq("campaign_id", c.id);
+          for (const id of accIds) await supabase.from("tiktok_accounts").delete().eq("id", id);
+          for (const id of crIds) {
+            const { data: cr } = await supabase.from("creators").select("name").eq("id", id).single();
+            if (cr?.name && (cr.name.startsWith("Simul ") || cr.name.startsWith("Creator E2E") || cr.name.startsWith("Creator M"))) {
+              await supabase.from("creators").delete().eq("id", id);
+            }
           }
+          await supabase.from("campaigns").delete().eq("id", c.id);
         }
-        await supabase.from("campaigns").delete().eq("id", c.id);
       }
+    } catch (e: any) {
+      console.warn("Legacy cleanup warning:", e.message);
     }
 
     const modules: { name: string; fn: () => Promise<TestLog[]> }[] = [
@@ -609,6 +616,7 @@ export default function SystemTest() {
 
     const moduleResults: ModuleResult[] = [];
     for (const mod of modules) {
+      setProgress(`▶ ${mod.name}...`);
       const logs = await mod.fn();
       const { passed, total } = countAsserts(logs);
       moduleResults.push({ name: mod.name, logs, passed, total });
@@ -624,6 +632,7 @@ export default function SystemTest() {
     setResults(moduleResults);
     setElapsed(Math.round((Date.now() - start) / 1000));
     setRunning(false);
+    setProgress("");
     setShowResults(true);
   }
 
@@ -667,6 +676,9 @@ export default function SystemTest() {
           <Button onClick={handleRun} disabled={running} variant="outline">
             {running ? "⏳ Test in esecuzione..." : "🧪 Test Completo Sistema"}
           </Button>
+          {running && progress && (
+            <p className="text-xs text-muted-foreground mt-2 animate-pulse">{progress}</p>
+          )}
         </CardContent>
       </Card>
 
