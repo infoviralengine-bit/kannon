@@ -185,7 +185,7 @@ export default function PayoffPage() {
                   {/* Campaign CPM metrics */}
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Views periodo</p>
+                      <p className="text-muted-foreground flex items-center">Views periodo <CappedBadge variant="icon" /></p>
                       <p className="font-semibold text-lg">{formatViews(camp.viewsPeriod)}</p>
                     </div>
                     <div>
