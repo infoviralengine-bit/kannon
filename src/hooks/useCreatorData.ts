@@ -43,11 +43,11 @@ export interface CreatorTableRow {
   isOnTrack: boolean;
 }
 
-export function useCreatorTable() {
-  const { start: mStart, end: mEnd } = currentMonthRange();
+export function useCreatorTable(selectedYear?: number, selectedMonth?: number) {
   const now = new Date();
-  const year = now.getFullYear();
-  const month0 = now.getMonth();
+  const year = selectedYear ?? now.getFullYear();
+  const month0 = selectedMonth ?? now.getMonth();
+  const { start: mStart, end: mEnd } = monthRangeFor(year, month0);
 
   return useQuery({
     queryKey: ["creator-table"],
