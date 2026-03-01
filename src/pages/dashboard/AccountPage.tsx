@@ -185,6 +185,7 @@ export default function AccountPage() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
