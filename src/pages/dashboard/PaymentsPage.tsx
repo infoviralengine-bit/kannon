@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   CreditCard, ArrowDownCircle, ArrowUpCircle, TrendingUp, Clock, Check, AlertTriangle,
+  ChevronDown, ChevronRight, Info,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
