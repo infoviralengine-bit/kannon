@@ -13,6 +13,7 @@ import {
   useClientPayments, useCreatorPayments, usePaymentHistory, usePaymentSummary,
   type ClientPaymentRow, type CreatorPaymentRow,
 } from "@/hooks/usePaymentsData";
+import { useContractPayments, type ContractPaymentRow } from "@/hooks/useContractData";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
