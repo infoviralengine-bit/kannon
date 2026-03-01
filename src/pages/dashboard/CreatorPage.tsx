@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatViews } from "@/lib/format";
@@ -116,10 +116,28 @@ export default function CreatorPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const qc = useQueryClient();
-  const { data: creators, isLoading } = useCreatorTable();
+
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+
+  const { data: creators, isLoading } = useCreatorTable(selectedYear, selectedMonth);
   const [modalOpen, setModalOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+
+  const monthLabel = new Date(selectedYear, selectedMonth).toLocaleDateString("it-IT", { month: "long", year: "numeric" });
+  const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonth === now.getMonth();
+
+  function prevMonth() {
+    if (selectedMonth === 0) { setSelectedYear(y => y - 1); setSelectedMonth(11); }
+    else setSelectedMonth(m => m - 1);
+  }
+  function nextMonth() {
+    if (isCurrentMonth) return;
+    if (selectedMonth === 11) { setSelectedYear(y => y + 1); setSelectedMonth(0); }
+    else setSelectedMonth(m => m + 1);
+  }
 
   const deleteMutation = useMutation({
     mutationFn: async (creatorId: string) => {
@@ -164,12 +182,23 @@ export default function CreatorPage() {
 
       <CreateCreatorModal open={modalOpen} onOpenChange={setModalOpen} />
 
-      <div className="flex gap-2">
-        {(["all", "active", "inactive"] as const).map(f => (
-          <Button key={f} size="sm" variant={filter === f ? "default" : "outline"} onClick={() => setFilter(f)}>
-            {f === "all" ? "Tutti" : f === "active" ? "Attivi" : "Inattivi"}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          {(["all", "active", "inactive"] as const).map(f => (
+            <Button key={f} size="sm" variant={filter === f ? "default" : "outline"} onClick={() => setFilter(f)}>
+              {f === "all" ? "Tutti" : f === "active" ? "Attivi" : "Inattivi"}
+            </Button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={prevMonth}>
+            <ChevronLeft className="h-4 w-4" />
           </Button>
-        ))}
+          <span className="text-sm font-medium capitalize min-w-[140px] text-center">{monthLabel}</span>
+          <Button variant="outline" size="icon" className="h-8 w-8" onClick={nextMonth} disabled={isCurrentMonth}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <Card>
