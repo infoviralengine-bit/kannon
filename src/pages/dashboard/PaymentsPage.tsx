@@ -119,7 +119,7 @@ function ClientPaymentsTab() {
                   <TableCell className="text-right font-semibold">{formatCurrency(p.totalAmount)}</TableCell>
                   <TableCell>
                     {p.isPaid ? (
-                      <Badge className="bg-success/20 text-success border-success/30">✅ Pagato</Badge>
+                      <Badge className="bg-success/20 text-success border-success/30">✅</Badge>
                     ) : p.isOverdue ? (
                       <Badge variant="destructive">🔴 Scaduto</Badge>
                     ) : (
