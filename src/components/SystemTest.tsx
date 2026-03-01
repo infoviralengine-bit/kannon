@@ -676,6 +676,9 @@ export default function SystemTest() {
           <Button onClick={handleRun} disabled={running} variant="outline">
             {running ? "⏳ Test in esecuzione..." : "🧪 Test Completo Sistema"}
           </Button>
+          {running && progress && (
+            <p className="text-xs text-muted-foreground mt-2 animate-pulse">{progress}</p>
+          )}
         </CardContent>
       </Card>
 
