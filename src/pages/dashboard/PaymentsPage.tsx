@@ -8,6 +8,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatViews } from "@/lib/format";
+import { CappedBadge } from "@/components/CappedViewsBadge";
 import {
   useClientPayments, useCreatorPayments, usePaymentHistory, usePaymentSummary,
   type ClientPaymentRow, type CreatorPaymentRow,
@@ -124,7 +125,7 @@ function ClientPaymentsTab() {
                 <TableHead>Mese</TableHead>
                 <TableHead>Scadenza</TableHead>
                 <TableHead className="text-right">Fisso (€)</TableHead>
-                <TableHead className="text-right">Views nuove</TableHead>
+                <TableHead className="text-right">Views nuove <CappedBadge /></TableHead>
                 <TableHead className="text-right">CPM (€)</TableHead>
                 <TableHead className="text-right">Totale (€)</TableHead>
                 <TableHead>Status</TableHead>
@@ -206,7 +207,7 @@ function ClientPaymentsTab() {
                                 <span>{formatViews(Math.max(0, p.viewsPaidCumulative - p.cpmViews))}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Views nuove questo ciclo</span>
+                                <span className="text-muted-foreground">Views nuove questo ciclo <CappedBadge /></span>
                                 <span>{formatViews(p.cpmViews)}</span>
                               </div>
                               <div className="flex justify-between">
@@ -354,7 +355,7 @@ function CreatorPaymentsTab() {
                 <TableHead>Creator</TableHead>
                 <TableHead>Periodo</TableHead>
                 <TableHead className="text-right">Fisso (€)</TableHead>
-                <TableHead className="text-right">CPM (€)</TableHead>
+                <TableHead className="text-right">CPM (€) <CappedBadge /></TableHead>
                 <TableHead className="text-right">Totale (€)</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Azioni</TableHead>

@@ -9,6 +9,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { formatCurrency, formatViews } from "@/lib/format";
 import { useNavigate } from "react-router-dom";
 import { useCpmPayoffData } from "@/hooks/useCpmPayoffData";
+import { CappedBadge } from "@/components/CappedViewsBadge";
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid,
@@ -63,7 +64,9 @@ export default function PayoffPage() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Views Totali Periodo</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center">
+                Views Totali Periodo <CappedBadge variant="icon" />
+              </CardTitle>
               <Eye className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -171,7 +174,7 @@ export default function PayoffPage() {
                       <Badge variant="secondary" className="text-xs font-normal">{camp.clientName}</Badge>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
-                      <span className="text-muted-foreground">{formatViews(camp.viewsPeriod)} views</span>
+                      <span className="text-muted-foreground">{formatViews(camp.viewsPeriod)} views <CappedBadge /></span>
                       <span className={camp.marginCpm >= 0 ? "text-success font-semibold" : "text-destructive font-semibold"}>
                         {formatCurrency(camp.marginCpm)}
                       </span>
@@ -182,7 +185,7 @@ export default function PayoffPage() {
                   {/* Campaign CPM metrics */}
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Views periodo</p>
+                      <p className="text-muted-foreground flex items-center">Views periodo <CappedBadge variant="icon" /></p>
                       <p className="font-semibold text-lg">{formatViews(camp.viewsPeriod)}</p>
                     </div>
                     <div>
@@ -256,7 +259,7 @@ export default function PayoffPage() {
                 <TableRow>
                   <TableHead>Creator</TableHead>
                   <TableHead>Campagna</TableHead>
-                  <TableHead className="text-right">Views totali</TableHead>
+                  <TableHead className="text-right">Views totali <CappedBadge /></TableHead>
                   <TableHead className="text-right">Definitive</TableHead>
                   <TableHead className="text-right">Provvisorie</TableHead>
                   <TableHead className="text-right">CPM maturato (€)</TableHead>
