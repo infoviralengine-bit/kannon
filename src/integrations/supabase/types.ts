@@ -178,6 +178,108 @@ export type Database = {
           },
         ]
       }
+      contract_campaigns: {
+        Row: {
+          campaign_id: string
+          contract_id: string
+          id: string
+        }
+        Insert: {
+          campaign_id: string
+          contract_id: string
+          id?: string
+        }
+        Update: {
+          campaign_id?: string
+          contract_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_campaigns_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_campaigns_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_creators: {
+        Row: {
+          contract_id: string
+          creator_id: string
+          id: string
+          joined_at: string
+        }
+        Insert: {
+          contract_id: string
+          creator_id: string
+          id?: string
+          joined_at?: string
+        }
+        Update: {
+          contract_id?: string
+          creator_id?: string
+          id?: string
+          joined_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_creators_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_creators_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          created_at: string
+          creator_cpm: number
+          creator_fixed: number
+          id: string
+          is_active: boolean
+          min_videos_per_day: number
+          name: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          creator_cpm?: number
+          creator_fixed?: number
+          id?: string
+          is_active?: boolean
+          min_videos_per_day?: number
+          name: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          creator_cpm?: number
+          creator_fixed?: number
+          id?: string
+          is_active?: boolean
+          min_videos_per_day?: number
+          name?: string
+          type?: string
+        }
+        Relationships: []
+      }
       creator_payments: {
         Row: {
           cpm_amount: number
