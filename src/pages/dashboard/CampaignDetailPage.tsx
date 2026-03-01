@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import {
-  Eye, TrendingUp, Video, DollarSign, Users, AlertTriangle, CheckCircle2,
-  ChevronRight, Pencil, CalendarIcon, RefreshCw, Check, Trash2,
+  AlertTriangle, CheckCircle2,
+  ChevronRight, Pencil, CalendarIcon, RefreshCw, Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -60,19 +60,15 @@ const statusLabel: Record<string, string> = {
   completed: "Conclusa",
 };
 
-function KpiCard({ icon: Icon, label, value, loading }: {
-  icon: React.ElementType; label: string; value: string; loading: boolean;
+function StatItem({ label, value, sub, accent }: {
+  label: string; value: string; sub?: string; accent?: boolean;
 }) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        {loading ? <Skeleton className="h-8 w-24" /> : <p className="text-2xl font-bold">{value}</p>}
-      </CardContent>
-    </Card>
+    <div className="space-y-1">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+      <p className={cn("text-lg font-bold", accent && "text-primary")}>{value}</p>
+      {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
+    </div>
   );
 }
 
@@ -772,88 +768,91 @@ export default function CampaignDetailPage() {
         <EditCampaignModal open={editOpen} onOpenChange={setEditOpen} campaign={campaign as any} />
       )}
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <KpiCard icon={Eye} label="Views Totali" value={formatViews(kpi.data?.totalViews ?? 0)} loading={kpiLoading} />
-        <KpiCard icon={TrendingUp} label="Views Mese" value={formatViews(kpi.data?.monthViews ?? 0)} loading={kpiLoading} />
-        <KpiCard icon={Video} label="Video Oggi" value={String(kpi.data?.todayVideos ?? 0)} loading={kpiLoading} />
-        <KpiCard icon={DollarSign} label="Margine Mese" value={formatCurrency(margin.data?.margin ?? 0)} loading={kpiLoading} />
-        <KpiCard icon={Users} label="Creator Attivi" value={String(kpi.data?.creatorCount ?? 0)} loading={kpiLoading} />
-        <KpiCard icon={DollarSign} label="Entrata Mese" value={formatCurrency(margin.data?.revenue ?? 0)} loading={kpiLoading} />
-      </div>
-
-      {/* Economic conditions */}
+      {/* ── SEZIONE 1: Condizioni Campagna ── */}
       <Card>
-        <CardHeader><CardTitle className="text-lg">Condizioni Economiche</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-            <div>
-              <p className="text-muted-foreground">CPM Cliente</p>
-              <p className="font-semibold">{formatCurrency(campaign.client_cpm ?? 0)} / 1.000 views</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Fisso per Creator</p>
-              <p className="font-semibold">{formatCurrency(campaign.client_fixed_per_creator ?? 0)} / mese</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Creator previsti</p>
-              <p className="font-semibold">{campAny.planned_creators ?? 1}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Creator effettivi</p>
-              <div className="flex items-center gap-2">
-                <p className="font-semibold">{kpi.data?.creatorCount ?? 0}</p>
-                {!kpi.isLoading && (() => {
-                  const planned = campAny.planned_creators ?? 1;
-                  const actual = kpi.data?.creatorCount ?? 0;
-                  if (actual >= planned) {
-                    return <Badge className="bg-success/20 text-success border-success/30 text-xs">✅ Completi</Badge>;
-                  }
-                  return <Badge className="bg-warning/20 text-warning border-warning/30 text-xs">⚠️ Mancano {planned - actual}</Badge>;
-                })()}
-              </div>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Date</p>
-              <p className="font-semibold">
-                {format(new Date(campaign.start_date), "dd/MM/yyyy")}
-                {" — "}
-                {campaign.end_date ? format(new Date(campaign.end_date), "dd/MM/yyyy") : "In corso"}
-              </p>
-            </div>
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <CardTitle className="text-base font-semibold">Condizioni</CardTitle>
           </div>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {kpiLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+              {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14" />)}
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                <StatItem label="CPM Cliente" value={formatCurrency(campaign.client_cpm ?? 0)} sub="per 1.000 views" />
+                <StatItem label="Fisso / Creator" value={formatCurrency(campaign.client_fixed_per_creator ?? 0)} sub="al mese" />
+                <StatItem label="Creator previsti" value={String(campAny.planned_creators ?? 1)} />
+                <StatItem label="Durata" value={`${format(new Date(campaign.start_date), "dd/MM/yy")} → ${campaign.end_date ? format(new Date(campaign.end_date), "dd/MM/yy") : "∞"}`} />
+                <StatItem label="Cap per video" value={videoViewsCap != null ? `${formatViews(videoViewsCap)}` : "—"} sub={videoViewsCap != null ? "views max" : "nessun limite"} />
+                <StatItem label="Cap di spesa" value={monthlySpendCap != null ? formatCurrency(monthlySpendCap) : "—"} sub={monthlySpendCap != null ? "per ciclo" : "nessun limite"} />
+              </div>
 
-          {/* Cap section */}
-          <Separator />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div>
-              <p className="text-muted-foreground">Cap per video</p>
-              <p className="font-semibold">{videoViewsCap != null ? `${formatViews(videoViewsCap)} views` : "Nessun cap"}</p>
+              {/* Spend progress bar */}
+              {monthlySpendCap != null && (
+                <div className="rounded-lg bg-secondary/50 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Spesa ciclo corrente</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold">{formatCurrency(currentSpend)}</span>
+                      <span className="text-xs text-muted-foreground">/ {formatCurrency(monthlySpendCap)}</span>
+                      {spendPercent >= 100 && <Badge variant="destructive" className="text-xs">CAP</Badge>}
+                    </div>
+                  </div>
+                  <Progress
+                    value={spendPercent}
+                    className={cn("h-2", spendPercent >= 90 && "bg-destructive/20")}
+                  />
+                </div>
+              )}
+
+              {campaign.notes && (
+                <p className="text-sm text-muted-foreground border-l-2 border-primary/30 pl-3">{campaign.notes}</p>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── SEZIONE 2: Stato Campagna ── */}
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-success" />
+            <CardTitle className="text-base font-semibold">Stato</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {kpiLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+              {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14" />)}
             </div>
-            <div>
-              <p className="text-muted-foreground">Cap di spesa ciclo</p>
-              <p className="font-semibold">{monthlySpendCap != null ? formatCurrency(monthlySpendCap) : "Nessun cap"}</p>
-            </div>
-            {monthlySpendCap != null && campaign.status === "active" && (
-              <div className="col-span-2">
-                <p className="text-muted-foreground mb-1">Spesa ciclo corrente</p>
-                <div className="flex items-center gap-3">
-                  <Progress value={spendPercent} className="flex-1" />
-                  <span className="text-sm font-semibold">{formatCurrency(currentSpend)} / {formatCurrency(monthlySpendCap)}</span>
-                  {spendPercent >= 100 && <Badge variant="destructive" className="text-xs">CAP RAGGIUNTO</Badge>}
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+              <StatItem label="Views totali" value={formatViews(kpi.data?.totalViews ?? 0)} accent />
+              <StatItem label="Views contate" value={formatViews(kpi.data?.monthViews ?? 0)} sub={videoViewsCap != null ? `con cap ${formatViews(videoViewsCap)}` : "senza cap"} />
+              <StatItem label="Video / mese" value={String(kpi.data?.todayVideos ?? 0)} sub="pubblicati oggi" />
+              <StatItem label="Entrata / mese" value={formatCurrency(margin.data?.revenue ?? 0)} accent />
+              <StatItem label="Margine / mese" value={formatCurrency(margin.data?.margin ?? 0)} sub={`costo: ${formatCurrency(margin.data?.cost ?? 0)}`} />
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Creator attivi</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-bold">{kpi.data?.creatorCount ?? 0}</p>
+                  <span className="text-xs text-muted-foreground">/ {campAny.planned_creators ?? 1}</span>
+                  {(() => {
+                    const planned = campAny.planned_creators ?? 1;
+                    const actual = kpi.data?.creatorCount ?? 0;
+                    return actual >= planned
+                      ? <Badge className="bg-success/20 text-success border-success/30 text-[10px] px-1.5">✓</Badge>
+                      : <Badge className="bg-warning/20 text-warning border-warning/30 text-[10px] px-1.5">-{planned - actual}</Badge>;
+                  })()}
                 </div>
               </div>
-            )}
-          </div>
-
-          {campaign.notes && (
-            <>
-              <Separator />
-              <div>
-                <p className="text-muted-foreground text-sm mb-1">Note</p>
-                <p className="text-sm">{campaign.notes}</p>
-              </div>
-            </>
+            </div>
           )}
         </CardContent>
       </Card>
