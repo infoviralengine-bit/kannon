@@ -1185,6 +1185,9 @@ export default function SystemTest() {
             <Button onClick={handleCleanup} disabled={running || cleaning} variant="outline" size="sm">
               {cleaning ? "⏳ Pulizia..." : <><Trash2 className="h-4 w-4 mr-1" /> Pulisci dati test</>}
             </Button>
+            <Button onClick={handleSeedCap} disabled={running || cleaning || seeding} variant="outline" size="sm">
+              {seeding ? "⏳ Creazione scenario..." : "🌱 Seed Scenario Cap (100k views / 5000€)"}
+            </Button>
           </div>
           <div className="flex items-center gap-2">
             <Checkbox id="keep-data" checked={keepData} onCheckedChange={(v) => setKeepData(!!v)} />
@@ -1192,7 +1195,17 @@ export default function SystemTest() {
               Mantieni dati di test per verifica manuale
             </label>
           </div>
-          {running && progress && (
+          {seedResult && (
+            <div className={`rounded-md p-3 text-sm ${seedResult.ok ? "bg-green-500/20 text-green-400" : "bg-destructive/20 text-destructive"}`}>
+              {seedResult.ok ? "✅" : "❌"} {seedResult.msg}
+              {seedResult.ok && (
+                <a href={`/dashboard/campagne/${seedResult.id}`} className="ml-2 underline font-semibold">
+                  Apri campagna →
+                </a>
+              )}
+            </div>
+          )}
+          {(running || seeding) && progress && (
             <p className="text-xs text-muted-foreground animate-pulse">{progress}</p>
           )}
         </CardContent>
