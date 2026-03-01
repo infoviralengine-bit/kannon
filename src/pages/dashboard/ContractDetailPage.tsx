@@ -288,6 +288,9 @@ export default function ContractDetailPage() {
         <Badge variant={contract.is_active ? "default" : "secondary"}>
           {contract.is_active ? "Attivo" : "Inattivo"}
         </Badge>
+        <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+          <Pencil className="mr-1 h-4 w-4" /> Modifica
+        </Button>
       </div>
 
       {/* Contract conditions */}
