@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { sumEffectiveViews, countByWindowStatus } from "@/lib/videoWindow";
+import { sumEffectiveViews, sumEffectiveViewsCapped, countByWindowStatus } from "@/lib/videoWindow";
 import { isFixedEarnedMonthly, getMonthlyTarget } from "@/lib/fixedEarned";
 
 /* ═══════════════════════════════════════════════
