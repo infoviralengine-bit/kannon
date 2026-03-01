@@ -111,7 +111,7 @@ function ClientPaymentsTab() {
                     {p.campaignName}
                   </TableCell>
                   <TableCell>{p.clientName}</TableCell>
-                  <TableCell>{p.cycleLabel}</TableCell>
+                  <TableCell>{new Date(p.dueDate).toLocaleDateString("it-IT")}</TableCell>
                   <TableCell>{new Date(p.dueDate).toLocaleDateString("it-IT")}</TableCell>
                   <TableCell className="text-right">{formatCurrency(p.fixedAmount)}</TableCell>
                   <TableCell className="text-right">{formatViews(p.cpmViews)}</TableCell>
