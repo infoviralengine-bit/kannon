@@ -652,6 +652,110 @@ function DeleteCampaignModal({ open, onOpenChange, campaign }: {
   );
 }
 
+/* ── Creator Table with Contract info ── */
+function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCreator, navigate }: {
+  campaignId: string;
+  creators: ReturnType<typeof useCampaignCreators>;
+  isCompleted: boolean;
+  onAddCreator: () => void;
+  navigate: ReturnType<typeof useNavigate>;
+}) {
+  const { data: contractCampaigns } = useQuery({
+    queryKey: ["contract-campaigns-for-campaign", campaignId],
+    queryFn: async () => {
+      const { data: links } = await supabase.from("contract_campaigns" as any).select("contract_id").eq("campaign_id", campaignId);
+      if (!links?.length) return [];
+      const contractIds = (links as any[]).map((l) => l.contract_id);
+      const { data: contracts } = await supabase.from("contracts" as any).select("id, name").in("id", contractIds);
+      // Get contract-creator links
+      const { data: ccLinks } = await supabase.from("contract_creators" as any).select("contract_id, creator_id").in("contract_id", contractIds);
+      return { contracts: contracts as any[] ?? [], creatorLinks: ccLinks as any[] ?? [] };
+    },
+  });
+
+  const contractsByCreator = new Map<string, { id: string; name: string }>();
+  if (contractCampaigns && !Array.isArray(contractCampaigns)) {
+    const { contracts, creatorLinks } = contractCampaigns;
+    const contractMap = new Map((contracts ?? []).map((c: any) => [c.id, c]));
+    (creatorLinks ?? []).forEach((l: any) => {
+      const contract = contractMap.get(l.contract_id);
+      if (contract) contractsByCreator.set(l.creator_id, contract);
+    });
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-lg">Creator</CardTitle>
+        {!isCompleted && (
+          <Button size="sm" onClick={onAddCreator}>+ Aggiungi Creator</Button>
+        )}
+      </CardHeader>
+      <CardContent>
+        {creators.isLoading ? (
+          <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+        ) : !creators.data?.length ? (
+          <p className="text-sm text-muted-foreground text-center py-6">Nessun creator associato.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Contratto</TableHead>
+                <TableHead>Account TikTok</TableHead>
+                <TableHead className="text-right">Oggi</TableHead>
+                <TableHead className="text-right">Settimana</TableHead>
+                <TableHead className="text-right">Mese</TableHead>
+                <TableHead className="text-right">Views Totali</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {creators.data.map((c) => {
+                const contract = contractsByCreator.get(c.creatorId);
+                return (
+                  <TableRow key={c.creatorId}>
+                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell>
+                      {contract ? (
+                        <span className="cursor-pointer hover:underline text-primary" onClick={() => navigate(`/dashboard/contracts/${contract.id}`)}>
+                          {contract.name}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{c.accountUsername}</TableCell>
+                    <TableCell className="text-right">{c.todayVideos}</TableCell>
+                    <TableCell className="text-right">{c.weekVideos}</TableCell>
+                    <TableCell className="text-right">{c.monthVideos}</TableCell>
+                    <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
+                    <TableCell>
+                      {c.alertLevel === "green" ? (
+                        <Badge className="bg-success/20 text-success border-success/30">🟢 In regola</Badge>
+                      ) : c.alertLevel === "yellow" ? (
+                        <Badge className="bg-warning/20 text-warning border-warning/30">🟡 Attenzione</Badge>
+                      ) : (
+                        <Badge className="bg-destructive/20 text-destructive border-destructive/30">🔴 A rischio</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.creatorId}`)}>
+                        Apri
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function CampaignDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
