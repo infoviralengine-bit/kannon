@@ -1244,7 +1244,7 @@ export default function SystemTest() {
             <div className={`rounded-md p-3 text-sm ${seedResult.ok ? "bg-green-500/20 text-green-400" : "bg-destructive/20 text-destructive"}`}>
               {seedResult.ok ? "✅" : "❌"} {seedResult.msg}
               {seedResult.ok && (
-                <a href={`/dashboard/campagne/${seedResult.id}`} className="ml-2 underline font-semibold">
+                <a href={`/dashboard/campaigns/${seedResult.id}`} className="ml-2 underline font-semibold">
                   Apri campagna →
                 </a>
               )}
