@@ -954,83 +954,122 @@ async function runModule10(skipCleanup = false): Promise<TestLog[]> {
 const ALL_TEST_NAMES = ["TEST_M1", "TEST_M2", "TEST_M3", "TEST_M4", "TEST_M5", "TEST_M6", "TEST_M7", "TEST_M7_ZERO", "TEST_M8", "TEST_M9", "TEST_M10_CAP", "TEST_M10_SPEND", "SIMUL_3MESI", "TEST_E2E", "SEED_CAP_E2E"];
 
 // ═══════════════════════════════════════════════════════════════
-// SEED SCENARIO: Campagna realistica con Cap Views + Cap Spesa
+// SEED SCENARIO: Test semplice Cap Video + Cap Spesa
+// 1 campagna (3 mesi), 1 creator, 2 account TikTok
 // ═══════════════════════════════════════════════════════════════
 
 async function seedCapScenario(onProgress: (msg: string) => void): Promise<string> {
-  onProgress("Creazione campagna con cap views 100k e cap spesa 5000€...");
+  onProgress("Creazione campagna 3 mesi con cap views 100k e cap spesa 3000€...");
 
-  const { data: camp } = await supabase.from("campaigns").insert({
+  // Campagna: gen-mar 2026, CPM 2€, fisso 200€/creator, cap views 100k, cap spesa 3000€
+  const { data: camp, error: campErr } = await supabase.from("campaigns").insert({
     name: "SEED_CAP_E2E",
-    client_name: "Cliente Premium Test",
+    client_name: "Cliente Test Cap",
     start_date: "2026-01-01",
-    end_date: "2026-07-01",
+    end_date: "2026-04-01",
     client_cpm: 2,
-    client_fixed_per_creator: 300,
-    planned_creators: 3,
+    client_fixed_per_creator: 200,
+    planned_creators: 1,
     status: "active",
     video_views_cap: 100000,
-    monthly_spend_cap: 5000,
+    monthly_spend_cap: 3000,
   } as any).select().single();
-  if (!camp) throw new Error("Campagna non creata");
-  const campaignId = camp.id;
+  if (campErr) throw campErr;
+  const campaignId = camp!.id;
 
-  // 3 creator con fasce diverse
-  const creatorsSpec = [
-    { name: "Creator Cap Star", cpm: 1.0, fixed: 500, min: 3 },
-    { name: "Creator Cap Mid", cpm: 0.5, fixed: 200, min: 5 },
-    { name: "Creator Cap Junior", cpm: 0.3, fixed: 100, min: 8 },
+  // 1 creator
+  onProgress("Creazione creator e 2 account TikTok...");
+  const { data: cr } = await supabase.from("creators").insert({
+    name: "Creator Test Cap", status: "active", creator_cpm: 0.5, creator_fixed: 200, min_videos_per_day: 3,
+  }).select().single();
+  await supabase.from("campaign_creators").insert({ campaign_id: campaignId, creator_id: cr!.id });
+
+  // 2 account TikTok
+  const { data: acc1 } = await supabase.from("tiktok_accounts").insert({
+    username: "cap_test_acc1", account_type: "creator", campaign_id: campaignId, creator_id: cr!.id,
+  }).select().single();
+  const { data: acc2 } = await supabase.from("tiktok_accounts").insert({
+    username: "cap_test_acc2", account_type: "creator", campaign_id: campaignId, creator_id: cr!.id,
+  }).select().single();
+
+  // Video distribuiti su 3 mesi con views diverse per testare il cap
+  // Mese 1 (Gennaio): 6 video — mix sotto/sopra cap
+  onProgress("Inserimento video mese 1 (Gennaio)...");
+  const m1Videos = [
+    // Account 1: 3 video
+    { acc: acc1!.id, day: 3, views: 50000, vid: "m1_a1_v1" },   // sotto cap
+    { acc: acc1!.id, day: 10, views: 150000, vid: "m1_a1_v2" },  // sopra cap → cappato a 100k
+    { acc: acc1!.id, day: 20, views: 100000, vid: "m1_a1_v3" },  // esattamente al cap
+    // Account 2: 3 video
+    { acc: acc2!.id, day: 5, views: 200000, vid: "m1_a2_v1" },   // molto sopra cap
+    { acc: acc2!.id, day: 15, views: 30000, vid: "m1_a2_v2" },   // sotto cap
+    { acc: acc2!.id, day: 25, views: 80000, vid: "m1_a2_v3" },   // sotto cap
   ];
 
-  for (const spec of creatorsSpec) {
-    onProgress(`Creazione ${spec.name}...`);
-    const { data: cr } = await supabase.from("creators").insert({
-      name: spec.name, status: "active", creator_cpm: spec.cpm, creator_fixed: spec.fixed, min_videos_per_day: spec.min,
-    }).select().single();
+  // Mese 2 (Febbraio): 6 video — più views per avvicinarsi al cap spesa
+  onProgress("Inserimento video mese 2 (Febbraio)...");
+  const m2Videos = [
+    { acc: acc1!.id, day: 2, views: 120000, vid: "m2_a1_v1" },   // sopra cap
+    { acc: acc1!.id, day: 12, views: 95000, vid: "m2_a1_v2" },   // sotto cap
+    { acc: acc1!.id, day: 22, views: 180000, vid: "m2_a1_v3" },  // sopra cap
+    { acc: acc2!.id, day: 7, views: 110000, vid: "m2_a2_v1" },   // sopra cap
+    { acc: acc2!.id, day: 17, views: 60000, vid: "m2_a2_v2" },   // sotto cap
+    { acc: acc2!.id, day: 27, views: 250000, vid: "m2_a2_v3" },  // molto sopra cap
+  ];
 
-    await supabase.from("campaign_creators").insert({ campaign_id: campaignId, creator_id: cr!.id });
+  // Mese 3 (Marzo): 4 video — spinta finale per testare cap spesa
+  onProgress("Inserimento video mese 3 (Marzo)...");
+  const m3Videos = [
+    { acc: acc1!.id, day: 5, views: 300000, vid: "m3_a1_v1" },   // molto sopra cap
+    { acc: acc1!.id, day: 15, views: 90000, vid: "m3_a1_v2" },   // sotto cap
+    { acc: acc2!.id, day: 10, views: 170000, vid: "m3_a2_v1" },  // sopra cap
+    { acc: acc2!.id, day: 20, views: 45000, vid: "m3_a2_v2" },   // sotto cap
+  ];
 
-    const { data: acc } = await supabase.from("tiktok_accounts").insert({
-      username: `cap_${spec.name.split(" ").pop()!.toLowerCase()}`,
-      account_type: "creator",
-      campaign_id: campaignId,
-      creator_id: cr!.id,
-    }).select().single();
-
-    // Video con views diverse per testare il cap
-    const videos = [];
-    const viewsPerVideo = spec.name.includes("Star")
-      ? [150000, 120000, 80000, 50000, 200000, 30000, 95000, 110000] // Star: molti sopra cap
-      : spec.name.includes("Mid")
-      ? [60000, 45000, 100000, 130000, 20000, 75000, 90000, 110000, 55000, 40000] // Mid: mix
-      : [15000, 25000, 10000, 35000, 8000, 12000, 50000, 70000, 5000, 18000, 22000, 30000]; // Junior: molti sotto cap
-
-    for (let i = 0; i < viewsPerVideo.length; i++) {
-      const day = 1 + Math.floor(i * 3); // spread across month
-      const d = new Date(Date.UTC(2026, 0, Math.min(day, 28), 8 + (i % 8)));
-      // Some videos with window closed (older ones)
-      const isOld = i < 3;
-      videos.push({
-        tiktok_account_id: acc!.id,
-        published_at: d.toISOString(),
-        tiktok_video_id: `seed_cap_${spec.name.split(" ").pop()!.toLowerCase()}_v${i}`,
-        views: viewsPerVideo[i],
-        window_closed: isOld,
-        views_final: isOld ? viewsPerVideo[i] : null,
-        window_expires_at: isOld ? d.toISOString() : new Date(d.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      });
-    }
-
-    onProgress(`Inserimento ${videos.length} video per ${spec.name}...`);
-    await bulkInsertVideos(videos);
+  const allSpecs: any[] = [];
+  for (const v of m1Videos) {
+    const d = new Date(Date.UTC(2026, 0, v.day, 10));
+    allSpecs.push({
+      tiktok_account_id: v.acc, published_at: d.toISOString(), tiktok_video_id: v.vid,
+      views: v.views, window_closed: true, views_final: v.views,
+      window_expires_at: new Date(d.getTime() + 30 * 86400000).toISOString(),
+    });
+  }
+  for (const v of m2Videos) {
+    const d = new Date(Date.UTC(2026, 1, v.day, 10));
+    allSpecs.push({
+      tiktok_account_id: v.acc, published_at: d.toISOString(), tiktok_video_id: v.vid,
+      views: v.views, window_closed: true, views_final: v.views,
+      window_expires_at: new Date(d.getTime() + 30 * 86400000).toISOString(),
+    });
+  }
+  for (const v of m3Videos) {
+    const d = new Date(Date.UTC(2026, 2, v.day, 10));
+    allSpecs.push({
+      tiktok_account_id: v.acc, published_at: d.toISOString(), tiktok_video_id: v.vid,
+      views: v.views, window_closed: false, views_final: null,
+      window_expires_at: new Date(d.getTime() + 30 * 86400000).toISOString(),
+    });
   }
 
-  // Genera 3 cicli di pagamento
-  const p = { start_date: "2026-01-01", end_date: "2026-07-01", client_fixed_per_creator: 300, client_cpm: 2, planned_creators: 3 };
-  for (let i = 1; i <= 3; i++) {
-    onProgress(`Generazione ciclo ${i}/3...`);
+  await bulkInsertVideos(allSpecs);
+
+  // Genera 4 cicli di pagamento (C1=solo fisso, C2-C4=fisso+CPM)
+  const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed_per_creator: 200, client_cpm: 2, planned_creators: 1 };
+  for (let i = 1; i <= 4; i++) {
+    onProgress(`Generazione ciclo ${i}/4...`);
     await generateCycle(campaignId, p);
   }
+
+  // Riepilogo atteso:
+  // Cap video 100k → ogni video con views > 100k viene contato come 100k
+  // M1 views effettive: 50k + 100k + 100k + 100k + 30k + 80k = 460k
+  // M2 views effettive: 100k + 95k + 100k + 100k + 60k + 100k = 555k
+  // M3 views effettive: 100k + 90k + 100k + 45k = 335k
+  // Totale: 1.350k views effettive
+  // CPM totale (senza cap spesa): 1.350k × 2€/1000 = 2.700€
+  // + fisso 200€ × 4 cicli = 800€ → totale ~3.500€
+  // Cap spesa 3000€/ciclo → nessun singolo ciclo supera il cap (distribuito)
 
   return campaignId;
 }
