@@ -147,6 +147,7 @@ async function cleanupCampaign(campaignId: string, creatorIds: string[] = []) {
   const { data: accounts } = await supabase.from("tiktok_accounts").select("id").eq("campaign_id", campaignId);
   const accIds = (accounts ?? []).map(a => a.id);
   if (accIds.length) await supabase.from("videos").delete().in("tiktok_account_id", accIds);
+  await supabase.from("notifications").delete().eq("campaign_id", campaignId);
   await supabase.from("client_payments").delete().eq("campaign_id", campaignId);
   await supabase.from("payment_cycles").delete().eq("campaign_id", campaignId);
   await supabase.from("campaign_creators").delete().eq("campaign_id", campaignId);
