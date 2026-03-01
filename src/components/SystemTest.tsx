@@ -707,12 +707,23 @@ export default function SystemTest() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <Button onClick={handleRun} disabled={running} variant="outline">
-            {running ? "⏳ Test in esecuzione..." : "🧪 Test Completo Sistema"}
-          </Button>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-4">
+            <Button onClick={handleRun} disabled={running || cleaning} variant="outline">
+              {running ? "⏳ Test in esecuzione..." : "🧪 Test Completo Sistema"}
+            </Button>
+            <Button onClick={handleCleanup} disabled={running || cleaning} variant="outline" size="sm">
+              {cleaning ? "⏳ Pulizia..." : <><Trash2 className="h-4 w-4 mr-1" /> Pulisci dati test</>}
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox id="keep-data" checked={keepData} onCheckedChange={(v) => setKeepData(!!v)} />
+            <label htmlFor="keep-data" className="text-sm text-muted-foreground cursor-pointer">
+              Mantieni dati di test per verifica manuale
+            </label>
+          </div>
           {running && progress && (
-            <p className="text-xs text-muted-foreground mt-2 animate-pulse">{progress}</p>
+            <p className="text-xs text-muted-foreground animate-pulse">{progress}</p>
           )}
         </CardContent>
       </Card>
