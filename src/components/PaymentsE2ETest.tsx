@@ -35,8 +35,8 @@ async function generateCycle(campaignId: string, campaign: { start_date: string;
     startDate = campaign.start_date;
   }
 
-  const endD = new Date(startDate);
-  endD.setDate(endD.getDate() + 30);
+  const endD = new Date(startDate + "T00:00:00Z");
+  endD.setUTCDate(endD.getUTCDate() + 30);
   const endDate = endD.toISOString().slice(0, 10);
 
   const isLastCycle = startDate >= campaign.end_date;
