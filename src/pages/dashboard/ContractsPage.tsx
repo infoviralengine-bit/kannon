@@ -35,7 +35,7 @@ function NewContractModal({ open, onOpenChange }: { open: boolean; onOpenChange:
   const qc = useQueryClient();
   const { data: campaigns } = useActiveCampaignsForSelect();
   const [name, setName] = useState("");
-  const [type, setType] = useState("custom");
+  const type = "custom";
   const [fixed, setFixed] = useState("0");
   const [cpm, setCpm] = useState("0.50");
   const [minVpd, setMinVpd] = useState("5");
