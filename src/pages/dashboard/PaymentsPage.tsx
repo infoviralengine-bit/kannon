@@ -207,7 +207,7 @@ function ClientPaymentsTab() {
                                 <span>{formatViews(Math.max(0, p.viewsPaidCumulative - p.cpmViews))}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Views nuove questo ciclo</span>
+                                <span className="text-muted-foreground">Views nuove questo ciclo <CappedBadge /></span>
                                 <span>{formatViews(p.cpmViews)}</span>
                               </div>
                               <div className="flex justify-between">
