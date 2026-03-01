@@ -55,7 +55,7 @@ const App = () => (
               <Route path="creators/:id" element={<CreatorDetailPage />} />
               <Route path="accounts" element={<AccountPage />} />
               <Route path="accounts/:id" element={<AccountDetailPage />} />
-              <Route path="payoff" element={<PayoffPage />} />
+              <Route path="payoff" element={<Navigate to="/dashboard" replace />} />
               <Route path="payments-receivable" element={<PaymentsReceivablePage />} />
               <Route path="payments-payable" element={<PaymentsPayablePage />} />
               <Route path="pipeline" element={<PipelinePage />} />

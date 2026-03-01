@@ -35,7 +35,6 @@ const creatorItems = [
   { title: "Creator", url: "/dashboard/creators", icon: Users },
   { title: "Account", url: "/dashboard/accounts", icon: Smartphone },
   { title: "Pagamenti Da Pagare", url: "/dashboard/payments-payable", icon: ArrowUpCircle },
-  { title: "Payoff CPM", url: "/dashboard/payoff", icon: Eye },
 ];
 
 const altroItems = [
