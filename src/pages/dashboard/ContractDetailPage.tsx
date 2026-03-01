@@ -451,6 +451,13 @@ export default function ContractDetailPage() {
         contractId={contractId}
         existingCreatorIds={(creators.data ?? []).map((c) => c.creatorId)}
       />
+      {contract && (
+        <EditContractModal
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          contract={contract}
+        />
+      )}
     </div>
   );
 }
