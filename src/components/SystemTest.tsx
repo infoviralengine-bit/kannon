@@ -281,7 +281,7 @@ async function runModule2(skipCleanup = false): Promise<TestLog[]> {
 
 // ─── MODULE 3: Multi-video campagna ───
 
-async function runModule3(): Promise<TestLog[]> {
+async function runModule3(skipCleanup = false): Promise<TestLog[]> {
   const logs: TestLog[] = [];
   let campaignId = "";
   const creatorIds: string[] = [];
