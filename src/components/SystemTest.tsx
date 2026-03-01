@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { FlaskConical, ChevronDown, Copy, Check } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FlaskConical, ChevronDown, Copy, Check, Trash2 } from "lucide-react";
 
 // ─── Types ───
 
