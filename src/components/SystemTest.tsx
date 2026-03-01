@@ -221,7 +221,7 @@ async function runModule1(skipCleanup = false): Promise<TestLog[]> {
 
 // ─── MODULE 2: Views cumulative ───
 
-async function runModule2(): Promise<TestLog[]> {
+async function runModule2(skipCleanup = false): Promise<TestLog[]> {
   const logs: TestLog[] = [];
   let campaignId = "";
   const creatorIds: string[] = [];
