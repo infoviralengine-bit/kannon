@@ -285,7 +285,7 @@ function CreatorPaymentsTab() {
                   <TableCell className="text-right font-semibold">{formatCurrency(cr.totalAmount)}</TableCell>
                   <TableCell>
                     <Badge variant={cr.isPaid ? "default" : "secondary"}>
-                      {cr.isPaid ? "✅ Pagato" : "⏳ Da pagare"}
+                      {cr.isPaid ? "✅" : "⏳"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
