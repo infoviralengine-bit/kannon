@@ -569,6 +569,8 @@ export default function SystemTest() {
   const [elapsed, setElapsed] = useState(0);
   const [copied, setCopied] = useState(false);
   const [progress, setProgress] = useState("");
+  const [keepData, setKeepData] = useState(true);
+  const [cleaning, setCleaning] = useState(false);
 
   async function handleRun() {
     setRunning(true);
