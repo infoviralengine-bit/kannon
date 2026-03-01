@@ -466,6 +466,39 @@ export type Database = {
         }
         Relationships: []
       }
+      scraping_logs: {
+        Row: {
+          accounts_processed: number
+          created_at: string
+          error_message: string | null
+          id: string
+          run_at: string
+          status: string
+          videos_created: number
+          videos_updated: number
+        }
+        Insert: {
+          accounts_processed?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          run_at?: string
+          status: string
+          videos_created?: number
+          videos_updated?: number
+        }
+        Update: {
+          accounts_processed?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          run_at?: string
+          status?: string
+          videos_created?: number
+          videos_updated?: number
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           id: string
@@ -495,6 +528,7 @@ export type Database = {
           creator_id: string | null
           id: string
           is_active: boolean | null
+          last_scraped_at: string | null
           username: string
         }
         Insert: {
@@ -504,6 +538,7 @@ export type Database = {
           creator_id?: string | null
           id?: string
           is_active?: boolean | null
+          last_scraped_at?: string | null
           username: string
         }
         Update: {
@@ -513,6 +548,7 @@ export type Database = {
           creator_id?: string | null
           id?: string
           is_active?: boolean | null
+          last_scraped_at?: string | null
           username?: string
         }
         Relationships: [
