@@ -8,6 +8,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatViews } from "@/lib/format";
+import { CappedBadge } from "@/components/CappedViewsBadge";
 import {
   useClientPayments, useCreatorPayments, usePaymentHistory, usePaymentSummary,
   type ClientPaymentRow, type CreatorPaymentRow,

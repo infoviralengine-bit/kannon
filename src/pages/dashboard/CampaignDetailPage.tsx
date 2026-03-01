@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatViews, formatCurrency } from "@/lib/format";
 import { getEffectiveViews } from "@/lib/videoWindow";
+import { CappedBadge } from "@/components/CappedViewsBadge";
 import {
   useCampaignDetail, useCampaignKpi, useCampaignMargin,
   useCampaignCreators, useCampaignAccounts, useCampaignAlerts,
