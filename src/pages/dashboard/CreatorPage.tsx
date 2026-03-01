@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatViews } from "@/lib/format";
@@ -15,7 +15,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -114,9 +114,39 @@ function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChang
 
 export default function CreatorPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const qc = useQueryClient();
   const { data: creators, isLoading } = useCreatorTable();
   const [modalOpen, setModalOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: async (creatorId: string) => {
+      // Delete related data first, then the creator
+      const { data: accounts } = await supabase.from("tiktok_accounts").select("id").eq("creator_id", creatorId);
+      if (accounts?.length) {
+        const accountIds = accounts.map(a => a.id);
+        await supabase.from("videos").delete().in("tiktok_account_id", accountIds);
+        await supabase.from("outreach_stats").delete().in("tiktok_account_id", accountIds);
+        await supabase.from("tiktok_accounts").delete().eq("creator_id", creatorId);
+      }
+      await supabase.from("campaign_creators").delete().eq("creator_id", creatorId);
+      await supabase.from("creator_payments").delete().eq("creator_id", creatorId);
+      await supabase.from("payments").delete().eq("creator_id", creatorId);
+      const { error } = await supabase.from("creators").delete().eq("id", creatorId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Creator eliminato" });
+      qc.invalidateQueries({ queryKey: ["creator-table"] });
+      qc.invalidateQueries({ queryKey: ["active-creators-count"] });
+      setDeleteTarget(null);
+    },
+    onError: (e: Error) => {
+      toast({ title: "Errore eliminazione", description: e.message, variant: "destructive" });
+    },
+  });
 
   const filtered = (creators ?? []).filter(c => {
     if (filter === "all") return true;
@@ -178,8 +208,11 @@ export default function CreatorPage() {
                     <TableCell>
                       <Badge className={statusColor[c.status] ?? ""}>{statusLabel[c.status] ?? c.status}</Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="space-x-1">
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.id}`)}>Apri</Button>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: c.id, name: c.name })}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -188,6 +221,24 @@ export default function CreatorPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete confirmation */}
+      <Dialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Elimina Creator</DialogTitle>
+            <DialogDescription>
+              Sei sicuro di voler eliminare <strong>{deleteTarget?.name}</strong>? Verranno eliminati anche tutti i video, account TikTok, pagamenti e associazioni alle campagne. Questa azione è irreversibile.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Annulla</Button>
+            <Button variant="destructive" onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? "Eliminazione..." : "Elimina"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
