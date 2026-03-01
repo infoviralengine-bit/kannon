@@ -160,7 +160,7 @@ function EditContractModal({ open, onOpenChange, contract }: {
         name,
         creator_fixed: parseFloat(fixed) || 0,
         creator_cpm: parseFloat(cpm) || 0,
-        min_videos_per_day: parseInt(minVpd) || 1,
+        min_videos_per_day: parseInt(minVpd) ?? 1,
       }).eq("id", contract.id);
       if (error) throw error;
     },
