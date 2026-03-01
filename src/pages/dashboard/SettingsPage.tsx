@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Eye, EyeOff, Shield, Users, Cpu } from "lucide-react";
+import PaymentsE2ETest from "@/components/PaymentsE2ETest";
 
 type AppUser = { id: string; full_name: string; email: string; role: string; created_at: string };
 
@@ -386,6 +387,9 @@ export default function SettingsPage() {
           </p>
         </CardContent>
       </Card>
+
+      {/* SECTION 4 — E2E TEST */}
+      <PaymentsE2ETest />
 
       {/* NEW USER MODAL */}
       <Dialog open={showNewUser} onOpenChange={setShowNewUser}>
