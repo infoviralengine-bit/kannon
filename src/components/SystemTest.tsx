@@ -333,7 +333,7 @@ async function runModule3(skipCleanup = false): Promise<TestLog[]> {
   } catch (e: any) {
     logs.push({ step: `❌ ERRORE: ${e.message}`, ok: false });
   } finally {
-    if (campaignId) await cleanupCampaign(campaignId, creatorIds);
+    if (campaignId && !skipCleanup) await cleanupCampaign(campaignId, creatorIds);
   }
   return logs;
 }
