@@ -264,7 +264,7 @@ export default function CreatorDetailPage() {
           {!accounts ? (
             <Skeleton className="h-16 w-full" />
           ) : !accounts.length ? (
-            <p className="text-sm text-muted-foreground text-center py-4">Nessun account TikTok collegato.</p>
+            <p className="text-sm text-muted-foreground text-center py-4">Nessun account collegato.</p>
           ) : (
             <Table>
               <TableHeader>

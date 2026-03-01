@@ -1033,7 +1033,7 @@ export default function CampaignDetailPage() {
           {accounts.isLoading ? (
             <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
           ) : !accounts.data?.length ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Nessun account TikTok associato.</p>
+            <p className="text-sm text-muted-foreground text-center py-6">Nessun account associato.</p>
           ) : (
             <Table>
               <TableHeader>
