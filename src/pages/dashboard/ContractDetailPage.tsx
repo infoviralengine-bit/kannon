@@ -217,6 +217,7 @@ export default function ContractDetailPage() {
 
   const [addCampOpen, setAddCampOpen] = useState(false);
   const [addCreatorOpen, setAddCreatorOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const removeCampaign = useMutation({
     mutationFn: async (linkId: string) => {
