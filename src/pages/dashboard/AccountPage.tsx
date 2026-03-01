@@ -7,7 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { formatViews } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 export default function AccountPage() {
   const navigate = useNavigate();
@@ -29,6 +29,7 @@ export default function AccountPage() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("all");
   const [campaignFilter, setCampaignFilter] = useState<string>("all");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; username: string } | null>(null);
 
   const [username, setUsername] = useState("");
   const [accountType, setAccountType] = useState<string>("");
@@ -53,6 +54,21 @@ export default function AccountPage() {
       toast({ title: "Account creato con successo" });
       setOpen(false);
       resetForm();
+    },
+    onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (accountId: string) => {
+      await supabase.from("videos").delete().eq("tiktok_account_id", accountId);
+      await supabase.from("outreach_stats").delete().eq("tiktok_account_id", accountId);
+      const { error } = await supabase.from("tiktok_accounts").delete().eq("id", accountId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tiktok_accounts"] });
+      toast({ title: "Account eliminato" });
+      setDeleteTarget(null);
     },
     onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
   });
@@ -168,8 +184,8 @@ export default function AccountPage() {
             <Card><CardContent className="py-12 text-center text-muted-foreground">Nessun account TikTok. Crea il primo!</CardContent></Card>
           ) : (
             <div className="space-y-6">
-              {creatorAccounts.length > 0 && <CreatorTable accounts={creatorAccounts} creators={creators} campaigns={campaigns} getVideosToday={getCreatorVideosToday} getTotalViews={getAccountTotalViews} navigate={navigate} />}
-              {outreachAccounts.length > 0 && <OutreachTable accounts={outreachAccounts} getOutreachToday={getOutreachToday} getOutreachMonth={getOutreachMonth} navigate={navigate} />}
+              {creatorAccounts.length > 0 && <CreatorTable accounts={creatorAccounts} creators={creators} campaigns={campaigns} getVideosToday={getCreatorVideosToday} getTotalViews={getAccountTotalViews} navigate={navigate} onDelete={setDeleteTarget} />}
+              {outreachAccounts.length > 0 && <OutreachTable accounts={outreachAccounts} getOutreachToday={getOutreachToday} getOutreachMonth={getOutreachMonth} navigate={navigate} onDelete={setDeleteTarget} />}
             </div>
           )}
         </TabsContent>
@@ -178,7 +194,7 @@ export default function AccountPage() {
           {filteredCreatorAccounts.length === 0 ? (
             <Card><CardContent className="py-12 text-center text-muted-foreground">Nessun account creator trovato.</CardContent></Card>
           ) : (
-            <CreatorTable accounts={filteredCreatorAccounts} creators={creators} campaigns={campaigns} getVideosToday={getCreatorVideosToday} getTotalViews={getAccountTotalViews} navigate={navigate} />
+            <CreatorTable accounts={filteredCreatorAccounts} creators={creators} campaigns={campaigns} getVideosToday={getCreatorVideosToday} getTotalViews={getAccountTotalViews} navigate={navigate} onDelete={setDeleteTarget} />
           )}
         </TabsContent>
 
@@ -186,15 +202,32 @@ export default function AccountPage() {
           {outreachAccounts.length === 0 ? (
             <Card><CardContent className="py-12 text-center text-muted-foreground">Nessun account outreach trovato.</CardContent></Card>
           ) : (
-            <OutreachTable accounts={outreachAccounts} getOutreachToday={getOutreachToday} getOutreachMonth={getOutreachMonth} navigate={navigate} />
+            <OutreachTable accounts={outreachAccounts} getOutreachToday={getOutreachToday} getOutreachMonth={getOutreachMonth} navigate={navigate} onDelete={setDeleteTarget} />
           )}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Elimina Account</DialogTitle>
+            <DialogDescription>
+              Sei sicuro di voler eliminare <strong>@{deleteTarget?.username}</strong>? Verranno eliminati anche tutti i video e le statistiche di outreach associate. Questa azione è irreversibile.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Annulla</Button>
+            <Button variant="destructive" onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? "Eliminazione..." : "Elimina"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function CreatorTable({ accounts, creators, campaigns, getVideosToday, getTotalViews, navigate }: any) {
+function CreatorTable({ accounts, creators, campaigns, getVideosToday, getTotalViews, navigate, onDelete }: any) {
   return (
     <Card>
       <Table>
@@ -228,8 +261,11 @@ function CreatorTable({ accounts, creators, campaigns, getVideosToday, getTotalV
                     {ok ? "✅" : "⚠️"}
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell className="space-x-1">
                   <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
+                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </TableCell>
               </TableRow>
             );
@@ -240,7 +276,7 @@ function CreatorTable({ accounts, creators, campaigns, getVideosToday, getTotalV
   );
 }
 
-function OutreachTable({ accounts, getOutreachToday, getOutreachMonth, navigate }: any) {
+function OutreachTable({ accounts, getOutreachToday, getOutreachMonth, navigate, onDelete }: any) {
   return (
     <Card>
       <Table>
@@ -266,8 +302,11 @@ function OutreachTable({ accounts, getOutreachToday, getOutreachMonth, navigate 
                 <TableCell className="text-right">{replies}</TableCell>
                 <TableCell className="text-right">{rate}%</TableCell>
                 <TableCell className="text-right">{formatViews(dmMonth)}</TableCell>
-                <TableCell>
+                <TableCell className="space-x-1">
                   <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
+                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </TableCell>
               </TableRow>
             );
