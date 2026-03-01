@@ -1,8 +1,9 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   CreditCard, ArrowDownCircle, ArrowUpCircle, TrendingUp, Clock, Check, AlertTriangle,
+  ChevronDown, ChevronRight, Info,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +37,7 @@ function ClientPaymentsTab() {
   const [confirm, setConfirm] = useState<ClientPaymentRow | null>(null);
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<"all" | "pending" | "paid" | "overdue">("all");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const filtered = (data ?? []).filter((p) => {
     if (filter === "pending") return !p.isPaid && !p.isOverdue;
@@ -44,7 +46,13 @@ function ClientPaymentsTab() {
     return true;
   });
 
-  const pendingTotal = (data ?? []).filter((p) => !p.isPaid).reduce((s, p) => s + p.totalAmount, 0);
+  const now = new Date();
+  const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  const allUnpaid = (data ?? []).filter((p) => !p.isPaid);
+  const thisMonthTotal = allUnpaid.filter((p) => p.dueDate.startsWith(currentMonthStr)).reduce((s, p) => s + p.totalAmount, 0);
+  const futureTotal = allUnpaid.filter((p) => p.dueDate > `${currentMonthStr}-31`).reduce((s, p) => s + p.totalAmount, 0);
+  const overdueTotal = allUnpaid.filter((p) => p.isOverdue).reduce((s, p) => s + p.totalAmount, 0);
 
   async function handleMarkReceived(p: ClientPaymentRow) {
     setSaving(true);
@@ -54,7 +62,7 @@ function ClientPaymentsTab() {
         .update({ is_paid: true, paid_at: new Date().toISOString() })
         .eq("id", p.id);
       if (error) throw error;
-      toast({ title: "Pagamento ricevuto", description: `${p.campaignName} — Ciclo ${p.cycleNumber}` });
+      toast({ title: "Pagamento ricevuto", description: `${p.campaignName} — ${p.monthLabel}` });
       qc.invalidateQueries({ queryKey: ["client-payments"] });
       qc.invalidateQueries({ queryKey: ["payment-history-all"] });
       qc.invalidateQueries({ queryKey: ["payment-summary"] });
@@ -66,12 +74,30 @@ function ClientPaymentsTab() {
     }
   }
 
+  const summaryCards = [
+    { label: "Da ricevere questo mese", value: thisMonthTotal, color: "text-foreground" },
+    { label: "Da ricevere in futuro", value: futureTotal, color: "text-muted-foreground" },
+    { label: "Scaduto non pagato", value: overdueTotal, color: "text-destructive" },
+  ];
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Totale da ricevere: <span className="font-semibold text-foreground">{formatCurrency(pendingTotal)}</span>
-        </p>
+      {/* Header cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {summaryCards.map((c) => (
+          <Card key={c.label}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{c.label}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className={`text-2xl font-bold ${c.color}`}>{formatCurrency(c.value)}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Filter */}
+      <div className="flex justify-end">
         <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
           <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -92,53 +118,115 @@ function ClientPaymentsTab() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-8"></TableHead>
                 <TableHead>Campagna</TableHead>
                 <TableHead>Cliente</TableHead>
-                <TableHead>Ciclo</TableHead>
+                <TableHead>Mese</TableHead>
                 <TableHead>Scadenza</TableHead>
                 <TableHead className="text-right">Fisso (€)</TableHead>
-                <TableHead className="text-right">Views</TableHead>
+                <TableHead className="text-right">Views nuove</TableHead>
                 <TableHead className="text-right">CPM (€)</TableHead>
                 <TableHead className="text-right">Totale (€)</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Azioni</TableHead>
+                <TableHead className="text-right">Azione</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium cursor-pointer hover:underline" onClick={() => navigate(`/dashboard/campaigns/${p.campaignId}`)}>
-                    {p.campaignName}
-                  </TableCell>
-                  <TableCell>{p.clientName}</TableCell>
-                  <TableCell>{new Date(p.dueDate).toLocaleDateString("it-IT")}</TableCell>
-                  <TableCell>{new Date(p.dueDate).toLocaleDateString("it-IT")}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(p.fixedAmount)}</TableCell>
-                  <TableCell className="text-right">{formatViews(p.cpmViews)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(p.cpmAmount)}</TableCell>
-                  <TableCell className="text-right font-semibold">{formatCurrency(p.totalAmount)}</TableCell>
-                  <TableCell>
-                    {p.isPaid ? (
-                      <Badge className="bg-success/20 text-success border-success/30">✅</Badge>
-                    ) : p.isOverdue ? (
-                      <Badge variant="destructive">🔴</Badge>
-                    ) : (
-                      <Badge variant="secondary">⏳</Badge>
+              {filtered.map((p) => {
+                const isExpanded = expandedId === p.id;
+                return (
+                  <React.Fragment key={p.id}>
+                    <TableRow
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setExpandedId(isExpanded ? null : p.id)}
+                    >
+                      <TableCell className="px-2">
+                        {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <span
+                          className="hover:underline"
+                          onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/campaigns/${p.campaignId}`); }}
+                        >
+                          {p.campaignName}
+                        </span>
+                      </TableCell>
+                      <TableCell>{p.clientName}</TableCell>
+                      <TableCell>{p.monthLabel}</TableCell>
+                      <TableCell>{new Date(p.dueDate).toLocaleDateString("it-IT")}</TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(p.fixedAmount)}
+                        <span className="block text-xs text-muted-foreground">
+                          {p.creatorCount} × €{p.clientFixedPerCreator}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">{formatViews(p.cpmViews)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(p.cpmAmount)}</TableCell>
+                      <TableCell className="text-right font-semibold">{formatCurrency(p.totalAmount)}</TableCell>
+                      <TableCell>
+                        {p.isPaid ? (
+                          <Badge className="bg-success/20 text-success border-success/30">✅</Badge>
+                        ) : p.isOverdue ? (
+                          <Badge variant="destructive">🔴</Badge>
+                        ) : (
+                          <Badge variant="secondary">⏳</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        {p.isPaid ? (
+                          <span className="text-xs text-muted-foreground">
+                            {p.paidAt ? new Date(p.paidAt).toLocaleDateString("it-IT") : "—"}
+                          </span>
+                        ) : (
+                          <Button size="sm" variant="outline" onClick={() => setConfirm(p)}>
+                            <Check className="mr-1 h-3 w-3" /> Segna Ricevuto
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                    {isExpanded && (
+                      <TableRow key={`${p.id}-detail`}>
+                        <TableCell colSpan={11} className="bg-muted/30 px-6 py-4">
+                          <div className="grid gap-3 md:grid-cols-2 text-sm">
+                            <div className="space-y-2">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Periodo views</span>
+                                <span>{new Date(p.cycleStartDate).toLocaleDateString("it-IT")} — {new Date(p.cycleEndDate).toLocaleDateString("it-IT")}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Dettaglio fisso</span>
+                                <span>{p.creatorCount} creator × €{p.clientFixedPerCreator} = {formatCurrency(p.fixedAmount)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Dettaglio CPM</span>
+                                <span>{formatViews(p.cpmViews)} views × €{p.clientCpm} / 1.000 = {formatCurrency(p.cpmAmount)}</span>
+                              </div>
+                              <div className="flex justify-between font-semibold border-t border-border pt-2">
+                                <span>Totale da ricevere</span>
+                                <span>{formatCurrency(p.totalAmount)}</span>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              {p.isFirstCycle && (
+                                <div className="flex items-start gap-2 rounded-md bg-primary/10 p-3 text-xs">
+                                  <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                                  <span>Nessun CPM — primo mese di campagna, le views verranno pagate il mese successivo</span>
+                                </div>
+                              )}
+                              {p.isLastCycle && (
+                                <div className="flex items-start gap-2 rounded-md bg-warning/10 p-3 text-xs">
+                                  <Info className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+                                  <span>Campagna conclusa — solo CPM residuo, nessun fisso</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
                     )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {p.isPaid ? (
-                      <span className="text-xs text-muted-foreground">
-                        {p.paidAt ? new Date(p.paidAt).toLocaleDateString("it-IT") : "—"}
-                      </span>
-                    ) : (
-                      <Button size="sm" variant="outline" onClick={() => setConfirm(p)}>
-                        <Check className="mr-1 h-3 w-3" /> Segna Ricevuto
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+                  </React.Fragment>
+                );
+              })}
             </TableBody>
           </Table>
         </Card>
@@ -149,7 +237,7 @@ function ClientPaymentsTab() {
           <DialogHeader>
             <DialogTitle>Conferma incasso</DialogTitle>
             <DialogDescription>
-              Vuoi segnare come ricevuto il pagamento di {confirm?.campaignName} — {confirm?.cycleLabel}?
+              Vuoi segnare come ricevuto il pagamento di {confirm?.campaignName} — {confirm?.monthLabel}?
             </DialogDescription>
           </DialogHeader>
           {confirm && (

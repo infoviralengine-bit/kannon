@@ -14,6 +14,7 @@ export interface ClientPaymentRow {
   clientName: string;
   cycleNumber: number;
   cycleLabel: string;
+  monthLabel: string;
   dueDate: string;
   fixedAmount: number;
   cpmViews: number;
@@ -22,39 +23,67 @@ export interface ClientPaymentRow {
   isPaid: boolean;
   paidAt: string | null;
   isOverdue: boolean;
+  // enriched fields
+  cycleStartDate: string;
+  cycleEndDate: string;
+  isLastCycle: boolean;
+  isFirstCycle: boolean;
+  clientFixedPerCreator: number;
+  clientCpm: number;
+  creatorCount: number;
+  plannedCreators: number;
 }
 
 export function useClientPayments(filterMonth?: number, filterYear?: number) {
   return useQuery({
     queryKey: ["client-payments", filterMonth, filterYear],
     queryFn: async () => {
-      let query = supabase
+      const { data: payments, error } = await supabase
         .from("client_payments")
         .select("*")
         .order("due_date", { ascending: true });
-
-      const { data: payments, error } = await query;
       if (error) throw error;
 
       const campIds = [...new Set((payments ?? []).map((p) => p.campaign_id))];
-      let campMap = new Map<string, { name: string; client_name: string }>();
+      let campMap = new Map<string, { name: string; client_name: string; client_fixed_per_creator: number; client_cpm: number; planned_creators: number }>();
+      let creatorCountMap = new Map<string, number>();
+
       if (campIds.length) {
-        const { data: camps } = await supabase
-          .from("campaigns")
-          .select("id, name, client_name")
-          .in("id", campIds);
-        (camps ?? []).forEach((c) => campMap.set(c.id, { name: c.name, client_name: c.client_name }));
+        const [{ data: camps }, { data: ccRows }] = await Promise.all([
+          supabase.from("campaigns").select("id, name, client_name, client_fixed_per_creator, client_cpm, planned_creators").in("id", campIds),
+          supabase.from("campaign_creators").select("campaign_id").in("campaign_id", campIds),
+        ]);
+        (camps ?? []).forEach((c) => campMap.set(c.id, {
+          name: c.name, client_name: c.client_name,
+          client_fixed_per_creator: Number(c.client_fixed_per_creator ?? 200),
+          client_cpm: Number(c.client_cpm ?? 2),
+          planned_creators: c.planned_creators ?? 1,
+        }));
+        (ccRows ?? []).forEach((r) => {
+          creatorCountMap.set(r.campaign_id, (creatorCountMap.get(r.campaign_id) ?? 0) + 1);
+        });
+      }
+
+      // Fetch all cycles for these campaigns
+      let cycleMap = new Map<string, { cycle_start_date: string; cycle_end_date: string; is_last_cycle: boolean }>();
+      if (campIds.length) {
+        const { data: cycles } = await supabase.from("payment_cycles").select("id, cycle_start_date, cycle_end_date, is_last_cycle").in("campaign_id", campIds);
+        (cycles ?? []).forEach((c) => cycleMap.set(c.id, { cycle_start_date: c.cycle_start_date, cycle_end_date: c.cycle_end_date, is_last_cycle: c.is_last_cycle }));
       }
 
       const now = new Date();
       const todayStr = now.toISOString().slice(0, 10);
+      const monthNamesFull = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+      const monthNamesShort = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
 
       return (payments ?? []).map((p): ClientPaymentRow => {
         const camp = campMap.get(p.campaign_id);
         const dueDate = p.due_date;
-        const monthIdx = new Date(dueDate).getMonth();
-        const monthNames = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
-        const yr = new Date(dueDate).getFullYear();
+        const dd = new Date(dueDate);
+        const monthIdx = dd.getMonth();
+        const yr = dd.getFullYear();
+        const cycle = cycleMap.get(p.cycle_id);
+        const realCreators = creatorCountMap.get(p.campaign_id) ?? 0;
 
         return {
           id: p.id,
@@ -62,7 +91,8 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           campaignName: camp?.name ?? "—",
           clientName: camp?.client_name ?? "—",
           cycleNumber: p.cycle_number,
-          cycleLabel: `Ciclo ${p.cycle_number} — ${monthNames[monthIdx]} ${yr}`,
+          cycleLabel: `Ciclo ${p.cycle_number} — ${monthNamesShort[monthIdx]} ${yr}`,
+          monthLabel: `${monthNamesFull[monthIdx]} ${yr}`,
           dueDate,
           fixedAmount: Number(p.fixed_amount),
           cpmViews: p.cpm_views,
@@ -71,6 +101,14 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           isPaid: p.is_paid,
           paidAt: p.paid_at,
           isOverdue: !p.is_paid && dueDate < todayStr,
+          cycleStartDate: cycle?.cycle_start_date ?? dueDate,
+          cycleEndDate: cycle?.cycle_end_date ?? dueDate,
+          isLastCycle: cycle?.is_last_cycle ?? false,
+          isFirstCycle: p.cycle_number === 1,
+          clientFixedPerCreator: camp?.client_fixed_per_creator ?? 200,
+          clientCpm: camp?.client_cpm ?? 2,
+          creatorCount: realCreators || (camp?.planned_creators ?? 1),
+          plannedCreators: camp?.planned_creators ?? 1,
         };
       });
     },
@@ -371,28 +409,37 @@ export function useCampaignCycles(campaignId: string) {
 
       const { data: camp } = await supabase
         .from("campaigns")
-        .select("name, client_name")
+        .select("name, client_name, client_fixed_per_creator, client_cpm, planned_creators")
         .eq("id", campaignId)
         .single();
 
+      const { data: ccRows } = await supabase
+        .from("campaign_creators")
+        .select("campaign_id")
+        .eq("campaign_id", campaignId);
+      const realCreators = ccRows?.length ?? 0;
+
       const now = new Date();
       const todayStr = now.toISOString().slice(0, 10);
-      const monthNames = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+      const monthNamesShort = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+      const monthNamesFull = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
 
       return (cycles ?? []).map((c): CampaignCycleRow => {
         const p = (payments ?? []).find((p) => p.cycle_id === c.id);
         let payment: ClientPaymentRow | null = null;
         if (p) {
           const dueDate = p.due_date;
-          const monthIdx = new Date(dueDate).getMonth();
-          const yr = new Date(dueDate).getFullYear();
+          const dd = new Date(dueDate);
+          const monthIdx = dd.getMonth();
+          const yr = dd.getFullYear();
           payment = {
             id: p.id,
             campaignId: p.campaign_id,
             campaignName: camp?.name ?? "—",
             clientName: camp?.client_name ?? "—",
             cycleNumber: p.cycle_number,
-            cycleLabel: `Ciclo ${p.cycle_number} — ${monthNames[monthIdx]} ${yr}`,
+            cycleLabel: `Ciclo ${p.cycle_number} — ${monthNamesShort[monthIdx]} ${yr}`,
+            monthLabel: `${monthNamesFull[monthIdx]} ${yr}`,
             dueDate,
             fixedAmount: Number(p.fixed_amount),
             cpmViews: p.cpm_views,
@@ -401,6 +448,14 @@ export function useCampaignCycles(campaignId: string) {
             isPaid: p.is_paid,
             paidAt: p.paid_at,
             isOverdue: !p.is_paid && dueDate < todayStr,
+            cycleStartDate: c.cycle_start_date,
+            cycleEndDate: c.cycle_end_date,
+            isLastCycle: c.is_last_cycle,
+            isFirstCycle: p.cycle_number === 1,
+            clientFixedPerCreator: Number(camp?.client_fixed_per_creator ?? 200),
+            clientCpm: Number(camp?.client_cpm ?? 2),
+            creatorCount: realCreators || (camp?.planned_creators ?? 1),
+            plannedCreators: camp?.planned_creators ?? 1,
           };
         }
 
