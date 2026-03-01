@@ -100,9 +100,12 @@ function EditCampaignModal({
   const mutation = useMutation({
     mutationFn: async () => {
       if (!name || !clientName || !startDate) throw new Error("Compila i campi obbligatori");
-      const newCpm = parseFloat(clientCpm) || 2;
-      const newFixed = parseFloat(clientFixed) || 200;
-      const newPlanned = Math.max(1, parseInt(plannedCreators) || 1);
+      const parsedCpm = parseFloat(clientCpm);
+      const newCpm = isNaN(parsedCpm) ? 2 : parsedCpm;
+      const parsedFixed = parseFloat(clientFixed);
+      const newFixed = isNaN(parsedFixed) ? 200 : parsedFixed;
+      const parsedPlanned = parseInt(plannedCreators);
+      const newPlanned = Math.max(1, isNaN(parsedPlanned) ? 1 : parsedPlanned);
 
       const { error } = await supabase.from("campaigns").update({
         name,

@@ -54,12 +54,13 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
     mutationFn: async () => {
       if (!name || !clientName || !startDate) throw new Error("Compila i campi obbligatori");
       const startStr = format(startDate, "yyyy-MM-dd");
-      const numPlanned = Math.max(1, parseInt(plannedCreators) || 1);
+      const parsedPlanned = parseInt(plannedCreators);
+      const numPlanned = Math.max(1, isNaN(parsedPlanned) ? 1 : parsedPlanned);
       const { data: newCamp, error } = await supabase.from("campaigns").insert({
         name,
         client_name: clientName,
-        client_cpm: parseFloat(clientCpm) || 2,
-        client_fixed_per_creator: parseFloat(clientFixed) || 200,
+        client_cpm: isNaN(parseFloat(clientCpm)) ? 2 : parseFloat(clientCpm),
+        client_fixed_per_creator: isNaN(parseFloat(clientFixed)) ? 200 : parseFloat(clientFixed),
         start_date: startStr,
         end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
         notes: notes || null,
@@ -79,7 +80,7 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
       if (cycleErr) throw cycleErr;
 
       // Create client payment for cycle 1 (fixed only, 0 CPM)
-      const fixedPerCreator = parseFloat(clientFixed) || 200;
+      const fixedPerCreator = isNaN(parseFloat(clientFixed)) ? 200 : parseFloat(clientFixed);
       const fixedTotal = fixedPerCreator * numPlanned;
       await supabase.from("client_payments").insert({
         campaign_id: newCamp.id,
