@@ -269,9 +269,9 @@ function CyclesSection({ campaignId, campaign, cycles }: {
         startDate = campaign.start_date;
       }
 
-      const endD = new Date(startDate);
-      endD.setDate(endD.getDate() + 30);
-      const endDate = format(endD, "yyyy-MM-dd");
+      const endD = new Date(startDate + "T00:00:00Z");
+      endD.setUTCDate(endD.getUTCDate() + 30);
+      const endDate = endD.toISOString().slice(0, 10);
 
       // Check if this is the last cycle (post-campaign)
       const campEndDate = campaign.end_date;
