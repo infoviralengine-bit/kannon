@@ -1,7 +1,7 @@
 import {
   Globe, Megaphone, Users, Smartphone, Wallet, CreditCard,
   BarChart3, Film, TrendingUp, Search, FileText,
-  CalendarDays, Landmark, Settings, LogOut
+  CalendarDays, Landmark, Settings, LogOut, ArrowDownCircle, ArrowUpCircle, Eye
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -23,17 +23,22 @@ import {
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 
-const mainItems = [
-  { title: "Generale", url: "/dashboard", icon: Globe },
+const dashboardItem = { title: "Dashboard", url: "/dashboard", icon: Globe };
+
+const clientiItems = [
   { title: "Campagne", url: "/dashboard/campaigns", icon: Megaphone },
-  { title: "Creator", url: "/dashboard/creators", icon: Users },
-  { title: "Contratti", url: "/dashboard/contracts", icon: FileText },
-  { title: "Account", url: "/dashboard/accounts", icon: Smartphone },
-  { title: "Payoff", url: "/dashboard/payoff", icon: Wallet },
-  { title: "Pagamenti", url: "/dashboard/payments", icon: CreditCard },
+  { title: "Pagamenti Da Ricevere", url: "/dashboard/payments-receivable", icon: ArrowDownCircle },
 ];
 
-const comingSoonItems = [
+const creatorItems = [
+  { title: "Contratti", url: "/dashboard/contracts", icon: FileText },
+  { title: "Creator", url: "/dashboard/creators", icon: Users },
+  { title: "Account", url: "/dashboard/accounts", icon: Smartphone },
+  { title: "Pagamenti Da Pagare", url: "/dashboard/payments-payable", icon: ArrowUpCircle },
+  { title: "Payoff CPM", url: "/dashboard/payoff", icon: Eye },
+];
+
+const altroItems = [
   { title: "Pipeline CRM", url: "/dashboard/pipeline", icon: BarChart3 },
   { title: "Media Library", url: "/dashboard/media", icon: Film },
   { title: "Report", url: "/dashboard/reports", icon: TrendingUp },
@@ -60,9 +65,24 @@ export function AppSidebar() {
     .toUpperCase()
     .slice(0, 2) || "?";
 
-  const allItems = role === "admin"
-    ? [...comingSoonItems, { title: "Impostazioni", url: "/dashboard/settings", icon: Settings }]
-    : comingSoonItems;
+  const allAltroItems = role === "admin"
+    ? [...altroItems, { title: "Impostazioni", url: "/dashboard/settings", icon: Settings }]
+    : altroItems;
+
+  const renderMenuItems = (items: typeof clientiItems) => (
+    <SidebarMenu>
+      {items.map((item) => (
+        <SidebarMenuItem key={item.title}>
+          <SidebarMenuButton asChild isActive={isActive(item.url)}>
+            <NavLink to={item.url} end={item.url === "/dashboard"}>
+              <item.icon className="h-4 w-4" />
+              {!collapsed && <span>{item.title}</span>}
+            </NavLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  );
 
   return (
     <Sidebar collapsible="icon">
@@ -78,39 +98,31 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Dashboard - no section label */}
         <SidebarGroup>
-          <SidebarGroupLabel>Principale</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {mainItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink to={item.url} end={item.url === "/dashboard"}>
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            {renderMenuItems([dashboardItem])}
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Clienti</SidebarGroupLabel>
+          <SidebarGroupContent>
+            {renderMenuItems(clientiItems)}
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Creator</SidebarGroupLabel>
+          <SidebarGroupContent>
+            {renderMenuItems(creatorItems)}
           </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarGroup>
           <SidebarGroupLabel>Altro</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {allItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink to={item.url} end={false}>
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+            {renderMenuItems(allAltroItems)}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

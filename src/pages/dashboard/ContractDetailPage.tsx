@@ -332,7 +332,7 @@ export default function ContractDetailPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Account TikTok</TableHead>
+                          <TableHead>Account</TableHead>
                           <TableHead>Campagna assegnata</TableHead>
                         </TableRow>
                       </TableHeader>

@@ -210,7 +210,7 @@ export default function AccountPage() {
 
         <TabsContent value="all">
           {accounts.length === 0 ? (
-            <Card><CardContent className="py-12 text-center text-muted-foreground">Nessun account TikTok. Crea il primo!</CardContent></Card>
+            <Card><CardContent className="py-12 text-center text-muted-foreground">Nessun account. Crea il primo!</CardContent></Card>
           ) : (
             <div className="space-y-6">
               {creatorAccounts.length > 0 && <CreatorTable accounts={creatorAccounts} creators={creators} campaigns={campaigns} getVideosToday={getCreatorVideosToday} getTotalViews={getAccountTotalViews} navigate={navigate} onDelete={setDeleteTarget} />}

@@ -702,7 +702,7 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Contratto</TableHead>
-                <TableHead>Account TikTok</TableHead>
+                <TableHead>Account</TableHead>
                 <TableHead className="text-right">Oggi</TableHead>
                 <TableHead className="text-right">Settimana</TableHead>
                 <TableHead className="text-right">Mese</TableHead>
