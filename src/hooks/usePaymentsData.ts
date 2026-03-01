@@ -23,6 +23,7 @@ export interface ClientPaymentRow {
   isPaid: boolean;
   paidAt: string | null;
   isOverdue: boolean;
+  viewsPaidCumulative: number;
   // enriched fields
   cycleStartDate: string;
   cycleEndDate: string;
@@ -101,6 +102,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           isPaid: p.is_paid,
           paidAt: p.paid_at,
           isOverdue: !p.is_paid && dueDate < todayStr,
+          viewsPaidCumulative: p.views_paid_cumulative ?? 0,
           cycleStartDate: cycle?.cycle_start_date ?? dueDate,
           cycleEndDate: cycle?.cycle_end_date ?? dueDate,
           isLastCycle: cycle?.is_last_cycle ?? false,
@@ -448,6 +450,7 @@ export function useCampaignCycles(campaignId: string) {
             isPaid: p.is_paid,
             paidAt: p.paid_at,
             isOverdue: !p.is_paid && dueDate < todayStr,
+            viewsPaidCumulative: (p as any).views_paid_cumulative ?? 0,
             cycleStartDate: c.cycle_start_date,
             cycleEndDate: c.cycle_end_date,
             isLastCycle: c.is_last_cycle,

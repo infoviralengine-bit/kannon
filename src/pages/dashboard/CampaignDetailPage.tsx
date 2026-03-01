@@ -273,37 +273,54 @@ function CyclesSection({ campaignId, campaign, cycles }: {
       endD.setDate(endD.getDate() + 30);
       const endDate = format(endD, "yyyy-MM-dd");
 
+      // Check if this is the last cycle (post-campaign)
+      const campEndDate = campaign.end_date;
+      const isLastCycle = campEndDate ? new Date(startDate) >= new Date(campEndDate) : false;
+
       const { data: cycle, error: cycleErr } = await supabase.from("payment_cycles").insert({
         campaign_id: campaignId,
         cycle_number: nextNumber,
         cycle_start_date: startDate,
         cycle_end_date: endDate,
+        is_last_cycle: isLastCycle,
       }).select().single();
       if (cycleErr) throw cycleErr;
 
-      // Get creator count for fixed — use actual count, fallback to planned_creators
+      // Get creator count
       const { data: cc } = await supabase.from("campaign_creators").select("creator_id").eq("campaign_id", campaignId);
       const actualCreatorCount = (cc ?? []).length;
       const plannedCount = (campaign as any).planned_creators ?? 1;
-      const creatorCount = actualCreatorCount > 0 ? actualCreatorCount : plannedCount;
+      const isFirstCycle = nextNumber === 1;
+      // Cycle 1 uses planned_creators, subsequent cycles use actual (or planned as fallback)
+      const creatorCount = isFirstCycle ? plannedCount : (actualCreatorCount > 0 ? actualCreatorCount : plannedCount);
 
-      // Get views for CPM calculation: total current views - views already paid
+      // Get views_paid_cumulative from previous cycle's payment
+      let prevViewsPaidCumulative = 0;
+      if (lastCycle?.payment) {
+        prevViewsPaidCumulative = lastCycle.payment.viewsPaidCumulative ?? 0;
+      }
+
+      // Get total current views for all campaign videos
       const { data: accounts } = await supabase.from("tiktok_accounts").select("id").eq("campaign_id", campaignId);
       const accIds = (accounts ?? []).map((a) => a.id);
 
-      let cpmViews = 0;
+      let totalCurrentViews = 0;
       if (accIds.length) {
-        const { data: videos } = await supabase.from("videos").select("views, views_at_last_payment").in("tiktok_account_id", accIds);
-        cpmViews = (videos ?? []).reduce((s, v) => s + ((v.views ?? 0) - (v.views_at_last_payment ?? 0)), 0);
+        const { data: videos } = await supabase.from("videos").select("views, views_final, window_closed").in("tiktok_account_id", accIds);
+        totalCurrentViews = (videos ?? []).reduce((s, v) => {
+          const effectiveViews = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
+          return s + effectiveViews;
+        }, 0);
       }
 
-      const fixedAmount = (campaign.client_fixed_per_creator ?? 200) * creatorCount;
-      const cpmAmount = (campaign.client_cpm ?? 2) * (cpmViews / 1000);
+      // Calculate new views for this cycle
+      const newViews = isFirstCycle ? 0 : Math.max(0, totalCurrentViews - prevViewsPaidCumulative);
+      const viewsPaidCumulative = prevViewsPaidCumulative + newViews;
 
-      // For cycle 1: no CPM. For others: use calculated CPM from previous cycle's views
-      const isFirstCycle = nextNumber === 1;
-      const finalCpmViews = isFirstCycle ? 0 : cpmViews;
-      const finalCpmAmount = isFirstCycle ? 0 : cpmAmount;
+      // Fixed amount: 0 for last cycle (post-campaign), otherwise fixed × creators
+      const fixedAmount = isLastCycle ? 0 : (campaign.client_fixed_per_creator ?? 200) * creatorCount;
+      const cpmAmount = isFirstCycle ? 0 : (campaign.client_cpm ?? 2) * (newViews / 1000);
+      const totalAmount = fixedAmount + cpmAmount;
 
       await supabase.from("client_payments").insert({
         campaign_id: campaignId,
@@ -311,21 +328,14 @@ function CyclesSection({ campaignId, campaign, cycles }: {
         cycle_number: nextNumber,
         due_date: startDate,
         fixed_amount: fixedAmount,
-        cpm_views: finalCpmViews,
-        cpm_amount: finalCpmAmount,
-        total_amount: fixedAmount + finalCpmAmount,
+        cpm_views: newViews,
+        cpm_amount: cpmAmount,
+        total_amount: totalAmount,
         views_snapshot_at: new Date().toISOString(),
-      });
+        views_paid_cumulative: viewsPaidCumulative,
+      } as any);
 
-      // Update views_at_last_payment for all videos of this campaign
-      if (!isFirstCycle && accIds.length) {
-        const { data: videos } = await supabase.from("videos").select("id, views").in("tiktok_account_id", accIds);
-        for (const v of (videos ?? [])) {
-          await supabase.from("videos").update({ views_at_last_payment: v.views ?? 0 }).eq("id", v.id);
-        }
-      }
-
-      toast({ title: `Ciclo ${nextNumber} generato`, description: `Pagamento cliente di ${formatCurrency(fixedAmount + finalCpmAmount)} previsto per il ${new Date(startDate).toLocaleDateString("it-IT")}` });
+      toast({ title: `Ciclo ${nextNumber} generato`, description: `Da ricevere: ${formatCurrency(totalAmount)}` });
       qc.invalidateQueries({ queryKey: ["campaign-cycles", campaignId] });
       qc.invalidateQueries({ queryKey: ["client-payments"] });
     } catch (e: any) {

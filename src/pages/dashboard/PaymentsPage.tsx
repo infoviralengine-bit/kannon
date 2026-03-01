@@ -190,16 +190,28 @@ function ClientPaymentsTab() {
                           <div className="grid gap-3 md:grid-cols-2 text-sm">
                             <div className="space-y-2">
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Periodo views</span>
+                                <span className="text-muted-foreground">Periodo</span>
                                 <span>{new Date(p.cycleStartDate).toLocaleDateString("it-IT")} — {new Date(p.cycleEndDate).toLocaleDateString("it-IT")}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Dettaglio fisso</span>
+                                <span className="text-muted-foreground">Fisso</span>
                                 <span>{p.creatorCount} creator × €{p.clientFixedPerCreator} = {formatCurrency(p.fixedAmount)}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-muted-foreground">Dettaglio CPM</span>
-                                <span>{formatViews(p.cpmViews)} views × €{p.clientCpm} / 1.000 = {formatCurrency(p.cpmAmount)}</span>
+                                <span className="text-muted-foreground">Views totali campagna</span>
+                                <span>{formatViews(p.viewsPaidCumulative)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Views già pagate cicli precedenti</span>
+                                <span>{formatViews(Math.max(0, p.viewsPaidCumulative - p.cpmViews))}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Views nuove questo ciclo</span>
+                                <span>{formatViews(p.cpmViews)}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">CPM</span>
+                                <span>{formatViews(p.cpmViews)} × €{p.clientCpm} / 1.000 = {formatCurrency(p.cpmAmount)}</span>
                               </div>
                               <div className="flex justify-between font-semibold border-t border-border pt-2">
                                 <span>Totale da ricevere</span>
@@ -210,13 +222,13 @@ function ClientPaymentsTab() {
                               {p.isFirstCycle && (
                                 <div className="flex items-start gap-2 rounded-md bg-primary/10 p-3 text-xs">
                                   <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                                  <span>Nessun CPM — primo mese di campagna, le views verranno pagate il mese successivo</span>
+                                  <span>Nessun CPM — le views verranno conteggiate dal prossimo ciclo</span>
                                 </div>
                               )}
                               {p.isLastCycle && (
                                 <div className="flex items-start gap-2 rounded-md bg-warning/10 p-3 text-xs">
                                   <Info className="h-4 w-4 text-warning mt-0.5 shrink-0" />
-                                  <span>Campagna conclusa — solo CPM residuo, nessun fisso</span>
+                                  <span>Campagna conclusa — nessun fisso, solo CPM residuo</span>
                                 </div>
                               )}
                             </div>
