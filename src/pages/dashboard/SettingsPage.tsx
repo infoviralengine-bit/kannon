@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Eye, EyeOff, Shield, Users, Cpu } from "lucide-react";
+import { Plus, Eye, EyeOff, Users, Cpu } from "lucide-react";
 import SystemTest from "@/components/SystemTest";
 
 type AppUser = { id: string; full_name: string; email: string; role: string; created_at: string };
@@ -50,7 +50,6 @@ export default function SettingsPage() {
   const [showApiKey, setShowApiKey] = useState(false);
 
   // Saving flags
-  const [savingEcon, setSavingEcon] = useState(false);
   const [savingApify, setSavingApify] = useState(false);
 
   useEffect(() => {
@@ -147,23 +146,6 @@ export default function SettingsPage() {
     await supabase.from("settings").update({ value, updated_at: new Date().toISOString() }).eq("key", key);
   }
 
-  async function handleSaveEconomics() {
-    setSavingEcon(true);
-    try {
-      await Promise.all([
-        saveSetting("client_cpm_default", settings.client_cpm_default || "2.00"),
-        saveSetting("creator_fixed_default", settings.creator_fixed_default || "200.00"),
-        saveSetting("creator_cpm_default", settings.creator_cpm_default || "0.50"),
-        saveSetting("creator_monthly_fixed_default", settings.creator_monthly_fixed_default || "200.00"),
-        saveSetting("creator_min_videos_default", settings.creator_min_videos_default || "5"),
-      ]);
-      toast({ title: "Impostazioni salvate" });
-    } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
-    }
-    setSavingEcon(false);
-  }
-
   async function handleSaveApify() {
     setSavingApify(true);
     try {
@@ -257,72 +239,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* SECTION 2 — DEFAULT ECONOMICS */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Shield className="h-5 w-5 text-primary" />
-            <div>
-              <CardTitle className="text-lg">Condizioni Economiche Default</CardTitle>
-              <CardDescription>Questi valori vengono precompilati quando crei una nuova campagna o un nuovo creator.</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-2">
-              <Label>CPM Cliente default (€)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={settings.client_cpm_default || ""}
-                onChange={(e) => setSettings({ ...settings, client_cpm_default: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Fisso per Creator default (€)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={settings.creator_fixed_default || ""}
-                onChange={(e) => setSettings({ ...settings, creator_fixed_default: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>CPM Creator default (€)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={settings.creator_cpm_default || ""}
-                onChange={(e) => setSettings({ ...settings, creator_cpm_default: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Fisso Mensile Creator default (€)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={settings.creator_monthly_fixed_default || ""}
-                onChange={(e) => setSettings({ ...settings, creator_monthly_fixed_default: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Minimo video/giorno Creator</Label>
-              <Input
-                type="number"
-                step="1"
-                value={settings.creator_min_videos_default || ""}
-                onChange={(e) => setSettings({ ...settings, creator_min_videos_default: e.target.value })}
-              />
-            </div>
-          </div>
-          <Button className="mt-6" onClick={handleSaveEconomics} disabled={savingEcon}>
-            {savingEcon ? "Salvataggio..." : "Salva Impostazioni"}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* SECTION 3 — APIFY */}
+      {/* SECTION 2 — APIFY */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
