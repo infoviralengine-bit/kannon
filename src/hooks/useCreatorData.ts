@@ -238,7 +238,7 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
         const creatorCpm = Number(contract.creator_cpm ?? 0.5);
         const target = hasVideoTarget ? getMonthlyTarget(minVpd, year, month) : 0;
         const fixedEarned = hasVideoTarget ? isFixedEarnedMonthly(monthVideoCount, minVpd, year, month) : true;
-        const progress = hasVideoTarget ? getProgressData(monthVideoCount, minVpd, year, month) : { percent: 100, alertLevel: "green" as const, avgCurrent: 0, avgNeeded: 0, workingDaysLeft: 0 };
+        const progress = hasVideoTarget ? getProgressData(monthVideoCount, minVpd, year, month) : { videosSoFar: 0, totalRequired: 0, workingDaysElapsed: 0, workingDaysTotal: 0, workingDaysLeft: 0, percent: 100, alertLevel: "green" as const, avgCurrent: 0, avgNeeded: 0 };
 
         const cpmAmount = creatorCpm * (monthViews / 1000);
 

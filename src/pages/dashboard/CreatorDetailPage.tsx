@@ -208,47 +208,68 @@ export default function CreatorDetailPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           {payoff ? (
-            <>
-              {/* Progress bar */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span>Video pubblicati questo mese: {payoff.monthVideoCount} / {payoff.monthlyTarget}</span>
-                  <Badge className={
-                    payoff.progress.alertLevel === "green" ? "bg-success/20 text-success border-success/30" :
-                    payoff.progress.alertLevel === "yellow" ? "bg-warning/20 text-warning border-warning/30" :
-                    "bg-destructive/20 text-destructive border-destructive/30"
-                  }>
-                    {payoff.fixedEarned ? "✅ Maturato" : payoff.progress.alertLevel === "yellow" ? "🟡 In ritardo" : "🔴 Non maturato"}
-                  </Badge>
-                </div>
-                <Progress value={payoff.progress.percent} className={progressColor(payoff.progress.alertLevel)} />
-                <p className="text-xs text-muted-foreground">
-                  Media giornaliera attuale: {payoff.progress.avgCurrent.toFixed(1)} video/giorno — necessaria: {payoff.min.toFixed(0)} video/giorno
-                  {payoff.progress.workingDaysLeft > 0 && !payoff.fixedEarned && (
-                    <> (per recuperare: {payoff.progress.avgNeeded.toFixed(1)} video/giorno)</>
-                  )}
-                </p>
-              </div>
+            payoff.contracts.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Nessun contratto assegnato a questo creator.</p>
+            ) : (
+              <>
+                {payoff.contracts.map((pc) => (
+                  <div key={pc.contractId} className="space-y-3 border-b border-border pb-4 last:border-b-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold">{pc.contractName}</span>
+                      {pc.hasVideoTarget ? (
+                        <Badge className={
+                          pc.progress.alertLevel === "green" ? "bg-success/20 text-success border-success/30" :
+                          pc.progress.alertLevel === "yellow" ? "bg-warning/20 text-warning border-warning/30" :
+                          "bg-destructive/20 text-destructive border-destructive/30"
+                        }>
+                          {pc.fixedEarned ? "✅ Maturato" : pc.progress.alertLevel === "yellow" ? "🟡 In ritardo" : "🔴 Non maturato"}
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-success/20 text-success border-success/30">✅ Sempre maturato</Badge>
+                      )}
+                    </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Fisso</span>
-                <span className="font-semibold">{formatCurrency(payoff.fixedEarned ? payoff.creatorFixed : 0)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">CPM maturato</span>
-                <span className="font-semibold">{formatCurrency(payoff.cpmAmount)}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {formatViews(payoff.monthViews)} views × {formatCurrency(payoff.creatorCpm)} / 1.000 = {formatCurrency(payoff.cpmAmount)}
-              </p>
-              <p className="text-xs text-muted-foreground italic">
-                {payoff.windowOpen} video con finestra aperta (views provvisorie) — {payoff.windowClosed} video con finestra chiusa (views definitive)
-              </p>
-              <div className="flex items-center justify-between border-t border-border pt-3">
-                <span className="text-sm font-semibold">Totale mese</span>
-                <span className="text-lg font-bold">{formatCurrency(payoff.total)}</span>
-              </div>
-            </>
+                    {pc.hasVideoTarget && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-muted-foreground">
+                          Video pubblicati: {pc.monthVideoCount} / {pc.monthlyTarget}
+                        </p>
+                        <Progress value={pc.progress.percent} className={progressColor(pc.progress.alertLevel)} />
+                        <p className="text-xs text-muted-foreground">
+                          Media: {pc.progress.avgCurrent.toFixed(1)} video/g — necessaria: {pc.min} video/g
+                          {pc.progress.workingDaysLeft > 0 && !pc.fixedEarned && (
+                            <> (per recuperare: {pc.progress.avgNeeded.toFixed(1)} video/g)</>
+                          )}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs">Fisso</span>
+                      <span className="text-sm font-semibold">{formatCurrency(pc.fixedEarned ? pc.creatorFixed : 0)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs">CPM maturato</span>
+                      <span className="text-sm font-semibold">{formatCurrency(pc.cpmAmount)}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {formatViews(pc.monthViews)} views × {formatCurrency(pc.creatorCpm)} / 1.000 = {formatCurrency(pc.cpmAmount)}
+                    </p>
+                    <p className="text-xs text-muted-foreground italic">
+                      {pc.windowOpen} video finestra aperta — {pc.windowClosed} finestra chiusa
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold">Subtotale</span>
+                      <span className="text-sm font-bold">{formatCurrency(pc.total)}</span>
+                    </div>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between border-t border-border pt-3">
+                  <span className="text-sm font-semibold">Totale mese</span>
+                  <span className="text-lg font-bold">{formatCurrency(payoff.grandTotal)}</span>
+                </div>
+              </>
+            )
           ) : (
             <Skeleton className="h-20 w-full" />
           )}
