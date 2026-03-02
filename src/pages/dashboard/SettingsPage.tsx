@@ -47,9 +47,6 @@ export default function SettingsPage() {
   const [editCreatorId, setEditCreatorId] = useState("");
   const [editCampaignId, setEditCampaignId] = useState("");
 
-  // Apify
-  const [showApiKey, setShowApiKey] = useState(false);
-
   // Saving flags
   const [savingApify, setSavingApify] = useState(false);
 
