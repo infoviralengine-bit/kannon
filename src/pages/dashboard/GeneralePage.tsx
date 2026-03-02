@@ -349,7 +349,7 @@ export default function GeneralePage() {
         )}
       </div>
 
-      {/* ROW 4 — Creator Alerts + Top Performers */}
+      {/* ROW 4 — Alerts (Creator + Sistema) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Alerts */}
         <Card className="border-[#1e1e2e] bg-[#111118]">
@@ -403,6 +403,49 @@ export default function GeneralePage() {
           </CardContent>
         </Card>
 
+        {/* System Alerts */}
+        <Card className="border-[#1e1e2e] bg-[#111118]">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold text-[#f8fafc] flex items-center gap-2">
+              <Zap className="h-4 w-4 text-[#64748b]" />
+              Alert Sistema
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {deadlines.isLoading ? (
+              <Shimmer className="h-16" />
+            ) : !deadlines.data?.systemAlerts.length ? (
+              <div className="flex items-center gap-2 py-4 px-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <span className="text-sm text-emerald-400">Nessun problema rilevato ✓</span>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {deadlines.data.systemAlerts.map((a, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-2 p-3 rounded-lg border ${
+                      a.severity === "red"
+                        ? "border-red-500/20 bg-red-500/5"
+                        : a.severity === "yellow"
+                          ? "border-amber-500/20 bg-amber-500/5"
+                          : "border-[#1e1e2e] bg-[#0d0d14]"
+                    }`}
+                  >
+                    <AlertTriangle className={`h-3.5 w-3.5 flex-shrink-0 ${
+                      a.severity === "red" ? "text-red-400" : a.severity === "yellow" ? "text-amber-400" : "text-[#64748b]"
+                    }`} />
+                    <span className="text-sm text-[#94a3b8]">{a.message}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* ROW 5 — Top Performers + Payment Deadlines */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top Performers */}
         <Card className="border-[#1e1e2e] bg-[#111118]">
           <CardHeader className="pb-3">
@@ -446,10 +489,7 @@ export default function GeneralePage() {
             )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* ROW 5 — Deadlines + System Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Payment Deadlines */}
         <Card className="border-[#1e1e2e] bg-[#111118]">
           <CardHeader className="pb-3">
@@ -525,46 +565,6 @@ export default function GeneralePage() {
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* System Alerts */}
-        <Card className="border-[#1e1e2e] bg-[#111118]">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-[#f8fafc] flex items-center gap-2">
-              <Zap className="h-4 w-4 text-[#64748b]" />
-              Alert Sistema
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {deadlines.isLoading ? (
-              <Shimmer className="h-16" />
-            ) : !deadlines.data?.systemAlerts.length ? (
-              <div className="flex items-center gap-2 py-4 px-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                <span className="text-sm text-emerald-400">Nessun problema rilevato ✓</span>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {deadlines.data.systemAlerts.map((a, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center gap-2 p-3 rounded-lg border ${
-                      a.severity === "red"
-                        ? "border-red-500/20 bg-red-500/5"
-                        : a.severity === "yellow"
-                          ? "border-amber-500/20 bg-amber-500/5"
-                          : "border-[#1e1e2e] bg-[#0d0d14]"
-                    }`}
-                  >
-                    <AlertTriangle className={`h-3.5 w-3.5 flex-shrink-0 ${
-                      a.severity === "red" ? "text-red-400" : a.severity === "yellow" ? "text-amber-400" : "text-[#64748b]"
-                    }`} />
-                    <span className="text-sm text-[#94a3b8]">{a.message}</span>
-                  </div>
-                ))}
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
