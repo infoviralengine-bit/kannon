@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 const statusColor: Record<string, string> = {
   active: "bg-success/20 text-success border-success/30",
@@ -145,6 +146,18 @@ export default function CreatorPage() {
     },
   });
 
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from("creators").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Status aggiornato" });
+      qc.invalidateQueries({ queryKey: ["creator-table"] });
+      qc.invalidateQueries({ queryKey: ["active-creators-count"] });
+    },
+  });
+
   const filtered = (creators ?? []).filter(c => {
     if (filter === "all") return true;
     return c.status === filter;
@@ -206,7 +219,13 @@ export default function CreatorPage() {
                     <TableCell className="text-right">{c.activeCampaigns}</TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
                     <TableCell>
-                      <Badge className={statusColor[c.status] ?? ""}>{statusLabel[c.status] ?? c.status}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={c.status === "active"}
+                          onCheckedChange={(checked) => statusMutation.mutate({ id: c.id, status: checked ? "active" : "inactive" })}
+                        />
+                        <span className="text-xs text-muted-foreground">{c.status === "active" ? "Attivo" : "Inattivo"}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="space-x-1">
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.id}`)}>Apri</Button>
