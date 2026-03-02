@@ -41,10 +41,6 @@ function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChang
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [cpm, setCpm] = useState("0.50");
-  const [fixed, setFixed] = useState("200.00");
-  const [minVideos, setMinVideos] = useState("5");
-
   const mutation = useMutation({
     mutationFn: async () => {
       if (!name) throw new Error("Il nome è obbligatorio");
@@ -52,9 +48,6 @@ function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChang
         name,
         email: email || null,
         phone: phone || null,
-        creator_cpm: parseFloat(cpm) || 0.5,
-        creator_fixed: parseFloat(fixed) || 200,
-        min_videos_per_day: parseInt(minVideos) || 5,
       });
       if (error) throw error;
     },
@@ -63,7 +56,7 @@ function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChang
       qc.invalidateQueries({ queryKey: ["creator-table"] });
       qc.invalidateQueries({ queryKey: ["active-creators-count"] });
       onOpenChange(false);
-      setName(""); setEmail(""); setPhone(""); setCpm("0.50"); setFixed("200.00"); setMinVideos("5");
+      setName(""); setEmail(""); setPhone("");
     },
     onError: (e: Error) => {
       toast({ title: "Errore", description: e.message, variant: "destructive" });
@@ -87,20 +80,6 @@ function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChang
             <div className="grid gap-1.5">
               <Label>Telefono</Label>
               <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+39..." />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="grid gap-1.5">
-              <Label>CPM Creator (€)</Label>
-              <Input type="number" step="0.01" value={cpm} onChange={e => setCpm(e.target.value)} />
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Fisso mensile (€)</Label>
-              <Input type="number" step="0.01" value={fixed} onChange={e => setFixed(e.target.value)} />
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Min video/giorno</Label>
-              <Input type="number" value={minVideos} onChange={e => setMinVideos(e.target.value)} />
             </div>
           </div>
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
