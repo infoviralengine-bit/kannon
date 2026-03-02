@@ -179,7 +179,7 @@ export default function CreatorDetailPage() {
           <Card key={k.label}>
             <CardContent className="pt-4 pb-3 px-4">
               <p className="text-xs text-muted-foreground">{k.label}</p>
-              <p className="text-xl font-bold mt-1">{k.value}{k.extra ?? ""}</p>
+              <p className="text-xl font-bold mt-1">{k.value}</p>
             </CardContent>
           </Card>
         ))}
