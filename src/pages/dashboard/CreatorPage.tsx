@@ -41,10 +41,6 @@ function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChang
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [cpm, setCpm] = useState("0.50");
-  const [fixed, setFixed] = useState("200.00");
-  const [minVideos, setMinVideos] = useState("5");
-
   const mutation = useMutation({
     mutationFn: async () => {
       if (!name) throw new Error("Il nome è obbligatorio");
@@ -52,9 +48,6 @@ function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChang
         name,
         email: email || null,
         phone: phone || null,
-        creator_cpm: parseFloat(cpm) || 0.5,
-        creator_fixed: parseFloat(fixed) || 200,
-        min_videos_per_day: parseInt(minVideos) || 5,
       });
       if (error) throw error;
     },
