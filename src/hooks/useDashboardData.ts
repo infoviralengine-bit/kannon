@@ -104,10 +104,46 @@ export function useCampaignTable() {
       const { data: campaigns } = await supabase.from("campaigns").select("*");
       if (!campaigns?.length) return [] as CampaignRow[];
 
-      const { data: ccRows } = await supabase.from("campaign_creators").select("campaign_id, creator_id");
-      const { data: creators } = await supabase.from("creators").select("id, creator_cpm, creator_fixed, min_videos_per_day, status");
-      const { data: accounts } = await supabase.from("tiktok_accounts").select("id, campaign_id, creator_id");
-      const { data: allVideos } = await supabase.from("videos").select("tiktok_account_id, views, published_at");
+      const [
+        { data: ccRows },
+        { data: creators },
+        { data: accounts },
+        { data: allVideos },
+        { data: contracts },
+        { data: contractCampaigns },
+        { data: contractCreators },
+      ] = await Promise.all([
+        supabase.from("campaign_creators").select("campaign_id, creator_id"),
+        supabase.from("creators").select("id, creator_cpm, creator_fixed, min_videos_per_day, status"),
+        supabase.from("tiktok_accounts").select("id, campaign_id, creator_id"),
+        supabase.from("videos").select("tiktok_account_id, views, published_at"),
+        supabase.from("contracts" as any).select("id, creator_fixed, creator_cpm, min_videos_per_day, is_active"),
+        supabase.from("contract_campaigns" as any).select("contract_id, campaign_id"),
+        supabase.from("contract_creators" as any).select("contract_id, creator_id"),
+      ]);
+
+      // Build contract lookup: for a given campaign+creator, find the contract terms
+      const contractMap = new Map(((contracts ?? []) as any[]).map((c) => [c.id, c]));
+      const campToContracts = new Map<string, string[]>();
+      ((contractCampaigns ?? []) as any[]).forEach((cc) => {
+        const list = campToContracts.get(cc.campaign_id) ?? [];
+        list.push(cc.contract_id);
+        campToContracts.set(cc.campaign_id, list);
+      });
+      const creatorToContracts = new Map<string, Set<string>>();
+      ((contractCreators ?? []) as any[]).forEach((cc) => {
+        const set = creatorToContracts.get(cc.creator_id) ?? new Set();
+        set.add(cc.contract_id);
+        creatorToContracts.set(cc.creator_id, set);
+      });
+      // Find contract for a campaign+creator pair
+      const findContract = (campaignId: string, creatorId: string) => {
+        const campContracts = campToContracts.get(campaignId) ?? [];
+        const creatorContracts = creatorToContracts.get(creatorId);
+        if (!creatorContracts) return null;
+        const contractId = campContracts.find((cid) => creatorContracts.has(cid));
+        return contractId ? contractMap.get(contractId) : null;
+      };
 
       const now = new Date();
       const year = now.getFullYear();
@@ -157,16 +193,21 @@ export function useCampaignTable() {
         activeCreators.forEach((id) => {
           const cr = creatorMap.get(id);
           if (cr) {
-            // Check if creator earned the fixed this month (based on ALL their accounts, not just this campaign)
+            // Use contract terms if available, otherwise fall back to creator-level rates
+            const contract = findContract(c.id, id);
+            const fixedAmt = contract ? Number(contract.creator_fixed ?? 0) : (cr.creator_fixed ?? 0);
+            const cpmRate = contract ? Number(contract.creator_cpm ?? 0) : (cr.creator_cpm ?? 0);
+            const minVpd = contract ? (contract.min_videos_per_day ?? 5) : (cr.min_videos_per_day ?? 5);
+
+            // Check if creator earned the fixed this month
             const crAccIds = new Set(allAccountsByCreator.get(id) ?? []);
             const crMonthVideoCount = (allVideos ?? []).filter(
               (v) => crAccIds.has(v.tiktok_account_id) && v.published_at >= mStart && v.published_at < mEnd
             ).length;
-            const min = cr.min_videos_per_day ?? 5;
-            if (isFixedEarnedMonthly(crMonthVideoCount, min, year, month0)) {
-              cost += cr.creator_fixed ?? 0;
+            if (isFixedEarnedMonthly(crMonthVideoCount, minVpd, year, month0)) {
+              cost += fixedAmt;
             }
-            cost += (cr.creator_cpm ?? 0) * (monthViews / 1000);
+            cost += cpmRate * (monthViews / 1000);
           }
         });
 
