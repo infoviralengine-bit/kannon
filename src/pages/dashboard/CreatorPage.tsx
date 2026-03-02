@@ -82,20 +82,6 @@ function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChang
               <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+39..." />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="grid gap-1.5">
-              <Label>CPM Creator (€)</Label>
-              <Input type="number" step="0.01" value={cpm} onChange={e => setCpm(e.target.value)} />
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Fisso mensile (€)</Label>
-              <Input type="number" step="0.01" value={fixed} onChange={e => setFixed(e.target.value)} />
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Min video/giorno</Label>
-              <Input type="number" value={minVideos} onChange={e => setMinVideos(e.target.value)} />
-            </div>
-          </div>
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
             {mutation.isPending ? "Creazione..." : "Crea Creator"}
           </Button>
