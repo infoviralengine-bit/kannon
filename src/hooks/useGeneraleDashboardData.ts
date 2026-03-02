@@ -333,6 +333,13 @@ export interface PaymentDeadline {
   isOverdue: boolean;
 }
 
+export interface CreatorPaymentDeadline {
+  creatorName: string;
+  amount: number;
+  periodLabel: string;
+  isPaid: boolean;
+}
+
 export interface SystemAlert {
   type: "cap" | "window" | "scraping";
   message: string;
