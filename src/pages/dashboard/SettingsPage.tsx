@@ -257,19 +257,17 @@ export default function SettingsPage() {
               <Label>Apify API Key</Label>
               <div className="relative">
                 <Input
-                  type={showApiKey ? "text" : "password"}
-                  value={settings.apify_api_key || ""}
-                  onChange={(e) => setSettings({ ...settings, apify_api_key: e.target.value })}
+                  type="password"
+                  placeholder={settings.apify_api_key ? "••••••••••••••••" : "Inserisci API key..."}
+                  value={settings.apify_api_key_input ?? ""}
+                  onChange={(e) => setSettings({ ...settings, apify_api_key_input: e.target.value })}
                   className="pr-10"
                 />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                >
-                  {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                  {settings.apify_api_key ? "Configurata" : "Non configurata"}
+                </span>
               </div>
+              <p className="text-xs text-muted-foreground">La chiave è conservata in modo sicuro e non può essere visualizzata.</p>
             </div>
             <div className="space-y-2">
               <Label>Frequenza aggiornamento</Label>
