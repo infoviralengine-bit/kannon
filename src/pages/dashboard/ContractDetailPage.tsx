@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { FileText, Plus, Trash2, ChevronRight, Pencil } from "lucide-react";
+import { FileText, Plus, Trash2, ChevronRight, Pencil, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatViews } from "@/lib/format";
@@ -29,6 +29,10 @@ import {
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList,
   BreadcrumbPage, BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const statusColor: Record<string, string> = {
   active: "bg-success/20 text-success border-success/30",
@@ -219,6 +223,24 @@ export default function ContractDetailPage() {
   const [addCreatorOpen, setAddCreatorOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
+  const deleteContract = useMutation({
+    mutationFn: async () => {
+      // Delete related links first, then the contract
+      await supabase.from("contract_campaigns" as any).delete().eq("contract_id", contractId);
+      await supabase.from("contract_creators" as any).delete().eq("contract_id", contractId);
+      const { error } = await supabase.from("contracts" as any).delete().eq("id", contractId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Contratto eliminato" });
+      qc.invalidateQueries({ queryKey: ["contract-list"] });
+      navigate("/dashboard/contracts");
+    },
+    onError: (e: Error) => {
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
+    },
+  });
+
   const removeCampaign = useMutation({
     mutationFn: async (linkId: string) => {
       const { error } = await supabase.from("contract_campaigns" as any).delete().eq("id", linkId);
@@ -291,6 +313,27 @@ export default function ContractDetailPage() {
         <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
           <Pencil className="mr-1 h-4 w-4" /> Modifica
         </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" size="sm">
+              <Trash2 className="mr-1 h-4 w-4" /> Elimina
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Eliminare il contratto?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Questa azione è irreversibile. Verranno rimossi tutti i collegamenti a campagne e creator di questo contratto.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annulla</AlertDialogCancel>
+              <AlertDialogAction onClick={() => deleteContract.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Elimina
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Contract conditions */}
