@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getCreatorAlertLevel, getMonthlyTarget, getProgressData, isFixedEarnedMonthly, type AlertLevel } from "@/lib/fixedEarned";
+import { getCreatorAlertLevel, getMonthlyTarget, getProgressData, type AlertLevel } from "@/lib/fixedEarned";
 
 function todayRange() {
   const now = new Date();
@@ -92,7 +92,7 @@ export interface CampaignRow {
   totalViews: number;
   monthViews: number;
   creatorCount: number;
-  margin: number;
+  revenue: number;
 }
 
 export function useCampaignTable() {
@@ -109,51 +109,12 @@ export function useCampaignTable() {
         { data: creators },
         { data: accounts },
         { data: allVideos },
-        { data: contracts },
-        { data: contractCampaigns },
-        { data: contractCreators },
       ] = await Promise.all([
         supabase.from("campaign_creators").select("campaign_id, creator_id"),
-        supabase.from("creators").select("id, creator_cpm, creator_fixed, min_videos_per_day, status"),
-        supabase.from("tiktok_accounts").select("id, campaign_id, creator_id"),
+        supabase.from("creators").select("id, status"),
+        supabase.from("tiktok_accounts").select("id, campaign_id"),
         supabase.from("videos").select("tiktok_account_id, views, published_at"),
-        supabase.from("contracts" as any).select("id, creator_fixed, creator_cpm, min_videos_per_day, is_active"),
-        supabase.from("contract_campaigns" as any).select("contract_id, campaign_id"),
-        supabase.from("contract_creators" as any).select("contract_id, creator_id"),
       ]);
-
-      // Build contract lookup: for a given campaign+creator, find the contract terms
-      const contractMap = new Map(((contracts ?? []) as any[]).map((c) => [c.id, c]));
-      const campToContracts = new Map<string, string[]>();
-      ((contractCampaigns ?? []) as any[]).forEach((cc) => {
-        const list = campToContracts.get(cc.campaign_id) ?? [];
-        list.push(cc.contract_id);
-        campToContracts.set(cc.campaign_id, list);
-      });
-      const creatorToContracts = new Map<string, Set<string>>();
-      ((contractCreators ?? []) as any[]).forEach((cc) => {
-        const set = creatorToContracts.get(cc.creator_id) ?? new Set();
-        set.add(cc.contract_id);
-        creatorToContracts.set(cc.creator_id, set);
-      });
-      // Find contract for a campaign+creator pair
-      // If the campaign is covered by a contract, use that contract's terms for ALL creators
-      const findContract = (campaignId: string, creatorId: string) => {
-        const campContracts = campToContracts.get(campaignId) ?? [];
-        if (!campContracts.length) return null;
-        // Prefer exact match (creator explicitly in contract_creators)
-        const creatorContracts = creatorToContracts.get(creatorId);
-        if (creatorContracts) {
-          const exactMatch = campContracts.find((cid) => creatorContracts.has(cid));
-          if (exactMatch) return contractMap.get(exactMatch);
-        }
-        // Campaign is covered by a contract → use its terms for all creators
-        return contractMap.get(campContracts[0]) ?? null;
-      };
-
-      const now = new Date();
-      const year = now.getFullYear();
-      const month0 = now.getMonth();
 
       const accountsByCampaign = new Map<string, string[]>();
       (accounts ?? []).forEach((a) => {
@@ -161,15 +122,6 @@ export function useCampaignTable() {
         const list = accountsByCampaign.get(a.campaign_id) ?? [];
         list.push(a.id);
         accountsByCampaign.set(a.campaign_id, list);
-      });
-
-      // Build per-creator account mapping (all accounts, not just campaign-specific)
-      const allAccountsByCreator = new Map<string, string[]>();
-      (accounts ?? []).forEach((a) => {
-        if (!a.creator_id) return;
-        const list = allAccountsByCreator.get(a.creator_id) ?? [];
-        list.push(a.id);
-        allAccountsByCreator.set(a.creator_id, list);
       });
 
       const creatorMap = new Map((creators ?? []).map((c) => [c.id, c]));
@@ -195,28 +147,6 @@ export function useCampaignTable() {
         const clientCpm = (c.client_cpm ?? 0) * (monthViews / 1000);
         const revenue = clientFixed + clientCpm;
 
-        let cost = 0;
-        activeCreators.forEach((id) => {
-          const cr = creatorMap.get(id);
-          if (cr) {
-            // Use contract terms if available, otherwise fall back to creator-level rates
-            const contract = findContract(c.id, id);
-            const fixedAmt = contract ? Number(contract.creator_fixed ?? 0) : (cr.creator_fixed ?? 0);
-            const cpmRate = contract ? Number(contract.creator_cpm ?? 0) : (cr.creator_cpm ?? 0);
-            const minVpd = contract ? (contract.min_videos_per_day ?? 5) : (cr.min_videos_per_day ?? 5);
-
-            // Check if creator earned the fixed this month
-            const crAccIds = new Set(allAccountsByCreator.get(id) ?? []);
-            const crMonthVideoCount = (allVideos ?? []).filter(
-              (v) => crAccIds.has(v.tiktok_account_id) && v.published_at >= mStart && v.published_at < mEnd
-            ).length;
-            if (isFixedEarnedMonthly(crMonthVideoCount, minVpd, year, month0)) {
-              cost += fixedAmt;
-            }
-            cost += cpmRate * (monthViews / 1000);
-          }
-        });
-
         return {
           id: c.id,
           name: c.name,
@@ -227,7 +157,7 @@ export function useCampaignTable() {
           totalViews,
           monthViews,
           creatorCount: activeCreators.length,
-          margin: revenue - cost,
+          revenue,
         };
       });
     },
