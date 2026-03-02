@@ -168,7 +168,8 @@ export function useContractCreators(contractId: string, year?: number, month?: n
       const fixedAmt = Number((contract as any)?.creator_fixed ?? 0);
       const minVpd = (contract as any)?.min_videos_per_day ?? 5;
 
-      return ((creators ?? []) as any[]).map((cr): ContractCreatorRow => {
+      const sortedCreators = ((creators ?? []) as any[]).sort((a: any, b: any) => a.name.localeCompare(b.name));
+      return sortedCreators.map((cr): ContractCreatorRow => {
         const crAccounts = ((accounts ?? []) as any[]).filter((a) => a.creator_id === cr.id);
         // Only accounts linked to contract campaigns
         const contractAccounts = crAccounts.filter((a) => a.campaign_id && campIdSet.has(a.campaign_id));

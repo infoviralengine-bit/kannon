@@ -156,7 +156,7 @@ export default function AccountPage() {
                     <Select value={creatorId} onValueChange={setCreatorId}>
                       <SelectTrigger><SelectValue placeholder="Seleziona creator" /></SelectTrigger>
                       <SelectContent>
-                        {creators.filter((c) => c.status === "active").map((c) => (
+                        {creators.filter((c) => c.status === "active").sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
                           <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                         ))}
                       </SelectContent>
