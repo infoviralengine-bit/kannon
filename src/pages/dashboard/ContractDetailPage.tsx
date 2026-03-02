@@ -223,6 +223,24 @@ export default function ContractDetailPage() {
   const [addCreatorOpen, setAddCreatorOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
+  const deleteContract = useMutation({
+    mutationFn: async () => {
+      // Delete related links first, then the contract
+      await supabase.from("contract_campaigns" as any).delete().eq("contract_id", contractId);
+      await supabase.from("contract_creators" as any).delete().eq("contract_id", contractId);
+      const { error } = await supabase.from("contracts" as any).delete().eq("id", contractId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Contratto eliminato" });
+      qc.invalidateQueries({ queryKey: ["contract-list"] });
+      navigate("/dashboard/contracts");
+    },
+    onError: (e: Error) => {
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
+    },
+  });
+
   const removeCampaign = useMutation({
     mutationFn: async (linkId: string) => {
       const { error } = await supabase.from("contract_campaigns" as any).delete().eq("id", linkId);
