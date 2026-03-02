@@ -89,6 +89,7 @@ export function useCreatorPayable(year: number, month: number) {
         contractCampMap.set(r.contract_id, list);
       });
 
+      allCreators.sort((a, b) => a.name.localeCompare(b.name));
       return allCreators.map((cr): CreatorPayableRow => {
         const crContractIds = creatorContracts.get(cr.id) ?? [];
         const hasContracts = crContractIds.length > 0;

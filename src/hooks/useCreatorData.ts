@@ -70,7 +70,8 @@ export function useCreatorTable(selectedYear?: number, selectedMonth?: number) {
         accountsByCreator.set(a.creator_id, list);
       });
 
-      return creators.map((c): CreatorTableRow => {
+      const sorted = [...creators].sort((a, b) => a.name.localeCompare(b.name));
+      return sorted.map((c): CreatorTableRow => {
         const accIds = new Set(accountsByCreator.get(c.id) ?? []);
         const vids = (allVideos ?? []).filter(v => accIds.has(v.tiktok_account_id));
         const monthVideos = vids.filter(v => v.published_at >= mStart && v.published_at < mEnd).length;

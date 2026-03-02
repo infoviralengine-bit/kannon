@@ -197,6 +197,7 @@ export function useCreatorPayments(year: number, month: number) {
         accountsByCreator.set(a.creator_id, list);
       });
 
+      allCreators.sort((a, b) => a.name.localeCompare(b.name));
       return allCreators.map((cr): CreatorPaymentRow => {
         const accIds = new Set(accountsByCreator.get(cr.id) ?? []);
         const crVideos = allVideos.filter((v) => accIds.has(v.tiktok_account_id));
