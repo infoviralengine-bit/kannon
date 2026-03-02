@@ -54,14 +54,17 @@ Deno.serve(async (req) => {
   let errorMessage: string | null = null;
 
   try {
-    // 1. Read API token
-    const { data: settingRow } = await supabaseAdmin
-      .from("settings")
-      .select("value")
-      .eq("key", "apify_api_key")
-      .single();
-
-    const apiToken = settingRow?.value;
+    // 1. Read API token from secrets (env) with fallback to settings table
+    let apiToken = Deno.env.get("APIFY_API_KEY");
+    if (!apiToken) {
+      // Fallback: read from settings table (legacy)
+      const { data: settingRow } = await supabaseAdmin
+        .from("settings")
+        .select("value")
+        .eq("key", "apify_api_key")
+        .single();
+      apiToken = settingRow?.value || "";
+    }
     if (!apiToken) {
       throw new Error("API token Apify non valido o mancante. Configuralo nelle Impostazioni.");
     }
