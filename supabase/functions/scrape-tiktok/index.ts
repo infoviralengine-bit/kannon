@@ -16,34 +16,40 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  // Verify caller is admin
+  // Verify caller is admin or service role (cron)
   const authHeader = req.headers.get("Authorization");
-  if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.replace("Bearer ", "");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    // If token is anon key (cron call) or service role, skip user check
-    if (token !== anonKey && token !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
-      const userClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_ANON_KEY")!,
-        { global: { headers: { Authorization: authHeader } } }
-      );
-      const { data: claimsData, error: claimsErr } = await userClient.auth.getUser();
-      if (claimsErr || !claimsData?.user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const { data: roleData } = await supabaseAdmin.rpc("get_user_role", {
-        _user_id: claimsData.user.id,
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  // Only service role key bypasses user check (used by pg_cron)
+  if (token !== serviceRoleKey) {
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: claimsData, error: claimsErr } = await userClient.auth.getUser();
+    if (claimsErr || !claimsData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-      if (roleData !== "admin") {
-        return new Response(JSON.stringify({ error: "Admin only" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    }
+    const { data: roleData } = await supabaseAdmin.rpc("get_user_role", {
+      _user_id: claimsData.user.id,
+    });
+    if (roleData !== "admin") {
+      return new Response(JSON.stringify({ error: "Admin only" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
   }
 
