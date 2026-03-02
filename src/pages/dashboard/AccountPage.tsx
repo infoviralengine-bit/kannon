@@ -267,7 +267,6 @@ function CreatorTable({ accounts, creators, campaigns, getVideosToday, getTotalV
             <TableHead>Campagna</TableHead>
             <TableHead className="text-right">Video oggi</TableHead>
             <TableHead className="text-right">Views totali</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead />
           </TableRow>
         </TableHeader>
@@ -276,8 +275,6 @@ function CreatorTable({ accounts, creators, campaigns, getVideosToday, getTotalV
             const creator = creators.find((c: any) => c.id === a.creator_id);
             const campaign = campaigns.find((c: any) => c.id === a.campaign_id);
             const videosToday = getVideosToday(a.id);
-            const min = creator?.min_videos_per_day || 5;
-            const ok = videosToday >= min;
             return (
               <TableRow key={a.id}>
                 <TableCell className="font-medium">@{a.username?.replace(/^@/, '')}</TableCell>
@@ -285,11 +282,6 @@ function CreatorTable({ accounts, creators, campaigns, getVideosToday, getTotalV
                 <TableCell>{campaign?.name || "—"}</TableCell>
                 <TableCell className="text-right">{videosToday}</TableCell>
                 <TableCell className="text-right">{formatViews(getTotalViews(a.id))}</TableCell>
-                <TableCell>
-                  <Badge variant={ok ? "default" : "destructive"}>
-                    {ok ? "✅" : "⚠️"}
-                  </Badge>
-                </TableCell>
                 <TableCell className="space-x-1">
                   <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
                   <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
