@@ -358,7 +358,7 @@ export function useActiveCreatorsForSelect() {
   return useQuery({
     queryKey: ["active-creators-select"],
     queryFn: async () => {
-      const { data } = await supabase.from("creators").select("id, name").eq("status", "active");
+      const { data } = await supabase.from("creators").select("id, name").eq("status", "active").order("name");
       return data ?? [];
     },
   });
