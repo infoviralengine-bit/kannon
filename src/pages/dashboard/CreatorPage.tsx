@@ -227,7 +227,6 @@ export default function CreatorPage() {
                         <span className="text-xs text-muted-foreground">{c.status === "active" ? "Attivo" : "Inattivo"}</span>
                       </div>
                     </TableCell>
-                    </TableCell>
                     <TableCell className="space-x-1">
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.id}`)}>Apri</Button>
                       <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: c.id, name: c.name })}>
