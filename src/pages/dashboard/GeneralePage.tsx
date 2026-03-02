@@ -567,13 +567,7 @@ export default function GeneralePage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* System Alerts */}
-        <Card className="border-[#1e1e2e] bg-[#111118]">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-[#f8fafc] flex items-center gap-2">
-              <Zap className="h-4 w-4 text-[#64748b]" />
-              Alert Sistema
+      </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
