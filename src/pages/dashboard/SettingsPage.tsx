@@ -141,7 +141,24 @@ export default function SettingsPage() {
   }
 
   async function saveSetting(key: string, value: string) {
-    await supabase.from("settings").update({ value, updated_at: new Date().toISOString() }).eq("key", key);
+    const trimmed = value.trim();
+    if (!trimmed) throw new Error("Il valore non può essere vuoto");
+    
+    // Validate based on setting type
+    const numericKeys = ["client_cpm_default", "creator_cpm_default", "creator_fixed_default", "creator_monthly_fixed_default"];
+    if (numericKeys.includes(key)) {
+      const num = parseFloat(trimmed);
+      if (isNaN(num) || num < 0) throw new Error("Il valore deve essere un numero positivo");
+    }
+    if (key === "creator_min_videos_default") {
+      const num = parseInt(trimmed);
+      if (isNaN(num) || num < 0 || num > 100) throw new Error("Min video deve essere tra 0 e 100");
+    }
+    if (key === "apify_api_key" && trimmed.length < 10) {
+      throw new Error("La chiave API sembra troppo corta");
+    }
+    
+    await supabase.from("settings").update({ value: trimmed, updated_at: new Date().toISOString() }).eq("key", key);
   }
 
   async function handleSaveApify() {
