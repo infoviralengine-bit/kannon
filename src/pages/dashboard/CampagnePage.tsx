@@ -246,7 +246,7 @@ export default function CampagnePage() {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Views Totali</TableHead>
-                  <TableHead className="text-right">Margine Mese</TableHead>
+                  <TableHead className="text-right">Revenue Mese</TableHead>
                   <TableHead className="text-right">Creator</TableHead>
                   <TableHead />
                 </TableRow>
@@ -260,7 +260,7 @@ export default function CampagnePage() {
                       <Badge className={statusColor[c.status] ?? ""}>{statusLabel[c.status] ?? c.status}</Badge>
                     </TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(c.margin)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(c.revenue)}</TableCell>
                     <TableCell className="text-right">{c.creatorCount}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/campaigns/${c.id}`)}>
