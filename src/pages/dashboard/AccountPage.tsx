@@ -275,8 +275,6 @@ function CreatorTable({ accounts, creators, campaigns, getVideosToday, getTotalV
             const creator = creators.find((c: any) => c.id === a.creator_id);
             const campaign = campaigns.find((c: any) => c.id === a.campaign_id);
             const videosToday = getVideosToday(a.id);
-            const min = creator?.min_videos_per_day || 5;
-            const ok = videosToday >= min;
             return (
               <TableRow key={a.id}>
                 <TableCell className="font-medium">@{a.username?.replace(/^@/, '')}</TableCell>
