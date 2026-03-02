@@ -216,8 +216,6 @@ export default function CreatorPage() {
                   <TableHead>Nome</TableHead>
                   <TableHead className="text-right">Campagne attive</TableHead>
                   <TableHead className="text-right">Views totali</TableHead>
-                  <TableHead className="text-right">Video mese</TableHead>
-                  <TableHead>Obiettivo mensile</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead />
                 </TableRow>
@@ -228,12 +226,6 @@ export default function CreatorPage() {
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell className="text-right">{c.activeCampaigns}</TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
-                    <TableCell className="text-right">{c.monthVideos} / {c.monthlyTarget}</TableCell>
-                    <TableCell>
-                      <Badge className={alertBadge[c.alertLevel].className}>
-                        {alertBadge[c.alertLevel].label}
-                      </Badge>
-                    </TableCell>
                     <TableCell>
                       <Badge className={statusColor[c.status] ?? ""}>{statusLabel[c.status] ?? c.status}</Badge>
                     </TableCell>
