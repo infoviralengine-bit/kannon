@@ -226,12 +226,6 @@ export default function CreatorPage() {
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell className="text-right">{c.activeCampaigns}</TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
-                    <TableCell className="text-right">{c.monthVideos} / {c.monthlyTarget}</TableCell>
-                    <TableCell>
-                      <Badge className={alertBadge[c.alertLevel].className}>
-                        {alertBadge[c.alertLevel].label}
-                      </Badge>
-                    </TableCell>
                     <TableCell>
                       <Badge className={statusColor[c.status] ?? ""}>{statusLabel[c.status] ?? c.status}</Badge>
                     </TableCell>
