@@ -219,7 +219,14 @@ export default function CreatorPage() {
                     <TableCell className="text-right">{c.activeCampaigns}</TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
                     <TableCell>
-                      <Badge className={statusColor[c.status] ?? ""}>{statusLabel[c.status] ?? c.status}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={c.status === "active"}
+                          onCheckedChange={(checked) => statusMutation.mutate({ id: c.id, status: checked ? "active" : "inactive" })}
+                        />
+                        <span className="text-xs text-muted-foreground">{c.status === "active" ? "Attivo" : "Inattivo"}</span>
+                      </div>
+                    </TableCell>
                     </TableCell>
                     <TableCell className="space-x-1">
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.id}`)}>Apri</Button>
