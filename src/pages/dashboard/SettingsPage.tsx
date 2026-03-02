@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Eye, EyeOff, Users, Cpu } from "lucide-react";
+import { Plus, Users, Cpu } from "lucide-react";
 import SystemTest from "@/components/SystemTest";
 import ScrapingLogsSection from "@/components/ScrapingLogsSection";
 
