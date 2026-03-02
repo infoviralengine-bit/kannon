@@ -333,6 +333,13 @@ export interface PaymentDeadline {
   isOverdue: boolean;
 }
 
+export interface CreatorPaymentDeadline {
+  creatorName: string;
+  amount: number;
+  periodLabel: string;
+  isPaid: boolean;
+}
+
 export interface SystemAlert {
   type: "cap" | "window" | "scraping";
   message: string;
@@ -347,17 +354,26 @@ export function useDeadlinesAndAlerts() {
       const todayStr = now.toISOString().slice(0, 10);
       const weekFromNow = new Date(now.getTime() + 7 * 86400000).toISOString().slice(0, 10);
 
+      // Current month for creator payments
+      const currentMonth = now.getMonth() + 1; // 1-based
+      const currentYear = now.getFullYear();
+
       const [
         { data: clientPayments },
         { data: campaigns },
         { data: scrapingLogs },
+        { data: creatorPayments },
+        { data: creators },
       ] = await Promise.all([
         supabase.from("client_payments").select("*").eq("is_paid", false).lte("due_date", weekFromNow).order("due_date"),
         supabase.from("campaigns").select("id, name, client_name, monthly_spend_cap, video_views_cap"),
         supabase.from("scraping_logs").select("*").order("run_at", { ascending: false }).limit(5),
+        supabase.from("creator_payments").select("*").eq("period_month", currentMonth).eq("period_year", currentYear),
+        supabase.from("creators").select("id, name").eq("status", "active"),
       ]);
 
       const campMap = new Map((campaigns ?? []).map((c) => [c.id, c]));
+      const creatorMap = new Map((creators ?? []).map((c) => [c.id, c.name]));
 
       const deadlines: PaymentDeadline[] = (clientPayments ?? []).map((p) => {
         const camp = campMap.get(p.campaign_id);
@@ -373,6 +389,14 @@ export function useDeadlinesAndAlerts() {
         };
       });
 
+      const monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+      const creatorDeadlines: CreatorPaymentDeadline[] = (creatorPayments ?? []).map((p) => ({
+        creatorName: creatorMap.get(p.creator_id) ?? "—",
+        amount: Number(p.total_amount),
+        periodLabel: `${monthNames[p.period_month - 1]} ${p.period_year}`,
+        isPaid: p.is_paid,
+      }));
+
       const systemAlerts: SystemAlert[] = [];
 
       // Failed scraping
@@ -385,7 +409,7 @@ export function useDeadlinesAndAlerts() {
         });
       }
 
-      return { deadlines, systemAlerts };
+      return { deadlines, creatorDeadlines, systemAlerts };
     },
     refetchInterval: 5 * 60 * 1000,
   });
