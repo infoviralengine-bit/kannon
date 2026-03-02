@@ -56,7 +56,7 @@ function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChang
       qc.invalidateQueries({ queryKey: ["creator-table"] });
       qc.invalidateQueries({ queryKey: ["active-creators-count"] });
       onOpenChange(false);
-      setName(""); setEmail(""); setPhone(""); setCpm("0.50"); setFixed("200.00"); setMinVideos("5");
+      setName(""); setEmail(""); setPhone("");
     },
     onError: (e: Error) => {
       toast({ title: "Errore", description: e.message, variant: "destructive" });
