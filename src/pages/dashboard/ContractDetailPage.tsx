@@ -313,6 +313,27 @@ export default function ContractDetailPage() {
         <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
           <Pencil className="mr-1 h-4 w-4" /> Modifica
         </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" size="sm">
+              <Trash2 className="mr-1 h-4 w-4" /> Elimina
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Eliminare il contratto?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Questa azione è irreversibile. Verranno rimossi tutti i collegamenti a campagne e creator di questo contratto.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Annulla</AlertDialogCancel>
+              <AlertDialogAction onClick={() => deleteContract.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Elimina
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {/* Contract conditions */}
