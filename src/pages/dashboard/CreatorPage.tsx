@@ -216,8 +216,6 @@ export default function CreatorPage() {
                   <TableHead>Nome</TableHead>
                   <TableHead className="text-right">Campagne attive</TableHead>
                   <TableHead className="text-right">Views totali</TableHead>
-                  <TableHead className="text-right">Video mese</TableHead>
-                  <TableHead>Obiettivo mensile</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead />
                 </TableRow>
