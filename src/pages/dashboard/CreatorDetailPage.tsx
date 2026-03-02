@@ -169,7 +169,7 @@ export default function CreatorDetailPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
-          { label: "Video oggi", value: kpi?.todayVideos ?? 0, extra: kpi && creator ? (kpi.todayVideos >= (creator.min_videos_per_day ?? 5) ? " ✅" : " ⚠️") : "" },
+          { label: "Video oggi", value: kpi?.todayVideos ?? 0 },
           { label: "Video settimana", value: kpi?.weekVideos ?? 0 },
           { label: "Video mese", value: kpi?.monthVideos ?? 0 },
           { label: "Views totali", value: formatViews(kpi?.totalViews ?? 0) },
