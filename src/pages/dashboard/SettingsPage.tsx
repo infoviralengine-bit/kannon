@@ -164,16 +164,7 @@ export default function SettingsPage() {
   async function handleSaveApify() {
     setSavingApify(true);
     try {
-      const promises: Promise<any>[] = [
-        saveSetting("apify_frequency", settings.apify_frequency || "every_2_hours"),
-      ];
-      // Only update API key if user typed a new value
-      if (settings.apify_api_key_input) {
-        promises.push(saveSetting("apify_api_key", settings.apify_api_key_input));
-        // Clear the input after save
-        setSettings((prev) => ({ ...prev, apify_api_key: settings.apify_api_key_input, apify_api_key_input: "" }));
-      }
-      await Promise.all(promises);
+      await saveSetting("apify_frequency", settings.apify_frequency || "every_2_hours");
       toast({ title: "Configurazione Apify salvata" });
     } catch (e: any) {
       toast({ title: "Errore", description: e.message, variant: "destructive" });
