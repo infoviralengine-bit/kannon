@@ -29,6 +29,10 @@ import {
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList,
   BreadcrumbPage, BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const statusColor: Record<string, string> = {
   active: "bg-success/20 text-success border-success/30",
