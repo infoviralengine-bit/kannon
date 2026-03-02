@@ -137,12 +137,18 @@ export function useCampaignTable() {
         creatorToContracts.set(cc.creator_id, set);
       });
       // Find contract for a campaign+creator pair
+      // If the campaign is covered by a contract, use that contract's terms for ALL creators
       const findContract = (campaignId: string, creatorId: string) => {
         const campContracts = campToContracts.get(campaignId) ?? [];
+        if (!campContracts.length) return null;
+        // Prefer exact match (creator explicitly in contract_creators)
         const creatorContracts = creatorToContracts.get(creatorId);
-        if (!creatorContracts) return null;
-        const contractId = campContracts.find((cid) => creatorContracts.has(cid));
-        return contractId ? contractMap.get(contractId) : null;
+        if (creatorContracts) {
+          const exactMatch = campContracts.find((cid) => creatorContracts.has(cid));
+          if (exactMatch) return contractMap.get(exactMatch);
+        }
+        // Campaign is covered by a contract → use its terms for all creators
+        return contractMap.get(campContracts[0]) ?? null;
       };
 
       const now = new Date();
