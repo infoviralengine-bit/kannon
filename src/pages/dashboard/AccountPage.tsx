@@ -282,11 +282,6 @@ function CreatorTable({ accounts, creators, campaigns, getVideosToday, getTotalV
                 <TableCell>{campaign?.name || "—"}</TableCell>
                 <TableCell className="text-right">{videosToday}</TableCell>
                 <TableCell className="text-right">{formatViews(getTotalViews(a.id))}</TableCell>
-                <TableCell>
-                  <Badge variant={ok ? "default" : "destructive"}>
-                    {ok ? "✅" : "⚠️"}
-                  </Badge>
-                </TableCell>
                 <TableCell className="space-x-1">
                   <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
                   <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
