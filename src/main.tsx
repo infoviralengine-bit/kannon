@@ -8,8 +8,13 @@ try {
   createRoot(root).render(<App />);
 } catch (err) {
   console.error("Failed to mount app:", err);
-  root.innerHTML = `<div style="color:white;padding:2rem;font-family:sans-serif">
-    <h1>Errore di avvio</h1>
-    <p>${err instanceof Error ? err.message : String(err)}</p>
-  </div>`;
+  const errorDiv = document.createElement('div');
+  errorDiv.style.cssText = 'color:white;padding:2rem;font-family:sans-serif';
+  const heading = document.createElement('h1');
+  heading.textContent = 'Errore di avvio';
+  const message = document.createElement('p');
+  message.textContent = err instanceof Error ? err.message : String(err);
+  errorDiv.appendChild(heading);
+  errorDiv.appendChild(message);
+  root.appendChild(errorDiv);
 }
