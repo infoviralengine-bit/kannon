@@ -349,7 +349,7 @@ export default function GeneralePage() {
         )}
       </div>
 
-      {/* ROW 4 — Creator Alerts + Top Performers */}
+      {/* ROW 4 — Alerts (Creator + Sistema) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Alerts */}
         <Card className="border-[#1e1e2e] bg-[#111118]">
