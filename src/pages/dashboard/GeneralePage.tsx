@@ -506,7 +506,7 @@ export default function GeneralePage() {
                 <div className="space-y-2">
                   {[1, 2].map((i) => <Shimmer key={`cr-${i}`} className="h-10" />)}
                 </div>
-              ) : !deadlines.data?.creatorDeadlines.filter((d) => !d.isPaid).length ? (
+              ) : !deadlines.data?.creatorDeadlines?.filter((d) => !d.isPaid).length ? (
                 <p className="text-[11px] text-[#64748b] py-2">Nessun pagamento creator in sospeso</p>
               ) : (
                 <div className="space-y-2">
