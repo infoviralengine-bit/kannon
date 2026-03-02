@@ -307,7 +307,7 @@ export default function CreatorDetailPage() {
                     <TableCell>{a.campaignName}</TableCell>
                     <TableCell className="text-right">{a.todayVideos}</TableCell>
                     <TableCell className="text-right">{formatViews(a.totalViews)}</TableCell>
-                    <TableCell>{a.isOnTrack ? "✅" : "⚠️"}</TableCell>
+                    
                     <TableCell>
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.accountId}`)}>Apri</Button>
                     </TableCell>
