@@ -208,7 +208,7 @@ export default function CreatorDetailPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           {payoff ? (
-            payoff.contracts.length === 0 ? (
+            !payoff.contracts?.length ? (
               <p className="text-sm text-muted-foreground text-center py-4">Nessun contratto assegnato a questo creator.</p>
             ) : (
               <>
