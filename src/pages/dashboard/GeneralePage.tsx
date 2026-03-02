@@ -568,9 +568,9 @@ export default function GeneralePage() {
           </CardContent>
         </Card>
       </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+    </div>
+  );
+}
             {deadlines.isLoading ? (
               <Shimmer className="h-16" />
             ) : !deadlines.data?.systemAlerts.length ? (
