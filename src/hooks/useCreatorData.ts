@@ -148,7 +148,30 @@ export function useCreatorKpi(creatorId: string) {
   });
 }
 
-/* ── Payoff for a given month ── */
+/* ── Payoff for a given month (contract-based) ── */
+
+export interface CreatorPayoffContract {
+  contractId: string;
+  contractName: string;
+  creatorFixed: number;
+  creatorCpm: number;
+  min: number;
+  monthlyTarget: number;
+  monthVideoCount: number;
+  monthViews: number;
+  cpmAmount: number;
+  fixedEarned: boolean;
+  total: number;
+  progress: ReturnType<typeof getProgressData>;
+  windowOpen: number;
+  windowClosed: number;
+  hasVideoTarget: boolean;
+}
+
+export interface CreatorPayoffResult {
+  contracts: CreatorPayoffContract[];
+  grandTotal: number;
+}
 
 export function useCreatorPayoff(creatorId: string, year: number, month: number) {
   const { start: mStart, end: mEnd } = monthRangeFor(year, month);
@@ -156,44 +179,91 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
   return useQuery({
     queryKey: ["creator-payoff", creatorId, year, month],
     queryFn: async () => {
-      const { data: creator } = await supabase.from("creators").select("creator_cpm, creator_fixed, min_videos_per_day").eq("id", creatorId).single();
-      const { data: accounts } = await supabase.from("tiktok_accounts").select("id").eq("creator_id", creatorId);
-      const accIds = (accounts ?? []).map(a => a.id);
+      // Get contracts this creator belongs to
+      const { data: contractLinks } = await supabase
+        .from("contract_creators" as any)
+        .select("contract_id")
+        .eq("creator_id", creatorId);
 
-      const min = creator?.min_videos_per_day ?? 5;
-      let monthVids: any[] = [];
-      let monthViews = 0;
+      const contractIds = ((contractLinks ?? []) as any[]).map((l) => l.contract_id);
 
-      if (accIds.length) {
-        const { data: vids } = await supabase.from("videos").select("views, views_final, window_closed, window_expires_at, published_at").in("tiktok_account_id", accIds).gte("published_at", mStart).lt("published_at", mEnd);
-        monthVids = vids ?? [];
-        monthViews = sumEffectiveViews(monthVids);
+      if (!contractIds.length) {
+        // Fallback: creator not in any contract
+        return { contracts: [] as CreatorPayoffContract[], grandTotal: 0 } as CreatorPayoffResult;
       }
 
-      const monthVideoCount = monthVids.length;
-      const target = getMonthlyTarget(min, year, month);
-      const fixedEarned = isFixedEarnedMonthly(monthVideoCount, min, year, month);
-      const progress = getProgressData(monthVideoCount, min, year, month);
+      const [
+        { data: contracts },
+        { data: contractCampaigns },
+        { data: accounts },
+      ] = await Promise.all([
+        supabase.from("contracts" as any).select("*").in("id", contractIds),
+        supabase.from("contract_campaigns" as any).select("contract_id, campaign_id").in("contract_id", contractIds),
+        supabase.from("tiktok_accounts").select("id, campaign_id").eq("creator_id", creatorId),
+      ]);
 
-      const windowStats = countByWindowStatus(monthVids);
-      const creatorFixed = creator?.creator_fixed ?? 200;
-      const creatorCpm = creator?.creator_cpm ?? 0.5;
-      const cpmAmount = creatorCpm * (monthViews / 1000);
+      const allAccounts = accounts ?? [];
+      const accIds = allAccounts.map((a) => a.id);
 
-      return {
-        monthViews,
-        creatorFixed,
-        creatorCpm,
-        cpmAmount,
-        total: (fixedEarned ? creatorFixed : 0) + cpmAmount,
-        fixedEarned,
-        monthVideoCount,
-        monthlyTarget: target,
-        progress,
-        min,
-        windowOpen: windowStats.open,
-        windowClosed: windowStats.closed,
-      };
+      let allVideos: any[] = [];
+      if (accIds.length) {
+        const { data: vids } = await supabase
+          .from("videos")
+          .select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at")
+          .in("tiktok_account_id", accIds)
+          .gte("published_at", mStart)
+          .lt("published_at", mEnd);
+        allVideos = vids ?? [];
+      }
+
+      const allCC = (contractCampaigns ?? []) as any[];
+      const allContracts = (contracts ?? []) as any[];
+
+      const payoffContracts: CreatorPayoffContract[] = allContracts.map((contract) => {
+        const campIds = allCC.filter((cc) => cc.contract_id === contract.id).map((cc) => cc.campaign_id);
+        const campIdSet = new Set(campIds);
+
+        // Accounts assigned to this contract's campaigns
+        const contractAccounts = allAccounts.filter((a) => a.campaign_id && campIdSet.has(a.campaign_id));
+        const contractAccIds = new Set(contractAccounts.map((a) => a.id));
+
+        const contractVideos = allVideos.filter((v) => contractAccIds.has(v.tiktok_account_id));
+        const monthVideoCount = contractVideos.length;
+        const monthViews = sumEffectiveViews(contractVideos);
+        const windowStats = countByWindowStatus(contractVideos);
+
+        const minVpd = contract.min_videos_per_day ?? 0;
+        const hasVideoTarget = minVpd > 0;
+        const creatorFixed = Number(contract.creator_fixed ?? 0);
+        const creatorCpm = Number(contract.creator_cpm ?? 0.5);
+        const target = hasVideoTarget ? getMonthlyTarget(minVpd, year, month) : 0;
+        const fixedEarned = hasVideoTarget ? isFixedEarnedMonthly(monthVideoCount, minVpd, year, month) : true;
+        const progress = hasVideoTarget ? getProgressData(monthVideoCount, minVpd, year, month) : { videosSoFar: 0, totalRequired: 0, workingDaysElapsed: 0, workingDaysTotal: 0, workingDaysLeft: 0, percent: 100, alertLevel: "green" as const, avgCurrent: 0, avgNeeded: 0 };
+
+        const cpmAmount = creatorCpm * (monthViews / 1000);
+
+        return {
+          contractId: contract.id,
+          contractName: contract.name,
+          creatorFixed,
+          creatorCpm,
+          min: minVpd,
+          monthlyTarget: target,
+          monthVideoCount,
+          monthViews,
+          cpmAmount,
+          fixedEarned,
+          total: (fixedEarned ? creatorFixed : 0) + cpmAmount,
+          progress,
+          windowOpen: windowStats.open,
+          windowClosed: windowStats.closed,
+          hasVideoTarget,
+        };
+      });
+
+      const grandTotal = payoffContracts.reduce((s, c) => s + c.total, 0);
+
+      return { contracts: payoffContracts, grandTotal } as CreatorPayoffResult;
     },
     enabled: !!creatorId,
   });
