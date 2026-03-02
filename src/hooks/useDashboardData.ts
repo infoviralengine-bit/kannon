@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getCreatorAlertLevel, getMonthlyTarget, getProgressData, type AlertLevel } from "@/lib/fixedEarned";
+import { getCreatorAlertLevel, getMonthlyTarget, getProgressData, isFixedEarnedMonthly, type AlertLevel } from "@/lib/fixedEarned";
 
 function todayRange() {
   const now = new Date();
@@ -105,9 +105,13 @@ export function useCampaignTable() {
       if (!campaigns?.length) return [] as CampaignRow[];
 
       const { data: ccRows } = await supabase.from("campaign_creators").select("campaign_id, creator_id");
-      const { data: creators } = await supabase.from("creators").select("id, creator_cpm, creator_fixed, status");
-      const { data: accounts } = await supabase.from("tiktok_accounts").select("id, campaign_id");
+      const { data: creators } = await supabase.from("creators").select("id, creator_cpm, creator_fixed, min_videos_per_day, status");
+      const { data: accounts } = await supabase.from("tiktok_accounts").select("id, campaign_id, creator_id");
       const { data: allVideos } = await supabase.from("videos").select("tiktok_account_id, views, published_at");
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month0 = now.getMonth();
 
       const accountsByCampaign = new Map<string, string[]>();
       (accounts ?? []).forEach((a) => {
@@ -115,6 +119,15 @@ export function useCampaignTable() {
         const list = accountsByCampaign.get(a.campaign_id) ?? [];
         list.push(a.id);
         accountsByCampaign.set(a.campaign_id, list);
+      });
+
+      // Build per-creator account mapping (all accounts, not just campaign-specific)
+      const allAccountsByCreator = new Map<string, string[]>();
+      (accounts ?? []).forEach((a) => {
+        if (!a.creator_id) return;
+        const list = allAccountsByCreator.get(a.creator_id) ?? [];
+        list.push(a.id);
+        allAccountsByCreator.set(a.creator_id, list);
       });
 
       const creatorMap = new Map((creators ?? []).map((c) => [c.id, c]));
@@ -144,7 +157,15 @@ export function useCampaignTable() {
         activeCreators.forEach((id) => {
           const cr = creatorMap.get(id);
           if (cr) {
-            cost += cr.creator_fixed ?? 0;
+            // Check if creator earned the fixed this month (based on ALL their accounts, not just this campaign)
+            const crAccIds = new Set(allAccountsByCreator.get(id) ?? []);
+            const crMonthVideoCount = (allVideos ?? []).filter(
+              (v) => crAccIds.has(v.tiktok_account_id) && v.published_at >= mStart && v.published_at < mEnd
+            ).length;
+            const min = cr.min_videos_per_day ?? 5;
+            if (isFixedEarnedMonthly(crMonthVideoCount, min, year, month0)) {
+              cost += cr.creator_fixed ?? 0;
+            }
             cost += (cr.creator_cpm ?? 0) * (monthViews / 1000);
           }
         });
