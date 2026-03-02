@@ -1,33 +1,48 @@
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClientAreaData } from "@/hooks/usePortalData";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Eye, Users } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LogOut, Eye, Heart, MessageCircle, Users, Video, CalendarDays, TrendingUp } from "lucide-react";
 import { formatViews } from "@/lib/format";
+
+type Period = "1d" | "7d" | "30d" | "90d";
+
+const periodLabels: Record<Period, string> = {
+  "1d": "Oggi",
+  "7d": "7 giorni",
+  "30d": "30 giorni",
+  "90d": "90 giorni",
+};
 
 export default function ClientArea() {
   const { profile, signOut } = useAuth();
   const { data, isLoading } = useClientAreaData();
+  const [period, setPeriod] = useState<Period>("30d");
+
+  const Header = () => (
+    <header className="border-b border-border px-6 py-4 flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-sm">K</div>
+        <span className="font-semibold text-lg">Kannon</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-muted-foreground">{profile?.full_name}</span>
+        <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="mr-2 h-4 w-4" />Esci</Button>
+      </div>
+    </header>
+  );
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <header className="border-b border-border px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-sm">K</div>
-            <span className="font-semibold text-lg">Kannon</span>
-          </div>
-          <Skeleton className="h-8 w-24" />
-        </header>
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="w-full max-w-2xl space-y-6">
-            <Skeleton className="h-10 w-64 mx-auto" />
-            <div className="grid gap-6 md:grid-cols-2">
-              <Skeleton className="h-40" />
-              <Skeleton className="h-40" />
-            </div>
-          </div>
+        <Header />
+        <div className="flex-1 p-6 max-w-5xl mx-auto w-full space-y-6">
+          <Skeleton className="h-10 w-64" />
+          <div className="grid gap-4 md:grid-cols-3"><Skeleton className="h-32" /><Skeleton className="h-32" /><Skeleton className="h-32" /></div>
+          <div className="grid gap-4 md:grid-cols-3"><Skeleton className="h-32" /><Skeleton className="h-32" /><Skeleton className="h-32" /></div>
         </div>
       </div>
     );
@@ -36,16 +51,7 @@ export default function ClientArea() {
   if (!data) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <header className="border-b border-border px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-sm">K</div>
-            <span className="font-semibold text-lg">Kannon</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">{profile?.full_name}</span>
-            <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="mr-2 h-4 w-4" />Esci</Button>
-          </div>
-        </header>
+        <Header />
         <div className="flex-1 flex items-center justify-center p-6 text-center">
           <div>
             <h2 className="text-xl font-semibold mb-2">Nessuna campagna collegata</h2>
@@ -56,47 +62,141 @@ export default function ClientArea() {
     );
   }
 
+  const views = data[`views_${period}`];
+  const likes = data[`likes_${period}`];
+  const comments = data[`comments_${period}`];
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-sm">K</div>
-          <span className="font-semibold text-lg">Kannon</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">{profile?.full_name}</span>
-          <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="mr-2 h-4 w-4" />Esci</Button>
-        </div>
-      </header>
+      <Header />
 
-      {/* Content */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-2xl space-y-8 animate-fade-in text-center">
-          <h1 className="text-3xl font-bold">{data.campaign.name}</h1>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card className="py-8">
-              <CardContent className="flex flex-col items-center gap-3">
-                <Eye className="h-8 w-8 text-primary" />
-                <p className="text-4xl font-bold">{formatViews(data.totalViews)}</p>
-                <p className="text-sm text-muted-foreground">Views Totali</p>
-              </CardContent>
-            </Card>
-            <Card className="py-8">
-              <CardContent className="flex flex-col items-center gap-3">
-                <Users className="h-8 w-8 text-primary" />
-                <p className="text-4xl font-bold">{data.activeCreators}</p>
-                <p className="text-sm text-muted-foreground">Creator Attivi</p>
-              </CardContent>
-            </Card>
+      <div className="flex-1 p-6 max-w-5xl mx-auto w-full space-y-8 animate-fade-in">
+        {/* Campaign title & status */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">{data.campaign.name}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{data.campaign.client_name}</p>
           </div>
-
-          <p className="text-xs text-muted-foreground">Dati aggiornati ogni 2 ore</p>
+          <span className={`text-xs font-medium px-3 py-1 rounded-full ${data.campaign.status === "active" ? "bg-green-500/10 text-green-500" : "bg-muted text-muted-foreground"}`}>
+            {data.campaign.status === "active" ? "Attiva" : data.campaign.status}
+          </span>
         </div>
+
+        {/* Period selector */}
+        <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
+          <TabsList>
+            {(Object.keys(periodLabels) as Period[]).map((p) => (
+              <TabsTrigger key={p} value={p}>{periodLabels[p]}</TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+
+        {/* Performance metrics */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardContent className="flex flex-col items-center gap-2 py-6">
+              <Eye className="h-7 w-7 text-primary" />
+              <p className="text-3xl font-bold">{formatViews(views)}</p>
+              <p className="text-sm text-muted-foreground">Visualizzazioni</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex flex-col items-center gap-2 py-6">
+              <Heart className="h-7 w-7 text-rose-500" />
+              <p className="text-3xl font-bold">{formatViews(likes)}</p>
+              <p className="text-sm text-muted-foreground">Like</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex flex-col items-center gap-2 py-6">
+              <MessageCircle className="h-7 w-7 text-sky-500" />
+              <p className="text-3xl font-bold">{formatViews(comments)}</p>
+              <p className="text-sm text-muted-foreground">Commenti</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Operational stats */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardContent className="flex flex-col items-center gap-2 py-6">
+              <Users className="h-7 w-7 text-primary" />
+              <p className="text-3xl font-bold">{data.active_creators}</p>
+              <p className="text-sm text-muted-foreground">Creator Attivi</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex flex-col items-center gap-2 py-6">
+              <Video className="h-7 w-7 text-primary" />
+              <p className="text-3xl font-bold">{data.videos_today}</p>
+              <p className="text-sm text-muted-foreground">Video Oggi</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex flex-col items-center gap-2 py-6">
+              <TrendingUp className="h-7 w-7 text-primary" />
+              <p className="text-3xl font-bold">{data.avg_videos_per_day_30d}</p>
+              <p className="text-sm text-muted-foreground">Media Video/Giorno (30gg)</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Campaign details */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <CalendarDays className="h-5 w-5" /> Dettagli Campagna
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Inizio</p>
+                <p className="font-medium">{new Date(data.campaign.start_date).toLocaleDateString("it-IT")}</p>
+              </div>
+              {data.campaign.end_date && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Fine</p>
+                  <p className="font-medium">{new Date(data.campaign.end_date).toLocaleDateString("it-IT")}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm text-muted-foreground">Creator Previsti</p>
+                <p className="font-medium">{data.campaign.planned_creators}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Creator Attivi / Totali</p>
+                <p className="font-medium">{data.active_creators} / {data.total_creators}</p>
+              </div>
+              {data.campaign.client_cpm != null && (
+                <div>
+                  <p className="text-sm text-muted-foreground">CPM</p>
+                  <p className="font-medium">€{data.campaign.client_cpm}</p>
+                </div>
+              )}
+              {data.campaign.client_fixed_per_creator != null && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Fisso / Creator</p>
+                  <p className="font-medium">€{data.campaign.client_fixed_per_creator}</p>
+                </div>
+              )}
+              {data.campaign.video_views_cap != null && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Cap Views / Video</p>
+                  <p className="font-medium">{formatViews(data.campaign.video_views_cap)}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm text-muted-foreground">Video Totali</p>
+                <p className="font-medium">{formatViews(data.total_videos)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <p className="text-xs text-muted-foreground text-center">Dati aggiornati ogni 2 ore</p>
       </div>
 
-      {/* Footer */}
       <footer className="border-t border-border py-4 text-center">
         <p className="text-xs text-muted-foreground">Powered by Kannon</p>
       </footer>

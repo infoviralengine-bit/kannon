@@ -141,50 +141,41 @@ export function useClientAreaData() {
     queryFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
-      const { data: campaigns, error } = await supabase
-        .from("campaigns")
-        .select("*")
-        .filter("client_profile_id", "eq", user.id);
+      const { data, error } = await supabase.rpc("get_client_campaign_data", {
+        p_user_id: user.id,
+      });
       if (error) throw error;
-      if (!campaigns?.length) return null;
-
-      const camp = campaigns[0];
-
-      const { data: accounts } = await supabase
-        .from("tiktok_accounts")
-        .select("id")
-        .eq("campaign_id", camp.id);
-      const accIds = (accounts ?? []).map((a) => a.id);
-
-      let totalViews = 0;
-      if (accIds.length) {
-        const { data: videos } = await supabase
-          .from("videos")
-          .select("views")
-          .in("tiktok_account_id", accIds);
-        totalViews = (videos ?? []).reduce((s, v) => s + (v.views ?? 0), 0);
-      }
-
-      const { data: cc } = await supabase
-        .from("campaign_creators")
-        .select("creator_id")
-        .eq("campaign_id", camp.id);
-      const creatorIds = (cc ?? []).map((r) => r.creator_id);
-      let activeCreators = 0;
-      if (creatorIds.length) {
-        const { count } = await supabase
-          .from("creators")
-          .select("*", { count: "exact", head: true })
-          .in("id", creatorIds)
-          .eq("status", "active");
-        activeCreators = count ?? 0;
-      }
-
-      return {
-        campaign: camp,
-        totalViews,
-        activeCreators,
-      };
+      return data as {
+        campaign: {
+          id: string;
+          name: string;
+          client_name: string;
+          status: string;
+          start_date: string;
+          end_date: string | null;
+          planned_creators: number;
+          client_cpm: number | null;
+          client_fixed_per_creator: number | null;
+          video_views_cap: number | null;
+        };
+        active_creators: number;
+        total_creators: number;
+        views_1d: number;
+        views_7d: number;
+        views_30d: number;
+        views_90d: number;
+        likes_1d: number;
+        likes_7d: number;
+        likes_30d: number;
+        likes_90d: number;
+        comments_1d: number;
+        comments_7d: number;
+        comments_30d: number;
+        comments_90d: number;
+        videos_today: number;
+        avg_videos_per_day_30d: number;
+        total_videos: number;
+      } | null;
     },
     enabled: !!user,
   });
