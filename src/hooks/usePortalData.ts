@@ -141,9 +141,9 @@ export function useClientAreaData() {
     queryFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase.rpc("get_client_campaign_data", {
+      const { data, error } = await supabase.rpc("get_client_campaign_data" as any, {
         p_user_id: user.id,
-      });
+      } as any);
       if (error) throw error;
       return data as {
         campaign: {
