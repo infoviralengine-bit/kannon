@@ -267,7 +267,6 @@ function CreatorTable({ accounts, creators, campaigns, getVideosToday, getTotalV
             <TableHead>Campagna</TableHead>
             <TableHead className="text-right">Video oggi</TableHead>
             <TableHead className="text-right">Views totali</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead />
           </TableRow>
         </TableHeader>
