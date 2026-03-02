@@ -146,6 +146,18 @@ export default function CreatorPage() {
     },
   });
 
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase.from("creators").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Status aggiornato" });
+      qc.invalidateQueries({ queryKey: ["creator-table"] });
+      qc.invalidateQueries({ queryKey: ["active-creators-count"] });
+    },
+  });
+
   const filtered = (creators ?? []).filter(c => {
     if (filter === "all") return true;
     return c.status === filter;
