@@ -169,7 +169,7 @@ export default function CreatorDetailPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
-          { label: "Video oggi", value: kpi?.todayVideos ?? 0, extra: kpi && creator ? (kpi.todayVideos >= (creator.min_videos_per_day ?? 5) ? " ✅" : " ⚠️") : "" },
+          { label: "Video oggi", value: kpi?.todayVideos ?? 0 },
           { label: "Video settimana", value: kpi?.weekVideos ?? 0 },
           { label: "Video mese", value: kpi?.monthVideos ?? 0 },
           { label: "Views totali", value: formatViews(kpi?.totalViews ?? 0) },
@@ -179,7 +179,7 @@ export default function CreatorDetailPage() {
           <Card key={k.label}>
             <CardContent className="pt-4 pb-3 px-4">
               <p className="text-xs text-muted-foreground">{k.label}</p>
-              <p className="text-xl font-bold mt-1">{k.value}{k.extra ?? ""}</p>
+              <p className="text-xl font-bold mt-1">{k.value}</p>
             </CardContent>
           </Card>
         ))}
@@ -295,7 +295,7 @@ export default function CreatorDetailPage() {
                   <TableHead>Campagna</TableHead>
                   <TableHead className="text-right">Video oggi</TableHead>
                   <TableHead className="text-right">Views totali</TableHead>
-                  <TableHead>Status</TableHead>
+                  
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -307,7 +307,7 @@ export default function CreatorDetailPage() {
                     <TableCell>{a.campaignName}</TableCell>
                     <TableCell className="text-right">{a.todayVideos}</TableCell>
                     <TableCell className="text-right">{formatViews(a.totalViews)}</TableCell>
-                    <TableCell>{a.isOnTrack ? "✅" : "⚠️"}</TableCell>
+                    
                     <TableCell>
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.accountId}`)}>Apri</Button>
                     </TableCell>
