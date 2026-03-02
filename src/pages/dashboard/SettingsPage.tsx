@@ -275,19 +275,15 @@ export default function SettingsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Apify API Key</Label>
-              <div className="relative">
-                <Input
-                  type="password"
-                  placeholder={settings.apify_api_key ? "••••••••••••••••" : "Inserisci API key..."}
-                  value={settings.apify_api_key_input ?? ""}
-                  onChange={(e) => setSettings({ ...settings, apify_api_key_input: e.target.value })}
-                  className="pr-10"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                  {settings.apify_api_key ? "Configurata" : "Non configurata"}
-                </span>
+              <div className="rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+                Gestita tramite Supabase Secrets
               </div>
-              <p className="text-xs text-muted-foreground">La chiave è conservata in modo sicuro e non può essere visualizzata.</p>
+              <p className="text-xs text-muted-foreground">
+                La chiave è configurata come variabile d'ambiente sicura. Per modificarla, vai nelle{" "}
+                <a href={`https://supabase.com/dashboard/project/ceknjgwzxexxzckcqjmq/settings/functions`} target="_blank" rel="noopener noreferrer" className="underline text-primary">
+                  impostazioni Edge Functions
+                </a> di Supabase.
+              </p>
             </div>
             <div className="space-y-2">
               <Label>Frequenza aggiornamento</Label>
