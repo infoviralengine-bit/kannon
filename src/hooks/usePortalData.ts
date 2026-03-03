@@ -142,6 +142,14 @@ export function useClientAreaData() {
           client_fixed_per_creator: number | null;
           video_views_cap: number | null;
         };
+        accounts: {
+          username: string;
+          total_views: number;
+          total_videos: number;
+          videos_today: number;
+          views_7d: number;
+          views_30d: number;
+        }[];
         active_creators: number;
         total_creators: number;
         views_1d: number;
