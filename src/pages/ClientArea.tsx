@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Eye, Heart, MessageCircle, Users, Video, CalendarDays, TrendingUp } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { LogOut, Eye, Heart, MessageCircle, Users, Video, CalendarDays, TrendingUp, AtSign } from "lucide-react";
 import { formatViews } from "@/lib/format";
 
 type Period = "1d" | "7d" | "30d" | "90d";
@@ -17,12 +18,9 @@ const periodLabels: Record<Period, string> = {
   "90d": "90 giorni",
 };
 
-export default function ClientArea() {
+function ClientHeader() {
   const { profile, signOut } = useAuth();
-  const { data, isLoading } = useClientAreaData();
-  const [period, setPeriod] = useState<Period>("30d");
-
-  const Header = () => (
+  return (
     <header className="border-b border-border px-6 py-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
         <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-sm">K</div>
@@ -34,14 +32,18 @@ export default function ClientArea() {
       </div>
     </header>
   );
+}
+
+export default function ClientArea() {
+  const { data, isLoading } = useClientAreaData();
+  const [period, setPeriod] = useState<Period>("30d");
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <Header />
+        <ClientHeader />
         <div className="flex-1 p-6 max-w-5xl mx-auto w-full space-y-6">
           <Skeleton className="h-10 w-64" />
-          <div className="grid gap-4 md:grid-cols-3"><Skeleton className="h-32" /><Skeleton className="h-32" /><Skeleton className="h-32" /></div>
           <div className="grid gap-4 md:grid-cols-3"><Skeleton className="h-32" /><Skeleton className="h-32" /><Skeleton className="h-32" /></div>
         </div>
       </div>
@@ -51,7 +53,7 @@ export default function ClientArea() {
   if (!data) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <Header />
+        <ClientHeader />
         <div className="flex-1 flex items-center justify-center p-6 text-center">
           <div>
             <h2 className="text-xl font-semibold mb-2">Nessuna campagna collegata</h2>
@@ -68,7 +70,7 @@ export default function ClientArea() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+      <ClientHeader />
 
       <div className="flex-1 p-6 max-w-5xl mx-auto w-full space-y-8 animate-fade-in">
         {/* Campaign title & status */}
@@ -122,7 +124,7 @@ export default function ClientArea() {
             <CardContent className="flex flex-col items-center gap-2 py-6">
               <Users className="h-7 w-7 text-primary" />
               <p className="text-3xl font-bold">{data.active_creators}</p>
-              <p className="text-sm text-muted-foreground">Creator Attivi</p>
+              <p className="text-sm text-muted-foreground">Account Attivi</p>
             </CardContent>
           </Card>
           <Card>
@@ -140,6 +142,41 @@ export default function ClientArea() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Account list */}
+        {data.accounts && data.accounts.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <AtSign className="h-5 w-5" /> Account TikTok
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Username</TableHead>
+                    <TableHead className="text-right">Views Totali</TableHead>
+                    <TableHead className="text-right">Views 30gg</TableHead>
+                    <TableHead className="text-right">Video Totali</TableHead>
+                    <TableHead className="text-right">Video Oggi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.accounts.map((acc) => (
+                    <TableRow key={acc.username}>
+                      <TableCell className="font-medium">@{acc.username}</TableCell>
+                      <TableCell className="text-right">{formatViews(acc.total_views)}</TableCell>
+                      <TableCell className="text-right">{formatViews(acc.views_30d)}</TableCell>
+                      <TableCell className="text-right">{acc.total_videos}</TableCell>
+                      <TableCell className="text-right">{acc.videos_today}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Campaign details */}
         <Card>
@@ -161,25 +198,9 @@ export default function ClientArea() {
                 </div>
               )}
               <div>
-                <p className="text-sm text-muted-foreground">Creator Previsti</p>
-                <p className="font-medium">{data.campaign.planned_creators}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Creator Attivi / Totali</p>
+                <p className="text-sm text-muted-foreground">Account Attivi / Totali</p>
                 <p className="font-medium">{data.active_creators} / {data.total_creators}</p>
               </div>
-              {data.campaign.client_cpm != null && (
-                <div>
-                  <p className="text-sm text-muted-foreground">CPM</p>
-                  <p className="font-medium">€{data.campaign.client_cpm}</p>
-                </div>
-              )}
-              {data.campaign.client_fixed_per_creator != null && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Fisso / Creator</p>
-                  <p className="font-medium">€{data.campaign.client_fixed_per_creator}</p>
-                </div>
-              )}
               {data.campaign.video_views_cap != null && (
                 <div>
                   <p className="text-sm text-muted-foreground">Cap Views / Video</p>
