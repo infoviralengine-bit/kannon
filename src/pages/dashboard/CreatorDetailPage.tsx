@@ -76,13 +76,6 @@ function EditCreatorModal({ open, onOpenChange, creator }: {
   );
 }
 
-/* ── Progress bar color helper ── */
-function progressColor(level: "green" | "yellow" | "red") {
-  if (level === "green") return "[&>div]:bg-success";
-  if (level === "yellow") return "[&>div]:bg-warning";
-  return "[&>div]:bg-destructive";
-}
-
 /* ── Detail Page ── */
 export default function CreatorDetailPage() {
   const { id } = useParams<{ id: string }>();
