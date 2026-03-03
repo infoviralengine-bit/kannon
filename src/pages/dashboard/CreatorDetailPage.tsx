@@ -29,7 +29,7 @@ import {
 /* ── Edit Modal ── */
 function EditCreatorModal({ open, onOpenChange, creator }: {
   open: boolean; onOpenChange: (v: boolean) => void;
-  creator: { id: string; name: string; email: string | null; phone: string | null; creator_cpm: number | null; creator_fixed: number | null; min_videos_per_day: number | null };
+  creator: { id: string; name: string; email: string | null; phone: string | null };
 }) {
   const { toast } = useToast();
   const qc = useQueryClient();
