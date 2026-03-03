@@ -109,27 +109,9 @@ export default function CreatorArea() {
         <Card>
           <CardHeader><CardTitle className="text-lg">Payoff mese corrente</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            {/* Progress bar */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span>Video pubblicati: {data.progress.videosSoFar} / {data.monthlyTarget}</span>
-                <Badge variant={data.fixedEarned ? "default" : "secondary"}>
-                  {data.fixedEarned ? "✅ Maturato" :
-                    data.progress.alertLevel === "yellow" ? "🟡 In ritardo" : "🔴 Non maturato"}
-                </Badge>
-              </div>
-              <Progress value={data.progress.percent} className={progressColor(data.progress.alertLevel)} />
-              <p className="text-xs text-muted-foreground">
-                Media giornaliera attuale: {data.progress.avgCurrent.toFixed(1)} video/giorno — necessaria: {data.min.toFixed(0)} video/giorno
-                {data.progress.workingDaysLeft > 0 && !data.fixedEarned && (
-                  <> (per recuperare: {data.progress.avgNeeded.toFixed(1)} video/giorno)</>
-                )}
-              </p>
-            </div>
-
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Fisso</span>
-              <span className="font-semibold">{formatCurrency(data.fixedEarned ? data.creatorFixed : 0)}</span>
+              <span className="font-semibold">{formatCurrency(data.creatorFixed)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">CPM maturato</span>
