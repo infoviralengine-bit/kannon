@@ -144,6 +144,19 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleDeleteUser() {
+    if (!deletingUser) return;
+    try {
+      await callManageUsers({ action: "delete_user", user_id: deletingUser.id });
+      toast({ title: "Utente eliminato definitivamente" });
+      setDeletingUser(null);
+      loadAll();
+    } catch (e: any) {
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      setDeletingUser(null);
+    }
+  }
+
   async function saveSetting(key: string, value: string) {
     const trimmed = value.trim();
     if (!trimmed) throw new Error("Il valore non può essere vuoto");
