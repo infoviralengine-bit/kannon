@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViews, sumEffectiveViewsCapped } from "@/lib/videoWindow";
-import { isFixedEarnedMonthly, getCreatorAlertLevel, getMonthlyTarget, type AlertLevel } from "@/lib/fixedEarned";
+import { isFixedEarnedMonthly } from "@/lib/fixedEarned";
 
 function todayRange() {
   const now = new Date();
@@ -216,18 +216,12 @@ export interface CampaignCreatorRow {
   weekVideos: number;
   monthVideos: number;
   totalViews: number;
-  minVideos: number;
-  alertLevel: AlertLevel;
-  isOnTrack: boolean;
 }
 
 export function useCampaignCreators(campaignId: string) {
   const { start: tStart, end: tEnd } = todayRange();
   const { start: wStart, end: wEnd } = weekRange();
   const { start: mStart, end: mEnd } = monthRange();
-  const now = new Date();
-  const year = now.getFullYear();
-  const month0 = now.getMonth();
 
   return useQuery({
     queryKey: ["campaign-creators", campaignId],
@@ -241,18 +235,13 @@ export function useCampaignCreators(campaignId: string) {
 
       const { data: creators } = await supabase
         .from("creators")
-        .select("id, name, min_videos_per_day, status")
+        .select("id, name, status")
         .in("id", creatorIds);
 
       const { data: accounts } = await supabase
         .from("tiktok_accounts")
         .select("id, creator_id, username")
         .eq("campaign_id", campaignId);
-
-      const { data: allCreatorAccounts } = await supabase
-        .from("tiktok_accounts")
-        .select("id, creator_id")
-        .in("creator_id", creatorIds);
 
       const { data: allVideos } = await supabase
         .from("videos")
@@ -266,14 +255,6 @@ export function useCampaignCreators(campaignId: string) {
         accountsByCreator.set(a.creator_id, list);
       });
 
-      const allAccByCreator = new Map<string, string[]>();
-      (allCreatorAccounts ?? []).forEach((a) => {
-        if (!a.creator_id) return;
-        const list = allAccByCreator.get(a.creator_id) ?? [];
-        list.push(a.id);
-        allAccByCreator.set(a.creator_id, list);
-      });
-
       return (creators ?? []).map((c): CampaignCreatorRow => {
         const accs = accountsByCreator.get(c.id) ?? [];
         const accIds = new Set(accs.map((a) => a.id));
@@ -283,13 +264,6 @@ export function useCampaignCreators(campaignId: string) {
         const weekVideos = vids.filter((v) => v.published_at >= wStart && v.published_at < wEnd).length;
         const monthVideos = vids.filter((v) => v.published_at >= mStart && v.published_at < mEnd).length;
         const totalViews = vids.reduce((s, v) => s + (v.views ?? 0), 0);
-        const min = c.min_videos_per_day ?? 5;
-
-        const allAccIds = new Set(allAccByCreator.get(c.id) ?? []);
-        const allMonthVideos = (allVideos ?? []).filter(
-          (v) => allAccIds.has(v.tiktok_account_id) && v.published_at >= mStart && v.published_at < mEnd
-        ).length;
-        const alertLevel = getCreatorAlertLevel(allMonthVideos, min, year, month0);
 
         return {
           creatorId: c.id,
@@ -299,9 +273,6 @@ export function useCampaignCreators(campaignId: string) {
           weekVideos,
           monthVideos,
           totalViews,
-          minVideos: min,
-          alertLevel,
-          isOnTrack: alertLevel === "green",
         };
       });
     },
@@ -368,74 +339,6 @@ export function useCampaignAccounts(campaignId: string) {
   });
 }
 
-export interface CampaignAlert {
-  creatorName: string;
-  videosSoFar: number;
-  totalRequired: number;
-  alertLevel: AlertLevel;
-}
-
-export function useCampaignAlerts(campaignId: string) {
-  const { start: mStart, end: mEnd } = monthRange();
-  const now = new Date();
-  const year = now.getFullYear();
-  const month0 = now.getMonth();
-
-  return useQuery({
-    queryKey: ["campaign-alerts", campaignId],
-    queryFn: async () => {
-      const { data: cc } = await supabase
-        .from("campaign_creators")
-        .select("creator_id")
-        .eq("campaign_id", campaignId);
-      const creatorIds = (cc ?? []).map((r) => r.creator_id);
-      if (!creatorIds.length) return [];
-
-      const { data: creators } = await supabase
-        .from("creators")
-        .select("id, name, min_videos_per_day")
-        .in("id", creatorIds)
-        .eq("status", "active");
-
-      const { data: accounts } = await supabase
-        .from("tiktok_accounts")
-        .select("id, creator_id");
-
-      const { data: videos } = await supabase
-        .from("videos")
-        .select("tiktok_account_id, published_at")
-        .gte("published_at", mStart)
-        .lt("published_at", mEnd);
-
-      const accountsByCreator = new Map<string, string[]>();
-      (accounts ?? []).forEach((a) => {
-        if (!a.creator_id) return;
-        const list = accountsByCreator.get(a.creator_id) ?? [];
-        list.push(a.id);
-        accountsByCreator.set(a.creator_id, list);
-      });
-
-      const alerts: CampaignAlert[] = [];
-      (creators ?? []).forEach((c) => {
-        const accIds = new Set(accountsByCreator.get(c.id) ?? []);
-        const videosSoFar = (videos ?? []).filter((v) => accIds.has(v.tiktok_account_id)).length;
-        const min = c.min_videos_per_day ?? 5;
-        const totalRequired = getMonthlyTarget(min, year, month0);
-        const alertLevel = getCreatorAlertLevel(videosSoFar, min, year, month0);
-        if (alertLevel !== "green") {
-          alerts.push({
-            creatorName: c.name,
-            videosSoFar,
-            totalRequired,
-            alertLevel,
-          });
-        }
-      });
-      return alerts;
-    },
-    enabled: !!campaignId,
-  });
-}
 
 export function useAllCreatorsForSelect() {
   return useQuery({

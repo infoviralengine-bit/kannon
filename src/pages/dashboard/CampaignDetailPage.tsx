@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import {
-  AlertTriangle, CheckCircle2,
+  AlertTriangle,
   ChevronRight, Pencil, CalendarIcon, RefreshCw, Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -15,7 +15,7 @@ import { getEffectiveViews } from "@/lib/videoWindow";
 import { CappedBadge } from "@/components/CappedViewsBadge";
 import {
   useCampaignDetail, useCampaignKpi, useCampaignMargin,
-  useCampaignCreators, useCampaignAccounts, useCampaignAlerts,
+  useCampaignCreators, useCampaignAccounts,
   useAllCreatorsForSelect,
 } from "@/hooks/useCampaignData";
 import { useCampaignCycles, type ClientPaymentRow } from "@/hooks/usePaymentsData";
@@ -707,7 +707,6 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
                 <TableHead className="text-right">Settimana</TableHead>
                 <TableHead className="text-right">Mese</TableHead>
                 <TableHead className="text-right">Views Totali</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
@@ -731,15 +730,6 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
                     <TableCell className="text-right">{c.weekVideos}</TableCell>
                     <TableCell className="text-right">{c.monthVideos}</TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
-                    <TableCell>
-                      {c.alertLevel === "green" ? (
-                        <Badge className="bg-success/20 text-success border-success/30">🟢 In regola</Badge>
-                      ) : c.alertLevel === "yellow" ? (
-                        <Badge className="bg-warning/20 text-warning border-warning/30">🟡 Attenzione</Badge>
-                      ) : (
-                        <Badge className="bg-destructive/20 text-destructive border-destructive/30">🔴 A rischio</Badge>
-                      )}
-                    </TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.creatorId}`)}>
                         Apri
@@ -769,7 +759,7 @@ export default function CampaignDetailPage() {
   const margin = useCampaignMargin(campaignId);
   const creators = useCampaignCreators(campaignId);
   const accounts = useCampaignAccounts(campaignId);
-  const alerts = useCampaignAlerts(campaignId);
+  
   const cycles = useCampaignCycles(campaignId);
 
   const [editOpen, setEditOpen] = useState(false);
@@ -982,36 +972,6 @@ export default function CampaignDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Alerts */}
-      {alerts.isLoading ? (
-        <Skeleton className="h-16 w-full" />
-      ) : (alerts.data?.length ?? 0) > 0 ? (
-        <Card className="border-destructive/40 bg-destructive/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-4 w-4" /> Alert Creator — Proiezione mensile
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {alerts.data!.map((a) => (
-              <div key={a.creatorName} className="flex items-center gap-2 text-sm">
-                <span className={a.alertLevel === "red" ? "text-destructive" : "text-warning"}>
-                  {a.alertLevel === "red" ? "🔴 Critico" : "🟡 Attenzione"}
-                </span>
-                <span className="font-semibold">{a.creatorName}</span>
-                <span className="text-muted-foreground">— {a.videosSoFar}/{a.totalRequired} video nel mese</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="border-success/30 bg-success/5">
-          <CardContent className="flex items-center gap-2 py-4">
-            <CheckCircle2 className="h-4 w-4 text-success" />
-            <span className="text-sm text-success">Tutti i creator sono in regola questo mese ✓</span>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Creator Table */}
       <CreatorTableWithContracts
