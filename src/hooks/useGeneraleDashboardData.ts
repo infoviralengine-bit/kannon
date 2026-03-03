@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { type AlertLevel } from "@/lib/fixedEarned";
 import { sumEffectiveViews } from "@/lib/videoWindow";
 
 function monthRange(year: number, month: number) {
