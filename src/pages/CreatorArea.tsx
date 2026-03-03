@@ -142,7 +142,6 @@ export default function CreatorArea() {
                     <TableHead>Campagna</TableHead>
                     <TableHead className="text-right">Video oggi</TableHead>
                     <TableHead className="text-right">Views totali</TableHead>
-                    <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
