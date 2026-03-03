@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { sumEffectiveViews } from "@/lib/videoWindow";
-import { isFixedEarnedMonthly, getMonthlyTarget, getProgressData } from "@/lib/fixedEarned";
+import { sumEffectiveViews } from "@/lib/videoWindow";
 
 function todayRange() {
   const now = new Date();
