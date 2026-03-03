@@ -135,7 +135,6 @@ export default function ClientArea() {
             </CardContent>
           </Card>
         </div>
-        </div>
 
         {/* Account list */}
         {data.accounts && data.accounts.length > 0 && (
