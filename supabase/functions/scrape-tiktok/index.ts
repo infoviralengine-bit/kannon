@@ -190,6 +190,7 @@ Deno.serve(async (req) => {
         // 7. Upsert videos
         const now = new Date().toISOString();
         const viewsCap = campaign.video_views_cap;
+        const campaignStartDate = new Date(campaign.start_date);
 
         for (const item of items) {
           const tiktokVideoId = item.id || item.videoId;
@@ -201,6 +202,13 @@ Deno.serve(async (req) => {
           const createTime = item.createTime
             ? new Date(item.createTime * 1000).toISOString()
             : now;
+
+          // Server-side filter: skip videos published before campaign start_date
+          const videoDate = new Date(createTime);
+          if (videoDate < campaignStartDate) {
+            console.log(`Skipping video ${tiktokVideoId} for @${cleanUsername}: published ${createTime} before campaign start ${campaign.start_date}`);
+            continue;
+          }
 
           // Check if video exists
           const { data: existing } = await supabaseAdmin
