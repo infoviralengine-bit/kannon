@@ -198,37 +198,12 @@ export default function CreatorDetailPage() {
                   <div key={pc.contractId} className="space-y-3 border-b border-border pb-4 last:border-b-0">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold">{pc.contractName}</span>
-                      {pc.hasVideoTarget ? (
-                        <Badge className={
-                          pc.progress.alertLevel === "green" ? "bg-success/20 text-success border-success/30" :
-                          pc.progress.alertLevel === "yellow" ? "bg-warning/20 text-warning border-warning/30" :
-                          "bg-destructive/20 text-destructive border-destructive/30"
-                        }>
-                          {pc.fixedEarned ? "✅ Maturato" : pc.progress.alertLevel === "yellow" ? "🟡 In ritardo" : "🔴 Non maturato"}
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-success/20 text-success border-success/30">✅ Sempre maturato</Badge>
-                      )}
+                      <Badge className="bg-success/20 text-success border-success/30">✅ Fisso maturato</Badge>
                     </div>
-
-                    {pc.hasVideoTarget && (
-                      <div className="space-y-2">
-                        <p className="text-xs text-muted-foreground">
-                          Video pubblicati: {pc.monthVideoCount} / {pc.monthlyTarget}
-                        </p>
-                        <Progress value={pc.progress.percent} className={progressColor(pc.progress.alertLevel)} />
-                        <p className="text-xs text-muted-foreground">
-                          Media: {pc.progress.avgCurrent.toFixed(1)} video/g — necessaria: {pc.min} video/g
-                          {pc.progress.workingDaysLeft > 0 && !pc.fixedEarned && (
-                            <> (per recuperare: {pc.progress.avgNeeded.toFixed(1)} video/g)</>
-                          )}
-                        </p>
-                      </div>
-                    )}
 
                     <div className="flex items-center justify-between">
                       <span className="text-xs">Fisso</span>
-                      <span className="text-sm font-semibold">{formatCurrency(pc.fixedEarned ? pc.creatorFixed : 0)}</span>
+                      <span className="text-sm font-semibold">{formatCurrency(pc.creatorFixed)}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs">CPM maturato</span>

@@ -151,11 +151,6 @@ export default function CreatorArea() {
                       <TableCell>{a.campaignName}</TableCell>
                       <TableCell className="text-right">{a.todayVideos}</TableCell>
                       <TableCell className="text-right">{formatViews(a.totalViews)}</TableCell>
-                      <TableCell>
-                        {a.isOnTrack
-                          ? <Badge variant="default">✅ In regola</Badge>
-                          : <Badge variant="secondary">⚠️ Sotto minimo</Badge>}
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

@@ -226,7 +226,6 @@ export interface CreatorAlertRow {
   videosSoFar: number;
   totalRequired: number;
   daysRemaining: number;
-  alertLevel: AlertLevel;
 }
 
 export interface TopCreatorRow {

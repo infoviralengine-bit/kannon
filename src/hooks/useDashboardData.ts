@@ -210,10 +210,6 @@ export function useCreatorAlerts() {
         const videosSoFar = (videos ?? []).filter((v) => accIds.has(v.tiktok_account_id)).length;
         const min = c.min_videos_per_day ?? 5;
         const totalRequired = getMonthlyTarget(min, year, month0);
-        const alertLevel = getCreatorAlertLevel(videosSoFar, min, year, month0);
-        if (alertLevel !== "green") {
-          alerts.push({ creatorName: c.name, videosSoFar, totalRequired, alertLevel });
-        }
       });
 
       return alerts;

@@ -1013,13 +1013,6 @@ export default function CampaignDetailPage() {
                     <TableCell className="text-right">{a.todayVideos}</TableCell>
                     <TableCell className="text-right">{formatViews(a.totalViews)}</TableCell>
                     <TableCell>
-                      {a.isOnTrack ? (
-                        <span className="text-success">✅ In regola</span>
-                      ) : (
-                        <span className="text-warning">⚠️ Sotto minimo</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.accountId}`)}>
                         Apri
                       </Button>
