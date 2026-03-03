@@ -134,13 +134,7 @@ export default function ClientArea() {
               <p className="text-sm text-muted-foreground">Video Oggi</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="flex flex-col items-center gap-2 py-6">
-              <TrendingUp className="h-7 w-7 text-primary" />
-              <p className="text-3xl font-bold">{data.avg_videos_per_day_30d}</p>
-              <p className="text-sm text-muted-foreground">Media Video/Giorno (30gg)</p>
-            </CardContent>
-          </Card>
+        </div>
         </div>
 
         {/* Account list */}
