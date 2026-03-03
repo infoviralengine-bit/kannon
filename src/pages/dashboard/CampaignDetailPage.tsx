@@ -707,7 +707,6 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
                 <TableHead className="text-right">Settimana</TableHead>
                 <TableHead className="text-right">Mese</TableHead>
                 <TableHead className="text-right">Views Totali</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
