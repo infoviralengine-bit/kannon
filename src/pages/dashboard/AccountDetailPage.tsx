@@ -167,15 +167,6 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
         <KPICard title="Views mese" value={formatViews(data.viewsMonth)} />
       </div>
 
-      {/* Alert */}
-      {!ok && (
-        <Card className="border-destructive/50 bg-destructive/10">
-          <CardContent className="py-4 flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            <span>Oggi: <strong>{data.videosToday}</strong> video pubblicati — minimo richiesto: <strong>{min}</strong></span>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Chart */}
       <Card>
