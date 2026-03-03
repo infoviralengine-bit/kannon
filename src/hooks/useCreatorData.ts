@@ -289,8 +289,6 @@ export function useCreatorAccounts(creatorId: string) {
           campaignName: a.campaign_id ? campMap.get(a.campaign_id) ?? "—" : "—",
           todayVideos,
           totalViews,
-          minVideos: min,
-          isOnTrack: todayVideos >= min,
         };
       });
     },
