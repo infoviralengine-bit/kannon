@@ -9,12 +9,6 @@ import { Progress } from "@/components/ui/progress";
 import { LogOut, Video, Eye, Calendar } from "lucide-react";
 import { formatCurrency, formatViews } from "@/lib/format";
 
-function progressColor(level: "green" | "yellow" | "red") {
-  if (level === "green") return "[&>div]:bg-success";
-  if (level === "yellow") return "[&>div]:bg-warning";
-  return "[&>div]:bg-destructive";
-}
-
 export default function CreatorArea() {
   const { profile, signOut } = useAuth();
   const { data, isLoading } = useCreatorAreaData();
