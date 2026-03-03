@@ -222,9 +222,6 @@ export function useCampaignCreators(campaignId: string) {
   const { start: tStart, end: tEnd } = todayRange();
   const { start: wStart, end: wEnd } = weekRange();
   const { start: mStart, end: mEnd } = monthRange();
-  const now = new Date();
-  const year = now.getFullYear();
-  const month0 = now.getMonth();
 
   return useQuery({
     queryKey: ["campaign-creators", campaignId],
@@ -238,18 +235,13 @@ export function useCampaignCreators(campaignId: string) {
 
       const { data: creators } = await supabase
         .from("creators")
-        .select("id, name, min_videos_per_day, status")
+        .select("id, name, status")
         .in("id", creatorIds);
 
       const { data: accounts } = await supabase
         .from("tiktok_accounts")
         .select("id, creator_id, username")
         .eq("campaign_id", campaignId);
-
-      const { data: allCreatorAccounts } = await supabase
-        .from("tiktok_accounts")
-        .select("id, creator_id")
-        .in("creator_id", creatorIds);
 
       const { data: allVideos } = await supabase
         .from("videos")
@@ -261,14 +253,6 @@ export function useCampaignCreators(campaignId: string) {
         const list = accountsByCreator.get(a.creator_id) ?? [];
         list.push(a);
         accountsByCreator.set(a.creator_id, list);
-      });
-
-      const allAccByCreator = new Map<string, string[]>();
-      (allCreatorAccounts ?? []).forEach((a) => {
-        if (!a.creator_id) return;
-        const list = allAccByCreator.get(a.creator_id) ?? [];
-        list.push(a.id);
-        allAccByCreator.set(a.creator_id, list);
       });
 
       return (creators ?? []).map((c): CampaignCreatorRow => {
