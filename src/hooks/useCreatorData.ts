@@ -69,12 +69,8 @@ export function useCreatorTable(selectedYear?: number, selectedMonth?: number) {
       return sorted.map((c): CreatorTableRow => {
         const accIds = new Set(accountsByCreator.get(c.id) ?? []);
         const vids = (allVideos ?? []).filter(v => accIds.has(v.tiktok_account_id));
-        const monthVideos = vids.filter(v => v.published_at >= mStart && v.published_at < mEnd).length;
         const totalViews = vids.reduce((s, v) => s + (v.views ?? 0), 0);
         const activeCampaigns = (ccRows ?? []).filter(r => r.creator_id === c.id && activeCampaignIds.has(r.campaign_id)).length;
-        const min = c.min_videos_per_day ?? 5;
-        const target = getMonthlyTarget(min, year, month0);
-        const progress = getProgressData(monthVideos, min, year, month0);
 
         return {
           id: c.id,
@@ -82,10 +78,6 @@ export function useCreatorTable(selectedYear?: number, selectedMonth?: number) {
           status: c.status,
           activeCampaigns,
           totalViews,
-          monthVideos,
-          monthlyTarget: target,
-          alertLevel: progress.alertLevel,
-          isOnTrack: progress.alertLevel === "green",
         };
       });
     },
