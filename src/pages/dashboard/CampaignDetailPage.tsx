@@ -455,11 +455,11 @@ function CyclesSection({ campaignId, campaign, cycles }: {
         console.log(`[CycleGen] Campaign — no accounts found`);
       }
 
-      const newViews = isFirstCycle ? 0 : Math.max(0, totalCurrentViews - prevViewsPaidCumulative);
+      const newViews = Math.max(0, totalCurrentViews - prevViewsPaidCumulative);
       const viewsPaidCumulative = prevViewsPaidCumulative + newViews;
 
       const fixedAmount = isLastCycle ? 0 : (campaign.client_fixed_per_creator ?? 200) * creatorCount;
-      const cpmAmount = isFirstCycle ? 0 : (campaign.client_cpm ?? 2) * (newViews / 1000);
+      const cpmAmount = (campaign.client_cpm ?? 2) * (newViews / 1000);
       let totalAmount = fixedAmount + cpmAmount;
 
       // Apply spend cap
@@ -474,7 +474,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
         campaign_id: campaignId,
         cycle_id: cycle.id,
         cycle_number: nextNumber,
-        due_date: startDate,
+        due_date: endDate,
         fixed_amount: fixedAmount,
         cpm_views: newViews,
         cpm_amount: cpmAmount,
