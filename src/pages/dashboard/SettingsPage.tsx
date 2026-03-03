@@ -48,6 +48,9 @@ export default function SettingsPage() {
   const [editCreatorId, setEditCreatorId] = useState("");
   const [editCampaignId, setEditCampaignId] = useState("");
 
+  // Delete user
+  const [deletingUser, setDeletingUser] = useState<AppUser | null>(null);
+
   // Saving flags
   const [savingApify, setSavingApify] = useState(false);
 
