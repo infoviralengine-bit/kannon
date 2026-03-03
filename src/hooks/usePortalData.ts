@@ -91,7 +91,6 @@ export function useCreatorAreaData() {
           campaignName: a.campaign_id ? campMap.get(a.campaign_id) ?? "—" : "—",
           todayVideos: accTodayVideos,
           totalViews: accTotalViews,
-          isOnTrack: accTodayVideos >= min,
         };
       });
 
