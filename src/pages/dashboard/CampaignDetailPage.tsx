@@ -14,7 +14,7 @@ import { getEffectiveViews } from "@/lib/videoWindow";
 import { CappedBadge } from "@/components/CappedViewsBadge";
 import {
   useCampaignDetail, useCampaignKpi, useCampaignMargin,
-  useCampaignCreators, useCampaignAccounts, useCampaignAlerts,
+  useCampaignCreators, useCampaignAccounts,
   useAllCreatorsForSelect,
 } from "@/hooks/useCampaignData";
 import { useCampaignCycles, type ClientPaymentRow } from "@/hooks/usePaymentsData";
