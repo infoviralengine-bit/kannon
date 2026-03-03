@@ -253,8 +253,6 @@ export interface CreatorAccountRow {
   campaignName: string | null;
   todayVideos: number;
   totalViews: number;
-  minVideos: number;
-  isOnTrack: boolean;
 }
 
 export function useCreatorAccounts(creatorId: string) {
