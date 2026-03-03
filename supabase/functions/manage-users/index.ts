@@ -87,6 +87,19 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    if (action === "delete_user") {
+      const { user_id } = payload;
+      if (user_id === caller.id) {
+        return new Response(JSON.stringify({ error: "Non puoi eliminare te stesso" }), { status: 400, headers: corsHeaders });
+      }
+      // Delete role, profile, then auth user
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", user_id);
+      await supabaseAdmin.from("profiles").delete().eq("id", user_id);
+      const { error } = await supabaseAdmin.auth.admin.deleteUser(user_id);
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     if (action === "list_users") {
       // Get all profiles + roles
       const { data: profiles } = await supabaseAdmin.from("profiles").select("id, full_name, email, created_at");
