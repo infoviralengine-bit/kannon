@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Users, Cpu } from "lucide-react";
+import { Plus, Users, Cpu, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import SystemTest from "@/components/SystemTest";
 import ScrapingLogsSection from "@/components/ScrapingLogsSection";
 
@@ -46,6 +47,9 @@ export default function SettingsPage() {
   const [editRole, setEditRole] = useState("");
   const [editCreatorId, setEditCreatorId] = useState("");
   const [editCampaignId, setEditCampaignId] = useState("");
+
+  // Delete user
+  const [deletingUser, setDeletingUser] = useState<AppUser | null>(null);
 
   // Saving flags
   const [savingApify, setSavingApify] = useState(false);
@@ -137,6 +141,19 @@ export default function SettingsPage() {
       loadAll();
     } catch (e: any) {
       toast({ title: "Errore", description: e.message, variant: "destructive" });
+    }
+  }
+
+  async function handleDeleteUser() {
+    if (!deletingUser) return;
+    try {
+      await callManageUsers({ action: "delete_user", user_id: deletingUser.id });
+      toast({ title: "Utente eliminato definitivamente" });
+      setDeletingUser(null);
+      loadAll();
+    } catch (e: any) {
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      setDeletingUser(null);
     }
   }
 
@@ -242,6 +259,9 @@ export default function SettingsPage() {
                     </Button>
                     <Button variant="destructive" size="sm" onClick={() => handleDisable(u.id)}>
                       Disabilita
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeletingUser(u)}>
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -434,6 +454,24 @@ export default function SettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* DELETE USER CONFIRM */}
+      <AlertDialog open={!!deletingUser} onOpenChange={() => setDeletingUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminare questo utente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Stai per eliminare definitivamente <strong>{deletingUser?.full_name}</strong> ({deletingUser?.email}).
+              Questa azione è irreversibile: verranno rimossi profilo, ruolo e account di autenticazione.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Elimina definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
