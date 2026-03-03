@@ -305,9 +305,8 @@ export function useCampaignAccounts(campaignId: string) {
       const creatorIds = [...new Set(accounts.map((a) => a.creator_id).filter(Boolean))] as string[];
       const { data: creators } = await supabase
         .from("creators")
-        .select("id, name, min_videos_per_day")
+        .select("id, name")
         .in("id", creatorIds);
-      const creatorMap = new Map((creators ?? []).map((c) => [c.id, c]));
 
       const accIds = accounts.map((a) => a.id);
       const { data: allVideos } = await supabase
