@@ -98,8 +98,8 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
   const [likes, setLikes] = useState("0");
   const [comments, setComments] = useState("0");
 
-  const min = data.creator?.min_videos_per_day || 5;
-  const ok = data.videosToday >= min;
+  const min = 0; // Video target mechanism removed
+  const ok = true;
 
   // Fetch campaign's video_views_cap
   const campaignId = data.account?.campaign_id;
