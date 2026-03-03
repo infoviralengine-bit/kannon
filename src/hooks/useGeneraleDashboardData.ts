@@ -275,8 +275,6 @@ export function useCreatorStatus() {
         creatorContract.set(cc.creator_id, contractMap.get(cc.contract_id) ?? "—");
       });
 
-      const daysInMonth = new Date(y, m + 1, 0).getDate();
-      const daysRemaining = daysInMonth - now.getDate();
 
       const alerts: CreatorAlertRow[] = [];
       const performers: { name: string; views: number; cpm: number; contract: string }[] = [];
