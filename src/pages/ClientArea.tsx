@@ -150,7 +150,6 @@ export default function ClientArea() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Username</TableHead>
-                    <TableHead className="text-right">Views Totali</TableHead>
                     <TableHead className="text-right">Views 30gg</TableHead>
                     <TableHead className="text-right">Video Totali</TableHead>
                     <TableHead className="text-right">Video Oggi</TableHead>
