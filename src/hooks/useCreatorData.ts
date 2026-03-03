@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViews, countByWindowStatus } from "@/lib/videoWindow";
-import { isFixedEarnedMonthly, getMonthlyTarget, getProgressData } from "@/lib/fixedEarned";
 
 function todayRange() {
   const now = new Date();
@@ -37,10 +36,6 @@ export interface CreatorTableRow {
   status: string;
   activeCampaigns: number;
   totalViews: number;
-  monthVideos: number;
-  monthlyTarget: number;
-  alertLevel: "green" | "yellow" | "red";
-  isOnTrack: boolean;
 }
 
 export function useCreatorTable(selectedYear?: number, selectedMonth?: number) {
@@ -74,12 +69,8 @@ export function useCreatorTable(selectedYear?: number, selectedMonth?: number) {
       return sorted.map((c): CreatorTableRow => {
         const accIds = new Set(accountsByCreator.get(c.id) ?? []);
         const vids = (allVideos ?? []).filter(v => accIds.has(v.tiktok_account_id));
-        const monthVideos = vids.filter(v => v.published_at >= mStart && v.published_at < mEnd).length;
         const totalViews = vids.reduce((s, v) => s + (v.views ?? 0), 0);
         const activeCampaigns = (ccRows ?? []).filter(r => r.creator_id === c.id && activeCampaignIds.has(r.campaign_id)).length;
-        const min = c.min_videos_per_day ?? 5;
-        const target = getMonthlyTarget(min, year, month0);
-        const progress = getProgressData(monthVideos, min, year, month0);
 
         return {
           id: c.id,
@@ -87,10 +78,6 @@ export function useCreatorTable(selectedYear?: number, selectedMonth?: number) {
           status: c.status,
           activeCampaigns,
           totalViews,
-          monthVideos,
-          monthlyTarget: target,
-          alertLevel: progress.alertLevel,
-          isOnTrack: progress.alertLevel === "green",
         };
       });
     },
@@ -156,17 +143,13 @@ export interface CreatorPayoffContract {
   contractName: string;
   creatorFixed: number;
   creatorCpm: number;
-  min: number;
-  monthlyTarget: number;
   monthVideoCount: number;
   monthViews: number;
   cpmAmount: number;
   fixedEarned: boolean;
   total: number;
-  progress: ReturnType<typeof getProgressData>;
   windowOpen: number;
   windowClosed: number;
-  hasVideoTarget: boolean;
 }
 
 export interface CreatorPayoffResult {
@@ -233,13 +216,8 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
         const monthViews = sumEffectiveViews(contractVideos);
         const windowStats = countByWindowStatus(contractVideos);
 
-        const minVpd = contract.min_videos_per_day ?? 0;
-        const hasVideoTarget = minVpd > 0;
         const creatorFixed = Number(contract.creator_fixed ?? 0);
         const creatorCpm = Number(contract.creator_cpm ?? 0.5);
-        const target = hasVideoTarget ? getMonthlyTarget(minVpd, year, month) : 0;
-        const fixedEarned = hasVideoTarget ? isFixedEarnedMonthly(monthVideoCount, minVpd, year, month) : true;
-        const progress = hasVideoTarget ? getProgressData(monthVideoCount, minVpd, year, month) : { videosSoFar: 0, totalRequired: 0, workingDaysElapsed: 0, workingDaysTotal: 0, workingDaysLeft: 0, percent: 100, alertLevel: "green" as const, avgCurrent: 0, avgNeeded: 0 };
 
         const cpmAmount = creatorCpm * (monthViews / 1000);
 
@@ -248,17 +226,13 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
           contractName: contract.name,
           creatorFixed,
           creatorCpm,
-          min: minVpd,
-          monthlyTarget: target,
           monthVideoCount,
           monthViews,
           cpmAmount,
-          fixedEarned,
-          total: (fixedEarned ? creatorFixed : 0) + cpmAmount,
-          progress,
+          fixedEarned: true, // Always earned for now (no video target mechanism)
+          total: creatorFixed + cpmAmount,
           windowOpen: windowStats.open,
           windowClosed: windowStats.closed,
-          hasVideoTarget,
         };
       });
 
@@ -279,8 +253,6 @@ export interface CreatorAccountRow {
   campaignName: string | null;
   todayVideos: number;
   totalViews: number;
-  minVideos: number;
-  isOnTrack: boolean;
 }
 
 export function useCreatorAccounts(creatorId: string) {
@@ -317,8 +289,6 @@ export function useCreatorAccounts(creatorId: string) {
           campaignName: a.campaign_id ? campMap.get(a.campaign_id) ?? "—" : "—",
           todayVideos,
           totalViews,
-          minVideos: min,
-          isOnTrack: todayVideos >= min,
         };
       });
     },

@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { sumEffectiveViews } from "@/lib/videoWindow";
-import { isFixedEarnedMonthly, getMonthlyTarget, getProgressData } from "@/lib/fixedEarned";
 
 function todayRange() {
   const now = new Date();
@@ -76,15 +75,6 @@ export function useCreatorAreaData() {
       const totalViews = allVideos.reduce((s, v) => s + (v.views ?? 0), 0);
       const monthViews = sumEffectiveViews(monthVideosList);
 
-      const min = creator.min_videos_per_day ?? 5;
-      const now = new Date();
-      const year = now.getFullYear();
-      const month0 = now.getMonth();
-
-      const fixedEarned = isFixedEarnedMonthly(monthVideosCount, min, year, month0);
-      const monthlyTarget = getMonthlyTarget(min, year, month0);
-      const progress = getProgressData(monthVideosCount, min, year, month0);
-
       const creatorFixed = creator.creator_fixed ?? 200;
       const creatorCpm = creator.creator_cpm ?? 0.5;
       const cpmAmount = creatorCpm * (monthViews / 1000);
@@ -100,7 +90,6 @@ export function useCreatorAreaData() {
           campaignName: a.campaign_id ? campMap.get(a.campaign_id) ?? "—" : "—",
           todayVideos: accTodayVideos,
           totalViews: accTotalViews,
-          isOnTrack: accTodayVideos >= min,
         };
       });
 
@@ -116,15 +105,10 @@ export function useCreatorAreaData() {
         monthVideos: monthVideosCount,
         totalViews,
         monthViews,
-        min,
-        isOnTrack: progress.alertLevel === "green",
-        fixedEarned,
         creatorFixed,
         creatorCpm,
         cpmAmount,
-        total: (fixedEarned ? creatorFixed : 0) + cpmAmount,
-        monthlyTarget,
-        progress,
+        total: creatorFixed + cpmAmount,
         accountRows,
         recentVideos,
       };

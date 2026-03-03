@@ -1002,7 +1002,6 @@ export default function CampaignDetailPage() {
                   <TableHead>Creator</TableHead>
                   <TableHead className="text-right">Video Oggi</TableHead>
                   <TableHead className="text-right">Views Totali</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -1013,13 +1012,6 @@ export default function CampaignDetailPage() {
                     <TableCell>{a.creatorName}</TableCell>
                     <TableCell className="text-right">{a.todayVideos}</TableCell>
                     <TableCell className="text-right">{formatViews(a.totalViews)}</TableCell>
-                    <TableCell>
-                      {a.isOnTrack ? (
-                        <span className="text-success">✅ In regola</span>
-                      ) : (
-                        <span className="text-warning">⚠️ Sotto minimo</span>
-                      )}
-                    </TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.accountId}`)}>
                         Apri

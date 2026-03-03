@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getCreatorAlertLevel, getMonthlyTarget, getProgressData, type AlertLevel } from "@/lib/fixedEarned";
+import { getMonthlyTarget } from "@/lib/fixedEarned";
 
 function todayRange() {
   const now = new Date();
@@ -168,7 +168,6 @@ export interface CreatorAlert {
   creatorName: string;
   videosSoFar: number;
   totalRequired: number;
-  alertLevel: AlertLevel;
 }
 
 export function useCreatorAlerts() {
@@ -211,10 +210,6 @@ export function useCreatorAlerts() {
         const videosSoFar = (videos ?? []).filter((v) => accIds.has(v.tiktok_account_id)).length;
         const min = c.min_videos_per_day ?? 5;
         const totalRequired = getMonthlyTarget(min, year, month0);
-        const alertLevel = getCreatorAlertLevel(videosSoFar, min, year, month0);
-        if (alertLevel !== "green") {
-          alerts.push({ creatorName: c.name, videosSoFar, totalRequired, alertLevel });
-        }
       });
 
       return alerts;

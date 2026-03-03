@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { type AlertLevel } from "@/lib/fixedEarned";
 import { sumEffectiveViews } from "@/lib/videoWindow";
 
 function monthRange(year: number, month: number) {
@@ -227,7 +226,6 @@ export interface CreatorAlertRow {
   videosSoFar: number;
   totalRequired: number;
   daysRemaining: number;
-  alertLevel: AlertLevel;
 }
 
 export interface TopCreatorRow {

@@ -9,7 +9,6 @@ import {
   useCreatorDetail, useCreatorKpi, useCreatorPayoff,
   useCreatorAccounts, useCreatorCampaigns,
 } from "@/hooks/useCreatorData";
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,24 +28,18 @@ import {
 /* ── Edit Modal ── */
 function EditCreatorModal({ open, onOpenChange, creator }: {
   open: boolean; onOpenChange: (v: boolean) => void;
-  creator: { id: string; name: string; email: string | null; phone: string | null; creator_cpm: number | null; creator_fixed: number | null; min_videos_per_day: number | null };
+  creator: { id: string; name: string; email: string | null; phone: string | null };
 }) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [name, setName] = useState(creator.name);
   const [email, setEmail] = useState(creator.email ?? "");
   const [phone, setPhone] = useState(creator.phone ?? "");
-  const [cpm, setCpm] = useState(String(creator.creator_cpm ?? 0.5));
-  const [fixed, setFixed] = useState(String(creator.creator_fixed ?? 200));
-  const [minVid, setMinVid] = useState(String(creator.min_videos_per_day ?? 5));
 
   const mutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("creators").update({
         name, email: email || null, phone: phone || null,
-        creator_cpm: parseFloat(cpm) || 0.5,
-        creator_fixed: parseFloat(fixed) || 200,
-        min_videos_per_day: parseInt(minVid) || 5,
       }).eq("id", creator.id);
       if (error) throw error;
     },
@@ -73,11 +66,6 @@ function EditCreatorModal({ open, onOpenChange, creator }: {
             <div className="grid gap-1.5"><Label>Email</Label><Input value={email} onChange={e => setEmail(e.target.value)} /></div>
             <div className="grid gap-1.5"><Label>Telefono</Label><Input value={phone} onChange={e => setPhone(e.target.value)} /></div>
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="grid gap-1.5"><Label>CPM (€)</Label><Input type="number" step="0.01" value={cpm} onChange={e => setCpm(e.target.value)} /></div>
-            <div className="grid gap-1.5"><Label>Fisso (€)</Label><Input type="number" step="0.01" value={fixed} onChange={e => setFixed(e.target.value)} /></div>
-            <div className="grid gap-1.5"><Label>Min video/g</Label><Input type="number" value={minVid} onChange={e => setMinVid(e.target.value)} /></div>
-          </div>
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
             {mutation.isPending ? "Salvataggio..." : "Salva Modifiche"}
           </Button>
@@ -85,13 +73,6 @@ function EditCreatorModal({ open, onOpenChange, creator }: {
       </DialogContent>
     </Dialog>
   );
-}
-
-/* ── Progress bar color helper ── */
-function progressColor(level: "green" | "yellow" | "red") {
-  if (level === "green") return "[&>div]:bg-success";
-  if (level === "yellow") return "[&>div]:bg-warning";
-  return "[&>div]:bg-destructive";
 }
 
 /* ── Detail Page ── */
@@ -216,37 +197,12 @@ export default function CreatorDetailPage() {
                   <div key={pc.contractId} className="space-y-3 border-b border-border pb-4 last:border-b-0">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold">{pc.contractName}</span>
-                      {pc.hasVideoTarget ? (
-                        <Badge className={
-                          pc.progress.alertLevel === "green" ? "bg-success/20 text-success border-success/30" :
-                          pc.progress.alertLevel === "yellow" ? "bg-warning/20 text-warning border-warning/30" :
-                          "bg-destructive/20 text-destructive border-destructive/30"
-                        }>
-                          {pc.fixedEarned ? "✅ Maturato" : pc.progress.alertLevel === "yellow" ? "🟡 In ritardo" : "🔴 Non maturato"}
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-success/20 text-success border-success/30">✅ Sempre maturato</Badge>
-                      )}
+                      <Badge className="bg-success/20 text-success border-success/30">✅ Fisso maturato</Badge>
                     </div>
-
-                    {pc.hasVideoTarget && (
-                      <div className="space-y-2">
-                        <p className="text-xs text-muted-foreground">
-                          Video pubblicati: {pc.monthVideoCount} / {pc.monthlyTarget}
-                        </p>
-                        <Progress value={pc.progress.percent} className={progressColor(pc.progress.alertLevel)} />
-                        <p className="text-xs text-muted-foreground">
-                          Media: {pc.progress.avgCurrent.toFixed(1)} video/g — necessaria: {pc.min} video/g
-                          {pc.progress.workingDaysLeft > 0 && !pc.fixedEarned && (
-                            <> (per recuperare: {pc.progress.avgNeeded.toFixed(1)} video/g)</>
-                          )}
-                        </p>
-                      </div>
-                    )}
 
                     <div className="flex items-center justify-between">
                       <span className="text-xs">Fisso</span>
-                      <span className="text-sm font-semibold">{formatCurrency(pc.fixedEarned ? pc.creatorFixed : 0)}</span>
+                      <span className="text-sm font-semibold">{formatCurrency(pc.creatorFixed)}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs">CPM maturato</span>

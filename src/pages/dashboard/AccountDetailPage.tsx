@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
-import { AlertTriangle, CheckCircle, Plus, ExternalLink } from "lucide-react";
+import { Plus, ExternalLink } from "lucide-react";
 
 export default function AccountDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -98,8 +98,8 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
   const [likes, setLikes] = useState("0");
   const [comments, setComments] = useState("0");
 
-  const min = data.creator?.min_videos_per_day || 5;
-  const ok = data.videosToday >= min;
+  const min = 0; // Video target mechanism removed
+  const ok = true;
 
   // Fetch campaign's video_views_cap
   const campaignId = data.account?.campaign_id;
@@ -159,7 +159,6 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
         <KPICard
           title="Video oggi"
           value={data.videosToday}
-          icon={ok ? <CheckCircle className="h-5 w-5 text-primary" /> : <AlertTriangle className="h-5 w-5 text-destructive" />}
         />
         <KPICard title="Video settimana" value={data.videosWeek} />
         <KPICard title="Video mese" value={data.videosMonth} />
@@ -168,15 +167,6 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
         <KPICard title="Views mese" value={formatViews(data.viewsMonth)} />
       </div>
 
-      {/* Alert */}
-      {!ok && (
-        <Card className="border-destructive/50 bg-destructive/10">
-          <CardContent className="py-4 flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            <span>Oggi: <strong>{data.videosToday}</strong> video pubblicati — minimo richiesto: <strong>{min}</strong></span>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Chart */}
       <Card>

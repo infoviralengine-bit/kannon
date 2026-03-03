@@ -286,8 +286,6 @@ export interface CampaignAccountRow {
   creatorName: string;
   todayVideos: number;
   totalViews: number;
-  minVideos: number;
-  isOnTrack: boolean;
 }
 
 export function useCampaignAccounts(campaignId: string) {
@@ -307,9 +305,8 @@ export function useCampaignAccounts(campaignId: string) {
       const creatorIds = [...new Set(accounts.map((a) => a.creator_id).filter(Boolean))] as string[];
       const { data: creators } = await supabase
         .from("creators")
-        .select("id, name, min_videos_per_day")
+        .select("id, name")
         .in("id", creatorIds);
-      const creatorMap = new Map((creators ?? []).map((c) => [c.id, c]));
 
       const accIds = accounts.map((a) => a.id);
       const { data: allVideos } = await supabase
@@ -317,12 +314,13 @@ export function useCampaignAccounts(campaignId: string) {
         .select("tiktok_account_id, views, published_at")
         .in("tiktok_account_id", accIds);
 
+      const creatorMap = new Map((creators ?? []).map((c) => [c.id, c]));
+      
       return accounts.map((a): CampaignAccountRow => {
         const vids = (allVideos ?? []).filter((v) => v.tiktok_account_id === a.id);
         const todayVids = vids.filter((v) => v.published_at >= tStart && v.published_at < tEnd);
         const totalViews = vids.reduce((s, v) => s + (v.views ?? 0), 0);
         const cr = a.creator_id ? creatorMap.get(a.creator_id) : undefined;
-        const min = cr?.min_videos_per_day ?? 5;
 
         return {
           accountId: a.id,
@@ -330,8 +328,6 @@ export function useCampaignAccounts(campaignId: string) {
           creatorName: cr?.name ?? "—",
           todayVideos: todayVids.length,
           totalViews,
-          minVideos: min,
-          isOnTrack: todayVids.length >= min,
         };
       });
     },
