@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { LogOut, Video, Eye, Calendar, CheckCircle, AlertTriangle } from "lucide-react";
+import { LogOut, Video, Eye, Calendar } from "lucide-react";
 import { formatCurrency, formatViews } from "@/lib/format";
 
 function progressColor(level: "green" | "yellow" | "red") {
