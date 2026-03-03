@@ -143,17 +143,13 @@ export interface CreatorPayoffContract {
   contractName: string;
   creatorFixed: number;
   creatorCpm: number;
-  min: number;
-  monthlyTarget: number;
   monthVideoCount: number;
   monthViews: number;
   cpmAmount: number;
   fixedEarned: boolean;
   total: number;
-  progress: ReturnType<typeof getProgressData>;
   windowOpen: number;
   windowClosed: number;
-  hasVideoTarget: boolean;
 }
 
 export interface CreatorPayoffResult {
