@@ -1002,7 +1002,6 @@ export default function CampaignDetailPage() {
                   <TableHead>Creator</TableHead>
                   <TableHead className="text-right">Video Oggi</TableHead>
                   <TableHead className="text-right">Views Totali</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
