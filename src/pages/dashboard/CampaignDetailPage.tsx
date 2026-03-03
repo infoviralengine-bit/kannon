@@ -455,7 +455,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
         console.log(`[CycleGen] Campaign — no accounts found`);
       }
 
-      const newViews = isFirstCycle ? 0 : Math.max(0, totalCurrentViews - prevViewsPaidCumulative);
+      const newViews = Math.max(0, totalCurrentViews - prevViewsPaidCumulative);
       const viewsPaidCumulative = prevViewsPaidCumulative + newViews;
 
       const fixedAmount = isLastCycle ? 0 : (campaign.client_fixed_per_creator ?? 200) * creatorCount;
