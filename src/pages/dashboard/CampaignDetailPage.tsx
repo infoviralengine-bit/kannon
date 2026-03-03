@@ -459,7 +459,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
       const viewsPaidCumulative = prevViewsPaidCumulative + newViews;
 
       const fixedAmount = isLastCycle ? 0 : (campaign.client_fixed_per_creator ?? 200) * creatorCount;
-      const cpmAmount = isFirstCycle ? 0 : (campaign.client_cpm ?? 2) * (newViews / 1000);
+      const cpmAmount = (campaign.client_cpm ?? 2) * (newViews / 1000);
       let totalAmount = fixedAmount + cpmAmount;
 
       // Apply spend cap
