@@ -41,9 +41,6 @@ function EditCreatorModal({ open, onOpenChange, creator }: {
     mutationFn: async () => {
       const { error } = await supabase.from("creators").update({
         name, email: email || null, phone: phone || null,
-        creator_cpm: parseFloat(cpm) || 0.5,
-        creator_fixed: parseFloat(fixed) || 200,
-        min_videos_per_day: parseInt(minVid) || 5,
       }).eq("id", creator.id);
       if (error) throw error;
     },
