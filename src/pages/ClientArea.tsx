@@ -119,7 +119,7 @@ export default function ClientArea() {
         </div>
 
         {/* Operational stats */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardContent className="flex flex-col items-center gap-2 py-6">
               <Users className="h-7 w-7 text-primary" />
@@ -132,13 +132,6 @@ export default function ClientArea() {
               <Video className="h-7 w-7 text-primary" />
               <p className="text-3xl font-bold">{data.videos_today}</p>
               <p className="text-sm text-muted-foreground">Video Oggi</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex flex-col items-center gap-2 py-6">
-              <TrendingUp className="h-7 w-7 text-primary" />
-              <p className="text-3xl font-bold">{data.avg_videos_per_day_30d}</p>
-              <p className="text-sm text-muted-foreground">Media Video/Giorno (30gg)</p>
             </CardContent>
           </Card>
         </div>
@@ -156,7 +149,6 @@ export default function ClientArea() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Username</TableHead>
-                    <TableHead className="text-right">Views Totali</TableHead>
                     <TableHead className="text-right">Views 30gg</TableHead>
                     <TableHead className="text-right">Video Totali</TableHead>
                     <TableHead className="text-right">Video Oggi</TableHead>
@@ -166,9 +158,9 @@ export default function ClientArea() {
                   {data.accounts.map((acc) => (
                     <TableRow key={acc.username}>
                       <TableCell className="font-medium">@{acc.username}</TableCell>
-                      <TableCell className="text-right">{formatViews(acc.total_views)}</TableCell>
                       <TableCell className="text-right">{formatViews(acc.views_30d)}</TableCell>
                       <TableCell className="text-right">{acc.total_videos}</TableCell>
+                      <TableCell className="text-right">{acc.videos_today}</TableCell>
                       <TableCell className="text-right">{acc.videos_today}</TableCell>
                     </TableRow>
                   ))}
