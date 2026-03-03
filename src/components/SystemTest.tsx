@@ -88,14 +88,15 @@ async function generateCycle(
   let totalCurrentViews = 0;
   if (accIds.length) {
     const videos = await fetchAllVideos(accIds, "views, views_final, window_closed");
-    // Fetch campaign's video_views_cap
     const { data: campData } = await supabase.from("campaigns").select("video_views_cap").eq("id", campaignId).single();
     const cap = (campData as any)?.video_views_cap as number | null;
+    console.log(`[CycleGen] ${accIds.length} accounts, ${videos.length} videos, cap=${cap}`);
     totalCurrentViews = videos.reduce((s, v) => {
       let eff = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
       if (cap != null && cap > 0) eff = Math.min(eff, cap);
       return s + eff;
     }, 0);
+    console.log(`[CycleGen] totalCurrentViews=${totalCurrentViews}, prevPaid=${prevViewsPaidCumulative}`);
   }
 
   const newViews = isFirstCycle ? 0 : Math.max(0, totalCurrentViews - prevViewsPaidCumulative);
