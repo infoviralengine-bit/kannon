@@ -284,15 +284,7 @@ export function useCreatorStatus() {
       (creators ?? []).forEach((c) => {
         const accIds = new Set(accountsByCreator.get(c.id) ?? []);
         const crVideos = (videos ?? []).filter((v) => accIds.has(v.tiktok_account_id));
-        const videosSoFar = crVideos.length;
         const viewsMonth = crVideos.reduce((s, v) => s + (v.views ?? 0), 0);
-        const min = c.min_videos_per_day ?? 5;
-        const totalRequired = getMonthlyTarget(min, y, m);
-        const alertLevel = getCreatorAlertLevel(videosSoFar, min, y, m);
-
-        if (alertLevel !== "green") {
-          alerts.push({ creatorName: c.name, videosSoFar, totalRequired, daysRemaining, alertLevel });
-        }
 
         performers.push({
           name: c.name,
@@ -301,9 +293,6 @@ export function useCreatorStatus() {
           contract: creatorContract.get(c.id) ?? "—",
         });
       });
-
-      // Sort alerts: red first, then yellow
-      alerts.sort((a, b) => (a.alertLevel === "red" ? -1 : 1) - (b.alertLevel === "red" ? -1 : 1));
 
       // Top 3 by views
       performers.sort((a, b) => b.views - a.views);
