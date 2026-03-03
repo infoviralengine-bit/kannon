@@ -76,15 +76,6 @@ export function useCreatorAreaData() {
       const totalViews = allVideos.reduce((s, v) => s + (v.views ?? 0), 0);
       const monthViews = sumEffectiveViews(monthVideosList);
 
-      const min = creator.min_videos_per_day ?? 5;
-      const now = new Date();
-      const year = now.getFullYear();
-      const month0 = now.getMonth();
-
-      const fixedEarned = isFixedEarnedMonthly(monthVideosCount, min, year, month0);
-      const monthlyTarget = getMonthlyTarget(min, year, month0);
-      const progress = getProgressData(monthVideosCount, min, year, month0);
-
       const creatorFixed = creator.creator_fixed ?? 200;
       const creatorCpm = creator.creator_cpm ?? 0.5;
       const cpmAmount = creatorCpm * (monthViews / 1000);
