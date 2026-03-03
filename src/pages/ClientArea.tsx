@@ -159,9 +159,9 @@ export default function ClientArea() {
                   {data.accounts.map((acc) => (
                     <TableRow key={acc.username}>
                       <TableCell className="font-medium">@{acc.username}</TableCell>
-                      <TableCell className="text-right">{formatViews(acc.total_views)}</TableCell>
                       <TableCell className="text-right">{formatViews(acc.views_30d)}</TableCell>
                       <TableCell className="text-right">{acc.total_videos}</TableCell>
+                      <TableCell className="text-right">{acc.videos_today}</TableCell>
                       <TableCell className="text-right">{acc.videos_today}</TableCell>
                     </TableRow>
                   ))}
