@@ -168,7 +168,6 @@ export interface CreatorAlert {
   creatorName: string;
   videosSoFar: number;
   totalRequired: number;
-  alertLevel: AlertLevel;
 }
 
 export function useCreatorAlerts() {
