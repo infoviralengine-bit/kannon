@@ -444,7 +444,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
       let totalCurrentViews = 0;
       if (accIds.length) {
         const { data: videos } = await supabase.from("videos").select("views, views_final, window_closed").in("tiktok_account_id", accIds);
-        console.log(`[CycleGen] Campaign "${campaign.name}" — ${accIds.length} accounts, ${(videos ?? []).length} videos found`);
+        console.log(`[CycleGen] Campaign — ${accIds.length} accounts, ${(videos ?? []).length} videos found`);
         totalCurrentViews = (videos ?? []).reduce((s, v) => {
           let effectiveViews = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
           if (cap != null && cap > 0) effectiveViews = Math.min(effectiveViews, cap);
@@ -452,7 +452,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
         }, 0);
         console.log(`[CycleGen] totalCurrentViews=${totalCurrentViews}, prevPaid=${prevViewsPaidCumulative}, cap=${cap}`);
       } else {
-        console.log(`[CycleGen] Campaign "${campaign.name}" — no accounts found`);
+        console.log(`[CycleGen] Campaign — no accounts found`);
       }
 
       const newViews = isFirstCycle ? 0 : Math.max(0, totalCurrentViews - prevViewsPaidCumulative);
