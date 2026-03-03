@@ -216,13 +216,8 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
         const monthViews = sumEffectiveViews(contractVideos);
         const windowStats = countByWindowStatus(contractVideos);
 
-        const minVpd = contract.min_videos_per_day ?? 0;
-        const hasVideoTarget = minVpd > 0;
         const creatorFixed = Number(contract.creator_fixed ?? 0);
         const creatorCpm = Number(contract.creator_cpm ?? 0.5);
-        const target = hasVideoTarget ? getMonthlyTarget(minVpd, year, month) : 0;
-        const fixedEarned = hasVideoTarget ? isFixedEarnedMonthly(monthVideoCount, minVpd, year, month) : true;
-        const progress = hasVideoTarget ? getProgressData(monthVideoCount, minVpd, year, month) : { videosSoFar: 0, totalRequired: 0, workingDaysElapsed: 0, workingDaysTotal: 0, workingDaysLeft: 0, percent: 100, alertLevel: "green" as const, avgCurrent: 0, avgNeeded: 0 };
 
         const cpmAmount = creatorCpm * (monthViews / 1000);
 
@@ -231,17 +226,13 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
           contractName: contract.name,
           creatorFixed,
           creatorCpm,
-          min: minVpd,
-          monthlyTarget: target,
           monthVideoCount,
           monthViews,
           cpmAmount,
-          fixedEarned,
-          total: (fixedEarned ? creatorFixed : 0) + cpmAmount,
-          progress,
+          fixedEarned: true, // Always earned for now (no video target mechanism)
+          total: creatorFixed + cpmAmount,
           windowOpen: windowStats.open,
           windowClosed: windowStats.closed,
-          hasVideoTarget,
         };
       });
 
