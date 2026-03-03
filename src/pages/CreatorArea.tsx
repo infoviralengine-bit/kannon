@@ -85,9 +85,6 @@ export default function CreatorArea() {
             <CardContent className="flex items-center gap-2">
               <Video className="h-4 w-4 text-primary" />
               <span className="text-2xl font-bold">{data.todayVideos}</span>
-              {data.isOnTrack
-                ? <CheckCircle className="h-4 w-4 text-success" />
-                : <AlertTriangle className="h-4 w-4 text-warning" />}
             </CardContent>
           </Card>
           <Card>
