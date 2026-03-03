@@ -36,9 +36,6 @@ function EditCreatorModal({ open, onOpenChange, creator }: {
   const [name, setName] = useState(creator.name);
   const [email, setEmail] = useState(creator.email ?? "");
   const [phone, setPhone] = useState(creator.phone ?? "");
-  const [cpm, setCpm] = useState(String(creator.creator_cpm ?? 0.5));
-  const [fixed, setFixed] = useState(String(creator.creator_fixed ?? 200));
-  const [minVid, setMinVid] = useState(String(creator.min_videos_per_day ?? 5));
 
   const mutation = useMutation({
     mutationFn: async () => {
