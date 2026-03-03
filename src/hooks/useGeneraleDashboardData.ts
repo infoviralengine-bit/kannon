@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getCreatorAlertLevel, getMonthlyTarget, type AlertLevel } from "@/lib/fixedEarned";
+import { type AlertLevel } from "@/lib/fixedEarned";
 import { sumEffectiveViews } from "@/lib/videoWindow";
 
 function monthRange(year: number, month: number) {
@@ -275,8 +275,6 @@ export function useCreatorStatus() {
         creatorContract.set(cc.creator_id, contractMap.get(cc.contract_id) ?? "—");
       });
 
-      const daysInMonth = new Date(y, m + 1, 0).getDate();
-      const daysRemaining = daysInMonth - now.getDate();
 
       const alerts: CreatorAlertRow[] = [];
       const performers: { name: string; views: number; cpm: number; contract: string }[] = [];
@@ -284,15 +282,7 @@ export function useCreatorStatus() {
       (creators ?? []).forEach((c) => {
         const accIds = new Set(accountsByCreator.get(c.id) ?? []);
         const crVideos = (videos ?? []).filter((v) => accIds.has(v.tiktok_account_id));
-        const videosSoFar = crVideos.length;
         const viewsMonth = crVideos.reduce((s, v) => s + (v.views ?? 0), 0);
-        const min = c.min_videos_per_day ?? 5;
-        const totalRequired = getMonthlyTarget(min, y, m);
-        const alertLevel = getCreatorAlertLevel(videosSoFar, min, y, m);
-
-        if (alertLevel !== "green") {
-          alerts.push({ creatorName: c.name, videosSoFar, totalRequired, daysRemaining, alertLevel });
-        }
 
         performers.push({
           name: c.name,
@@ -301,9 +291,6 @@ export function useCreatorStatus() {
           contract: creatorContract.get(c.id) ?? "—",
         });
       });
-
-      // Sort alerts: red first, then yellow
-      alerts.sort((a, b) => (a.alertLevel === "red" ? -1 : 1) - (b.alertLevel === "red" ? -1 : 1));
 
       // Top 3 by views
       performers.sort((a, b) => b.views - a.views);
