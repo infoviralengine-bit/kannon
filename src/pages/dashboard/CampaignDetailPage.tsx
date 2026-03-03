@@ -972,36 +972,6 @@ export default function CampaignDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Alerts */}
-      {alerts.isLoading ? (
-        <Skeleton className="h-16 w-full" />
-      ) : (alerts.data?.length ?? 0) > 0 ? (
-        <Card className="border-destructive/40 bg-destructive/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-4 w-4" /> Alert Creator — Proiezione mensile
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {alerts.data!.map((a) => (
-              <div key={a.creatorName} className="flex items-center gap-2 text-sm">
-                <span className={a.alertLevel === "red" ? "text-destructive" : "text-warning"}>
-                  {a.alertLevel === "red" ? "🔴 Critico" : "🟡 Attenzione"}
-                </span>
-                <span className="font-semibold">{a.creatorName}</span>
-                <span className="text-muted-foreground">— {a.videosSoFar}/{a.totalRequired} video nel mese</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="border-success/30 bg-success/5">
-          <CardContent className="flex items-center gap-2 py-4">
-            <CheckCircle2 className="h-4 w-4 text-success" />
-            <span className="text-sm text-success">Tutti i creator sono in regola questo mese ✓</span>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Creator Table */}
       <CreatorTableWithContracts
