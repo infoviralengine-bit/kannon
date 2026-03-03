@@ -280,13 +280,6 @@ export function useCampaignCreators(campaignId: string) {
         const weekVideos = vids.filter((v) => v.published_at >= wStart && v.published_at < wEnd).length;
         const monthVideos = vids.filter((v) => v.published_at >= mStart && v.published_at < mEnd).length;
         const totalViews = vids.reduce((s, v) => s + (v.views ?? 0), 0);
-        const min = c.min_videos_per_day ?? 5;
-
-        const allAccIds = new Set(allAccByCreator.get(c.id) ?? []);
-        const allMonthVideos = (allVideos ?? []).filter(
-          (v) => allAccIds.has(v.tiktok_account_id) && v.published_at >= mStart && v.published_at < mEnd
-        ).length;
-        const alertLevel = getCreatorAlertLevel(allMonthVideos, min, year, month0);
 
         return {
           creatorId: c.id,
@@ -296,9 +289,6 @@ export function useCampaignCreators(campaignId: string) {
           weekVideos,
           monthVideos,
           totalViews,
-          minVideos: min,
-          alertLevel,
-          isOnTrack: alertLevel === "green",
         };
       });
     },
