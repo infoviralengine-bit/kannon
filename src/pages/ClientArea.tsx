@@ -119,7 +119,7 @@ export default function ClientArea() {
         </div>
 
         {/* Operational stats */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardContent className="flex flex-col items-center gap-2 py-6">
               <Users className="h-7 w-7 text-primary" />
