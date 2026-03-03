@@ -731,15 +731,6 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
                     <TableCell className="text-right">{c.monthVideos}</TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
                     <TableCell>
-                      {c.alertLevel === "green" ? (
-                        <Badge className="bg-success/20 text-success border-success/30">🟢 In regola</Badge>
-                      ) : c.alertLevel === "yellow" ? (
-                        <Badge className="bg-warning/20 text-warning border-warning/30">🟡 Attenzione</Badge>
-                      ) : (
-                        <Badge className="bg-destructive/20 text-destructive border-destructive/30">🔴 A rischio</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.creatorId}`)}>
                         Apri
                       </Button>
