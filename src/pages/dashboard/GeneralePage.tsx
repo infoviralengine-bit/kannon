@@ -349,59 +349,8 @@ export default function GeneralePage() {
         )}
       </div>
 
-      {/* ROW 4 — Alerts (Creator + Sistema) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Alerts */}
-        <Card className="border-[#1e1e2e] bg-[#111118]">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-[#f8fafc] flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-400" />
-              Alert Creator
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {creatorStatus.isLoading ? (
-              <div className="space-y-3">
-                {[1, 2].map((i) => <Shimmer key={i} className="h-10" />)}
-              </div>
-            ) : !creatorStatus.data?.alerts.length ? (
-              <div className="flex items-center gap-2 py-4 px-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                <span className="text-sm text-emerald-400">Tutti i creator sono in regola ✓</span>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {creatorStatus.data.alerts.map((a) => (
-                  <div
-                    key={a.creatorName}
-                    className={`flex items-center justify-between p-3 rounded-lg border ${
-                      a.alertLevel === "red"
-                        ? "border-red-500/20 bg-red-500/5"
-                        : "border-amber-500/20 bg-amber-500/5"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {a.alertLevel === "red" ? (
-                        <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
-                      ) : (
-                        <AlertCircle className="h-3.5 w-3.5 text-amber-400" />
-                      )}
-                      <span className="text-sm font-medium text-[#f8fafc]">{a.creatorName}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs text-[#64748b]">
-                        {a.videosSoFar}/{a.totalRequired} video
-                      </span>
-                      <span className="text-[10px] text-[#64748b] ml-2">
-                        {a.daysRemaining}gg rimasti
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* ROW 4 — Alert Sistema */}
+      <div className="grid grid-cols-1 gap-4">
 
         {/* System Alerts */}
         <Card className="border-[#1e1e2e] bg-[#111118]">
