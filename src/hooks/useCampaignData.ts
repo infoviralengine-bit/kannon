@@ -216,9 +216,6 @@ export interface CampaignCreatorRow {
   weekVideos: number;
   monthVideos: number;
   totalViews: number;
-  minVideos: number;
-  alertLevel: AlertLevel;
-  isOnTrack: boolean;
 }
 
 export function useCampaignCreators(campaignId: string) {
