@@ -474,7 +474,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
         campaign_id: campaignId,
         cycle_id: cycle.id,
         cycle_number: nextNumber,
-        due_date: startDate,
+        due_date: endDate,
         fixed_amount: fixedAmount,
         cpm_views: newViews,
         cpm_amount: cpmAmount,
