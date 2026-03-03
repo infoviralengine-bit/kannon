@@ -67,11 +67,6 @@ function EditCreatorModal({ open, onOpenChange, creator }: {
             <div className="grid gap-1.5"><Label>Email</Label><Input value={email} onChange={e => setEmail(e.target.value)} /></div>
             <div className="grid gap-1.5"><Label>Telefono</Label><Input value={phone} onChange={e => setPhone(e.target.value)} /></div>
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="grid gap-1.5"><Label>CPM (€)</Label><Input type="number" step="0.01" value={cpm} onChange={e => setCpm(e.target.value)} /></div>
-            <div className="grid gap-1.5"><Label>Fisso (€)</Label><Input type="number" step="0.01" value={fixed} onChange={e => setFixed(e.target.value)} /></div>
-            <div className="grid gap-1.5"><Label>Min video/g</Label><Input type="number" value={minVid} onChange={e => setMinVid(e.target.value)} /></div>
-          </div>
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
             {mutation.isPending ? "Salvataggio..." : "Salva Modifiche"}
           </Button>
