@@ -36,10 +36,6 @@ export interface CreatorTableRow {
   status: string;
   activeCampaigns: number;
   totalViews: number;
-  monthVideos: number;
-  monthlyTarget: number;
-  alertLevel: "green" | "yellow" | "red";
-  isOnTrack: boolean;
 }
 
 export function useCreatorTable(selectedYear?: number, selectedMonth?: number) {
