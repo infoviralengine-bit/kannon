@@ -260,6 +260,9 @@ export default function SettingsPage() {
                     <Button variant="destructive" size="sm" onClick={() => handleDisable(u.id)}>
                       Disabilita
                     </Button>
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeletingUser(u)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
