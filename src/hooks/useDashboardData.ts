@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getCreatorAlertLevel, getMonthlyTarget, getProgressData, type AlertLevel } from "@/lib/fixedEarned";
+import { getMonthlyTarget } from "@/lib/fixedEarned";
 
 function todayRange() {
   const now = new Date();
