@@ -211,35 +211,7 @@ Deno.serve(async (req) => {
 
     console.log(`Apify returned ${items.length} items, processing...`);
 
-    // === DIAGNOSTIC: Check if Apify date filter worked ===
-    // Count videos per author that are BEFORE the earliest start date
-    if (earliestStartDate && items.length > 0) {
-      const earliestDate = new Date(earliestStartDate);
-      let totalBefore = 0;
-      let totalAfter = 0;
-      for (const item of items) {
-        if (item.createTime) {
-          const videoDate = new Date(item.createTime * 1000);
-          if (videoDate < earliestDate) totalBefore++;
-          else totalAfter++;
-        }
-      }
-      const filterWorking = totalBefore === 0;
-      console.log(`Date filter check: ${totalAfter} after, ${totalBefore} before ${earliestStartDate}. Filter working: ${filterWorking}`);
-      
-      await supabaseAdmin.from("scraping_logs").insert({
-        status: "info",
-        accounts_processed: 0,
-        videos_created: 0,
-        videos_updated: 0,
-        error_message: `DIAGNOSTIC - Date filter: ${totalAfter} after, ${totalBefore} before ${earliestStartDate}. Working: ${filterWorking}`,
-      });
-
-      // If ALL videos are before the start date, the filter is completely broken - reject
-      if (totalAfter === 0 && totalBefore > 0) {
-        throw new Error(`Apify date filter NOT working: all ${totalBefore} videos are before ${earliestStartDate}. Run rejected to save costs.`);
-      }
-    }
+    // Server-side date filtering applied per-video below
 
     // Process each item and associate to correct account via authorMeta.name
     const processedAccounts = new Set<string>();
