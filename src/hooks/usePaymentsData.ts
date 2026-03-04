@@ -80,17 +80,10 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       let liveViewsByCampaign = new Map<string, number>(); // campaign -> total effective views
 
       if (unpaidCampIds.length) {
-        const [{ data: accounts }, { data: allVideos }] = await Promise.all([
-          supabase.from("tiktok_accounts").select("id, campaign_id").in("campaign_id", unpaidCampIds),
-          supabase.from("videos").select("tiktok_account_id, views, views_final, window_closed").in(
-            "tiktok_account_id",
-            // We need to get account IDs first, but we can't nest. Fetch all accounts for these campaigns.
-            [] // placeholder, will fetch separately
-          ),
-        ].map((_, i) => i === 0
-          ? supabase.from("tiktok_accounts").select("id, campaign_id").in("campaign_id", unpaidCampIds)
-          : supabase.from("tiktok_accounts").select("id").in("campaign_id", unpaidCampIds)
-        ));
+        const { data: accounts } = await supabase
+          .from("tiktok_accounts")
+          .select("id, campaign_id")
+          .in("campaign_id", unpaidCampIds);
 
         const accIds = (accounts ?? []).map(a => a.id);
         if (accIds.length) {
