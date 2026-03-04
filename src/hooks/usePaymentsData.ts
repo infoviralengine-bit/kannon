@@ -46,12 +46,12 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       if (error) throw error;
 
       const campIds = [...new Set((payments ?? []).map((p) => p.campaign_id))];
-      let campMap = new Map<string, { name: string; client_name: string; client_fixed_per_creator: number; client_cpm: number; planned_creators: number }>();
+      let campMap = new Map<string, { name: string; client_name: string; client_fixed_per_creator: number; client_cpm: number; planned_creators: number; video_views_cap: number | null; monthly_spend_cap: number | null }>();
       let creatorCountMap = new Map<string, number>();
 
       if (campIds.length) {
         const [{ data: camps }, { data: ccRows }] = await Promise.all([
-          supabase.from("campaigns").select("id, name, client_name, client_fixed_per_creator, client_cpm, planned_creators").in("id", campIds),
+          supabase.from("campaigns").select("id, name, client_name, client_fixed_per_creator, client_cpm, planned_creators, video_views_cap, monthly_spend_cap").in("id", campIds),
           supabase.from("campaign_creators").select("campaign_id").in("campaign_id", campIds),
         ]);
         (camps ?? []).forEach((c) => campMap.set(c.id, {
@@ -59,6 +59,8 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           client_fixed_per_creator: Number(c.client_fixed_per_creator ?? 200),
           client_cpm: Number(c.client_cpm ?? 2),
           planned_creators: c.planned_creators ?? 1,
+          video_views_cap: (c as any).video_views_cap as number | null,
+          monthly_spend_cap: (c as any).monthly_spend_cap as number | null,
         }));
         (ccRows ?? []).forEach((r) => {
           creatorCountMap.set(r.campaign_id, (creatorCountMap.get(r.campaign_id) ?? 0) + 1);
@@ -71,6 +73,127 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
         const { data: cycles } = await supabase.from("payment_cycles").select("id, cycle_start_date, cycle_end_date, is_last_cycle").in("campaign_id", campIds);
         (cycles ?? []).forEach((c) => cycleMap.set(c.id, { cycle_start_date: c.cycle_start_date, cycle_end_date: c.cycle_end_date, is_last_cycle: c.is_last_cycle }));
       }
+
+      // ── Live recalculation for unpaid payments ──
+      // Fetch accounts and videos for campaigns with unpaid payments
+      const unpaidCampIds = [...new Set((payments ?? []).filter(p => !p.is_paid).map(p => p.campaign_id))];
+      let liveViewsByCampaign = new Map<string, number>(); // campaign -> total effective views
+
+      if (unpaidCampIds.length) {
+        const [{ data: accounts }, { data: allVideos }] = await Promise.all([
+          supabase.from("tiktok_accounts").select("id, campaign_id").in("campaign_id", unpaidCampIds),
+          supabase.from("videos").select("tiktok_account_id, views, views_final, window_closed").in(
+            "tiktok_account_id",
+            // We need to get account IDs first, but we can't nest. Fetch all accounts for these campaigns.
+            [] // placeholder, will fetch separately
+          ),
+        ].map((_, i) => i === 0
+          ? supabase.from("tiktok_accounts").select("id, campaign_id").in("campaign_id", unpaidCampIds)
+          : supabase.from("tiktok_accounts").select("id").in("campaign_id", unpaidCampIds)
+        ));
+
+        const accIds = (accounts ?? []).map(a => a.id);
+        if (accIds.length) {
+          const { data: videos } = await supabase.from("videos")
+            .select("tiktok_account_id, views, views_final, window_closed")
+            .in("tiktok_account_id", accIds);
+
+          // Group by campaign
+          const accToCamp = new Map<string, string>();
+          (accounts ?? []).forEach(a => { if (a.campaign_id) accToCamp.set(a.id, a.campaign_id); });
+
+          const videosByCampaign = new Map<string, typeof videos>();
+          (videos ?? []).forEach(v => {
+            const campId = accToCamp.get(v.tiktok_account_id);
+            if (!campId) return;
+            const list = videosByCampaign.get(campId) ?? [];
+            list.push(v);
+            videosByCampaign.set(campId, list);
+          });
+
+          videosByCampaign.forEach((vids, campId) => {
+            const camp = campMap.get(campId);
+            const cap = camp?.video_views_cap ?? null;
+            const totalViews = vids.reduce((s, v) => {
+              let eff = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
+              if (cap != null && cap > 0) eff = Math.min(eff, cap);
+              return s + eff;
+            }, 0);
+            liveViewsByCampaign.set(campId, totalViews);
+          });
+        }
+      }
+
+      // Sort payments by campaign + cycle_number to compute cumulative views correctly
+      const sortedPayments = [...(payments ?? [])].sort((a, b) => {
+        if (a.campaign_id !== b.campaign_id) return a.campaign_id.localeCompare(b.campaign_id);
+        return a.cycle_number - b.cycle_number;
+      });
+
+      // For unpaid payments, recalculate views based on live data
+      // We need to know views_paid_cumulative of the last PAID cycle for each campaign
+      const lastPaidCumulativeBycamp = new Map<string, number>();
+      sortedPayments.forEach(p => {
+        if (p.is_paid) {
+          lastPaidCumulativeBycamp.set(p.campaign_id, p.views_paid_cumulative);
+        }
+      });
+
+      // Build recalculated map for unpaid payments
+      const recalculated = new Map<string, { cpmViews: number; cpmAmount: number; fixedAmount: number; totalAmount: number; viewsPaidCumulative: number }>();
+
+      // Group unpaid by campaign, ordered by cycle_number
+      const unpaidByCampaign = new Map<string, typeof sortedPayments>();
+      sortedPayments.filter(p => !p.is_paid).forEach(p => {
+        const list = unpaidByCampaign.get(p.campaign_id) ?? [];
+        list.push(p);
+        unpaidByCampaign.set(p.campaign_id, list);
+      });
+
+      unpaidByCampaign.forEach((unpaidList, campId) => {
+        const camp = campMap.get(campId);
+        const totalLiveViews = liveViewsByCampaign.get(campId) ?? 0;
+        const prevPaidCumulative = lastPaidCumulativeBycamp.get(campId) ?? 0;
+        const totalNewViews = Math.max(0, totalLiveViews - prevPaidCumulative);
+        const realCreators = creatorCountMap.get(campId) ?? 0;
+        const creatorCount = realCreators || (camp?.planned_creators ?? 1);
+        const clientCpm = camp?.client_cpm ?? 2;
+        const clientFixed = camp?.client_fixed_per_creator ?? 200;
+        const spendCap = camp?.monthly_spend_cap ?? null;
+
+        // If there's only one unpaid cycle, all new views go to it
+        // If multiple unpaid cycles, assign all new views to the latest one (most common case)
+        // Actually, the system generates one cycle at a time, so typically only one is unpaid
+        // But to be safe, assign proportionally: earlier cycles keep their stored views if they had some,
+        // and the last unpaid cycle gets the remainder
+        
+        // Simple approach: for the last unpaid cycle, recalculate with all remaining views
+        // For earlier unpaid cycles, keep stored values (they were snapshots at creation)
+        const lastUnpaid = unpaidList[unpaidList.length - 1];
+        
+        unpaidList.forEach((p, idx) => {
+          const cycle = cycleMap.get(p.cycle_id);
+          const isLast = cycle?.is_last_cycle ?? false;
+
+          if (p.id === lastUnpaid.id) {
+            // This is the current/latest unpaid cycle — recalculate with live views
+            const prevCyclesCpmViews = unpaidList.slice(0, idx).reduce((s, up) => s + up.cpm_views, 0);
+            const cpmViews = Math.max(0, totalNewViews - prevCyclesCpmViews);
+            const fixedAmount = isLast ? 0 : clientFixed * creatorCount;
+            const cpmAmount = clientCpm * (cpmViews / 1000);
+            let totalAmount = fixedAmount + cpmAmount;
+            if (spendCap != null && totalAmount > spendCap) totalAmount = spendCap;
+
+            recalculated.set(p.id, {
+              cpmViews,
+              cpmAmount,
+              fixedAmount,
+              totalAmount,
+              viewsPaidCumulative: prevPaidCumulative + totalNewViews,
+            });
+          }
+        });
+      });
 
       const now = new Date();
       const todayStr = now.toISOString().slice(0, 10);
@@ -86,6 +209,14 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
         const cycle = cycleMap.get(p.cycle_id);
         const realCreators = creatorCountMap.get(p.campaign_id) ?? 0;
 
+        // Use recalculated values for unpaid payments, stored values for paid ones
+        const recalc = recalculated.get(p.id);
+        const cpmViews = recalc?.cpmViews ?? p.cpm_views;
+        const cpmAmount = recalc?.cpmAmount ?? Number(p.cpm_amount);
+        const fixedAmount = recalc?.fixedAmount ?? Number(p.fixed_amount);
+        const totalAmount = recalc?.totalAmount ?? Number(p.total_amount);
+        const viewsPaidCumulative = recalc?.viewsPaidCumulative ?? (p.views_paid_cumulative ?? 0);
+
         return {
           id: p.id,
           campaignId: p.campaign_id,
@@ -95,18 +226,18 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           cycleLabel: `Ciclo ${p.cycle_number} — ${monthNamesShort[monthIdx]} ${yr}`,
           monthLabel: `${monthNamesFull[monthIdx]} ${yr}`,
           dueDate,
-          fixedAmount: Number(p.fixed_amount),
-          cpmViews: p.cpm_views,
-          cpmAmount: Number(p.cpm_amount),
-          totalAmount: Number(p.total_amount),
+          fixedAmount,
+          cpmViews,
+          cpmAmount,
+          totalAmount,
           isPaid: p.is_paid,
           paidAt: p.paid_at,
           isOverdue: !p.is_paid && dueDate < todayStr,
-          viewsPaidCumulative: p.views_paid_cumulative ?? 0,
+          viewsPaidCumulative,
           cycleStartDate: cycle?.cycle_start_date ?? dueDate,
           cycleEndDate: cycle?.cycle_end_date ?? dueDate,
           isLastCycle: cycle?.is_last_cycle ?? false,
-          isFirstCycle: p.cycle_number === 1,
+          isFirstCycle: p.cycle_number === 1 && cpmViews === 0,
           clientFixedPerCreator: camp?.client_fixed_per_creator ?? 200,
           clientCpm: camp?.client_cpm ?? 2,
           creatorCount: realCreators || (camp?.planned_creators ?? 1),
