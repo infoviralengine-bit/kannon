@@ -126,7 +126,32 @@ Deno.serve(async (req) => {
       throw new Error("Nessun username valido trovato");
     }
 
+    // Build Apify input with multiple date-filter parameter names
+    const dateFilter = earliestStartDate || undefined;
+    const apifyInput: Record<string, unknown> = {
+      profiles: allUsernames,
+      profileScrapeSections: ["videos"],
+      profileSorting: "latest",
+      excludePinnedPosts: false,
+      resultsPerPage: 200,
+      // Try all known parameter name variants for date filtering
+      scrapeProfileVideosPostedAfter: dateFilter,
+      profileVideosPostedAfter: dateFilter,
+      videosPostedAfter: dateFilter,
+      postedAfter: dateFilter,
+    };
+
     console.log(`Starting single Apify run for ${allUsernames.length} profiles, earliest date: ${earliestStartDate}`);
+    console.log(`Apify input: ${JSON.stringify(apifyInput)}`);
+
+    // Log the input to scraping_logs for diagnostics
+    await supabaseAdmin.from("scraping_logs").insert({
+      status: "info",
+      accounts_processed: 0,
+      videos_created: 0,
+      videos_updated: 0,
+      error_message: `DIAGNOSTIC - Apify input: ${JSON.stringify(apifyInput)}`,
+    });
 
     // Single Apify run with ALL usernames
     const runRes = await fetch(
@@ -137,14 +162,7 @@ Deno.serve(async (req) => {
           Authorization: `Bearer ${apiToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          profiles: allUsernames,
-          profileScrapeSections: ["videos"],
-          profileSorting: "latest",
-          scrapeProfileVideosPostedAfter: earliestStartDate || undefined,
-          excludePinnedPosts: false,
-          resultsPerPage: 200,
-        }),
+        body: JSON.stringify(apifyInput),
       }
     );
 
@@ -197,8 +215,39 @@ Deno.serve(async (req) => {
 
     console.log(`Apify returned ${items.length} items, processing...`);
 
+    // === DIAGNOSTIC: Check if Apify date filter worked ===
+    // Count videos per author that are BEFORE the earliest start date
+    if (earliestStartDate && items.length > 0) {
+      const earliestDate = new Date(earliestStartDate);
+      let totalBefore = 0;
+      let totalAfter = 0;
+      for (const item of items) {
+        if (item.createTime) {
+          const videoDate = new Date(item.createTime * 1000);
+          if (videoDate < earliestDate) totalBefore++;
+          else totalAfter++;
+        }
+      }
+      const filterWorking = totalBefore === 0;
+      console.log(`Date filter check: ${totalAfter} after, ${totalBefore} before ${earliestStartDate}. Filter working: ${filterWorking}`);
+      
+      await supabaseAdmin.from("scraping_logs").insert({
+        status: "info",
+        accounts_processed: 0,
+        videos_created: 0,
+        videos_updated: 0,
+        error_message: `DIAGNOSTIC - Date filter: ${totalAfter} after, ${totalBefore} before ${earliestStartDate}. Working: ${filterWorking}`,
+      });
+
+      // If ALL videos are before the start date, the filter is completely broken - reject
+      if (totalAfter === 0 && totalBefore > 0) {
+        throw new Error(`Apify date filter NOT working: all ${totalBefore} videos are before ${earliestStartDate}. Run rejected to save costs.`);
+      }
+    }
+
     // Process each item and associate to correct account via authorMeta.name
     const processedAccounts = new Set<string>();
+
 
     for (const item of items) {
       try {
