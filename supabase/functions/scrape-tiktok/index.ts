@@ -59,9 +59,24 @@ Deno.serve(async (req) => {
   let errorMessage: string | null = null;
 
   try {
-    const apiToken = Deno.env.get("APIFY_API_KEY");
+    // Try settings table first, fallback to env var
+    let apiToken: string | null = null;
+    const { data: settingsRow } = await supabaseAdmin
+      .from("settings")
+      .select("value")
+      .eq("key", "apify_api_key")
+      .maybeSingle();
+    if (settingsRow?.value) {
+      apiToken = settingsRow.value;
+      console.log(`Using APIFY token from settings table: ${apiToken.substring(0, 10)}...`);
+    } else {
+      apiToken = Deno.env.get("APIFY_API_KEY") || null;
+      if (apiToken) {
+        console.log(`Using APIFY token from env var: ${apiToken.substring(0, 10)}...`);
+      }
+    }
     if (!apiToken) {
-      throw new Error("APIFY_API_KEY non configurata. Aggiungila come secret di Supabase.");
+      throw new Error("APIFY_API_KEY non configurata né in settings né come secret.");
     }
 
     // Get active creator accounts with campaign
