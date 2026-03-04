@@ -138,6 +138,40 @@ export function useCampaignMargin(campaignId: string) {
 
       const activeCreators = creators ?? [];
 
+      // Fetch contract terms for this campaign (prioritized over creator defaults)
+      const { data: contractCampaigns } = await supabase
+        .from("contract_campaigns")
+        .select("contract_id")
+        .eq("campaign_id", campaignId);
+
+      const contractIds = (contractCampaigns ?? []).map((r) => r.contract_id);
+
+      let contractTermsMap = new Map<string, { cpm: number; fixed: number; minVideos: number }>();
+      if (contractIds.length) {
+        const { data: contracts } = await supabase
+          .from("contracts")
+          .select("id, creator_cpm, creator_fixed, min_videos_per_day, is_active")
+          .in("id", contractIds)
+          .eq("is_active", true);
+
+        const { data: contractCreators } = await supabase
+          .from("contract_creators")
+          .select("contract_id, creator_id")
+          .in("contract_id", contractIds);
+
+        // Map each creator to their contract terms
+        (contractCreators ?? []).forEach((link) => {
+          const contract = (contracts ?? []).find((c) => c.id === link.contract_id);
+          if (contract) {
+            contractTermsMap.set(link.creator_id, {
+              cpm: contract.creator_cpm,
+              fixed: contract.creator_fixed,
+              minVideos: contract.min_videos_per_day,
+            });
+          }
+        });
+      }
+
       const { data: allAccounts } = await supabase
         .from("tiktok_accounts")
         .select("id, creator_id, campaign_id");
@@ -186,11 +220,16 @@ export function useCampaignMargin(campaignId: string) {
 
       let cost = 0;
       activeCreators.forEach((cr) => {
-        const min = cr.min_videos_per_day ?? 5;
+        // Use contract terms if available, otherwise fall back to creator profile
+        const contractTerms = contractTermsMap.get(cr.id);
+        const creatorCpm = contractTerms?.cpm ?? cr.creator_cpm ?? 0;
+        const creatorFixed = contractTerms?.fixed ?? cr.creator_fixed ?? 0;
+        const minVideos = contractTerms?.minVideos ?? cr.min_videos_per_day ?? 5;
+
         const videoCount = monthVideoCountByCreator.get(cr.id) ?? 0;
-        const earned = isFixedEarnedMonthly(videoCount, min, year, month0);
+        const earned = isFixedEarnedMonthly(videoCount, minVideos, year, month0);
         if (earned) {
-          cost += cr.creator_fixed ?? 0;
+          cost += creatorFixed;
         }
         const crCampAccIds = (allAccounts ?? [])
           .filter((a) => a.creator_id === cr.id && a.campaign_id === campaignId)
@@ -199,7 +238,7 @@ export function useCampaignMargin(campaignId: string) {
           monthVids.filter((v) => crCampAccIds.includes(v.tiktok_account_id)),
           cap
         );
-        cost += (cr.creator_cpm ?? 0) * (crViews / 1000);
+        cost += creatorCpm * (crViews / 1000);
       });
 
       return { revenue, cost, margin: revenue - cost };
