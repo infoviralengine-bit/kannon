@@ -126,7 +126,32 @@ Deno.serve(async (req) => {
       throw new Error("Nessun username valido trovato");
     }
 
+    // Build Apify input with multiple date-filter parameter names
+    const dateFilter = earliestStartDate || undefined;
+    const apifyInput: Record<string, unknown> = {
+      profiles: allUsernames,
+      profileScrapeSections: ["videos"],
+      profileSorting: "latest",
+      excludePinnedPosts: false,
+      resultsPerPage: 200,
+      // Try all known parameter name variants for date filtering
+      scrapeProfileVideosPostedAfter: dateFilter,
+      profileVideosPostedAfter: dateFilter,
+      videosPostedAfter: dateFilter,
+      postedAfter: dateFilter,
+    };
+
     console.log(`Starting single Apify run for ${allUsernames.length} profiles, earliest date: ${earliestStartDate}`);
+    console.log(`Apify input: ${JSON.stringify(apifyInput)}`);
+
+    // Log the input to scraping_logs for diagnostics
+    await supabaseAdmin.from("scraping_logs").insert({
+      status: "info",
+      accounts_processed: 0,
+      videos_created: 0,
+      videos_updated: 0,
+      error_message: `DIAGNOSTIC - Apify input: ${JSON.stringify(apifyInput)}`,
+    });
 
     // Single Apify run with ALL usernames
     const runRes = await fetch(
@@ -137,14 +162,7 @@ Deno.serve(async (req) => {
           Authorization: `Bearer ${apiToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          profiles: allUsernames,
-          profileScrapeSections: ["videos"],
-          profileSorting: "latest",
-          scrapeProfileVideosPostedAfter: earliestStartDate || undefined,
-          excludePinnedPosts: false,
-          resultsPerPage: 200,
-        }),
+        body: JSON.stringify(apifyInput),
       }
     );
 
