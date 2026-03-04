@@ -126,19 +126,15 @@ Deno.serve(async (req) => {
       throw new Error("Nessun username valido trovato");
     }
 
-    // Build Apify input with multiple date-filter parameter names
-    const dateFilter = earliestStartDate || undefined;
+    // STRATEGY: fetch only 5 most recent videos per profile
+    // This avoids downloading full history (date filter doesn't work)
+    // 5 videos is enough since creators post max 3-5/day
     const apifyInput: Record<string, unknown> = {
       profiles: allUsernames,
       profileScrapeSections: ["videos"],
       profileSorting: "latest",
       excludePinnedPosts: false,
-      resultsPerPage: 200,
-      // Try all known parameter name variants for date filtering
-      scrapeProfileVideosPostedAfter: dateFilter,
-      profileVideosPostedAfter: dateFilter,
-      videosPostedAfter: dateFilter,
-      postedAfter: dateFilter,
+      resultsPerPage: 5,
     };
 
     console.log(`Starting single Apify run for ${allUsernames.length} profiles, earliest date: ${earliestStartDate}`);
