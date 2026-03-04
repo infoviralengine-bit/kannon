@@ -753,6 +753,13 @@ export type Database = {
         Args: { p_ids: string[]; p_views: number[] }
         Returns: undefined
       }
+      get_campaign_total_views: {
+        Args: { p_campaign_ids: string[] }
+        Returns: {
+          campaign_id: string
+          total_views: number
+        }[]
+      }
       get_client_campaign_data: { Args: { p_user_id: string }; Returns: Json }
       get_user_role: {
         Args: { _user_id: string }
