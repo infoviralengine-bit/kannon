@@ -28,7 +28,6 @@ Deno.serve(async (req) => {
   const token = authHeader.replace("Bearer ", "");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-  // Only service role key bypasses user check (used by pg_cron)
   if (token !== serviceRoleKey) {
     const userClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -60,13 +59,12 @@ Deno.serve(async (req) => {
   let errorMessage: string | null = null;
 
   try {
-    // Read API token from Supabase secrets (environment variable)
     const apiToken = Deno.env.get("APIFY_API_KEY");
     if (!apiToken) {
       throw new Error("APIFY_API_KEY non configurata. Aggiungila come secret di Supabase.");
     }
 
-    // 2. Get active creator accounts with campaign
+    // Get active creator accounts with campaign
     const { data: accounts, error: accErr } = await supabaseAdmin
       .from("tiktok_accounts")
       .select("id, username, campaign_id, is_active")
@@ -76,7 +74,6 @@ Deno.serve(async (req) => {
 
     if (accErr) throw accErr;
     if (!accounts || accounts.length === 0) {
-      // No accounts to process
       await supabaseAdmin.from("scraping_logs").insert({
         status: "success",
         accounts_processed: 0,
@@ -90,7 +87,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 3. Get campaigns for start_date + video_views_cap
+    // Get campaigns for start_date + video_views_cap
     const campaignIds = [...new Set(accounts.map((a) => a.campaign_id!))];
     const { data: campaignsData } = await supabaseAdmin
       .from("campaigns")
@@ -101,114 +98,141 @@ Deno.serve(async (req) => {
       (campaignsData || []).map((c) => [c.id, c])
     );
 
-    // Process each account
+    // Build username-to-account map and collect all usernames
+    const usernameToAccounts = new Map<string, typeof accounts>();
+    const allUsernames: string[] = [];
+    let earliestStartDate: string | null = null;
+
     for (const account of accounts) {
+      const cleanUsername = account.username.replace(/^@/, "").toLowerCase();
+      if (!usernameToAccounts.has(cleanUsername)) {
+        usernameToAccounts.set(cleanUsername, []);
+      }
+      usernameToAccounts.get(cleanUsername)!.push(account);
+      if (!allUsernames.includes(cleanUsername)) {
+        allUsernames.push(cleanUsername);
+      }
+
+      // Find earliest campaign start_date
+      const campaign = campaignMap.get(account.campaign_id!);
+      if (campaign?.start_date) {
+        if (!earliestStartDate || campaign.start_date < earliestStartDate) {
+          earliestStartDate = campaign.start_date;
+        }
+      }
+    }
+
+    if (allUsernames.length === 0) {
+      throw new Error("Nessun username valido trovato");
+    }
+
+    console.log(`Starting single Apify run for ${allUsernames.length} profiles, earliest date: ${earliestStartDate}`);
+
+    // Single Apify run with ALL usernames
+    const runRes = await fetch(
+      "https://api.apify.com/v2/acts/clockworks~free-tiktok-scraper/runs",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          profiles: allUsernames,
+          profileScrapeSections: ["videos"],
+          profileSorting: "latest",
+          scrapeProfileVideosPostedAfter: earliestStartDate || undefined,
+          excludePinnedPosts: false,
+          resultsPerPage: 200,
+        }),
+      }
+    );
+
+    if (!runRes.ok) {
+      const errText = await runRes.text();
+      if (runRes.status === 401 || runRes.status === 403) {
+        throw new Error("API token Apify non valido");
+      }
+      throw new Error(`Apify run failed: ${errText}`);
+    }
+
+    const runData = await runRes.json();
+    const runId = runData.data?.id;
+    if (!runId) {
+      throw new Error("No run ID returned from Apify");
+    }
+
+    // Poll for completion (timeout 15 min for batch)
+    const maxWait = 15 * 60 * 1000;
+    const start = Date.now();
+    let runStatus = "";
+
+    while (Date.now() - start < maxWait) {
+      await new Promise((r) => setTimeout(r, 15000));
+      const statusRes = await fetch(
+        `https://api.apify.com/v2/actor-runs/${runId}`,
+        { headers: { Authorization: `Bearer ${apiToken}` } }
+      );
+      const statusData = await statusRes.json();
+      runStatus = statusData.data?.status;
+
+      if (runStatus === "SUCCEEDED") break;
+      if (runStatus === "FAILED" || runStatus === "ABORTED" || runStatus === "TIMED-OUT") {
+        break;
+      }
+    }
+
+    if (runStatus !== "SUCCEEDED") {
+      throw new Error(`Apify run ended with status: ${runStatus || "TIMEOUT"}`);
+    }
+
+    // Get results
+    const datasetId = runData.data?.defaultDatasetId;
+    const itemsRes = await fetch(
+      `https://api.apify.com/v2/datasets/${datasetId}/items?format=json`,
+      { headers: { Authorization: `Bearer ${apiToken}` } }
+    );
+    const items = await itemsRes.json();
+    const now = new Date().toISOString();
+
+    console.log(`Apify returned ${items.length} items, processing...`);
+
+    // Process each item and associate to correct account via authorMeta.name
+    const processedAccounts = new Set<string>();
+
+    for (const item of items) {
       try {
-        const campaign = campaignMap.get(account.campaign_id!);
-        if (!campaign) continue;
+        const tiktokVideoId = item.id || item.videoId;
+        if (!tiktokVideoId) continue;
 
-        const cleanUsername = account.username.replace(/^@/, "");
+        // Match author to account
+        const authorUsername = (
+          item.authorMeta?.name || item.author || ""
+        ).toLowerCase().replace(/^@/, "");
 
-        // 4. Start Apify run
-        const runRes = await fetch(
-          "https://api.apify.com/v2/acts/clockworks~free-tiktok-scraper/runs",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${apiToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              profiles: [cleanUsername],
-              profileScrapeSections: ["videos"],
-              profileSorting: "latest",
-              scrapeProfileVideosPostedAfter: campaign.start_date,
-              excludePinnedPosts: false,
-              resultsPerPage: 200,
-            }),
-          }
-        );
+        if (!authorUsername) continue;
 
-        if (!runRes.ok) {
-          const errText = await runRes.text();
-          if (runRes.status === 401 || runRes.status === 403) {
-            throw new Error("API token Apify non valido");
-          }
-          console.error(`Apify run failed for ${cleanUsername}: ${errText}`);
-          continue;
-        }
+        const matchedAccounts = usernameToAccounts.get(authorUsername);
+        if (!matchedAccounts || matchedAccounts.length === 0) continue;
 
-        const runData = await runRes.json();
-        const runId = runData.data?.id;
-        if (!runId) {
-          console.error(`No run ID for ${cleanUsername}`);
-          continue;
-        }
+        const playCount = item.playCount ?? item.views ?? 0;
+        const diggCount = item.diggCount ?? item.likes ?? 0;
+        const commentCount = item.commentCount ?? item.comments ?? 0;
+        const createTime = item.createTime
+          ? new Date(item.createTime * 1000).toISOString()
+          : now;
 
-        // 5. Poll for completion (timeout 10 min)
-        const maxWait = 10 * 60 * 1000;
-        const start = Date.now();
-        let runStatus = "";
+        // Process for each matching account (usually one)
+        for (const account of matchedAccounts) {
+          const campaign = campaignMap.get(account.campaign_id!);
+          if (!campaign) continue;
 
-        while (Date.now() - start < maxWait) {
-          await new Promise((r) => setTimeout(r, 15000));
-          const statusRes = await fetch(
-            `https://api.apify.com/v2/actor-runs/${runId}`,
-            { headers: { Authorization: `Bearer ${apiToken}` } }
-          );
-          const statusData = await statusRes.json();
-          runStatus = statusData.data?.status;
-
-          if (runStatus === "SUCCEEDED") break;
-          if (runStatus === "FAILED" || runStatus === "ABORTED" || runStatus === "TIMED-OUT") {
-            break;
-          }
-        }
-
-        if (runStatus !== "SUCCEEDED") {
-          console.error(`Apify run ${runId} for @${cleanUsername} ended with status: ${runStatus || "TIMEOUT"}`);
-          logStatus = "partial";
-          errorMessage = `Timeout o errore per @${cleanUsername}`;
-          // Update account status on error
-          if (runStatus === "FAILED") {
-            await supabaseAdmin
-              .from("tiktok_accounts")
-              .update({ is_active: false })
-              .eq("id", account.id);
-          }
-          continue;
-        }
-
-        // 6. Get results
-        const datasetId = runData.data?.defaultDatasetId;
-        const itemsRes = await fetch(
-          `https://api.apify.com/v2/datasets/${datasetId}/items?format=json`,
-          { headers: { Authorization: `Bearer ${apiToken}` } }
-        );
-        const items = await itemsRes.json();
-
-        // 7. Upsert videos
-        const now = new Date().toISOString();
-        const viewsCap = campaign.video_views_cap;
-        const campaignStartDate = new Date(campaign.start_date);
-
-        for (const item of items) {
-          const tiktokVideoId = item.id || item.videoId;
-          if (!tiktokVideoId) continue;
-
-          const playCount = item.playCount ?? item.views ?? 0;
-          const diggCount = item.diggCount ?? item.likes ?? 0;
-          const commentCount = item.commentCount ?? item.comments ?? 0;
-          const createTime = item.createTime
-            ? new Date(item.createTime * 1000).toISOString()
-            : now;
-
-          // Server-side filter: skip videos published before campaign start_date
+          // Server-side filter: skip videos before this account's campaign start
           const videoDate = new Date(createTime);
-          if (videoDate < campaignStartDate) {
-            console.log(`Skipping video ${tiktokVideoId} for @${cleanUsername}: published ${createTime} before campaign start ${campaign.start_date}`);
-            continue;
-          }
+          const campaignStartDate = new Date(campaign.start_date);
+          if (videoDate < campaignStartDate) continue;
+
+          const viewsCap = campaign.video_views_cap;
 
           // Check if video exists
           const { data: existing } = await supabaseAdmin
@@ -219,9 +243,10 @@ Deno.serve(async (req) => {
             .maybeSingle();
 
           if (!existing) {
-            // INSERT
             const publishedAt = new Date(createTime);
-            const windowExpires = new Date(publishedAt.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+            const windowExpires = new Date(
+              publishedAt.getTime() + 30 * 24 * 60 * 60 * 1000
+            ).toISOString();
 
             await supabaseAdmin.from("videos").insert({
               tiktok_account_id: account.id,
@@ -237,7 +262,6 @@ Deno.serve(async (req) => {
             });
             totalCreated++;
           } else {
-            // UPDATE
             const updateData: Record<string, unknown> = {
               views: playCount,
               likes: diggCount,
@@ -245,7 +269,6 @@ Deno.serve(async (req) => {
               last_scraped_at: now,
             };
 
-            // Check window expiry
             if (
               existing.window_expires_at &&
               new Date(existing.window_expires_at) <= new Date() &&
@@ -262,23 +285,24 @@ Deno.serve(async (req) => {
               .eq("id", existing.id);
             totalUpdated++;
           }
+
+          processedAccounts.add(account.id);
         }
-
-        // 9. Update account last_scraped_at
-        await supabaseAdmin
-          .from("tiktok_accounts")
-          .update({ last_scraped_at: now })
-          .eq("id", account.id);
-
-        accountsProcessed++;
-      } catch (accountErr: any) {
-        console.error(`Error processing @${account.username}:`, accountErr.message);
-        logStatus = "partial";
-        errorMessage = accountErr.message;
+      } catch (itemErr: any) {
+        console.error(`Error processing item:`, itemErr.message);
       }
     }
 
-    // 8. Insert log
+    // Update last_scraped_at for all processed accounts
+    for (const accountId of processedAccounts) {
+      await supabaseAdmin
+        .from("tiktok_accounts")
+        .update({ last_scraped_at: now })
+        .eq("id", accountId);
+    }
+    accountsProcessed = processedAccounts.size;
+
+    // Log
     await supabaseAdmin.from("scraping_logs").insert({
       status: logStatus,
       accounts_processed: accountsProcessed,
