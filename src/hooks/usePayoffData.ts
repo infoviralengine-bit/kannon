@@ -145,7 +145,7 @@ export function usePayoffData(year: number, month: number) {
         const campAccIds = accountsByCampaign.get(camp.id) ?? [];
         const viewsMonth = campAccIds.reduce((s, id) => s + (viewsByAccount.get(id) ?? 0), 0);
 
-        const clientFixed = (camp.client_fixed_per_creator ?? 200) * creatorCount;
+        const clientFixed = (camp.client_fixed_per_creator ?? 200) * (camp.planned_creators ?? 1);
         const clientCpm = (camp.client_cpm ?? 2) * (viewsMonth / 1000);
         const clientIncome = clientFixed + clientCpm;
 

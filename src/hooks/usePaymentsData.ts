@@ -595,7 +595,7 @@ export function useCampaignCycles(campaignId: string) {
             isFirstCycle: p.cycle_number === 1,
             clientFixedPerCreator: Number(camp?.client_fixed_per_creator ?? 200),
             clientCpm: Number(camp?.client_cpm ?? 2),
-            creatorCount: realCreators || (camp?.planned_creators ?? 1),
+            creatorCount: camp?.planned_creators ?? 1,
             plannedCreators: camp?.planned_creators ?? 1,
           };
         }
