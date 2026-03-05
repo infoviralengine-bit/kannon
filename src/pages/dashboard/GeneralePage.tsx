@@ -151,7 +151,7 @@ export default function GeneralePage() {
       </div>
 
       {/* ROW 1 — Financial KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiFinancialCard
           label="Entrate Fisse"
           icon={TrendingUp}
@@ -171,6 +171,13 @@ export default function GeneralePage() {
           icon={DollarSign}
           value={kpi?.cpmMargin ?? 0}
           accentClass="text-[#a78bfa]"
+          loading={kpiLoading}
+        />
+        <KpiFinancialCard
+          label="Margine Totale"
+          icon={DollarSign}
+          value={(kpi?.fixedIncome ?? 0) - (kpi?.fixedExpense ?? 0) + (kpi?.cpmMargin ?? 0)}
+          accentClass="text-amber-400"
           loading={kpiLoading}
         />
       </div>
