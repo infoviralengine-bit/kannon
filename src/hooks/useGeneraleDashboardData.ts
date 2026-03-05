@@ -188,14 +188,15 @@ export function useActiveCampaignCards() {
         const viewsCap = (c as any).video_views_cap as number | null;
         const spendCap = (c as any).monthly_spend_cap as number | null;
         const clientCpm = c.client_cpm ?? 2;
-        const clientFixed = (c.client_fixed_per_creator ?? 0) * creatorCount;
+        const plannedCreators = c.planned_creators ?? 1;
+        const clientFixed = (c.client_fixed_per_creator ?? 0) * plannedCreators;
         const cpmRevenue = clientCpm * (viewsMonth / 1000);
         const revenueMonth = clientFixed + cpmRevenue;
 
-        // Current spend from unpaid client payments
+        // Current spend from unpaid client payments (CPM only, fixed excluded from cap)
         const currentSpend = (clientPayments ?? [])
           .filter((p) => p.campaign_id === c.id && !p.is_paid)
-          .reduce((s, p) => s + Number(p.total_amount), 0);
+          .reduce((s, p) => s + Number(p.cpm_amount), 0);
 
         return {
           id: c.id,
@@ -209,7 +210,7 @@ export function useActiveCampaignCards() {
           revenueMonth,
           creatorCount,
           capPercent: viewsCap ? Math.round((viewsMonth / viewsCap) * 100) : null,
-          spendCapPercent: spendCap ? Math.round((revenueMonth / Number(spendCap)) * 100) : null,
+          spendCapPercent: spendCap ? Math.round((cpmRevenue / Number(spendCap)) * 100) : null,
         };
       });
     },
