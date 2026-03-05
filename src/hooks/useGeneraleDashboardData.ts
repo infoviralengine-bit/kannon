@@ -168,7 +168,7 @@ export function useActiveCampaignCards() {
         supabase.from("tiktok_accounts").select("id, campaign_id"),
         supabase.from("videos").select("tiktok_account_id, views, published_at")
           .gte("published_at", mStart).lt("published_at", mEnd),
-        supabase.from("client_payments").select("campaign_id, total_amount, is_paid"),
+        supabase.from("client_payments").select("campaign_id, total_amount, cpm_amount, is_paid"),
       ]);
 
       const accountsByCampaign = new Map<string, string[]>();
