@@ -123,8 +123,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
         const totalLiveViews = liveViewsByCampaign.get(campId) ?? 0;
         const prevPaidCumulative = lastPaidCumulativeBycamp.get(campId) ?? 0;
         const totalNewViews = Math.max(0, totalLiveViews - prevPaidCumulative);
-        const realCreators = creatorCountMap.get(campId) ?? 0;
-        const creatorCount = realCreators || (camp?.planned_creators ?? 1);
+        const creatorCount = camp?.planned_creators ?? 1;
         const clientCpm = camp?.client_cpm ?? 2;
         const clientFixed = camp?.client_fixed_per_creator ?? 200;
         const spendCap = camp?.monthly_spend_cap ?? null;
@@ -148,9 +147,10 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
             const prevCyclesCpmViews = unpaidList.slice(0, idx).reduce((s, up) => s + up.cpm_views, 0);
             const cpmViews = Math.max(0, totalNewViews - prevCyclesCpmViews);
             const fixedAmount = isLast ? 0 : clientFixed * creatorCount;
-            const cpmAmount = clientCpm * (cpmViews / 1000);
-            let totalAmount = fixedAmount + cpmAmount;
-            if (spendCap != null && totalAmount > spendCap) totalAmount = spendCap;
+            let cpmAmount = clientCpm * (cpmViews / 1000);
+            // Cap applies only to CPM, fixed is always added on top
+            if (spendCap != null && cpmAmount > spendCap) cpmAmount = spendCap;
+            const totalAmount = fixedAmount + cpmAmount;
 
             recalculated.set(p.id, {
               cpmViews,
@@ -208,7 +208,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           isFirstCycle: p.cycle_number === 1 && cpmViews === 0,
           clientFixedPerCreator: camp?.client_fixed_per_creator ?? 200,
           clientCpm: camp?.client_cpm ?? 2,
-          creatorCount: realCreators || (camp?.planned_creators ?? 1),
+          creatorCount: camp?.planned_creators ?? 1,
           plannedCreators: camp?.planned_creators ?? 1,
         };
       });
@@ -595,7 +595,7 @@ export function useCampaignCycles(campaignId: string) {
             isFirstCycle: p.cycle_number === 1,
             clientFixedPerCreator: Number(camp?.client_fixed_per_creator ?? 200),
             clientCpm: Number(camp?.client_cpm ?? 2),
-            creatorCount: realCreators || (camp?.planned_creators ?? 1),
+            creatorCount: camp?.planned_creators ?? 1,
             plannedCreators: camp?.planned_creators ?? 1,
           };
         }

@@ -141,23 +141,18 @@ function EditCampaignModal({
           .in("id", cycleIds);
         const cycleMap = new Map((cycles ?? []).map((c) => [c.id, c.is_last_cycle]));
 
-        const { data: cc } = await supabase
-          .from("campaign_creators")
-          .select("creator_id")
-          .eq("campaign_id", campaign.id);
-        const actualCreators = (cc ?? []).length;
-        const creatorCount = actualCreators > 0 ? actualCreators : newPlanned;
+        const creatorCount = newPlanned;
 
         for (const p of unpaidPayments) {
           const isLast = cycleMap.get(p.cycle_id) ?? false;
           const fixedAmount = isLast ? 0 : newFixed * creatorCount;
-          const cpmAmount = newCpm * (p.cpm_views / 1000);
-          let totalAmount = fixedAmount + cpmAmount;
+          let cpmAmount = newCpm * (p.cpm_views / 1000);
           
-          // Apply spend cap
-          if (parsedSpendCap != null && totalAmount > parsedSpendCap) {
-            totalAmount = parsedSpendCap;
+          // Apply spend cap (only to CPM, fixed always added on top)
+          if (parsedSpendCap != null && cpmAmount > parsedSpendCap) {
+            cpmAmount = parsedSpendCap;
           }
+          const totalAmount = fixedAmount + cpmAmount;
 
           await supabase.from("client_payments").update({
             fixed_amount: fixedAmount,
@@ -427,10 +422,8 @@ function CyclesSection({ campaignId, campaign, cycles }: {
       if (cycleErr) throw cycleErr;
 
       const { data: cc } = await supabase.from("campaign_creators").select("creator_id").eq("campaign_id", campaignId);
-      const actualCreatorCount = (cc ?? []).length;
       const plannedCount = (campaign as any).planned_creators ?? 1;
-      const isFirstCycle = nextNumber === 1;
-      const creatorCount = isFirstCycle ? plannedCount : (actualCreatorCount > 0 ? actualCreatorCount : plannedCount);
+      const creatorCount = plannedCount;
 
       let prevViewsPaidCumulative = 0;
       if (lastCycle?.payment) {
@@ -459,16 +452,16 @@ function CyclesSection({ campaignId, campaign, cycles }: {
       const viewsPaidCumulative = prevViewsPaidCumulative + newViews;
 
       const fixedAmount = isLastCycle ? 0 : (campaign.client_fixed_per_creator ?? 200) * creatorCount;
-      const cpmAmount = (campaign.client_cpm ?? 2) * (newViews / 1000);
-      let totalAmount = fixedAmount + cpmAmount;
+      let cpmAmount = (campaign.client_cpm ?? 2) * (newViews / 1000);
 
-      // Apply spend cap
+      // Apply spend cap (only to CPM, fixed is always added on top)
       const spendCap = (campaign as any).monthly_spend_cap as number | null;
       let capReached = false;
-      if (spendCap != null && totalAmount >= spendCap) {
-        totalAmount = spendCap;
+      if (spendCap != null && cpmAmount >= spendCap) {
+        cpmAmount = spendCap;
         capReached = true;
       }
+      const totalAmount = fixedAmount + cpmAmount;
 
       await supabase.from("client_payments").insert({
         campaign_id: campaignId,
