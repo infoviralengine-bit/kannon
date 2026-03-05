@@ -37,14 +37,44 @@ export default function AccountPage() {
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
       toast({
-        title: "Scraping completato",
-        description: `${data.created} nuovi video, ${data.updated} aggiornati (${data.accounts} account)`,
+        title: "Scraping avviato",
+        description: data?.message || "Scraping in background. Controlla i log per i risultati.",
       });
-      queryClient.invalidateQueries({ queryKey: ["tiktok_accounts"] });
+      // Poll scraping_logs for completion
+      const pollInterval = setInterval(async () => {
+        const { data: logs } = await supabase
+          .from("scraping_logs")
+          .select("*")
+          .order("run_at", { ascending: false })
+          .limit(1)
+          .single();
+        if (logs && new Date(logs.run_at) > new Date(Date.now() - 60000)) {
+          clearInterval(pollInterval);
+          setScraping(false);
+          queryClient.invalidateQueries({ queryKey: ["tiktok_accounts"] });
+          if (logs.status === "success") {
+            toast({
+              title: "Scraping completato",
+              description: `${logs.videos_created} nuovi video, ${logs.videos_updated} aggiornati (${logs.accounts_processed} account)`,
+            });
+          } else {
+            toast({
+              title: "Scraping terminato con errori",
+              description: logs.error_message?.substring(0, 200) || "Controlla i log per dettagli",
+              variant: "destructive",
+            });
+          }
+        }
+      }, 10000);
+      // Safety timeout: stop polling after 20 minutes
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        setScraping(false);
+      }, 20 * 60 * 1000);
     } catch (e: any) {
       toast({ title: "Errore scraping", description: e.message, variant: "destructive" });
+      setScraping(false);
     }
-    setScraping(false);
   }
 
   const [open, setOpen] = useState(false);

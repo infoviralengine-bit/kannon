@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
   EdgeRuntime.waitUntil(runScraping(supabaseAdmin));
 
   return new Response(
-    JSON.stringify({ success: true, message: "Scraping started in background. Check scraping_logs for results." }),
+    JSON.stringify({ success: true, message: "Scraping avviato in background. Controlla i log per i risultati." }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 });
@@ -65,9 +65,20 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
   let totalCreated = 0;
   let totalUpdated = 0;
   let accountsProcessed = 0;
+  const logMessages: string[] = [];
+
+  function log(msg: string) {
+    console.log(msg);
+    logMessages.push(`[${new Date().toISOString()}] ${msg}`);
+  }
+
+  function logError(msg: string) {
+    console.error(msg);
+    logMessages.push(`[${new Date().toISOString()}] ERROR: ${msg}`);
+  }
 
   try {
-    // Get API token
+    // Step 1: Get API token
     let apiToken: string | null = null;
     const { data: settingsRow } = await supabaseAdmin
       .from("settings")
@@ -76,14 +87,16 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
       .maybeSingle();
     if (settingsRow?.value) {
       apiToken = settingsRow.value;
+      log("API token caricato da settings");
     } else {
       apiToken = Deno.env.get("APIFY_API_KEY") || null;
+      if (apiToken) log("API token caricato da secret");
     }
     if (!apiToken) {
       throw new Error("APIFY_API_KEY non configurata né in settings né come secret.");
     }
 
-    // Get active creator accounts with campaign
+    // Step 2: Get active creator accounts
     const { data: accounts, error: accErr } = await supabaseAdmin
       .from("tiktok_accounts")
       .select("id, username, campaign_id, is_active")
@@ -91,19 +104,27 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
       .not("campaign_id", "is", null)
       .eq("is_active", true);
 
-    if (accErr) throw accErr;
+    if (accErr) throw new Error(`Errore query account: ${accErr.message}`);
+    
+    log(`Step 2: Recuperati ${accounts?.length ?? 0} account creator attivi dal DB`);
+    
     if (!accounts || accounts.length === 0) {
       await supabaseAdmin.from("scraping_logs").insert({
         status: "success",
         accounts_processed: 0,
         videos_created: 0,
         videos_updated: 0,
-        error_message: "Nessun account creator attivo trovato",
+        error_message: logMessages.join("\n") + "\nNessun account creator attivo trovato",
       });
       return;
     }
 
-    // Get campaigns for start_date + video_views_cap
+    // Log each account
+    for (const acc of accounts) {
+      log(`  - Account: @${acc.username} (id: ${acc.id}, campaign: ${acc.campaign_id})`);
+    }
+
+    // Step 3: Get campaigns
     const campaignIds = [...new Set(accounts.map((a) => a.campaign_id!))];
     const { data: campaignsData } = await supabaseAdmin
       .from("campaigns")
@@ -113,8 +134,9 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     const campaignMap = new Map(
       (campaignsData || []).map((c) => [c.id, c])
     );
+    log(`Step 3: Recuperate ${campaignsData?.length ?? 0} campagne`);
 
-    // Build username-to-account map
+    // Step 4: Build username list
     const usernameToAccounts = new Map<string, typeof accounts>();
     const allUsernames: string[] = [];
     let earliestStartDate: string | null = null;
@@ -140,6 +162,8 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
       throw new Error("Nessun username valido trovato");
     }
 
+    log(`Step 4: Username da scrapare: [${allUsernames.join(", ")}]`);
+
     const apifyInput = {
       profiles: allUsernames,
       profileScrapeSections: ["videos"],
@@ -148,9 +172,9 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
       resultsPerPage: 5,
     };
 
-    console.log(`Starting Apify run for ${allUsernames.length} profiles`);
+    log(`Step 5: Avvio run Apify con input: ${JSON.stringify(apifyInput)}`);
 
-    // Start Apify run
+    // Step 5: Start Apify run
     const runRes = await fetch(
       "https://api.apify.com/v2/acts/clockworks~free-tiktok-scraper/runs",
       {
@@ -166,28 +190,33 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     if (!runRes.ok) {
       const errText = await runRes.text();
       if (runRes.status === 401 || runRes.status === 403) {
-        throw new Error("API token Apify non valido");
+        throw new Error(`API token Apify non valido (status ${runRes.status}): ${errText}`);
       }
-      throw new Error(`Apify run failed: ${errText}`);
+      throw new Error(`Apify run failed (status ${runRes.status}): ${errText}`);
     }
 
     const runData = await runRes.json();
     const runId = runData.data?.id;
-    if (!runId) throw new Error("No run ID returned from Apify");
+    if (!runId) throw new Error(`No run ID returned from Apify. Response: ${JSON.stringify(runData)}`);
 
-    // Poll for completion (timeout 15 min)
+    log(`Step 5: Run Apify avviato con ID: ${runId}`);
+
+    // Step 6: Poll for completion
     const maxWait = 15 * 60 * 1000;
     const start = Date.now();
     let runStatus = "";
+    let pollCount = 0;
 
     while (Date.now() - start < maxWait) {
       await new Promise((r) => setTimeout(r, 15000));
+      pollCount++;
       const statusRes = await fetch(
         `https://api.apify.com/v2/actor-runs/${runId}`,
         { headers: { Authorization: `Bearer ${apiToken}` } }
       );
       const statusData = await statusRes.json();
       runStatus = statusData.data?.status;
+      log(`Step 6: Poll #${pollCount} - Status: ${runStatus}`);
       if (runStatus === "SUCCEEDED" || runStatus === "FAILED" || runStatus === "ABORTED" || runStatus === "TIMED-OUT") break;
     }
 
@@ -195,8 +224,10 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
       throw new Error(`Apify run ended with status: ${runStatus || "TIMEOUT"}`);
     }
 
-    // Get results
+    // Step 7: Get results
     const datasetId = runData.data?.defaultDatasetId;
+    log(`Step 7: Recupero risultati dal dataset: ${datasetId}`);
+    
     const itemsRes = await fetch(
       `https://api.apify.com/v2/datasets/${datasetId}/items?format=json`,
       { headers: { Authorization: `Bearer ${apiToken}` } }
@@ -204,22 +235,44 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     const items = await itemsRes.json();
     const now = new Date().toISOString();
 
-    console.log(`Apify returned ${items.length} items`);
+    log(`Step 7: Apify ha restituito ${Array.isArray(items) ? items.length : 0} items`);
+
+    if (!Array.isArray(items)) {
+      throw new Error(`Apify items non è un array. Tipo: ${typeof items}. Contenuto: ${JSON.stringify(items).substring(0, 500)}`);
+    }
+
+    // Log first item structure for debugging
+    if (items.length > 0) {
+      const sample = items[0];
+      log(`Step 7: Struttura primo item - keys: [${Object.keys(sample).join(", ")}]`);
+      log(`Step 7: Primo item id=${sample.id}, videoId=${sample.videoId}, authorMeta.name=${sample.authorMeta?.name}, author=${sample.author}, playCount=${sample.playCount}, views=${sample.views}`);
+    }
 
     const processedAccounts = new Set<string>();
 
-    for (const item of items) {
+    // Step 8: Process each item
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
       try {
         const tiktokVideoId = item.id || item.videoId;
-        if (!tiktokVideoId) continue;
+        if (!tiktokVideoId) {
+          log(`  Item #${i}: SKIP - nessun id/videoId trovato`);
+          continue;
+        }
 
         const authorUsername = (
           item.authorMeta?.name || item.author || ""
         ).toLowerCase().replace(/^@/, "");
-        if (!authorUsername) continue;
+        if (!authorUsername) {
+          log(`  Item #${i}: SKIP - nessun authorUsername (videoId: ${tiktokVideoId})`);
+          continue;
+        }
 
         const matchedAccounts = usernameToAccounts.get(authorUsername);
-        if (!matchedAccounts || matchedAccounts.length === 0) continue;
+        if (!matchedAccounts || matchedAccounts.length === 0) {
+          log(`  Item #${i}: SKIP - username "${authorUsername}" non matchato con nessun account`);
+          continue;
+        }
 
         const playCount = item.playCount ?? item.views ?? 0;
         const diggCount = item.diggCount ?? item.likes ?? 0;
@@ -230,20 +283,31 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
 
         for (const account of matchedAccounts) {
           const campaign = campaignMap.get(account.campaign_id!);
-          if (!campaign) continue;
+          if (!campaign) {
+            log(`  Item #${i}: SKIP - campagna non trovata per account ${account.id}`);
+            continue;
+          }
 
           const videoDate = new Date(createTime);
           const campaignStartDate = new Date(campaign.start_date);
-          if (videoDate < campaignStartDate) continue;
+          if (videoDate < campaignStartDate) {
+            log(`  Item #${i}: SKIP - video (${createTime}) prima di start_date campagna (${campaign.start_date}) per @${account.username}`);
+            continue;
+          }
 
           const viewsCap = campaign.video_views_cap;
 
-          const { data: existing } = await supabaseAdmin
+          const { data: existing, error: existErr } = await supabaseAdmin
             .from("videos")
             .select("id, window_expires_at, window_closed")
             .eq("tiktok_video_id", tiktokVideoId)
             .eq("tiktok_account_id", account.id)
             .maybeSingle();
+
+          if (existErr) {
+            logError(`  Item #${i}: Errore query existing video: ${existErr.message}`);
+            continue;
+          }
 
           if (!existing) {
             const publishedAt = new Date(createTime);
@@ -251,7 +315,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
               publishedAt.getTime() + 30 * 24 * 60 * 60 * 1000
             ).toISOString();
 
-            await supabaseAdmin.from("videos").insert({
+            const { error: insertErr } = await supabaseAdmin.from("videos").insert({
               tiktok_account_id: account.id,
               tiktok_video_id: tiktokVideoId,
               views: playCount,
@@ -263,7 +327,13 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
               views_final: null,
               last_scraped_at: now,
             });
-            totalCreated++;
+            
+            if (insertErr) {
+              logError(`  Item #${i}: ERRORE INSERT video ${tiktokVideoId} per @${account.username}: ${insertErr.message}`);
+            } else {
+              totalCreated++;
+              log(`  Item #${i}: INSERITO video ${tiktokVideoId} per @${account.username} (views: ${playCount}, likes: ${diggCount})`);
+            }
           } else {
             const updateData: Record<string, unknown> = {
               views: playCount,
@@ -280,19 +350,26 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
               updateData.window_closed = true;
               updateData.views_final =
                 viewsCap && playCount > viewsCap ? viewsCap : playCount;
+              log(`  Item #${i}: Window chiusa per video ${tiktokVideoId}, views_final: ${updateData.views_final}`);
             }
 
-            await supabaseAdmin
+            const { error: updateErr } = await supabaseAdmin
               .from("videos")
               .update(updateData)
               .eq("id", existing.id);
-            totalUpdated++;
+            
+            if (updateErr) {
+              logError(`  Item #${i}: ERRORE UPDATE video ${tiktokVideoId} per @${account.username}: ${updateErr.message}`);
+            } else {
+              totalUpdated++;
+              log(`  Item #${i}: AGGIORNATO video ${tiktokVideoId} per @${account.username} (views: ${playCount})`);
+            }
           }
 
           processedAccounts.add(account.id);
         }
       } catch (itemErr: any) {
-        console.error(`Error processing item:`, itemErr.message);
+        logError(`  Item #${i}: Eccezione non gestita: ${itemErr.message}`);
       }
     }
 
@@ -305,23 +382,24 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     }
     accountsProcessed = processedAccounts.size;
 
+    log(`Step 9: COMPLETATO - created: ${totalCreated}, updated: ${totalUpdated}, accounts: ${accountsProcessed}`);
+
     await supabaseAdmin.from("scraping_logs").insert({
       status: "success",
       accounts_processed: accountsProcessed,
       videos_created: totalCreated,
       videos_updated: totalUpdated,
-      error_message: null,
+      error_message: logMessages.join("\n"),
     });
 
-    console.log(`Scraping complete: ${totalCreated} created, ${totalUpdated} updated, ${accountsProcessed} accounts`);
   } catch (err: any) {
-    console.error("Scraping error:", err.message);
+    logError(`FATAL: ${err.message}`);
     await supabaseAdmin.from("scraping_logs").insert({
       status: "error",
       accounts_processed: accountsProcessed,
       videos_created: totalCreated,
       videos_updated: totalUpdated,
-      error_message: err.message,
+      error_message: logMessages.join("\n"),
     });
   }
 }
