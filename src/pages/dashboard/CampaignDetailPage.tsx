@@ -427,10 +427,8 @@ function CyclesSection({ campaignId, campaign, cycles }: {
       if (cycleErr) throw cycleErr;
 
       const { data: cc } = await supabase.from("campaign_creators").select("creator_id").eq("campaign_id", campaignId);
-      const actualCreatorCount = (cc ?? []).length;
       const plannedCount = (campaign as any).planned_creators ?? 1;
-      const isFirstCycle = nextNumber === 1;
-      const creatorCount = isFirstCycle ? plannedCount : (actualCreatorCount > 0 ? actualCreatorCount : plannedCount);
+      const creatorCount = plannedCount;
 
       let prevViewsPaidCumulative = 0;
       if (lastCycle?.payment) {
