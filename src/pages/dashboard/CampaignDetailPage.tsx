@@ -804,8 +804,8 @@ export default function CampaignDetailPage() {
       const p = c.payment!;
       return {
         label: p.cycleLabel,
-        spend: p.totalAmount,
-        percent: monthlySpendCap && monthlySpendCap > 0 ? Math.min(100, (p.totalAmount / monthlySpendCap) * 100) : 0,
+        spend: p.cpmAmount,
+        percent: monthlySpendCap && monthlySpendCap > 0 ? Math.min(100, (p.cpmAmount / monthlySpendCap) * 100) : 0,
         isCurrent: c === (cycles.data ?? []).at(-1),
       };
     });
