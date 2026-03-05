@@ -14,71 +14,132 @@ function monthRange(year: number, month: number) {
    ══════════════════════════════════════ */
 
 export interface FinancialKpi {
-  revenueMonth: number;
-  revenuePrevMonth: number;
-  expenseMonth: number;
-  expensePrevMonth: number;
-  margin: number;
-  marginPercent: number;
-  futureRevenue: number;
+  fixedIncome: number;
+  fixedExpense: number;
+  cpmMargin: number;
+  clientCpmTotal: number;
+  creatorCpmTotal: number;
 }
 
 export function useFinancialKpis() {
   const now = new Date();
   const y = now.getFullYear();
   const m = now.getMonth();
+  const mStart = new Date(y, m, 1).toISOString();
+  const mEnd = new Date(y, m + 1, 1).toISOString();
 
   return useQuery({
     queryKey: ["dashboard-financial-kpis", y, m],
     queryFn: async (): Promise<FinancialKpi> => {
-      const [{ data: clientPays }, { data: creatorPays }] = await Promise.all([
-        supabase.from("client_payments").select("total_amount, is_paid, due_date, paid_at"),
-        supabase.from("creator_payments").select("total_amount, is_paid, period_month, period_year, paid_at"),
+      const [
+        { data: campaigns },
+        { data: contracts },
+        { data: contractCreators },
+        { data: contractCampaigns },
+        { data: accounts },
+        { data: videos },
+        { data: ccRows },
+      ] = await Promise.all([
+        supabase.from("campaigns").select("id, client_cpm, client_fixed_per_creator, planned_creators, video_views_cap, status").eq("status", "active"),
+        supabase.from("contracts").select("id, creator_cpm, creator_fixed, is_active").eq("is_active", true),
+        supabase.from("contract_creators").select("contract_id, creator_id"),
+        supabase.from("contract_campaigns").select("contract_id, campaign_id"),
+        supabase.from("tiktok_accounts").select("id, creator_id, campaign_id"),
+        supabase.from("videos").select("tiktok_account_id, views, views_final, window_closed, published_at")
+          .gte("published_at", mStart).lt("published_at", mEnd),
+        supabase.from("campaign_creators").select("campaign_id, creator_id"),
       ]);
 
-      const allClient = clientPays ?? [];
-      const allCreator = creatorPays ?? [];
+      const allCampaigns = campaigns ?? [];
+      const allContracts = contracts ?? [];
+      const allContractCreators = contractCreators ?? [];
+      const allContractCampaigns = contractCampaigns ?? [];
+      const allAccounts = accounts ?? [];
+      const allVideos = videos ?? [];
+      const allCC = ccRows ?? [];
 
-      // Current month client revenue (due this month, paid or not)
-      const mStart = `${y}-${String(m + 1).padStart(2, "0")}-01`;
-      const mEnd = m === 11
-        ? `${y + 1}-01-01`
-        : `${y}-${String(m + 2).padStart(2, "0")}-01`;
+      // ── Entrate Fisse: planned_creators × fisso per ogni campagna attiva ──
+      const fixedIncome = allCampaigns.reduce((s, c) => {
+        return s + ((c.client_fixed_per_creator ?? 0) * (c.planned_creators ?? 1));
+      }, 0);
 
-      const revenueMonth = allClient
-        .filter((p) => p.due_date >= mStart && p.due_date < mEnd)
-        .reduce((s, p) => s + Number(p.total_amount), 0);
+      // ── Uscite Fisse: fisso di ogni contratto attivo × numero creator nel contratto ──
+      const fixedExpense = allContracts.reduce((s, contract) => {
+        const creatorsInContract = allContractCreators.filter((r) => r.contract_id === contract.id).length;
+        return s + ((contract.creator_fixed ?? 0) * creatorsInContract);
+      }, 0);
 
-      // Previous month
-      const pm = m === 0 ? 11 : m - 1;
-      const py = m === 0 ? y - 1 : y;
-      const pmStart = `${py}-${String(pm + 1).padStart(2, "0")}-01`;
-      const pmEnd = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+      // ── CPM Margins ──
+      // Build views by account (with per-video cap from campaign)
+      const campaignByAccount = new Map<string, string>();
+      allAccounts.forEach((a) => { if (a.campaign_id) campaignByAccount.set(a.id, a.campaign_id); });
 
-      const revenuePrevMonth = allClient
-        .filter((p) => p.due_date >= pmStart && p.due_date < pmEnd)
-        .reduce((s, p) => s + Number(p.total_amount), 0);
+      const capByCampaign = new Map<string, number | null>();
+      allCampaigns.forEach((c) => capByCampaign.set(c.id, (c as any).video_views_cap as number | null));
 
-      // Current month creator expense
-      const expenseMonth = allCreator
-        .filter((p) => p.period_year === y && p.period_month === m + 1)
-        .reduce((s, p) => s + Number(p.total_amount), 0);
+      // Views by campaign (capped)
+      const viewsByCampaign = new Map<string, number>();
+      allVideos.forEach((v) => {
+        const campId = campaignByAccount.get(v.tiktok_account_id);
+        if (!campId) return;
+        let views = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
+        const cap = capByCampaign.get(campId);
+        if (cap != null && cap > 0) views = Math.min(views, cap);
+        viewsByCampaign.set(campId, (viewsByCampaign.get(campId) ?? 0) + views);
+      });
 
-      const expensePrevMonth = allCreator
-        .filter((p) => p.period_year === py && p.period_month === pm + 1)
-        .reduce((s, p) => s + Number(p.total_amount), 0);
+      // Client CPM total
+      const clientCpmTotal = allCampaigns.reduce((s, c) => {
+        const views = viewsByCampaign.get(c.id) ?? 0;
+        return s + ((c.client_cpm ?? 0) * (views / 1000));
+      }, 0);
 
-      const margin = revenueMonth - expenseMonth;
-      const marginPercent = revenueMonth > 0 ? (margin / revenueMonth) * 100 : 0;
+      // Creator CPM total (based on contracts)
+      // Build: for each contract, find its campaigns, find creator accounts in those campaigns, sum capped views
+      const contractCampMap = new Map<string, string[]>();
+      allContractCampaigns.forEach((r) => {
+        const list = contractCampMap.get(r.contract_id) ?? [];
+        list.push(r.campaign_id);
+        contractCampMap.set(r.contract_id, list);
+      });
 
-      // Future revenue: unpaid client payments due in next 30 days
-      const todayStr = now.toISOString().slice(0, 10);
-      const future30 = new Date(now.getTime() + 30 * 86400000).toISOString().slice(0, 10);
-      const futureRevenue = allClient
-        .filter((p) => !p.is_paid && p.due_date > todayStr && p.due_date <= future30)
-        .reduce((s, p) => s + Number(p.total_amount), 0);
+      const creatorContractMap = new Map<string, string[]>();
+      allContractCreators.forEach((r) => {
+        const list = creatorContractMap.get(r.creator_id) ?? [];
+        list.push(r.contract_id);
+        creatorContractMap.set(r.creator_id, list);
+      });
 
-      return { revenueMonth, revenuePrevMonth, expenseMonth, expensePrevMonth, margin, marginPercent, futureRevenue };
+      // Views by creator×campaign (capped)
+      const viewsByCreatorCampaign = new Map<string, number>();
+      allVideos.forEach((v) => {
+        const acc = allAccounts.find((a) => a.id === v.tiktok_account_id);
+        if (!acc || !acc.creator_id || !acc.campaign_id) return;
+        const key = `${acc.creator_id}::${acc.campaign_id}`;
+        let views = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
+        const cap = capByCampaign.get(acc.campaign_id);
+        if (cap != null && cap > 0) views = Math.min(views, cap);
+        viewsByCreatorCampaign.set(key, (viewsByCreatorCampaign.get(key) ?? 0) + views);
+      });
+
+      let creatorCpmTotal = 0;
+      // For each contract, for each creator in that contract, sum views across contract's campaigns
+      allContracts.forEach((contract) => {
+        const campIds = contractCampMap.get(contract.id) ?? [];
+        const creatorIds = allContractCreators.filter((r) => r.contract_id === contract.id).map((r) => r.creator_id);
+        const cpmRate = contract.creator_cpm ?? 0;
+
+        creatorIds.forEach((creatorId) => {
+          const views = campIds.reduce((s, campId) => {
+            return s + (viewsByCreatorCampaign.get(`${creatorId}::${campId}`) ?? 0);
+          }, 0);
+          creatorCpmTotal += cpmRate * (views / 1000);
+        });
+      });
+
+      const cpmMargin = clientCpmTotal - creatorCpmTotal;
+
+      return { fixedIncome, fixedExpense, cpmMargin, clientCpmTotal, creatorCpmTotal };
     },
     refetchInterval: 5 * 60 * 1000,
   });
