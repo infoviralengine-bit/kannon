@@ -141,23 +141,18 @@ function EditCampaignModal({
           .in("id", cycleIds);
         const cycleMap = new Map((cycles ?? []).map((c) => [c.id, c.is_last_cycle]));
 
-        const { data: cc } = await supabase
-          .from("campaign_creators")
-          .select("creator_id")
-          .eq("campaign_id", campaign.id);
-        const actualCreators = (cc ?? []).length;
-        const creatorCount = actualCreators > 0 ? actualCreators : newPlanned;
+        const creatorCount = newPlanned;
 
         for (const p of unpaidPayments) {
           const isLast = cycleMap.get(p.cycle_id) ?? false;
           const fixedAmount = isLast ? 0 : newFixed * creatorCount;
-          const cpmAmount = newCpm * (p.cpm_views / 1000);
-          let totalAmount = fixedAmount + cpmAmount;
+          let cpmAmount = newCpm * (p.cpm_views / 1000);
           
-          // Apply spend cap
-          if (parsedSpendCap != null && totalAmount > parsedSpendCap) {
-            totalAmount = parsedSpendCap;
+          // Apply spend cap (only to CPM, fixed always added on top)
+          if (parsedSpendCap != null && cpmAmount > parsedSpendCap) {
+            cpmAmount = parsedSpendCap;
           }
+          const totalAmount = fixedAmount + cpmAmount;
 
           await supabase.from("client_payments").update({
             fixed_amount: fixedAmount,
