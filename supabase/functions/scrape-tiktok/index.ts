@@ -52,14 +52,22 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Return immediately, process in background
+  EdgeRuntime.waitUntil(runScraping(supabaseAdmin));
+
+  return new Response(
+    JSON.stringify({ success: true, message: "Scraping started in background. Check scraping_logs for results." }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+});
+
+async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
   let totalCreated = 0;
   let totalUpdated = 0;
   let accountsProcessed = 0;
-  let logStatus = "success";
-  let errorMessage: string | null = null;
 
   try {
-    // Try settings table first, fallback to env var
+    // Get API token
     let apiToken: string | null = null;
     const { data: settingsRow } = await supabaseAdmin
       .from("settings")
@@ -68,12 +76,8 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (settingsRow?.value) {
       apiToken = settingsRow.value;
-      console.log(`Using APIFY token from settings table: ${apiToken.substring(0, 10)}...`);
     } else {
       apiToken = Deno.env.get("APIFY_API_KEY") || null;
-      if (apiToken) {
-        console.log(`Using APIFY token from env var: ${apiToken.substring(0, 10)}...`);
-      }
     }
     if (!apiToken) {
       throw new Error("APIFY_API_KEY non configurata né in settings né come secret.");
@@ -96,10 +100,7 @@ Deno.serve(async (req) => {
         videos_updated: 0,
         error_message: "Nessun account creator attivo trovato",
       });
-      return new Response(
-        JSON.stringify({ success: true, created: 0, updated: 0, accounts: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return;
     }
 
     // Get campaigns for start_date + video_views_cap
@@ -113,7 +114,7 @@ Deno.serve(async (req) => {
       (campaignsData || []).map((c) => [c.id, c])
     );
 
-    // Build username-to-account map and collect all usernames
+    // Build username-to-account map
     const usernameToAccounts = new Map<string, typeof accounts>();
     const allUsernames: string[] = [];
     let earliestStartDate: string | null = null;
@@ -127,8 +128,6 @@ Deno.serve(async (req) => {
       if (!allUsernames.includes(cleanUsername)) {
         allUsernames.push(cleanUsername);
       }
-
-      // Find earliest campaign start_date
       const campaign = campaignMap.get(account.campaign_id!);
       if (campaign?.start_date) {
         if (!earliestStartDate || campaign.start_date < earliestStartDate) {
@@ -141,10 +140,7 @@ Deno.serve(async (req) => {
       throw new Error("Nessun username valido trovato");
     }
 
-    // STRATEGY: fetch only 5 most recent videos per profile
-    // This avoids downloading full history (date filter doesn't work)
-    // 5 videos is enough since creators post max 3-5/day
-    const apifyInput: Record<string, unknown> = {
+    const apifyInput = {
       profiles: allUsernames,
       profileScrapeSections: ["videos"],
       profileSorting: "latest",
@@ -152,19 +148,9 @@ Deno.serve(async (req) => {
       resultsPerPage: 5,
     };
 
-    console.log(`Starting single Apify run for ${allUsernames.length} profiles, earliest date: ${earliestStartDate}`);
-    console.log(`Apify input: ${JSON.stringify(apifyInput)}`);
+    console.log(`Starting Apify run for ${allUsernames.length} profiles`);
 
-    // Log the input to scraping_logs for diagnostics
-    await supabaseAdmin.from("scraping_logs").insert({
-      status: "info",
-      accounts_processed: 0,
-      videos_created: 0,
-      videos_updated: 0,
-      error_message: `DIAGNOSTIC - Apify input: ${JSON.stringify(apifyInput)}`,
-    });
-
-    // Single Apify run with ALL usernames
+    // Start Apify run
     const runRes = await fetch(
       "https://api.apify.com/v2/acts/clockworks~free-tiktok-scraper/runs",
       {
@@ -187,11 +173,9 @@ Deno.serve(async (req) => {
 
     const runData = await runRes.json();
     const runId = runData.data?.id;
-    if (!runId) {
-      throw new Error("No run ID returned from Apify");
-    }
+    if (!runId) throw new Error("No run ID returned from Apify");
 
-    // Poll for completion (timeout 15 min for batch)
+    // Poll for completion (timeout 15 min)
     const maxWait = 15 * 60 * 1000;
     const start = Date.now();
     let runStatus = "";
@@ -204,11 +188,7 @@ Deno.serve(async (req) => {
       );
       const statusData = await statusRes.json();
       runStatus = statusData.data?.status;
-
-      if (runStatus === "SUCCEEDED") break;
-      if (runStatus === "FAILED" || runStatus === "ABORTED" || runStatus === "TIMED-OUT") {
-        break;
-      }
+      if (runStatus === "SUCCEEDED" || runStatus === "FAILED" || runStatus === "ABORTED" || runStatus === "TIMED-OUT") break;
     }
 
     if (runStatus !== "SUCCEEDED") {
@@ -224,24 +204,18 @@ Deno.serve(async (req) => {
     const items = await itemsRes.json();
     const now = new Date().toISOString();
 
-    console.log(`Apify returned ${items.length} items, processing...`);
+    console.log(`Apify returned ${items.length} items`);
 
-    // Server-side date filtering applied per-video below
-
-    // Process each item and associate to correct account via authorMeta.name
     const processedAccounts = new Set<string>();
-
 
     for (const item of items) {
       try {
         const tiktokVideoId = item.id || item.videoId;
         if (!tiktokVideoId) continue;
 
-        // Match author to account
         const authorUsername = (
           item.authorMeta?.name || item.author || ""
         ).toLowerCase().replace(/^@/, "");
-
         if (!authorUsername) continue;
 
         const matchedAccounts = usernameToAccounts.get(authorUsername);
@@ -254,19 +228,16 @@ Deno.serve(async (req) => {
           ? new Date(item.createTime * 1000).toISOString()
           : now;
 
-        // Process for each matching account (usually one)
         for (const account of matchedAccounts) {
           const campaign = campaignMap.get(account.campaign_id!);
           if (!campaign) continue;
 
-          // Server-side filter: skip videos before this account's campaign start
           const videoDate = new Date(createTime);
           const campaignStartDate = new Date(campaign.start_date);
           if (videoDate < campaignStartDate) continue;
 
           const viewsCap = campaign.video_views_cap;
 
-          // Check if video exists
           const { data: existing } = await supabaseAdmin
             .from("videos")
             .select("id, window_expires_at, window_closed")
@@ -325,7 +296,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update last_scraped_at for all processed accounts
+    // Update last_scraped_at for processed accounts
     for (const accountId of processedAccounts) {
       await supabaseAdmin
         .from("tiktok_accounts")
@@ -334,27 +305,17 @@ Deno.serve(async (req) => {
     }
     accountsProcessed = processedAccounts.size;
 
-    // Log
     await supabaseAdmin.from("scraping_logs").insert({
-      status: logStatus,
+      status: "success",
       accounts_processed: accountsProcessed,
       videos_created: totalCreated,
       videos_updated: totalUpdated,
-      error_message: errorMessage,
+      error_message: null,
     });
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        created: totalCreated,
-        updated: totalUpdated,
-        accounts: accountsProcessed,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.log(`Scraping complete: ${totalCreated} created, ${totalUpdated} updated, ${accountsProcessed} accounts`);
   } catch (err: any) {
     console.error("Scraping error:", err.message);
-
     await supabaseAdmin.from("scraping_logs").insert({
       status: "error",
       accounts_processed: accountsProcessed,
@@ -362,13 +323,5 @@ Deno.serve(async (req) => {
       videos_updated: totalUpdated,
       error_message: err.message,
     });
-
-    return new Response(
-      JSON.stringify({ error: err.message }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
   }
-});
+}
