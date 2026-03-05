@@ -208,7 +208,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           isFirstCycle: p.cycle_number === 1 && cpmViews === 0,
           clientFixedPerCreator: camp?.client_fixed_per_creator ?? 200,
           clientCpm: camp?.client_cpm ?? 2,
-          creatorCount: realCreators || (camp?.planned_creators ?? 1),
+          creatorCount: camp?.planned_creators ?? 1,
           plannedCreators: camp?.planned_creators ?? 1,
         };
       });
