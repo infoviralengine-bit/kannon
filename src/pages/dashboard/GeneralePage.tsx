@@ -151,50 +151,43 @@ export default function GeneralePage() {
       </div>
 
       {/* ROW 1 — Financial KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <KpiFinancialCard
-          label="Entrate Mese"
+          label="Entrate Fisse"
           icon={TrendingUp}
-          value={kpi?.revenueMonth ?? 0}
-          prevValue={kpi?.revenuePrevMonth}
+          value={kpi?.fixedIncome ?? 0}
           accentClass="text-emerald-400"
           loading={kpiLoading}
         />
         <KpiFinancialCard
-          label="Uscite Mese"
+          label="Uscite Fisse"
           icon={TrendingDown}
-          value={kpi?.expenseMonth ?? 0}
-          prevValue={kpi?.expensePrevMonth}
+          value={kpi?.fixedExpense ?? 0}
           accentClass="text-red-400"
           loading={kpiLoading}
         />
         <KpiFinancialCard
-          label="Margine Mese"
+          label="Margine CPM"
           icon={DollarSign}
-          value={kpi?.margin ?? 0}
+          value={kpi?.cpmMargin ?? 0}
           accentClass="text-[#a78bfa]"
-          loading={kpiLoading}
-        />
-        <KpiFinancialCard
-          label="Entrate Future"
-          icon={Calendar}
-          value={kpi?.futureRevenue ?? 0}
-          accentClass="text-sky-400"
           loading={kpiLoading}
         />
       </div>
 
-      {/* Margin bar */}
-      {!kpiLoading && kpi && kpi.revenueMonth > 0 && (
+      {/* CPM detail bar */}
+      {!kpiLoading && kpi && kpi.clientCpmTotal > 0 && (
         <div className="flex items-center gap-3 px-1">
-          <span className="text-xs text-[#64748b]">Margine</span>
+          <span className="text-xs text-[#64748b]">CPM Margin</span>
           <div className="flex-1 h-1.5 rounded-full bg-[#1a1a28] overflow-hidden">
             <div
               className="h-full rounded-full bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] transition-all duration-700"
-              style={{ width: `${Math.max(0, Math.min(100, kpi.marginPercent))}%` }}
+              style={{ width: `${Math.max(0, Math.min(100, (kpi.cpmMargin / kpi.clientCpmTotal) * 100))}%` }}
             />
           </div>
-          <span className="text-xs font-medium text-[#a78bfa]">{kpi.marginPercent.toFixed(1)}%</span>
+          <span className="text-xs font-medium text-[#a78bfa]">
+            {((kpi.cpmMargin / kpi.clientCpmTotal) * 100).toFixed(1)}%
+          </span>
         </div>
       )}
 
