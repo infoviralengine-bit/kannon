@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { formatViews } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, RefreshCw, Loader2 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Plus, Trash2, RefreshCw, Loader2, ChevronDown, ChevronRight, User, Video, Eye } from "lucide-react";
 
 export default function AccountPage() {
   const navigate = useNavigate();
@@ -40,7 +41,6 @@ export default function AccountPage() {
         title: "Scraping avviato",
         description: data?.message || "Scraping in background. Controlla i log per i risultati.",
       });
-      // Poll scraping_logs for completion
       const pollInterval = setInterval(async () => {
         const { data: logs } = await supabase
           .from("scraping_logs")
@@ -66,7 +66,6 @@ export default function AccountPage() {
           }
         }
       }, 10000);
-      // Safety timeout: stop polling after 20 minutes
       setTimeout(() => {
         clearInterval(pollInterval);
         setScraping(false);
@@ -78,7 +77,7 @@ export default function AccountPage() {
   }
 
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState("all");
+  const [tab, setTab] = useState("creator");
   const [campaignFilter, setCampaignFilter] = useState<string>("all");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; username: string } | null>(null);
 
@@ -134,9 +133,36 @@ export default function AccountPage() {
   const activeCampaigns = campaigns.filter((c) => c.status === "active");
   const creatorAccounts = accounts.filter((a) => a.account_type === "creator");
   const outreachAccounts = accounts.filter((a) => a.account_type === "outreach");
-  const filteredCreatorAccounts = campaignFilter === "all"
-    ? creatorAccounts
-    : creatorAccounts.filter((a) => a.campaign_id === campaignFilter);
+
+  // Group creator accounts by creator
+  const accountsByCreator = new Map<string, typeof creatorAccounts>();
+  creatorAccounts.forEach((a) => {
+    const cid = a.creator_id ?? "_unassigned";
+    const list = accountsByCreator.get(cid) ?? [];
+    list.push(a);
+    accountsByCreator.set(cid, list);
+  });
+
+  // Sort creators alphabetically
+  const sortedCreatorGroups = Array.from(accountsByCreator.entries())
+    .map(([cid, accs]) => ({
+      creatorId: cid,
+      creatorName: cid === "_unassigned" ? "Non assegnato" : (creators.find((c) => c.id === cid)?.name ?? "Sconosciuto"),
+      accounts: accs,
+      totalViews: accs.reduce((s, a) => s + getAccountTotalViews(a.id), 0),
+      totalVideosToday: accs.reduce((s, a) => s + getCreatorVideosToday(a.id), 0),
+    }))
+    .sort((a, b) => a.creatorName.localeCompare(b.creatorName));
+
+  // Filter by campaign
+  const filteredCreatorGroups = campaignFilter === "all"
+    ? sortedCreatorGroups
+    : sortedCreatorGroups
+        .map((g) => ({
+          ...g,
+          accounts: g.accounts.filter((a) => a.campaign_id === campaignFilter),
+        }))
+        .filter((g) => g.accounts.length > 0);
 
   if (isLoading) {
     return (
@@ -162,66 +188,65 @@ export default function AccountPage() {
             <DialogTrigger asChild>
               <Button><Plus className="mr-2 h-4 w-4" /> Nuovo Account</Button>
             </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Nuovo Account</DialogTitle></DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Username TikTok</Label>
-                <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@username" />
+            <DialogContent>
+              <DialogHeader><DialogTitle>Nuovo Account</DialogTitle></DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Username TikTok</Label>
+                  <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@username" />
+                </div>
+                <div>
+                  <Label>Tipo Account</Label>
+                  <Select value={accountType} onValueChange={setAccountType}>
+                    <SelectTrigger><SelectValue placeholder="Seleziona tipo" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="creator">Creator</SelectItem>
+                      <SelectItem value="outreach">Outreach</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {accountType === "creator" && (
+                  <>
+                    <div>
+                      <Label>Creator associato</Label>
+                      <Select value={creatorId} onValueChange={setCreatorId}>
+                        <SelectTrigger><SelectValue placeholder="Seleziona creator" /></SelectTrigger>
+                        <SelectContent>
+                          {creators.filter((c) => c.status === "active").sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Campagna</Label>
+                      <Select value={campaignId} onValueChange={setCampaignId}>
+                        <SelectTrigger><SelectValue placeholder="Seleziona campagna" /></SelectTrigger>
+                        <SelectContent>
+                          {activeCampaigns.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
+                <Button
+                  className="w-full"
+                  disabled={!username || !accountType || (accountType === "creator" && (!creatorId || !campaignId))}
+                  onClick={() => createMutation.mutate()}
+                >
+                  Crea Account
+                </Button>
               </div>
-              <div>
-                <Label>Tipo Account</Label>
-                <Select value={accountType} onValueChange={setAccountType}>
-                  <SelectTrigger><SelectValue placeholder="Seleziona tipo" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="creator">Creator</SelectItem>
-                    <SelectItem value="outreach">Outreach</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {accountType === "creator" && (
-                <>
-                  <div>
-                    <Label>Creator associato</Label>
-                    <Select value={creatorId} onValueChange={setCreatorId}>
-                      <SelectTrigger><SelectValue placeholder="Seleziona creator" /></SelectTrigger>
-                      <SelectContent>
-                        {creators.filter((c) => c.status === "active").sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
-                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Campagna</Label>
-                    <Select value={campaignId} onValueChange={setCampaignId}>
-                      <SelectTrigger><SelectValue placeholder="Seleziona campagna" /></SelectTrigger>
-                      <SelectContent>
-                        {activeCampaigns.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
-              <Button
-                className="w-full"
-                disabled={!username || !accountType || (accountType === "creator" && (!creatorId || !campaignId))}
-                onClick={() => createMutation.mutate()}
-              >
-                Crea Account
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <TabsList>
-            <TabsTrigger value="all">Tutti ({accounts.length})</TabsTrigger>
             <TabsTrigger value="creator">Creator ({creatorAccounts.length})</TabsTrigger>
             <TabsTrigger value="outreach">Outreach ({outreachAccounts.length})</TabsTrigger>
           </TabsList>
@@ -238,22 +263,23 @@ export default function AccountPage() {
           )}
         </div>
 
-        <TabsContent value="all">
-          {accounts.length === 0 ? (
-            <Card><CardContent className="py-12 text-center text-muted-foreground">Nessun account. Crea il primo!</CardContent></Card>
-          ) : (
-            <div className="space-y-6">
-              {creatorAccounts.length > 0 && <CreatorTable accounts={creatorAccounts} creators={creators} campaigns={campaigns} getVideosToday={getCreatorVideosToday} getTotalViews={getAccountTotalViews} navigate={navigate} onDelete={setDeleteTarget} />}
-              {outreachAccounts.length > 0 && <OutreachTable accounts={outreachAccounts} getOutreachToday={getOutreachToday} getOutreachMonth={getOutreachMonth} navigate={navigate} onDelete={setDeleteTarget} />}
-            </div>
-          )}
-        </TabsContent>
-
         <TabsContent value="creator">
-          {filteredCreatorAccounts.length === 0 ? (
+          {filteredCreatorGroups.length === 0 ? (
             <Card><CardContent className="py-12 text-center text-muted-foreground">Nessun account creator trovato.</CardContent></Card>
           ) : (
-            <CreatorTable accounts={filteredCreatorAccounts} creators={creators} campaigns={campaigns} getVideosToday={getCreatorVideosToday} getTotalViews={getAccountTotalViews} navigate={navigate} onDelete={setDeleteTarget} />
+            <div className="space-y-3">
+              {filteredCreatorGroups.map((group) => (
+                <CreatorGroup
+                  key={group.creatorId}
+                  group={group}
+                  campaigns={campaigns}
+                  getVideosToday={getCreatorVideosToday}
+                  getTotalViews={getAccountTotalViews}
+                  navigate={navigate}
+                  onDelete={setDeleteTarget}
+                />
+              ))}
+            </div>
           )}
         </TabsContent>
 
@@ -286,46 +312,86 @@ export default function AccountPage() {
   );
 }
 
-function CreatorTable({ accounts, creators, campaigns, getVideosToday, getTotalViews, navigate, onDelete }: any) {
+/* ── Creator Group (collapsible card per creator) ── */
+
+function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigate, onDelete }: {
+  group: {
+    creatorId: string;
+    creatorName: string;
+    accounts: any[];
+    totalViews: number;
+    totalVideosToday: number;
+  };
+  campaigns: any[];
+  getVideosToday: (id: string) => number;
+  getTotalViews: (id: string) => number;
+  navigate: (path: string) => void;
+  onDelete: (target: { id: string; username: string }) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(true);
+
   return (
-    <Card>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Username</TableHead>
-            <TableHead>Creator</TableHead>
-            <TableHead>Campagna</TableHead>
-            <TableHead className="text-right">Video oggi</TableHead>
-            <TableHead className="text-right">Views totali</TableHead>
-            <TableHead />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {accounts.map((a: any) => {
-            const creator = creators.find((c: any) => c.id === a.creator_id);
-            const campaign = campaigns.find((c: any) => c.id === a.campaign_id);
-            const videosToday = getVideosToday(a.id);
-            return (
-              <TableRow key={a.id}>
-                <TableCell className="font-medium">@{a.username?.replace(/^@/, '')}</TableCell>
-                <TableCell>{creator?.name || "—"}</TableCell>
-                <TableCell>{campaign?.name || "—"}</TableCell>
-                <TableCell className="text-right">{videosToday}</TableCell>
-                <TableCell className="text-right">{formatViews(getTotalViews(a.id))}</TableCell>
-                <TableCell className="space-x-1">
-                  <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
-                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </Card>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors py-3 px-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-base">{group.creatorName}</CardTitle>
+                </div>
+                <Badge variant="secondary" className="text-xs">{group.accounts.length} account</Badge>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1"><Video className="h-3.5 w-3.5" /> {group.totalVideosToday} oggi</span>
+                <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> {formatViews(group.totalViews)}</span>
+              </div>
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="pt-0 px-0 pb-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="pl-6">Username</TableHead>
+                  <TableHead>Campagna</TableHead>
+                  <TableHead className="text-right">Video oggi</TableHead>
+                  <TableHead className="text-right">Views totali</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {group.accounts.map((a: any) => {
+                  const campaign = campaigns.find((c: any) => c.id === a.campaign_id);
+                  const videosToday = getVideosToday(a.id);
+                  return (
+                    <TableRow key={a.id}>
+                      <TableCell className="font-medium pl-6">@{a.username?.replace(/^@/, '')}</TableCell>
+                      <TableCell>{campaign?.name || "—"}</TableCell>
+                      <TableCell className="text-right">{videosToday}</TableCell>
+                      <TableCell className="text-right">{formatViews(getTotalViews(a.id))}</TableCell>
+                      <TableCell className="text-right space-x-1">
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }
+
+/* ── Outreach Table ── */
 
 function OutreachTable({ accounts, getOutreachToday, getOutreachMonth, navigate, onDelete }: any) {
   return (
@@ -353,7 +419,7 @@ function OutreachTable({ accounts, getOutreachToday, getOutreachMonth, navigate,
                 <TableCell className="text-right">{replies}</TableCell>
                 <TableCell className="text-right">{rate}%</TableCell>
                 <TableCell className="text-right">{formatViews(dmMonth)}</TableCell>
-                <TableCell className="space-x-1">
+                <TableCell className="text-right space-x-1">
                   <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
                   <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
                     <Trash2 className="h-4 w-4" />
