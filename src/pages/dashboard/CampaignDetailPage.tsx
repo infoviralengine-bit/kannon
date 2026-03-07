@@ -1035,16 +1035,21 @@ export default function CampaignDetailPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {accounts.data.map((a) => (
+              {accounts.data.map((a) => (
                   <TableRow key={a.accountId}>
                     <TableCell className="font-medium">@{a.username}</TableCell>
                     <TableCell>{a.creatorName}</TableCell>
                     <TableCell className="text-right">{a.todayVideos}</TableCell>
                     <TableCell className="text-right">{formatViews(a.totalViews)}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.accountId}`)}>
-                        Apri
-                      </Button>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.accountId}`)}>
+                          Apri
+                        </Button>
+                        {!isCompleted && (
+                          <RemoveAccountButton accountId={a.accountId} campaignId={campaignId} />
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
