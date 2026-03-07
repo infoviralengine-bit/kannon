@@ -746,10 +746,23 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
                     <TableCell className="text-right">{c.weekVideos}</TableCell>
                     <TableCell className="text-right">{c.monthVideos}</TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.creatorId}`)}>
-                        Apri
-                      </Button>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.creatorId}`)}>
+                          Apri
+                        </Button>
+                        {!isCompleted && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => removeCreatorMutation.mutate(c.creatorId)}
+                            disabled={removeCreatorMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
