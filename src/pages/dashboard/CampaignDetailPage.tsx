@@ -807,7 +807,7 @@ function RemoveAccountButton({ accountId, campaignId }: { accountId: string; cam
   );
 }
 
-
+export default function CampaignDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
