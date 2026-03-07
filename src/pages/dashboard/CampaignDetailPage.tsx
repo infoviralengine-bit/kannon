@@ -657,6 +657,25 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
   onAddCreator: () => void;
   navigate: ReturnType<typeof useNavigate>;
 }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+
+  const removeCreatorMutation = useMutation({
+    mutationFn: async (creatorId: string) => {
+      const { error } = await supabase
+        .from("campaign_creators")
+        .delete()
+        .eq("campaign_id", campaignId)
+        .eq("creator_id", creatorId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Creator rimosso dalla campagna" });
+      qc.invalidateQueries({ queryKey: ["campaign-creators", campaignId] });
+      qc.invalidateQueries({ queryKey: ["campaign-kpi", campaignId] });
+    },
+    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+  });
   const { data: contractCampaigns } = useQuery({
     queryKey: ["contract-campaigns-for-campaign", campaignId],
     queryFn: async () => {
