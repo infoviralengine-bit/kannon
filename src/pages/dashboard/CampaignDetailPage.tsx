@@ -657,6 +657,25 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
   onAddCreator: () => void;
   navigate: ReturnType<typeof useNavigate>;
 }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+
+  const removeCreatorMutation = useMutation({
+    mutationFn: async (creatorId: string) => {
+      const { error } = await supabase
+        .from("campaign_creators")
+        .delete()
+        .eq("campaign_id", campaignId)
+        .eq("creator_id", creatorId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Creator rimosso dalla campagna" });
+      qc.invalidateQueries({ queryKey: ["campaign-creators", campaignId] });
+      qc.invalidateQueries({ queryKey: ["campaign-kpi", campaignId] });
+    },
+    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+  });
   const { data: contractCampaigns } = useQuery({
     queryKey: ["contract-campaigns-for-campaign", campaignId],
     queryFn: async () => {
@@ -727,10 +746,23 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
                     <TableCell className="text-right">{c.weekVideos}</TableCell>
                     <TableCell className="text-right">{c.monthVideos}</TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.creatorId}`)}>
-                        Apri
-                      </Button>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.creatorId}`)}>
+                          Apri
+                        </Button>
+                        {!isCompleted && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => removeCreatorMutation.mutate(c.creatorId)}
+                            disabled={removeCreatorMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -740,6 +772,38 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/* ── Remove Account Button ── */
+function RemoveAccountButton({ accountId, campaignId }: { accountId: string; campaignId: string }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("tiktok_accounts")
+        .update({ campaign_id: null })
+        .eq("id", accountId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Account rimosso dalla campagna" });
+      qc.invalidateQueries({ queryKey: ["campaign-accounts", campaignId] });
+      qc.invalidateQueries({ queryKey: ["campaign-kpi", campaignId] });
+    },
+    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+  });
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+      onClick={() => mutation.mutate()}
+      disabled={mutation.isPending}
+    >
+      <Trash2 className="h-4 w-4" />
+    </Button>
   );
 }
 
@@ -1003,16 +1067,21 @@ export default function CampaignDetailPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {accounts.data.map((a) => (
+              {accounts.data.map((a) => (
                   <TableRow key={a.accountId}>
                     <TableCell className="font-medium">@{a.username}</TableCell>
                     <TableCell>{a.creatorName}</TableCell>
                     <TableCell className="text-right">{a.todayVideos}</TableCell>
                     <TableCell className="text-right">{formatViews(a.totalViews)}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.accountId}`)}>
-                        Apri
-                      </Button>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.accountId}`)}>
+                          Apri
+                        </Button>
+                        {!isCompleted && (
+                          <RemoveAccountButton accountId={a.accountId} campaignId={campaignId} />
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
