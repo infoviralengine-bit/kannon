@@ -775,7 +775,39 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
   );
 }
 
-export default function CampaignDetailPage() {
+/* ── Remove Account Button ── */
+function RemoveAccountButton({ accountId, campaignId }: { accountId: string; campaignId: string }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("tiktok_accounts")
+        .update({ campaign_id: null })
+        .eq("id", accountId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Account rimosso dalla campagna" });
+      qc.invalidateQueries({ queryKey: ["campaign-accounts", campaignId] });
+      qc.invalidateQueries({ queryKey: ["campaign-kpi", campaignId] });
+    },
+    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+  });
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+      onClick={() => mutation.mutate()}
+      disabled={mutation.isPending}
+    >
+      <Trash2 className="h-4 w-4" />
+    </Button>
+  );
+}
+
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
