@@ -30,6 +30,7 @@ import OutreachManagementPage from "@/pages/dashboard/OutreachManagementPage";
 import ContractsPage from "@/pages/dashboard/ContractsPage";
 import ContractDetailPage from "@/pages/dashboard/ContractDetailPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
+import CloserPage from "@/pages/dashboard/CloserPage";
 
 const queryClient = new QueryClient();
 
