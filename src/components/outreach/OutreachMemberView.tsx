@@ -266,6 +266,54 @@ export function OutreachMemberView() {
           </DialogContent>
         </Dialog>
 
+        <Dialog open={leadOpen} onOpenChange={setLeadOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm"><UserPlus className="h-4 w-4 mr-1" /> Aggiungi Lead</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nuovo lead per il closer</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Nome *</Label>
+                  <Input value={leadFirstName} onChange={e => setLeadFirstName(e.target.value)} placeholder="Mario" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Cognome *</Label>
+                  <Input value={leadLastName} onChange={e => setLeadLastName(e.target.value)} placeholder="Rossi" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Telefono</Label>
+                <Input value={leadPhone} onChange={e => setLeadPhone(e.target.value)} placeholder="+39..." />
+              </div>
+              <div className="space-y-2">
+                <Label>Username TikTok</Label>
+                <Input value={leadTiktok} onChange={e => setLeadTiktok(e.target.value)} placeholder="username" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Data call *</Label>
+                  <Input type="date" value={leadCallDate} onChange={e => setLeadCallDate(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Ora call *</Label>
+                  <Input type="time" value={leadCallTime} onChange={e => setLeadCallTime(e.target.value)} />
+                </div>
+              </div>
+              <Button
+                onClick={handleAddLead}
+                disabled={!leadFirstName.trim() || !leadLastName.trim() || !leadCallDate || !leadCallTime}
+                className="w-full"
+              >
+                Aggiungi Lead
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Separator orientation="vertical" className="h-6" />
 
         <Select value={filterAccount} onValueChange={setFilterAccount}>
