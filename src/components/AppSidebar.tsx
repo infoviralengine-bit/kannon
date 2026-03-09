@@ -1,6 +1,6 @@
 import {
   Globe, Megaphone, Users, Smartphone, Wallet, CreditCard,
-  BarChart3, Film, TrendingUp, Search, FileText,
+  BarChart3, Film, TrendingUp, Search, FileText, MessageCircle,
   CalendarDays, Landmark, Settings, LogOut, ArrowDownCircle, ArrowUpCircle
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -42,6 +42,7 @@ const altroItems = [
   { title: "Media Library", url: "/dashboard/media", icon: Film },
   { title: "Report", url: "/dashboard/reports", icon: TrendingUp },
   { title: "Recruiting", url: "/dashboard/recruiting", icon: Search },
+  { title: "Outreach", url: "/dashboard/outreach", icon: MessageCircle },
   { title: "Calendario", url: "/dashboard/calendar", icon: CalendarDays },
   { title: "Finanza", url: "/dashboard/finance", icon: Landmark },
 ];

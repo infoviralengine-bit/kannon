@@ -26,6 +26,7 @@ import {
   CalendarPage, FinancePage
 } from "@/pages/dashboard/ComingSoonPages";
 import RecruitingPage from "@/pages/dashboard/RecruitingPage";
+import OutreachManagementPage from "@/pages/dashboard/OutreachManagementPage";
 import ContractsPage from "@/pages/dashboard/ContractsPage";
 import ContractDetailPage from "@/pages/dashboard/ContractDetailPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
@@ -63,6 +64,7 @@ const App = () => (
               <Route path="media" element={<MediaPage />} />
               <Route path="reports" element={<ReportsPage />} />
               <Route path="recruiting" element={<RecruitingPage />} />
+              <Route path="outreach" element={<OutreachManagementPage />} />
               <Route path="contracts" element={<ContractsPage />} />
               <Route path="contracts/:id" element={<ContractDetailPage />} />
               <Route path="calendar" element={<CalendarPage />} />
