@@ -178,6 +178,51 @@ export type Database = {
           },
         ]
       }
+      closer_leads: {
+        Row: {
+          call_datetime: string
+          created_at: string
+          created_by: string | null
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string
+          notes: string | null
+          phone: string | null
+          source: string
+          status: string
+          tiktok_username: string | null
+        }
+        Insert: {
+          call_datetime: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          notes?: string | null
+          phone?: string | null
+          source?: string
+          status?: string
+          tiktok_username?: string | null
+        }
+        Update: {
+          call_datetime?: string
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          notes?: string | null
+          phone?: string | null
+          source?: string
+          status?: string
+          tiktok_username?: string | null
+        }
+        Relationships: []
+      }
       contract_campaigns: {
         Row: {
           campaign_id: string
@@ -414,6 +459,44 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_links: {
+        Row: {
+          completed_at: string | null
+          contract_ids: string[]
+          created_at: string
+          id: string
+          lead_id: string
+          status: string
+          token: string
+        }
+        Insert: {
+          completed_at?: string | null
+          contract_ids?: string[]
+          created_at?: string
+          id?: string
+          lead_id: string
+          status?: string
+          token?: string
+        }
+        Update: {
+          completed_at?: string | null
+          contract_ids?: string[]
+          created_at?: string
+          id?: string
+          lead_id?: string
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_links_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "closer_leads"
             referencedColumns: ["id"]
           },
         ]
