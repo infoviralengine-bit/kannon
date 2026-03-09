@@ -34,7 +34,7 @@ export function useOutreachAccounts() {
       let q = supabase
         .from("tiktok_accounts")
         .select("id, username, is_active, owner_profile_id")
-        .eq("account_type", "Outreach");
+        .eq("account_type", "outreach");
       // Outreach users only see own accounts via RLS; admin/team see all
       const { data, error } = await q.order("username");
       if (error) throw error;
