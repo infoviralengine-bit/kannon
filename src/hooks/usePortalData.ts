@@ -59,10 +59,29 @@ export function useCreatorAreaData() {
       }
 
       const campIds = [...new Set(accs.map((a) => a.campaign_id).filter(Boolean))] as string[];
-      let campaigns: { id: string; name: string }[] = [];
+      let campaigns: { id: string; name: string; video_views_cap: number | null }[] = [];
       if (campIds.length) {
-        const { data } = await supabase.from("campaigns").select("id, name").in("id", campIds);
+        const { data } = await supabase.from("campaigns").select("id, name, video_views_cap").in("id", campIds);
         campaigns = data ?? [];
+      }
+
+      // Fetch contracts for this creator
+      const { data: contractCreators } = await supabase
+        .from("contract_creators" as any)
+        .select("contract_id, creator_id")
+        .eq("creator_id", creator.id);
+      const ccRows = (contractCreators ?? []) as any[];
+      const contractIds = ccRows.map((r: any) => r.contract_id);
+
+      let allContracts: any[] = [];
+      let allContractCampaigns: any[] = [];
+      if (contractIds.length) {
+        const [{ data: cData }, { data: ccData }] = await Promise.all([
+          supabase.from("contracts" as any).select("*").in("id", contractIds).eq("is_active", true),
+          supabase.from("contract_campaigns" as any).select("contract_id, campaign_id").in("contract_id", contractIds),
+        ]);
+        allContracts = (cData ?? []) as any[];
+        allContractCampaigns = (ccData ?? []) as any[];
       }
 
       const { start: tStart, end: tEnd } = todayRange();
@@ -76,9 +95,62 @@ export function useCreatorAreaData() {
       const totalViews = allVideos.reduce((s, v) => s + (v.views ?? 0), 0);
       const monthViews = sumEffectiveViews(monthVideosList);
 
-      const creatorFixed = creator.creator_fixed ?? 200;
-      const creatorCpm = creator.creator_cpm ?? 0.5;
-      const cpmAmount = creatorCpm * (monthViews / 1000);
+      // Build per-contract payoff breakdown
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+
+      const capByCampaign = new Map<string, number | null>();
+      campaigns.forEach((c) => capByCampaign.set(c.id, c.video_views_cap));
+
+      const contractCampMap = new Map<string, string[]>();
+      allContractCampaigns.forEach((r: any) => {
+        const list = contractCampMap.get(r.contract_id) ?? [];
+        list.push(r.campaign_id);
+        contractCampMap.set(r.contract_id, list);
+      });
+
+      const contractBreakdowns = allContracts.map((contract: any) => {
+        const cCampIds = contractCampMap.get(contract.id) ?? [];
+        const campIdSet = new Set(cCampIds);
+        const contractAccounts = accs.filter((a) => a.campaign_id && campIdSet.has(a.campaign_id));
+        const contractAccIds = new Set(contractAccounts.map((a) => a.id));
+        const contractMonthVideos = monthVideosList.filter((v) => contractAccIds.has(v.tiktok_account_id));
+        const videoCount = contractMonthVideos.length;
+
+        const cpmRate = Number(contract.creator_cpm ?? 0.5);
+        const fixedAmt = Number(contract.creator_fixed ?? 0);
+        const minVpd = contract.min_videos_per_day ?? 5;
+        const target = getMonthlyTarget(minVpd, year, month);
+
+        let totalContractViews = 0;
+        cCampIds.forEach((campId) => {
+          const cap = capByCampaign.get(campId) ?? null;
+          const campAccIds = contractAccounts.filter((a) => a.campaign_id === campId).map((a) => a.id);
+          const campAccSet = new Set(campAccIds);
+          const campVideos = contractMonthVideos.filter((v) => campAccSet.has(v.tiktok_account_id));
+          totalContractViews += sumEffectiveViewsCapped(campVideos, cap);
+        });
+
+        const fixedEarned = minVpd === 0 || isFixedEarnedMonthly(videoCount, minVpd, year, month);
+        const cpmAmount = cpmRate * (totalContractViews / 1000);
+        const subtotal = (fixedEarned ? fixedAmt : 0) + cpmAmount;
+
+        return {
+          contractId: contract.id,
+          contractName: contract.name,
+          videoCount,
+          monthlyTarget: target,
+          fixedAmount: fixedAmt,
+          fixedEarned,
+          cpmRate,
+          cpmAmount,
+          totalViews: totalContractViews,
+          subtotal,
+        };
+      });
+
+      const totalPayoff = contractBreakdowns.reduce((s, b) => s + b.subtotal, 0);
 
       const campMap = new Map(campaigns.map((c) => [c.id, c.name]));
       const accountRows = accs.map((a) => {
@@ -106,10 +178,8 @@ export function useCreatorAreaData() {
         monthVideos: monthVideosCount,
         totalViews,
         monthViews,
-        creatorFixed,
-        creatorCpm,
-        cpmAmount,
-        total: creatorFixed + cpmAmount,
+        contractBreakdowns,
+        totalPayoff,
         accountRows,
         recentVideos,
       };
