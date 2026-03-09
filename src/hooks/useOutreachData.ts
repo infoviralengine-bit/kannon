@@ -34,7 +34,7 @@ export function useOutreachAccounts() {
       let q = supabase
         .from("tiktok_accounts")
         .select("id, username, is_active, owner_profile_id")
-        .eq("account_type", "Outreach");
+        .eq("account_type", "outreach");
       // Outreach users only see own accounts via RLS; admin/team see all
       const { data, error } = await q.order("username");
       if (error) throw error;
@@ -51,10 +51,13 @@ export function useAddOutreachAccount() {
     mutationFn: async (username: string) => {
       const { error } = await supabase.from("tiktok_accounts").insert({
         username,
-        account_type: "Outreach",
+        account_type: "outreach",
         owner_profile_id: user!.id,
       });
-      if (error) throw error;
+      if (error) {
+        console.error("Insert tiktok_accounts error:", JSON.stringify(error));
+        throw error;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["outreach-accounts"] }),
   });
@@ -158,7 +161,7 @@ export function useAllOutreachMembers() {
       const { data: accounts, error } = await supabase
         .from("tiktok_accounts")
         .select("id, username, is_active, owner_profile_id")
-        .eq("account_type", "Outreach")
+        .eq("account_type", "outreach")
         .order("username");
       if (error) throw error;
 
