@@ -313,45 +313,36 @@ export default function ClientArea() {
           <StatCard icon={Video} label="Video Totali" value={data.total_videos} />
         </div>
 
-        {/* Chart + Spend Progress */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <ViewsChart />
-          </div>
-          <div className="space-y-6">
-            <SpendProgress data={data} />
-            {/* Campaign info compact */}
-            <Card className="border-border/40">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <CalendarDays className="h-5 w-5 text-primary" /> Info Campagna
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Inizio</span>
-                  <span className="font-medium">{new Date(data.campaign.start_date).toLocaleDateString("it-IT")}</span>
-                </div>
-                {data.campaign.end_date && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Fine</span>
-                    <span className="font-medium">{new Date(data.campaign.end_date).toLocaleDateString("it-IT")}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Account</span>
-                  <span className="font-medium">{data.active_creators} / {data.total_creators}</span>
-                </div>
-                {data.campaign.video_views_cap != null && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Cap Views</span>
-                    <span className="font-medium">{formatViews(data.campaign.video_views_cap)}</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        {/* Chart full width */}
+        <ViewsChart />
+
+        {/* Spend Progress full width */}
+        <SpendProgress data={data} />
+
+        {/* Campaign info – single line */}
+        <Card className="border-border/40">
+          <CardContent className="flex flex-wrap items-center justify-between gap-6 py-4 px-6 text-sm">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground">Inizio</span>
+              <span className="font-medium">{new Date(data.campaign.start_date).toLocaleDateString("it-IT")}</span>
+            </div>
+            {data.campaign.end_date && (
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                <span className="text-muted-foreground">Fine</span>
+                <span className="font-medium">{new Date(data.campaign.end_date).toLocaleDateString("it-IT")}</span>
+              </div>
+            )}
+            {data.campaign.video_views_cap != null && (
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4 text-primary" />
+                <span className="text-muted-foreground">Cap Views</span>
+                <span className="font-medium">{formatViews(data.campaign.video_views_cap)}</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Account list */}
         {data.accounts && data.accounts.length > 0 && (
