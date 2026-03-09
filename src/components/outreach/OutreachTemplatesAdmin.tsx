@@ -7,9 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useOutreachTemplates, useAddTemplate, useUpdateTemplate } from "@/hooks/useOutreachData";
+import { useOutreachTemplates, useAddTemplate, useUpdateTemplate, useDeleteTemplate } from "@/hooks/useOutreachData";
 
 export function OutreachTemplatesAdmin() {
   const { data: templates = [], isLoading } = useOutreachTemplates(true);
