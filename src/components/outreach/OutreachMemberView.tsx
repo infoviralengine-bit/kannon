@@ -382,6 +382,20 @@ export function OutreachMemberView() {
                         </button>
                       )}
                       <span className="text-primary font-medium">{rate}%</span>
+                      <button
+                        className="text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                        onClick={() => {
+                          if (confirm("Eliminare questo record?")) {
+                            deleteStat.mutate(s.id, {
+                              onSuccess: () => toast.success("Record eliminato"),
+                              onError: () => toast.error("Errore nell'eliminazione"),
+                            });
+                          }
+                        }}
+                        title="Elimina"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   </div>
                 );
