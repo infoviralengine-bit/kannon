@@ -141,6 +141,7 @@ export function useClientAreaData() {
           client_cpm: number | null;
           client_fixed_per_creator: number | null;
           video_views_cap: number | null;
+          monthly_spend_cap: number | null;
         };
         accounts: {
           username: string;
@@ -168,6 +169,25 @@ export function useClientAreaData() {
         avg_videos_per_day_30d: number;
         total_videos: number;
       } | null;
+    },
+    enabled: !!user,
+  });
+}
+
+export function useClientDailyViews(days: number = 30) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["client-daily-views", user?.id, days],
+    queryFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase.rpc("get_client_daily_views" as any, {
+        p_user_id: user.id,
+        p_days: days,
+      } as any);
+      if (error) throw error;
+      return (data as { day: string; views: number; videos_published: number }[]) ?? [];
     },
     enabled: !!user,
   });
