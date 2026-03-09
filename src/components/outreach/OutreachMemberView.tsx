@@ -37,6 +37,15 @@ export function OutreachMemberView() {
   const [newUsername, setNewUsername] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
+  const [leadOpen, setLeadOpen] = useState(false);
+
+  // Lead form state
+  const [leadFirstName, setLeadFirstName] = useState("");
+  const [leadLastName, setLeadLastName] = useState("");
+  const [leadPhone, setLeadPhone] = useState("");
+  const [leadTiktok, setLeadTiktok] = useState("");
+  const [leadCallDate, setLeadCallDate] = useState("");
+  const [leadCallTime, setLeadCallTime] = useState("");
 
   // Log form state
   const [logAccountId, setLogAccountId] = useState("");
