@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Send, MessageSquare, TrendingUp, Smartphone, Pencil, FileText, Copy, Check } from "lucide-react";
+import { Plus, Send, MessageSquare, TrendingUp, Smartphone, Pencil, FileText, Copy, Check, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useOutreachAccounts,
