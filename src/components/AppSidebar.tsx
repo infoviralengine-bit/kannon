@@ -1,6 +1,6 @@
 import {
   Globe, Megaphone, Users, Smartphone, Wallet, CreditCard,
-  BarChart3, Film, TrendingUp, Search, FileText,
+  BarChart3, Film, TrendingUp, Search, FileText, MessageCircle,
   CalendarDays, Landmark, Settings, LogOut, ArrowDownCircle, ArrowUpCircle
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
