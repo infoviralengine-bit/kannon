@@ -54,7 +54,10 @@ export function useAddOutreachAccount() {
         account_type: "Outreach",
         owner_profile_id: user!.id,
       });
-      if (error) throw error;
+      if (error) {
+        console.error("Insert tiktok_accounts error:", JSON.stringify(error));
+        throw error;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["outreach-accounts"] }),
   });
