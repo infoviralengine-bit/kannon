@@ -26,6 +26,7 @@ import {
   CalendarPage, FinancePage
 } from "@/pages/dashboard/ComingSoonPages";
 import RecruitingPage from "@/pages/dashboard/RecruitingPage";
+import OutreachManagementPage from "@/pages/dashboard/OutreachManagementPage";
 import ContractsPage from "@/pages/dashboard/ContractsPage";
 import ContractDetailPage from "@/pages/dashboard/ContractDetailPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
