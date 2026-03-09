@@ -70,6 +70,7 @@ const App = () => (
               <Route path="contracts/:id" element={<ContractDetailPage />} />
               <Route path="calendar" element={<CalendarPage />} />
               <Route path="finance" element={<FinancePage />} />
+              <Route path="closer" element={<CloserPage />} />
               <Route path="settings" element={<SettingsPage />} />
               {/* Redirect old payments route */}
               <Route path="payments" element={<Navigate to="/dashboard/payments-receivable" replace />} />
