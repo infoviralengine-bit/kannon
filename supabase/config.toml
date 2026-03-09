@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.calendly-webhook]
 verify_jwt = false
+
+[functions.connect-calendly]
+verify_jwt = false
