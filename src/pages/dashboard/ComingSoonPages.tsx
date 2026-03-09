@@ -1,10 +1,9 @@
-import { BarChart3, Film, TrendingUp, Search, CalendarDays, Landmark } from "lucide-react";
+import { BarChart3, Film, TrendingUp, CalendarDays, Landmark } from "lucide-react";
 import { ComingSoon } from "@/components/ComingSoon";
 
 export function PipelinePage() { return <ComingSoon icon={BarChart3} title="Pipeline CRM" />; }
 export function MediaPage() { return <ComingSoon icon={Film} title="Media Library" />; }
 export function ReportsPage() { return <ComingSoon icon={TrendingUp} title="Report" />; }
-export function RecruitingPage() { return <ComingSoon icon={Search} title="Recruiting" />; }
 export function CalendarPage() { return <ComingSoon icon={CalendarDays} title="Calendario" />; }
 export function FinancePage() { return <ComingSoon icon={Landmark} title="Finanza" />; }
 // SettingsPage moved to dedicated file
