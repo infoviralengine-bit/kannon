@@ -368,6 +368,8 @@ export default function SettingsPage() {
                   <SelectItem value="team">Team</SelectItem>
                   <SelectItem value="creator">Creator</SelectItem>
                   <SelectItem value="client">Client</SelectItem>
+                  <SelectItem value="outreach">Outreach</SelectItem>
+                  <SelectItem value="closer">Closer</SelectItem>
                 </SelectContent>
               </Select>
             </div>
