@@ -117,6 +117,17 @@ export function useUpdateTemplate() {
   });
 }
 
+export function useDeleteTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("outreach_templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["outreach-templates"] }),
+  });
+}
+
 // --- Stats ---
 export function useOutreachStats() {
   const { user, role } = useAuth();
