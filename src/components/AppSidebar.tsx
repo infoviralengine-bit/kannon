@@ -38,11 +38,11 @@ const creatorItems = [
 ];
 
 const altroItems = [
+  { title: "Outreach", url: "/dashboard/outreach", icon: MessageCircle },
   { title: "Pipeline CRM", url: "/dashboard/pipeline", icon: BarChart3 },
   { title: "Media Library", url: "/dashboard/media", icon: Film },
   { title: "Report", url: "/dashboard/reports", icon: TrendingUp },
   { title: "Recruiting", url: "/dashboard/recruiting", icon: Search },
-  { title: "Outreach", url: "/dashboard/outreach", icon: MessageCircle },
   { title: "Calendario", url: "/dashboard/calendar", icon: CalendarDays },
   { title: "Finanza", url: "/dashboard/finance", icon: Landmark },
 ];
