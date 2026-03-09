@@ -30,6 +30,7 @@ export function OutreachMemberView() {
   const toggleAccount = useToggleOutreachAccount();
   const logStats = useLogOutreachStats();
   const updateStat = useUpdateOutreachStat();
+  const deleteStat = useDeleteOutreachStat();
 
   const [newUsername, setNewUsername] = useState("");
   const [addOpen, setAddOpen] = useState(false);
