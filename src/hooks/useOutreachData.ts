@@ -144,9 +144,11 @@ export function useLogOutreachStats() {
       replies_received: number;
       template_id: string | null;
     }) => {
-      const { error } = await supabase.from("outreach_stats").insert(entry);
+      const { error } = await supabase
+        .from("outreach_stats")
+        .upsert(entry, { onConflict: "tiktok_account_id,date,template_id" });
       if (error) {
-        console.error("Insert outreach_stats error:", JSON.stringify(error));
+        console.error("Upsert outreach_stats error:", JSON.stringify(error));
         throw error;
       }
     },
