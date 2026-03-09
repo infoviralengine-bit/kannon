@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Send, MessageSquare, TrendingUp, Smartphone, Pencil, FileText, Copy, Check } from "lucide-react";
+import { Plus, Send, MessageSquare, TrendingUp, Smartphone, Pencil, FileText, Copy, Check, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useOutreachAccounts,
@@ -18,6 +18,7 @@ import {
   useOutreachStats,
   useLogOutreachStats,
   useUpdateOutreachStat,
+  useDeleteOutreachStat,
 } from "@/hooks/useOutreachData";
 import { format } from "date-fns";
 
@@ -29,6 +30,7 @@ export function OutreachMemberView() {
   const toggleAccount = useToggleOutreachAccount();
   const logStats = useLogOutreachStats();
   const updateStat = useUpdateOutreachStat();
+  const deleteStat = useDeleteOutreachStat();
 
   const [newUsername, setNewUsername] = useState("");
   const [addOpen, setAddOpen] = useState(false);
@@ -380,6 +382,20 @@ export function OutreachMemberView() {
                         </button>
                       )}
                       <span className="text-primary font-medium">{rate}%</span>
+                      <button
+                        className="text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                        onClick={() => {
+                          if (confirm("Eliminare questo record?")) {
+                            deleteStat.mutate(s.id, {
+                              onSuccess: () => toast.success("Record eliminato"),
+                              onError: () => toast.error("Errore nell'eliminazione"),
+                            });
+                          }
+                        }}
+                        title="Elimina"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   </div>
                 );
