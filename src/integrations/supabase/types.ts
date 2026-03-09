@@ -820,6 +820,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      owns_tiktok_account: {
+        Args: { _account_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "team" | "creator" | "client" | "outreach" | "closer"
