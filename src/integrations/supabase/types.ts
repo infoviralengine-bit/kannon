@@ -425,6 +425,7 @@ export type Database = {
           dm_sent: number | null
           id: string
           replies_received: number | null
+          template_id: string | null
           tiktok_account_id: string
         }
         Insert: {
@@ -433,6 +434,7 @@ export type Database = {
           dm_sent?: number | null
           id?: string
           replies_received?: number | null
+          template_id?: string | null
           tiktok_account_id: string
         }
         Update: {
@@ -441,9 +443,17 @@ export type Database = {
           dm_sent?: number | null
           id?: string
           replies_received?: number | null
+          template_id?: string | null
           tiktok_account_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "outreach_stats_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "outreach_templates"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "outreach_stats_tiktok_account_id_fkey"
             columns: ["tiktok_account_id"]
@@ -452,6 +462,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      outreach_templates: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
       }
       payment_cycles: {
         Row: {
@@ -631,6 +665,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           last_scraped_at: string | null
+          owner_profile_id: string | null
           username: string
         }
         Insert: {
@@ -641,6 +676,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           last_scraped_at?: string | null
+          owner_profile_id?: string | null
           username: string
         }
         Update: {
@@ -651,6 +687,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           last_scraped_at?: string | null
+          owner_profile_id?: string | null
           username?: string
         }
         Relationships: [
@@ -666,6 +703,13 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tiktok_accounts_owner_profile_id_fkey"
+            columns: ["owner_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -778,7 +822,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "team" | "creator" | "client"
+      app_role: "admin" | "team" | "creator" | "client" | "outreach" | "closer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -906,7 +950,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "team", "creator", "client"],
+      app_role: ["admin", "team", "creator", "client", "outreach", "closer"],
     },
   },
 } as const

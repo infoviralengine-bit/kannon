@@ -64,6 +64,9 @@ export function AppSidebar() {
     .toUpperCase()
     .slice(0, 2) || "?";
 
+  // Outreach role: only show Recruiting
+  const isOutreach = role === "outreach";
+
   const allAltroItems = role === "admin"
     ? [...altroItems, { title: "Impostazioni", url: "/dashboard/settings", icon: Settings }]
     : altroItems;
@@ -97,33 +100,44 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Dashboard - no section label */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            {renderMenuItems([dashboardItem])}
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {isOutreach ? (
+          /* Outreach sees only Recruiting */
+          <SidebarGroup>
+            <SidebarGroupContent>
+              {renderMenuItems([{ title: "Recruiting", url: "/dashboard/recruiting", icon: Search }])}
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : (
+          <>
+            {/* Dashboard - no section label */}
+            <SidebarGroup>
+              <SidebarGroupContent>
+                {renderMenuItems([dashboardItem])}
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Clienti</SidebarGroupLabel>
-          <SidebarGroupContent>
-            {renderMenuItems(clientiItems)}
-          </SidebarGroupContent>
-        </SidebarGroup>
+            <SidebarGroup>
+              <SidebarGroupLabel>Clienti</SidebarGroupLabel>
+              <SidebarGroupContent>
+                {renderMenuItems(clientiItems)}
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Creator</SidebarGroupLabel>
-          <SidebarGroupContent>
-            {renderMenuItems(creatorItems)}
-          </SidebarGroupContent>
-        </SidebarGroup>
+            <SidebarGroup>
+              <SidebarGroupLabel>Creator</SidebarGroupLabel>
+              <SidebarGroupContent>
+                {renderMenuItems(creatorItems)}
+              </SidebarGroupContent>
+            </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Altro</SidebarGroupLabel>
-          <SidebarGroupContent>
-            {renderMenuItems(allAltroItems)}
-          </SidebarGroupContent>
-        </SidebarGroup>
+            <SidebarGroup>
+              <SidebarGroupLabel>Altro</SidebarGroupLabel>
+              <SidebarGroupContent>
+                {renderMenuItems(allAltroItems)}
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-3">

@@ -22,9 +22,10 @@ import PaymentsReceivablePage from "@/pages/dashboard/PaymentsReceivablePage";
 import PaymentsPayablePage from "@/pages/dashboard/PaymentsPayablePage";
 import CampaignDetailPage from "@/pages/dashboard/CampaignDetailPage";
 import {
-  PipelinePage, MediaPage, ReportsPage, RecruitingPage,
+  PipelinePage, MediaPage, ReportsPage,
   CalendarPage, FinancePage
 } from "@/pages/dashboard/ComingSoonPages";
+import RecruitingPage from "@/pages/dashboard/RecruitingPage";
 import ContractsPage from "@/pages/dashboard/ContractsPage";
 import ContractDetailPage from "@/pages/dashboard/ContractDetailPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
@@ -42,9 +43,9 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-            {/* Dashboard routes - admin & team */}
+            {/* Dashboard routes - admin, team & outreach */}
             <Route path="/dashboard" element={
-              <ProtectedRoute allowedRoles={["admin", "team"]}>
+              <ProtectedRoute allowedRoles={["admin", "team", "outreach"]}>
                 <DashboardLayout />
               </ProtectedRoute>
             }>
