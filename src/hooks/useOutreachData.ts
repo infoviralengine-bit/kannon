@@ -181,6 +181,17 @@ export function useUpdateOutreachStat() {
   });
 }
 
+export function useDeleteOutreachStat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("outreach_stats").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["outreach-stats"] }),
+  });
+}
+
 // --- Admin: all accounts with profile names ---
 export function useAllOutreachMembers() {
   const { role } = useAuth();
