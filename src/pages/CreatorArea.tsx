@@ -117,6 +117,11 @@ export default function CreatorArea() {
                     <span className="text-muted-foreground">Fisso {b.fixedEarned ? "✅" : "❌"}</span>
                     <span className="font-medium">{formatCurrency(b.fixedEarned ? b.fixedAmount : 0)}</span>
                   </div>
+                  {!b.fixedEarned && (
+                    <p className="text-xs text-muted-foreground">
+                      Raggiungi la quota mensile per il fisso — Video pubblicati: {b.videoCount}/{b.monthlyTarget}
+                    </p>
+                  )}
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">CPM ({formatCurrency(b.cpmRate)}/1k)</span>
                     <span className="font-medium">{formatCurrency(b.cpmAmount)}</span>
