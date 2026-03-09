@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Send, MessageSquare, TrendingUp, Smartphone, Pencil, FileText, Copy, Check, Trash2 } from "lucide-react";
+import { Plus, Send, MessageSquare, TrendingUp, Smartphone, Pencil, FileText, Copy, Check, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import {
   useOutreachAccounts,
@@ -20,6 +20,7 @@ import {
   useUpdateOutreachStat,
   useDeleteOutreachStat,
 } from "@/hooks/useOutreachData";
+import { useAddCloserLead } from "@/hooks/useCloserData";
 import { format } from "date-fns";
 
 export function OutreachMemberView() {
@@ -31,10 +32,20 @@ export function OutreachMemberView() {
   const logStats = useLogOutreachStats();
   const updateStat = useUpdateOutreachStat();
   const deleteStat = useDeleteOutreachStat();
+  const addLead = useAddCloserLead();
 
   const [newUsername, setNewUsername] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
+  const [leadOpen, setLeadOpen] = useState(false);
+
+  // Lead form state
+  const [leadFirstName, setLeadFirstName] = useState("");
+  const [leadLastName, setLeadLastName] = useState("");
+  const [leadPhone, setLeadPhone] = useState("");
+  const [leadTiktok, setLeadTiktok] = useState("");
+  const [leadCallDate, setLeadCallDate] = useState("");
+  const [leadCallTime, setLeadCallTime] = useState("");
 
   // Log form state
   const [logAccountId, setLogAccountId] = useState("");
@@ -106,6 +117,25 @@ export function OutreachMemberView() {
       setEditReplies("");
     } catch {
       toast.error("Errore nell'aggiornamento");
+    }
+  };
+
+  const handleAddLead = async () => {
+    if (!leadFirstName.trim() || !leadLastName.trim() || !leadCallDate || !leadCallTime) return;
+    try {
+      await addLead.mutateAsync({
+        first_name: leadFirstName.trim(),
+        last_name: leadLastName.trim(),
+        phone: leadPhone.trim() || undefined,
+        tiktok_username: leadTiktok.trim() || undefined,
+        call_datetime: `${leadCallDate}T${leadCallTime}:00`,
+      });
+      toast.success("Lead aggiunto per il closer!");
+      setLeadFirstName(""); setLeadLastName(""); setLeadPhone(""); setLeadTiktok("");
+      setLeadCallDate(""); setLeadCallTime("");
+      setLeadOpen(false);
+    } catch {
+      toast.error("Errore nell'aggiunta del lead");
     }
   };
 
@@ -231,6 +261,54 @@ export function OutreachMemberView() {
               </div>
               <Button onClick={handleAddAccount} disabled={!newUsername.trim()} className="w-full">
                 Aggiungi
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={leadOpen} onOpenChange={setLeadOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm"><UserPlus className="h-4 w-4 mr-1" /> Aggiungi Lead</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nuovo lead per il closer</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Nome *</Label>
+                  <Input value={leadFirstName} onChange={e => setLeadFirstName(e.target.value)} placeholder="Mario" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Cognome *</Label>
+                  <Input value={leadLastName} onChange={e => setLeadLastName(e.target.value)} placeholder="Rossi" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Telefono</Label>
+                <Input value={leadPhone} onChange={e => setLeadPhone(e.target.value)} placeholder="+39..." />
+              </div>
+              <div className="space-y-2">
+                <Label>Username TikTok</Label>
+                <Input value={leadTiktok} onChange={e => setLeadTiktok(e.target.value)} placeholder="username" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Data call *</Label>
+                  <Input type="date" value={leadCallDate} onChange={e => setLeadCallDate(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Ora call *</Label>
+                  <Input type="time" value={leadCallTime} onChange={e => setLeadCallTime(e.target.value)} />
+                </div>
+              </div>
+              <Button
+                onClick={handleAddLead}
+                disabled={!leadFirstName.trim() || !leadLastName.trim() || !leadCallDate || !leadCallTime}
+                className="w-full"
+              >
+                Aggiungi Lead
               </Button>
             </div>
           </DialogContent>

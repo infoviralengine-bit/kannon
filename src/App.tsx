@@ -30,6 +30,7 @@ import OutreachManagementPage from "@/pages/dashboard/OutreachManagementPage";
 import ContractsPage from "@/pages/dashboard/ContractsPage";
 import ContractDetailPage from "@/pages/dashboard/ContractDetailPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
+import CloserPage from "@/pages/dashboard/CloserPage";
 
 const queryClient = new QueryClient();
 
@@ -46,7 +47,7 @@ const App = () => (
 
             {/* Dashboard routes - admin, team & outreach */}
             <Route path="/dashboard" element={
-              <ProtectedRoute allowedRoles={["admin", "team", "outreach"]}>
+              <ProtectedRoute allowedRoles={["admin", "team", "outreach", "closer"]}>
                 <DashboardLayout />
               </ProtectedRoute>
             }>
@@ -69,6 +70,7 @@ const App = () => (
               <Route path="contracts/:id" element={<ContractDetailPage />} />
               <Route path="calendar" element={<CalendarPage />} />
               <Route path="finance" element={<FinancePage />} />
+              <Route path="closer" element={<CloserPage />} />
               <Route path="settings" element={<SettingsPage />} />
               {/* Redirect old payments route */}
               <Route path="payments" element={<Navigate to="/dashboard/payments-receivable" replace />} />

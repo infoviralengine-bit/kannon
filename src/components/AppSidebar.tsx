@@ -1,7 +1,7 @@
 import {
   Globe, Megaphone, Users, Smartphone, Wallet, CreditCard,
   BarChart3, Film, TrendingUp, Search, FileText, MessageCircle,
-  CalendarDays, Landmark, Settings, LogOut, ArrowDownCircle, ArrowUpCircle
+  CalendarDays, Landmark, Settings, LogOut, ArrowDownCircle, ArrowUpCircle, PhoneCall
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -39,6 +39,7 @@ const creatorItems = [
 
 const altroItems = [
   { title: "Outreach", url: "/dashboard/outreach", icon: MessageCircle },
+  { title: "Closer", url: "/dashboard/closer", icon: PhoneCall },
   { title: "Pipeline CRM", url: "/dashboard/pipeline", icon: BarChart3 },
   { title: "Media Library", url: "/dashboard/media", icon: Film },
   { title: "Report", url: "/dashboard/reports", icon: TrendingUp },
@@ -67,6 +68,7 @@ export function AppSidebar() {
 
   // Outreach role: only show Recruiting
   const isOutreach = role === "outreach";
+  const isCloser = role === "closer";
 
   const allAltroItems = role === "admin"
     ? [...altroItems, { title: "Impostazioni", url: "/dashboard/settings", icon: Settings }]
@@ -106,6 +108,13 @@ export function AppSidebar() {
           <SidebarGroup>
             <SidebarGroupContent>
               {renderMenuItems([{ title: "Recruiting", url: "/dashboard/recruiting", icon: Search }])}
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : isCloser ? (
+          /* Closer sees only Closer page */
+          <SidebarGroup>
+            <SidebarGroupContent>
+              {renderMenuItems([{ title: "Closer", url: "/dashboard/closer", icon: PhoneCall }])}
             </SidebarGroupContent>
           </SidebarGroup>
         ) : (
