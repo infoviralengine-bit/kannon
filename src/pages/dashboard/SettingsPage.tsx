@@ -24,6 +24,8 @@ const ROLE_COLORS: Record<string, string> = {
   team: "bg-blue-600/20 text-blue-400 border-blue-600/30",
   creator: "bg-green-600/20 text-green-400 border-green-600/30",
   client: "bg-orange-600/20 text-orange-400 border-orange-600/30",
+  outreach: "bg-teal-600/20 text-teal-400 border-teal-600/30",
+  closer: "bg-pink-600/20 text-pink-400 border-pink-600/30",
 };
 
 export default function SettingsPage() {
@@ -366,6 +368,8 @@ export default function SettingsPage() {
                   <SelectItem value="team">Team</SelectItem>
                   <SelectItem value="creator">Creator</SelectItem>
                   <SelectItem value="client">Client</SelectItem>
+                  <SelectItem value="outreach">Outreach</SelectItem>
+                  <SelectItem value="closer">Closer</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -422,6 +426,8 @@ export default function SettingsPage() {
                   <SelectItem value="team">Team</SelectItem>
                   <SelectItem value="creator">Creator</SelectItem>
                   <SelectItem value="client">Client</SelectItem>
+                  <SelectItem value="outreach">Outreach</SelectItem>
+                  <SelectItem value="closer">Closer</SelectItem>
                 </SelectContent>
               </Select>
             </div>
