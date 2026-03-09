@@ -103,24 +103,37 @@ export default function CreatorArea() {
           </Card>
         </div>
 
-        {/* Payoff with progress bar */}
+        {/* Payoff per contratto */}
         <Card>
           <CardHeader><CardTitle className="text-lg">Payoff mese corrente</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Fisso</span>
-              <span className="font-semibold">{formatCurrency(data.creatorFixed)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">CPM maturato</span>
-              <span className="font-semibold">{formatCurrency(data.cpmAmount)}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {formatViews(data.monthViews)} views × {formatCurrency(data.creatorCpm)} / 1.000 = {formatCurrency(data.cpmAmount)}
-            </p>
+          <CardContent className="space-y-4">
+            {!data.contractBreakdowns.length ? (
+              <p className="text-sm text-muted-foreground">Nessun contratto attivo</p>
+            ) : (
+              data.contractBreakdowns.map((b) => (
+                <div key={b.contractId} className="space-y-2 border-b border-border pb-4 last:border-0 last:pb-0">
+                  <h3 className="font-medium text-sm text-primary">{b.contractName}</h3>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Fisso {b.fixedEarned ? "✅" : "❌"}</span>
+                    <span className="font-medium">{formatCurrency(b.fixedEarned ? b.fixedAmount : 0)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">CPM ({formatCurrency(b.cpmRate)}/1k)</span>
+                    <span className="font-medium">{formatCurrency(b.cpmAmount)}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Video: {b.videoCount}/{b.monthlyTarget} · Views: {formatViews(b.totalViews)}
+                  </p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">Subtotale</span>
+                    <span className="font-semibold">{formatCurrency(b.subtotal)}</span>
+                  </div>
+                </div>
+              ))
+            )}
             <div className="flex items-center justify-between border-t border-border pt-3">
               <span className="font-semibold">Totale stimato</span>
-              <span className="text-xl font-bold">{formatCurrency(data.total)}</span>
+              <span className="text-xl font-bold">{formatCurrency(data.totalPayoff)}</span>
             </div>
             <p className="text-xs text-muted-foreground">Il payoff finale viene calcolato a fine mese</p>
           </CardContent>
