@@ -161,7 +161,7 @@ export function useAllOutreachMembers() {
       const { data: accounts, error } = await supabase
         .from("tiktok_accounts")
         .select("id, username, is_active, owner_profile_id")
-        .eq("account_type", "Outreach")
+        .eq("account_type", "outreach")
         .order("username");
       if (error) throw error;
 
