@@ -120,6 +120,25 @@ export function OutreachMemberView() {
     }
   };
 
+  const handleAddLead = async () => {
+    if (!leadFirstName.trim() || !leadLastName.trim() || !leadCallDate || !leadCallTime) return;
+    try {
+      await addLead.mutateAsync({
+        first_name: leadFirstName.trim(),
+        last_name: leadLastName.trim(),
+        phone: leadPhone.trim() || undefined,
+        tiktok_username: leadTiktok.trim() || undefined,
+        call_datetime: `${leadCallDate}T${leadCallTime}:00`,
+      });
+      toast.success("Lead aggiunto per il closer!");
+      setLeadFirstName(""); setLeadLastName(""); setLeadPhone(""); setLeadTiktok("");
+      setLeadCallDate(""); setLeadCallTime("");
+      setLeadOpen(false);
+    } catch {
+      toast.error("Errore nell'aggiunta del lead");
+    }
+  };
+
   const handleCopyTemplate = (content: string, id: string) => {
     navigator.clipboard.writeText(content);
     setCopiedId(id);
