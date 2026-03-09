@@ -192,24 +192,41 @@ export function OutreachAdminView() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Performance Template</CardTitle>
+          <p className="text-xs text-muted-foreground">Confronta l'efficacia di ogni template in base al tasso di risposta</p>
         </CardHeader>
         <CardContent>
           {templateStats.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nessun dato disponibile.</p>
           ) : (
-            <div className="space-y-2">
-              {templateStats.map((t, i) => (
-                <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg bg-secondary/30">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={i === 0 ? "default" : "secondary"} className="text-xs">{t.name}</Badge>
+            <div className="space-y-3">
+              {templateStats.map((t, i) => {
+                const maxRate = templateStats[0]?.rate ?? 0;
+                const barWidth = maxRate > 0 ? (t.rate / maxRate) * 100 : 0;
+                return (
+                  <div key={i} className={`py-3 px-4 rounded-lg border ${i === 0 && t.rate > 0 ? "border-primary/40 bg-primary/5" : "border-border bg-secondary/30"}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {i === 0 && t.rate > 0 && <span className="text-sm">🏆</span>}
+                        <Badge variant={i === 0 ? "default" : "secondary"} className="text-xs">{t.name}</Badge>
+                        {i === 0 && t.rate > 0 && (
+                          <span className="text-[10px] font-medium text-primary uppercase tracking-wider">Migliore</span>
+                        )}
+                      </div>
+                      <span className="text-lg font-bold text-primary">{t.rate.toFixed(1)}%</span>
+                    </div>
+                    <div className="w-full bg-secondary/50 rounded-full h-2 mb-2">
+                      <div
+                        className={`h-2 rounded-full transition-all ${i === 0 && t.rate > 0 ? "bg-primary" : "bg-muted-foreground/40"}`}
+                        style={{ width: `${barWidth}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span>{t.dm.toLocaleString()} DM inviati</span>
+                      <span>{t.replies.toLocaleString()} risposte ricevute</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="text-foreground">{t.dm.toLocaleString()} DM</span>
-                    <span className="text-foreground">{t.replies.toLocaleString()} risposte</span>
-                    <span className="text-primary font-medium">{t.rate.toFixed(1)}%</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
