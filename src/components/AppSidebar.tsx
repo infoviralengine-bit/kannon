@@ -1,7 +1,7 @@
 import {
   Globe, Megaphone, Users, Smartphone, Wallet, CreditCard,
   BarChart3, Film, TrendingUp, Search, FileText, MessageCircle,
-  CalendarDays, Landmark, Settings, LogOut, ArrowDownCircle, ArrowUpCircle
+  CalendarDays, Landmark, Settings, LogOut, ArrowDownCircle, ArrowUpCircle, PhoneCall
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
