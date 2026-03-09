@@ -114,6 +114,21 @@ export function OutreachTemplatesAdmin() {
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(tpl)}>
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={() => {
+                    if (confirm(`Eliminare il template "${tpl.name}"?`)) {
+                      deleteTemplate.mutate(tpl.id, {
+                        onSuccess: () => toast.success("Template eliminato"),
+                        onError: () => toast.error("Errore nell'eliminazione"),
+                      });
+                    }
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
                 <Switch
                   checked={tpl.is_active}
                   onCheckedChange={(checked) => updateTemplate.mutate({ id: tpl.id, is_active: checked })}
