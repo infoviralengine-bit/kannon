@@ -110,31 +110,56 @@ export default function CreatorArea() {
             {!data.contractBreakdowns.length ? (
               <p className="text-sm text-muted-foreground">Nessun contratto attivo</p>
             ) : (
-              data.contractBreakdowns.map((b) => (
-                <div key={b.contractId} className="space-y-2 border-b border-border pb-4 last:border-0 last:pb-0">
-                  <h3 className="font-medium text-sm text-primary">{b.contractName}</h3>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Fisso {b.fixedEarned ? "✅" : "❌"}</span>
-                    <span className="font-medium">{formatCurrency(b.fixedEarned ? b.fixedAmount : 0)}</span>
+              data.contractBreakdowns.map((b) => {
+                const hasFixed = b.fixedAmount > 0;
+                return (
+                  <div key={b.contractId} className="rounded-lg border border-border/60 p-4 space-y-3">
+                    <h3 className="font-semibold text-primary">{b.contractName}</h3>
+
+                    {hasFixed && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-foreground">Compenso fisso</span>
+                          <span className="font-semibold">{formatCurrency(b.fixedAmount)}</span>
+                        </div>
+                        {b.fixedEarned ? (
+                          <p className="text-xs text-green-500">✓ Quota raggiunta — fisso maturato</p>
+                        ) : (
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">
+                              Pubblica {b.monthlyTarget} video nel mese per maturare il fisso
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                                <div
+                                  className="h-full rounded-full bg-primary transition-all"
+                                  style={{ width: `${Math.min(100, b.monthlyTarget > 0 ? (b.videoCount / b.monthlyTarget) * 100 : 0)}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-muted-foreground font-medium">{b.videoCount}/{b.monthlyTarget}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-foreground">CPM</span>
+                        <span className="font-semibold">{formatCurrency(b.cpmAmount)}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {formatViews(b.totalViews)} views × {formatCurrency(b.cpmRate)}/1k
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm border-t border-border/40 pt-2">
+                      <span className="font-medium">Subtotale</span>
+                      <span className="font-bold">{formatCurrency(b.subtotal)}</span>
+                    </div>
                   </div>
-                  {!b.fixedEarned && (
-                    <p className="text-xs text-muted-foreground">
-                      Raggiungi la quota mensile per il fisso — Video pubblicati: {b.videoCount}/{b.monthlyTarget}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">CPM ({formatCurrency(b.cpmRate)}/1k)</span>
-                    <span className="font-medium">{formatCurrency(b.cpmAmount)}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Video: {b.videoCount}/{b.monthlyTarget} · Views: {formatViews(b.totalViews)}
-                  </p>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">Subtotale</span>
-                    <span className="font-semibold">{formatCurrency(b.subtotal)}</span>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
             <div className="flex items-center justify-between border-t border-border pt-3">
               <span className="font-semibold">Totale stimato</span>
