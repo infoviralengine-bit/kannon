@@ -333,10 +333,78 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* SECTION 3 — SCRAPING LOGS */}
+      {/* SECTION 3 — CALENDLY WEBHOOK */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Webhook className="h-5 w-5 text-primary" />
+            <div>
+              <CardTitle className="text-lg">Calendly Webhook</CardTitle>
+              <CardDescription>Configura il webhook per ricevere automaticamente le prenotazioni Calendly nella sezione Closer.</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Webhook URL</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  readOnly
+                  value={`https://ceknjgwzxexxzckcqjmq.supabase.co/functions/v1/calendly-webhook`}
+                  className="font-mono text-xs"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`https://ceknjgwzxexxzckcqjmq.supabase.co/functions/v1/calendly-webhook`);
+                    toast({ title: "URL copiato" });
+                  }}
+                >
+                  Copia
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Incolla questo URL nella configurazione webhook di Calendly.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Webhook Signing Key (opzionale)</Label>
+              <Input
+                type="password"
+                value={settings.calendly_webhook_secret || ""}
+                onChange={(e) => setSettings({ ...settings, calendly_webhook_secret: e.target.value })}
+                placeholder="Inserisci il signing key di Calendly"
+              />
+              <p className="text-xs text-muted-foreground">Trova il signing key nelle impostazioni webhook di Calendly per validare le richieste.</p>
+            </div>
+            <Button
+              onClick={async () => {
+                try {
+                  const val = (settings.calendly_webhook_secret || "").trim();
+                  if (val) {
+                    // Upsert the setting
+                    const { error } = await supabase.from("settings").upsert(
+                      { key: "calendly_webhook_secret", value: val, updated_at: new Date().toISOString() },
+                      { onConflict: "key" }
+                    );
+                    if (error) throw error;
+                  }
+                  toast({ title: "Configurazione Calendly salvata" });
+                } catch (e: any) {
+                  toast({ title: "Errore", description: e.message, variant: "destructive" });
+                }
+              }}
+            >
+              Salva
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* SECTION 4 — SCRAPING LOGS */}
       <ScrapingLogsSection />
 
-      {/* SECTION 4 — SYSTEM TEST */}
+      {/* SECTION 5 — SYSTEM TEST */}
       <SystemTest />
 
       {/* NEW USER MODAL */}

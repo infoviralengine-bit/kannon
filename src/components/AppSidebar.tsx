@@ -39,6 +39,7 @@ const creatorItems = [
 
 const altroItems = [
   { title: "Outreach", url: "/dashboard/outreach", icon: MessageCircle },
+  { title: "Closer", url: "/dashboard/closer", icon: PhoneCall },
   { title: "Pipeline CRM", url: "/dashboard/pipeline", icon: BarChart3 },
   { title: "Media Library", url: "/dashboard/media", icon: Film },
   { title: "Report", url: "/dashboard/reports", icon: TrendingUp },
