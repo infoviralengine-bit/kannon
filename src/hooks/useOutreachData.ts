@@ -151,6 +151,20 @@ export function useLogOutreachStats() {
   });
 }
 
+export function useUpdateOutreachStat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, replies_received }: { id: string; replies_received: number }) => {
+      const { error } = await supabase
+        .from("outreach_stats")
+        .update({ replies_received })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["outreach-stats"] }),
+  });
+}
+
 // --- Admin: all accounts with profile names ---
 export function useAllOutreachMembers() {
   const { role } = useAuth();
