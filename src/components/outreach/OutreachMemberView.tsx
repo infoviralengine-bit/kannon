@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Send, MessageSquare, TrendingUp, Smartphone, Pencil, FileText, Copy, Check, Trash2 } from "lucide-react";
+import { Plus, Send, MessageSquare, TrendingUp, Smartphone, Pencil, FileText, Copy, Check, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import {
   useOutreachAccounts,
@@ -20,6 +20,7 @@ import {
   useUpdateOutreachStat,
   useDeleteOutreachStat,
 } from "@/hooks/useOutreachData";
+import { useAddCloserLead } from "@/hooks/useCloserData";
 import { format } from "date-fns";
 
 export function OutreachMemberView() {
