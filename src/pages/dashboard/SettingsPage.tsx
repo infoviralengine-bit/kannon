@@ -53,8 +53,8 @@ export default function SettingsPage() {
   // Delete user
   const [deletingUser, setDeletingUser] = useState<AppUser | null>(null);
 
-  // Saving flags
   const [savingApify, setSavingApify] = useState(false);
+  const [connectingCalendly, setConnectingCalendly] = useState(false);
 
   useEffect(() => {
     if (role !== null && role !== "admin") {
