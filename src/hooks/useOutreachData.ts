@@ -145,7 +145,10 @@ export function useLogOutreachStats() {
       template_id: string | null;
     }) => {
       const { error } = await supabase.from("outreach_stats").insert(entry);
-      if (error) throw error;
+      if (error) {
+        console.error("Insert outreach_stats error:", JSON.stringify(error));
+        throw error;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["outreach-stats"] }),
   });
