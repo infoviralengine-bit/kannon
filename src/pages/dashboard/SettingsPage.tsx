@@ -333,21 +333,43 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* SECTION 3 — CALENDLY WEBHOOK */}
+      {/* SECTION 3 — CALENDLY */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
             <Webhook className="h-5 w-5 text-primary" />
             <div>
-              <CardTitle className="text-lg">Calendly Webhook</CardTitle>
-              <CardDescription>Configura il webhook per ricevere automaticamente le prenotazioni Calendly nella sezione Closer.</CardDescription>
+              <CardTitle className="text-lg">Calendly</CardTitle>
+              <CardDescription>Connetti Calendly per ricevere automaticamente le prenotazioni nella sezione Closer.</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Webhook URL</Label>
+              <Label>Personal Access Token Calendly</Label>
+              <Input
+                type="password"
+                value={settings.calendly_pat || ""}
+                onChange={(e) => setSettings({ ...settings, calendly_pat: e.target.value })}
+                placeholder="Inserisci il tuo Personal Access Token"
+              />
+              <p className="text-xs text-muted-foreground">
+                Ottienilo da{" "}
+                <a href="https://calendly.com/integrations/api_webhooks" target="_blank" rel="noopener noreferrer" className="underline text-primary">
+                  Calendly → Integrazioni → API & Webhooks
+                </a>
+              </p>
+            </div>
+
+            {settings.calendly_connected === "true" && (
+              <div className="flex items-center gap-2 rounded-md border border-green-600/30 bg-green-600/10 px-3 py-2 text-sm text-green-400">
+                ✅ Calendly connesso — webhook attivo
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>Webhook URL (configurato automaticamente)</Label>
               <div className="flex items-center gap-2">
                 <Input
                   readOnly
@@ -365,37 +387,39 @@ export default function SettingsPage() {
                   Copia
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">Incolla questo URL nella configurazione webhook di Calendly.</p>
             </div>
-            <div className="space-y-2">
-              <Label>Webhook Signing Key (opzionale)</Label>
-              <Input
-                type="password"
-                value={settings.calendly_webhook_secret || ""}
-                onChange={(e) => setSettings({ ...settings, calendly_webhook_secret: e.target.value })}
-                placeholder="Inserisci il signing key di Calendly"
-              />
-              <p className="text-xs text-muted-foreground">Trova il signing key nelle impostazioni webhook di Calendly per validare le richieste.</p>
-            </div>
+
             <Button
+              disabled={connectingCalendly}
               onClick={async () => {
+                const pat = (settings.calendly_pat || "").trim();
+                if (!pat || pat.length < 10) {
+                  toast({ title: "Inserisci un token valido", variant: "destructive" });
+                  return;
+                }
+                setConnectingCalendly(true);
                 try {
-                  const val = (settings.calendly_webhook_secret || "").trim();
-                  if (val) {
-                    // Upsert the setting
-                    const { error } = await supabase.from("settings").upsert(
-                      { key: "calendly_webhook_secret", value: val, updated_at: new Date().toISOString() },
-                      { onConflict: "key" }
-                    );
-                    if (error) throw error;
-                  }
-                  toast({ title: "Configurazione Calendly salvata" });
+                  const { data, error } = await supabase.functions.invoke("connect-calendly", {
+                    body: { personal_access_token: pat },
+                  });
+                  if (error) throw new Error(error.message);
+                  if (data?.error) throw new Error(data.error);
+
+                  // Mark as connected in settings
+                  await supabase.from("settings").upsert(
+                    { key: "calendly_connected", value: "true", updated_at: new Date().toISOString() },
+                    { onConflict: "key" }
+                  );
+                  setSettings({ ...settings, calendly_connected: "true" });
+
+                  toast({ title: data?.message || "Calendly connesso ✅" });
                 } catch (e: any) {
                   toast({ title: "Errore", description: e.message, variant: "destructive" });
                 }
+                setConnectingCalendly(false);
               }}
             >
-              Salva
+              {connectingCalendly ? "Connessione in corso..." : "Connetti Calendly"}
             </Button>
           </div>
         </CardContent>
