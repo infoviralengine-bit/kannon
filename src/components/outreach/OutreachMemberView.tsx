@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Send, MessageSquare, TrendingUp, Smartphone } from "lucide-react";
+import { Plus, Send, MessageSquare, TrendingUp, Smartphone, Pencil, FileText, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import {
   useOutreachAccounts,
@@ -17,6 +17,7 @@ import {
   useOutreachTemplates,
   useOutreachStats,
   useLogOutreachStats,
+  useUpdateOutreachStat,
 } from "@/hooks/useOutreachData";
 import { format } from "date-fns";
 
@@ -27,6 +28,7 @@ export function OutreachMemberView() {
   const addAccount = useAddOutreachAccount();
   const toggleAccount = useToggleOutreachAccount();
   const logStats = useLogOutreachStats();
+  const updateStat = useUpdateOutreachStat();
 
   const [newUsername, setNewUsername] = useState("");
   const [addOpen, setAddOpen] = useState(false);
@@ -38,6 +40,13 @@ export function OutreachMemberView() {
   const [logDate, setLogDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [logDmSent, setLogDmSent] = useState("");
   const [logReplies, setLogReplies] = useState("");
+
+  // Edit replies state
+  const [editStatId, setEditStatId] = useState<string | null>(null);
+  const [editReplies, setEditReplies] = useState("");
+
+  // Copied template state
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Filters
   const [filterAccount, setFilterAccount] = useState<string>("all");
@@ -76,7 +85,7 @@ export function OutreachMemberView() {
         date: logDate,
         dm_sent: Number(logDmSent),
         replies_received: Number(logReplies) || 0,
-        template_id: logTemplateId || null,
+        template_id: logTemplateId && logTemplateId !== "none" ? logTemplateId : null,
       });
       toast.success("Dati registrati");
       setLogDmSent("");
@@ -85,6 +94,24 @@ export function OutreachMemberView() {
     } catch {
       toast.error("Errore nella registrazione");
     }
+  };
+
+  const handleEditReplies = async (statId: string) => {
+    try {
+      await updateStat.mutateAsync({ id: statId, replies_received: Number(editReplies) || 0 });
+      toast.success("Risposte aggiornate");
+      setEditStatId(null);
+      setEditReplies("");
+    } catch {
+      toast.error("Errore nell'aggiornamento");
+    }
+  };
+
+  const handleCopyTemplate = (content: string, id: string) => {
+    navigator.clipboard.writeText(content);
+    setCopiedId(id);
+    toast.success("Template copiato!");
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   return (
@@ -262,6 +289,44 @@ export function OutreachMemberView() {
         </CardContent>
       </Card>
 
+      {/* Templates Section */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Template messaggi
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {templates.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nessun template disponibile. L'admin deve crearne alcuni.</p>
+          ) : (
+            <div className="space-y-3">
+              {templates.map(tpl => (
+                <div key={tpl.id} className="py-3 px-4 rounded-lg bg-secondary/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground">{tpl.name}</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => handleCopyTemplate(tpl.content, tpl.id)}
+                    >
+                      {copiedId === tpl.id ? (
+                        <><Check className="h-3 w-3 mr-1" /> Copiato</>
+                      ) : (
+                        <><Copy className="h-3 w-3 mr-1" /> Copia</>
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground whitespace-pre-wrap">{tpl.content || "Nessun contenuto"}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Recent Activity */}
       <Card>
         <CardHeader className="pb-3">
@@ -276,6 +341,7 @@ export function OutreachMemberView() {
                 const acc = accounts.find(a => a.id === s.tiktok_account_id);
                 const tpl = templates.find(t => t.id === s.template_id);
                 const rate = s.dm_sent > 0 ? ((s.replies_received / s.dm_sent) * 100).toFixed(0) : "0";
+                const isEditing = editStatId === s.id;
                 return (
                   <div key={s.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-secondary/30">
                     <div className="flex items-center gap-3">
@@ -283,9 +349,36 @@ export function OutreachMemberView() {
                       <span className="text-sm text-foreground">@{acc?.username ?? "?"}</span>
                       {tpl && <Badge variant="outline" className="text-xs">{tpl.name}</Badge>}
                     </div>
-                    <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-3 text-sm">
                       <span className="text-foreground">{s.dm_sent} DM</span>
-                      <span className="text-foreground">{s.replies_received} risposte</span>
+                      {isEditing ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="number"
+                            min="0"
+                            value={editReplies}
+                            onChange={e => setEditReplies(e.target.value)}
+                            className="w-16 h-7 text-xs"
+                            autoFocus
+                            onKeyDown={e => {
+                              if (e.key === "Enter") handleEditReplies(s.id);
+                              if (e.key === "Escape") setEditStatId(null);
+                            }}
+                          />
+                          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => handleEditReplies(s.id)}>
+                            <Check className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <button
+                          className="flex items-center gap-1 text-foreground hover:text-primary transition-colors cursor-pointer"
+                          onClick={() => { setEditStatId(s.id); setEditReplies(String(s.replies_received)); }}
+                          title="Modifica risposte"
+                        >
+                          {s.replies_received} risposte
+                          <Pencil className="h-3 w-3 opacity-50" />
+                        </button>
+                      )}
                       <span className="text-primary font-medium">{rate}%</span>
                     </div>
                   </div>
