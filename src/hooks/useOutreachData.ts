@@ -51,7 +51,7 @@ export function useAddOutreachAccount() {
     mutationFn: async (username: string) => {
       const { error } = await supabase.from("tiktok_accounts").insert({
         username,
-        account_type: "Outreach",
+        account_type: "outreach",
         owner_profile_id: user!.id,
       });
       if (error) {
