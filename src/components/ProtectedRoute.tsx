@@ -29,7 +29,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   if (role === "outreach" && !window.location.pathname.startsWith("/dashboard/recruiting")) {
     return <Navigate to="/dashboard/recruiting" replace />;
   }
-  if (role === "closer" && !window.location.pathname.startsWith("/dashboard/closer")) {
+  if (role === "closer" && !window.location.pathname.startsWith("/dashboard/closer") && !window.location.pathname.startsWith("/dashboard")) {
     return <Navigate to="/dashboard/closer" replace />;
   }
   if ((role === "admin" || role === "team") && (window.location.pathname === "/" || window.location.pathname === "/login")) {

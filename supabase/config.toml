@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.scrape-tiktok]
 verify_jwt = false
+
+[functions.calendly-webhook]
+verify_jwt = false
