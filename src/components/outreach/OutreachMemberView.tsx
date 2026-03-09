@@ -18,6 +18,7 @@ import {
   useOutreachStats,
   useLogOutreachStats,
   useUpdateOutreachStat,
+  useDeleteOutreachStat,
 } from "@/hooks/useOutreachData";
 import { format } from "date-fns";
 
