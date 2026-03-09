@@ -109,6 +109,13 @@ export function AppSidebar() {
               {renderMenuItems([{ title: "Recruiting", url: "/dashboard/recruiting", icon: Search }])}
             </SidebarGroupContent>
           </SidebarGroup>
+        ) : isCloser ? (
+          /* Closer sees only Closer page */
+          <SidebarGroup>
+            <SidebarGroupContent>
+              {renderMenuItems([{ title: "Closer", url: "/dashboard/closer", icon: PhoneCall }])}
+            </SidebarGroupContent>
+          </SidebarGroup>
         ) : (
           <>
             {/* Dashboard - no section label */}
