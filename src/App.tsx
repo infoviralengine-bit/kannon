@@ -42,9 +42,9 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-            {/* Dashboard routes - admin & team */}
+            {/* Dashboard routes - admin, team & outreach */}
             <Route path="/dashboard" element={
-              <ProtectedRoute allowedRoles={["admin", "team"]}>
+              <ProtectedRoute allowedRoles={["admin", "team", "outreach"]}>
                 <DashboardLayout />
               </ProtectedRoute>
             }>
