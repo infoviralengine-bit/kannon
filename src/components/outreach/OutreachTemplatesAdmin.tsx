@@ -15,6 +15,7 @@ export function OutreachTemplatesAdmin() {
   const { data: templates = [], isLoading } = useOutreachTemplates(true);
   const addTemplate = useAddTemplate();
   const updateTemplate = useUpdateTemplate();
+  const deleteTemplate = useDeleteTemplate();
 
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
