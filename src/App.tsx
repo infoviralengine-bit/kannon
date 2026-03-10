@@ -45,6 +45,8 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/onboarding/completed" element={<OnboardingCompleted />} />
+            <Route path="/onboarding/:token" element={<OnboardingPage />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
             {/* Dashboard routes - admin, team & outreach */}
