@@ -21,7 +21,7 @@ import {
   useUpdateOutreachStat,
   useDeleteOutreachStat,
 } from "@/hooks/useOutreachData";
-import { useAddCloserLead } from "@/hooks/useCloserData";
+import { useAddCloserLead, useMyLeads } from "@/hooks/useCloserData";
 import { format } from "date-fns";
 
 export function OutreachMemberView() {
