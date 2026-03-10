@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Phone, CheckCircle, XCircle, Link as LinkIcon, Copy, Clock, Calendar,
   MessageCircle, Video, ExternalLink, HelpCircle, Pencil, ChevronDown,
-  Mail, AtSign, StickyNote, User,
+  Mail, AtSign, StickyNote, User, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
