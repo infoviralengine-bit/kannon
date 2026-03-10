@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,10 +43,14 @@ export function OutreachMemberView() {
   // Lead form state
   const [leadFirstName, setLeadFirstName] = useState("");
   const [leadLastName, setLeadLastName] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
   const [leadTiktok, setLeadTiktok] = useState("");
   const [leadCallDate, setLeadCallDate] = useState("");
   const [leadCallTime, setLeadCallTime] = useState("");
+  const [leadChannel, setLeadChannel] = useState("whatsapp");
+  const [leadMeetLink, setLeadMeetLink] = useState("");
+  const [leadNotes, setLeadNotes] = useState("");
 
   // Log form state
   const [logAccountId, setLogAccountId] = useState("");
@@ -122,17 +127,25 @@ export function OutreachMemberView() {
 
   const handleAddLead = async () => {
     if (!leadFirstName.trim() || !leadLastName.trim() || !leadCallDate || !leadCallTime) return;
+    if (!leadEmail.trim() && !leadPhone.trim()) {
+      toast.error("Inserisci almeno email o telefono");
+      return;
+    }
     try {
       await addLead.mutateAsync({
         first_name: leadFirstName.trim(),
         last_name: leadLastName.trim(),
+        email: leadEmail.trim() || undefined,
         phone: leadPhone.trim() || undefined,
         tiktok_username: leadTiktok.trim() || undefined,
         call_datetime: `${leadCallDate}T${leadCallTime}:00`,
+        call_channel: leadChannel,
+        meet_link: leadChannel === "google_meet" ? leadMeetLink.trim() || undefined : undefined,
+        notes: leadNotes.trim() || undefined,
       });
       toast.success("Lead aggiunto per il closer!");
-      setLeadFirstName(""); setLeadLastName(""); setLeadPhone(""); setLeadTiktok("");
-      setLeadCallDate(""); setLeadCallTime("");
+      setLeadFirstName(""); setLeadLastName(""); setLeadEmail(""); setLeadPhone(""); setLeadTiktok("");
+      setLeadCallDate(""); setLeadCallTime(""); setLeadChannel("whatsapp"); setLeadMeetLink(""); setLeadNotes("");
       setLeadOpen(false);
     } catch {
       toast.error("Errore nell'aggiunta del lead");
@@ -286,13 +299,20 @@ export function OutreachMemberView() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Telefono</Label>
-                <Input value={leadPhone} onChange={e => setLeadPhone(e.target.value)} placeholder="+39..." />
-              </div>
-              <div className="space-y-2">
                 <Label>Username TikTok</Label>
                 <Input value={leadTiktok} onChange={e => setLeadTiktok(e.target.value)} placeholder="username" />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input type="email" value={leadEmail} onChange={e => setLeadEmail(e.target.value)} placeholder="email@esempio.com" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Telefono</Label>
+                  <Input value={leadPhone} onChange={e => setLeadPhone(e.target.value)} placeholder="+39..." />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground -mt-2">Almeno uno tra email e telefono è obbligatorio</p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Data call *</Label>
@@ -303,9 +323,30 @@ export function OutreachMemberView() {
                   <Input type="time" value={leadCallTime} onChange={e => setLeadCallTime(e.target.value)} />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label>Canale call *</Label>
+                <Select value={leadChannel} onValueChange={setLeadChannel}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                    <SelectItem value="google_meet">Google Meet</SelectItem>
+                    <SelectItem value="phone">Telefonata</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {leadChannel === "google_meet" && (
+                <div className="space-y-2">
+                  <Label>Link Google Meet</Label>
+                  <Input value={leadMeetLink} onChange={e => setLeadMeetLink(e.target.value)} placeholder="https://meet.google.com/..." />
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label>Note</Label>
+                <Textarea value={leadNotes} onChange={e => setLeadNotes(e.target.value)} placeholder="Note aggiuntive..." rows={2} />
+              </div>
               <Button
                 onClick={handleAddLead}
-                disabled={!leadFirstName.trim() || !leadLastName.trim() || !leadCallDate || !leadCallTime}
+                disabled={!leadFirstName.trim() || !leadLastName.trim() || !leadCallDate || !leadCallTime || (!leadEmail.trim() && !leadPhone.trim())}
                 className="w-full"
               >
                 Aggiungi Lead

@@ -15,6 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Phone, CheckCircle, XCircle, Link as LinkIcon, Copy, Clock, Calendar,
+  MessageCircle, Video, ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -119,9 +120,37 @@ export default function CloserPage() {
       </Badge>
     ) : (
       <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30">
-        <Phone className="h-3 w-3 mr-1" /> Manuale
+        <Phone className="h-3 w-3 mr-1" /> Outreach
       </Badge>
     );
+
+  const channelBadge = (channel: string, meetLink?: string | null) => {
+    switch (channel) {
+      case "google_meet":
+        return (
+          <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30">
+            <Video className="h-3 w-3 mr-1" /> Google Meet
+            {meetLink && (
+              <a href={meetLink} target="_blank" rel="noopener noreferrer" className="ml-1" onClick={e => e.stopPropagation()}>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+          </Badge>
+        );
+      case "phone":
+        return (
+          <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30">
+            <Phone className="h-3 w-3 mr-1" /> Telefonata
+          </Badge>
+        );
+      default:
+        return (
+          <Badge className="bg-green-500/15 text-green-600 border-green-500/30">
+            <MessageCircle className="h-3 w-3 mr-1" /> WhatsApp
+          </Badge>
+        );
+    }
+  };
 
   const statusBadge = (status: string) => {
     switch (status) {
@@ -230,6 +259,7 @@ export default function CloserPage() {
                               <span className="text-xs text-muted-foreground">
                                 {format(new Date(lead.call_datetime), "dd MMM yyyy HH:mm", { locale: it })}
                               </span>
+                              {channelBadge(lead.call_channel, lead.meet_link)}
                               {lead.email && <span className="text-xs text-muted-foreground">• {lead.email}</span>}
                               {lead.phone && <span className="text-xs text-muted-foreground">• {lead.phone}</span>}
                               {lead.tiktok_username && <span className="text-xs text-muted-foreground">• @{lead.tiktok_username}</span>}

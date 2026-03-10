@@ -180,6 +180,7 @@ export type Database = {
       }
       closer_leads: {
         Row: {
+          call_channel: string
           call_datetime: string
           created_at: string
           created_by: string | null
@@ -187,6 +188,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          meet_link: string | null
           notes: string | null
           phone: string | null
           source: string
@@ -194,6 +196,7 @@ export type Database = {
           tiktok_username: string | null
         }
         Insert: {
+          call_channel?: string
           call_datetime: string
           created_at?: string
           created_by?: string | null
@@ -201,6 +204,7 @@ export type Database = {
           first_name: string
           id?: string
           last_name: string
+          meet_link?: string | null
           notes?: string | null
           phone?: string | null
           source?: string
@@ -208,6 +212,7 @@ export type Database = {
           tiktok_username?: string | null
         }
         Update: {
+          call_channel?: string
           call_datetime?: string
           created_at?: string
           created_by?: string | null
@@ -215,6 +220,7 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string
+          meet_link?: string | null
           notes?: string | null
           phone?: string | null
           source?: string
