@@ -33,6 +33,7 @@ import ContractsPage from "@/pages/dashboard/ContractsPage";
 import ContractDetailPage from "@/pages/dashboard/ContractDetailPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
 import CloserPage from "@/pages/dashboard/CloserPage";
+import OnboardingMonitorPage from "@/pages/dashboard/OnboardingMonitorPage";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => (
               <Route path="calendar" element={<CalendarPage />} />
               <Route path="finance" element={<FinancePage />} />
               <Route path="closer" element={<CloserPage />} />
+              <Route path="onboarding" element={<OnboardingMonitorPage />} />
               <Route path="settings" element={<SettingsPage />} />
               {/* Redirect old payments route */}
               <Route path="payments" element={<Navigate to="/dashboard/payments-receivable" replace />} />
