@@ -439,6 +439,14 @@ export default function CloserPage() {
                         setContractDialog(true);
                       }}
                       onCopyLink={copyLink}
+                      onDelete={(l) => {
+                        if (confirm(`Eliminare il lead ${l.first_name} ${l.last_name}?`)) {
+                          deleteLead.mutate(l.id, {
+                            onSuccess: () => toast.success("Lead eliminato"),
+                            onError: () => toast.error("Errore nell'eliminazione"),
+                          });
+                        }
+                      }}
                     />
                   ))}
                 </div>
