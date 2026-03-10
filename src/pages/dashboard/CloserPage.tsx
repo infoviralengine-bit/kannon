@@ -66,7 +66,7 @@ export default function CloserPage() {
   const pendingLeads = leads.filter(l => l.status === "pending");
   const interestedLeads = leads.filter(l => l.status === "interested");
 
-  const handleOutcome = async (status: "interested" | "not_interested") => {
+  const handleOutcome = async (status: "interested" | "not_interested" | "undecided") => {
     if (!selectedLead) return;
     try {
       await updateStatus.mutateAsync({
@@ -74,7 +74,8 @@ export default function CloserPage() {
         status,
         notes: outcomeNotes || undefined,
       });
-      toast.success(status === "interested" ? "Segnato come interessato" : "Segnato come non interessato");
+      const labels: Record<string, string> = { interested: "Interessato", not_interested: "Non interessato", undecided: "Indeciso" };
+      toast.success(`Segnato come ${labels[status]}`);
       setOutcomeDialog(false);
       setOutcomeNotes("");
       if (status === "interested") {
