@@ -10,6 +10,8 @@ export interface CloserLead {
   phone: string | null;
   tiktok_username: string | null;
   call_datetime: string;
+  call_channel: string;
+  meet_link: string | null;
   source: string;
   status: string;
   notes: string | null;
