@@ -26,6 +26,7 @@ import {
   useOnboardingLinks,
   useUpdateLeadStatus,
   useCreateOnboardingLink,
+  useDeleteCloserLead,
   type CloserLead,
 } from "@/hooks/useCloserData";
 import { useQuery } from "@tanstack/react-query";
