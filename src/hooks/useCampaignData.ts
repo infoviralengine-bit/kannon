@@ -215,9 +215,7 @@ export function useCampaignMargin(campaignId: string) {
           });
       });
 
-      // Fetch planned_creators for fixed calculation
-      const { data: campFull } = await supabase.from("campaigns").select("planned_creators").eq("id", campaignId).single();
-      const clientFixed = (campaign?.client_fixed_per_creator ?? 0) * ((campFull as any)?.planned_creators ?? 1);
+      
       const clientCpm = (campaign?.client_cpm ?? 0) * (monthViews / 1000);
 
       let cpmCost = 0;
