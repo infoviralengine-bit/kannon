@@ -67,7 +67,7 @@ export default function OnboardingPage() {
   const [ibanHolder, setIbanHolder] = useState("");
 
   // Step 3 - TikTok
-  const [tiktokUsernames, setTiktokUsernames] = useState<Record<string, string>>({});
+  const [tiktokUsernames, setTiktokUsernames] = useState<Record<string, string>>({}); // keyed by campaign_id
 
   // Step 4 - Contracts & Auth
   const [acceptedContracts, setAcceptedContracts] = useState<Record<string, boolean>>({});
