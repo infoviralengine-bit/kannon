@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircle, AlertTriangle, Eye, EyeOff, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import exampleProfile1 from "@/assets/example-profile-1.png";
+import exampleProfile2 from "@/assets/example-profile-2.png";
 
 interface OnboardingLink {
   id: string;
@@ -417,6 +419,15 @@ export default function OnboardingPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+
+              {/* Esempi di profili corretti */}
+              <div className="mt-1 space-y-2">
+                <p className="font-semibold text-white/80 text-xs uppercase tracking-wider">📸 Esempi di profili creati correttamente</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <img src={exampleProfile1} alt="Esempio profilo TikTok 1" className="rounded-lg border border-green-500/20 w-full" />
+                  <img src={exampleProfile2} alt="Esempio profilo TikTok 2" className="rounded-lg border border-green-500/20 w-full" />
                 </div>
               </div>
             </div>
