@@ -562,6 +562,7 @@ export type Database = {
           id: string
           min_videos_per_day: number | null
           name: string
+          onboarding_phase: string | null
           phone: string | null
           profile_id: string | null
           status: string
@@ -582,6 +583,7 @@ export type Database = {
           id?: string
           min_videos_per_day?: number | null
           name: string
+          onboarding_phase?: string | null
           phone?: string | null
           profile_id?: string | null
           status?: string
@@ -602,6 +604,7 @@ export type Database = {
           id?: string
           min_videos_per_day?: number | null
           name?: string
+          onboarding_phase?: string | null
           phone?: string | null
           profile_id?: string | null
           status?: string
