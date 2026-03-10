@@ -524,6 +524,67 @@ export function OutreachMemberView() {
           )}
         </CardContent>
       </Card>
+      {/* My Leads Section */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <UserPlus className="h-4 w-4" />
+            I miei lead ({myLeads.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {myLeads.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Non hai ancora inserito nessun lead.</p>
+          ) : (
+            <div className="space-y-2">
+              {myLeads.map(lead => {
+                const statusConfig: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
+                  interested: { label: "Interessato", icon: <CheckCircle className="h-3 w-3 mr-1" />, className: "bg-green-500/15 text-green-600 border-green-500/30" },
+                  not_interested: { label: "Non interessato", icon: <XCircle className="h-3 w-3 mr-1" />, className: "bg-red-500/15 text-red-600 border-red-500/30" },
+                  undecided: { label: "Indeciso", icon: <HelpCircle className="h-3 w-3 mr-1" />, className: "bg-orange-500/15 text-orange-600 border-orange-500/30" },
+                };
+                const st = statusConfig[lead.status];
+                const channelIcons: Record<string, React.ReactNode> = {
+                  google_meet: <Video className="h-3 w-3" />,
+                  phone: <Phone className="h-3 w-3" />,
+                  whatsapp: <MessageCircle className="h-3 w-3" />,
+                };
+                const channelLabels: Record<string, string> = {
+                  google_meet: "Google Meet",
+                  phone: "Telefonata",
+                  whatsapp: "WhatsApp",
+                };
+                return (
+                  <div key={lead.id} className="flex items-center justify-between py-2.5 px-4 rounded-lg bg-secondary/30">
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground truncate">
+                          {lead.first_name} {lead.last_name}
+                        </span>
+                        {st ? (
+                          <Badge className={`${st.className} text-[11px] px-2 py-0`}>{st.icon}{st.label}</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-[11px] px-2 py-0"><Clock className="h-3 w-3 mr-1" />In attesa</Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {format(new Date(lead.call_datetime), "dd/MM/yyyy HH:mm")}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          {channelIcons[lead.call_channel] || channelIcons.whatsapp}
+                          {channelLabels[lead.call_channel] || "WhatsApp"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
