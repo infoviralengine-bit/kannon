@@ -239,13 +239,11 @@ export default function CloserPage() {
             </Select>
           </div>
 
-          <Card>
-            <CardContent className="pt-6">
-              {isLoading ? (
-                <p className="text-sm text-muted-foreground">Caricamento...</p>
-              ) : filteredLeads.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nessun lead trovato.</p>
-              ) : (
+          {isLoading ? (
+              <p className="text-sm text-muted-foreground">Caricamento...</p>
+          ) : filteredLeads.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nessun lead trovato.</p>
+          ) : (
                 <div className="space-y-3">
                   {filteredLeads.map(lead => {
                     const link = getLeadLink(lead.id);
