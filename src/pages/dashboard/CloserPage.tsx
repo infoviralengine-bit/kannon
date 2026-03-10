@@ -413,6 +413,14 @@ export default function CloserPage() {
                 </Button>
                 <Button
                   className="flex-1"
+                  variant="outline"
+                  onClick={() => handleOutcome("undecided")}
+                  disabled={updateStatus.isPending}
+                >
+                  <HelpCircle className="h-4 w-4 mr-2" /> Indeciso
+                </Button>
+                <Button
+                  className="flex-1"
                   onClick={() => handleOutcome("interested")}
                   disabled={updateStatus.isPending}
                 >
