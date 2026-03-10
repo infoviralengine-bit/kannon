@@ -140,7 +140,7 @@ export default function OnboardingPage() {
   /* ── Step validation ── */
   const canProceedStep0 = firstName.trim() && lastName.trim() && dob && validateFiscalCode(fiscalCode) && street.trim() && city.trim() && zip.trim() && province.trim();
   const canProceedStep1 = iban.trim() && validateIBAN(iban) && iban.replace(/\s/g, "").toUpperCase() === ibanConfirm.replace(/\s/g, "").toUpperCase() && ibanHolder.trim();
-  const canProceedStep2 = contracts.every(c => tiktokUsernames[c.id]?.trim());
+  const canProceedStep2 = campaigns.length > 0 && campaigns.every(c => tiktokUsernames[c.campaign_id]?.trim());
   const allContractsAccepted = contracts.every(c => acceptedContracts[c.id]);
   const canSubmit = allContractsAccepted && email.trim() && password.length >= 6;
 
