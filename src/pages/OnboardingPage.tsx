@@ -111,6 +111,24 @@ export default function OnboardingPage() {
         .in("id", linkData.contract_ids);
 
       setContracts((cData ?? []) as Contract[]);
+
+      // Load campaigns linked to these contracts
+      const { data: ccData } = await supabase
+        .from("contract_campaigns")
+        .select("contract_id, campaign_id, campaigns(name)")
+        .in("contract_id", linkData.contract_ids);
+
+      const campaignInfos: CampaignInfo[] = (ccData ?? []).map((cc: any) => ({
+        campaign_id: cc.campaign_id,
+        campaign_name: cc.campaigns?.name || "Campagna",
+        contract_id: cc.contract_id,
+      }));
+      // Deduplicate by campaign_id
+      const uniqueCampaigns = Array.from(
+        new Map(campaignInfos.map(c => [c.campaign_id, c])).values()
+      );
+      setCampaigns(uniqueCampaigns);
+
       setLoading(false);
     })();
   }, [token]);
