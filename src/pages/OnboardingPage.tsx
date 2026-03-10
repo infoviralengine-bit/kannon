@@ -346,65 +346,91 @@ export default function OnboardingPage() {
             <div>
               <h2 className="text-xl font-bold">I tuoi account TikTok 📱</h2>
               <p className="text-sm text-white/60 mt-1">
-                Per ogni contratto ti serve un account TikTok dedicato. Inserisci il tuo username (quello che inizia con @).
+                Per ogni campagna ti serve un account TikTok dedicato. Inserisci il tuo username (quello che inizia con @).
               </p>
             </div>
 
-            {contracts.map((c, i) => (
-              <div key={c.id} className="rounded-xl border border-white/10 bg-white/5 p-5 space-y-3">
+            {/* Banner riepilogo */}
+            <div className="rounded-xl border border-[hsl(254,100%,64%)]/30 bg-[hsl(254,100%,64%)]/10 p-4">
+              <p className="text-sm font-semibold mb-2">
+                Devi creare {campaigns.length} account TikTok dedicat{campaigns.length === 1 ? "o" : "i"}:
+              </p>
+              <ul className="space-y-1">
+                {campaigns.map(c => (
+                  <li key={c.campaign_id} className="text-sm text-white/70 flex items-center gap-2">
+                    <span className="text-[hsl(254,100%,64%)]">•</span>
+                    1 per <span className="font-medium text-white">{c.campaign_name}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Card 1 — Di cosa hai bisogno */}
+            <div className="rounded-xl border border-white/10 bg-white/5 p-5 space-y-3">
+              <h3 className="text-sm font-semibold">📧 Di cosa hai bisogno</h3>
+              <p className="text-sm text-white/60">
+                Per ogni account TikTok ti serve una email dedicata. Usa Gmail se possibile. Se hai esaurito gli account Gmail, usa ProtonMail (proton.me) — è gratuito.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-white/20 text-white/80 hover:bg-white/10"
+                onClick={() => window.open("https://proton.me", "_blank")}
+              >
+                Apri ProtonMail →
+              </Button>
+            </div>
+
+            {/* Card 2 — Crea il tuo profilo */}
+            <div className="rounded-xl border border-white/10 bg-white/5 p-5 space-y-4">
+              <h3 className="text-sm font-semibold">🎭 Crea il tuo profilo</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div className="space-y-2">
+                  <p className="font-medium text-green-400">✅ Fai così</p>
+                  <ul className="space-y-1.5 text-white/60">
+                    <li>Handle casual e organico (es. @marco.creator)</li>
+                    <li>Nome visualizzato semplice e personale</li>
+                    <li>Foto profilo: selfie o foto spontanea</li>
+                    <li>Bio breve e autentica</li>
+                    <li>Verifica l'account nelle impostazioni TikTok</li>
+                  </ul>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-medium text-red-400">❌ Evita</p>
+                  <ul className="space-y-1.5 text-white/60">
+                    <li>Nomi corporate o spammy (es. @promofinanza2024)</li>
+                    <li>Nome che sembra un brand</li>
+                    <li>Logo o immagini corporate</li>
+                    <li>Frasi promozionali o troppo formali</li>
+                    <li>Lasciare il profilo incompleto</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3 — Crea tutti gli account ora */}
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-5 space-y-2">
+              <h3 className="text-sm font-semibold">⚡ Crea tutti gli account ora</h3>
+              <p className="text-sm text-white/60">
+                Non puoi procedere senza aver creato tutti gli account e inserito gli username. Prenditi il tempo necessario — questo è il momento giusto per farlo.
+              </p>
+            </div>
+
+            {/* Username fields per campaign */}
+            {campaigns.map((c, i) => (
+              <div key={c.campaign_id} className="rounded-xl border border-white/10 bg-white/5 p-5 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold">{c.name}</span>
-                  <span className="text-xs text-white/40">Account {i + 1} di {contracts.length}</span>
+                  <span className="text-sm font-semibold">Account per {c.campaign_name}</span>
+                  <span className="text-xs text-white/40">Account {i + 1} di {campaigns.length}</span>
                 </div>
                 <Field
                   label="Username TikTok"
-                  value={tiktokUsernames[c.id] || ""}
-                  onChange={(v) => setTiktokUsernames(prev => ({ ...prev, [c.id]: v }))}
+                  value={tiktokUsernames[c.campaign_id] || ""}
+                  onChange={(v) => setTiktokUsernames(prev => ({ ...prev, [c.campaign_id]: v }))}
                   placeholder="@tuousername"
                 />
               </div>
             ))}
-
-            {/* Guide */}
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <button className="flex items-center gap-2 text-sm text-[hsl(254,100%,64%)] hover:underline w-full">
-                  <Info className="h-4 w-4" />
-                  <span>Come creare e preparare il tuo account TikTok</span>
-                  <ChevronDown className="h-4 w-4 ml-auto" />
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-3">
-                <div className="rounded-xl border border-white/10 bg-white/5 p-5 space-y-4 text-sm text-white/70">
-                  <div>
-                    <h4 className="font-semibold text-white mb-1">✅ Cosa fare</h4>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>Crea un nuovo account TikTok dedicato</li>
-                      <li>Completa il profilo con foto e bio</li>
-                      <li>Guarda video nella tua nicchia per 15-20 minuti al giorno</li>
-                      <li>Metti like e commenta video simili ai tuoi</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white mb-1">❌ Cosa evitare</h4>
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>Non pubblicare subito — aspetta almeno 3 giorni</li>
-                      <li>Non seguire troppe persone in poco tempo</li>
-                      <li>Non usare VPN o cambiare dispositivo spesso</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white mb-1">📅 I primi 3 giorni</h4>
-                    <p>Giorno 1-3: solo guardare, mettere like e commentare. Nessun video.</p>
-                    <p>Giorno 4+: pubblica 1-2 video al giorno, poi aumenta gradualmente.</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-white mb-1">📊 La regola delle 300 views</h4>
-                    <p>Se i tuoi primi video fanno meno di 300 views, l'account potrebbe essere "shadowbanned". In quel caso contattaci e valuteremo insieme se creare un nuovo account.</p>
-                  </div>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
 
             <div className="flex justify-between pt-4">
               <Button variant="ghost" onClick={() => setStep(1)} className="text-white/60">Indietro</Button>
