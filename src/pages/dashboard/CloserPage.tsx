@@ -15,7 +15,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Phone, CheckCircle, XCircle, Link as LinkIcon, Copy, Clock, Calendar,
-  MessageCircle, Video, ExternalLink, HelpCircle, Pencil,
+  MessageCircle, Video, ExternalLink, HelpCircle, Pencil, ChevronDown,
+  Mail, AtSign, StickyNote, User,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -45,10 +46,221 @@ function useContracts() {
   });
 }
 
+function useProfiles() {
+  return useQuery({
+    queryKey: ["profiles-all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+/* ── Lead Card Component ─────────────────────────────────── */
+
+function LeadCard({
+  lead,
+  link,
+  creatorName,
+  onOutcome,
+  onGenerateLink,
+  onCopyLink,
+}: {
+  lead: CloserLead;
+  link?: { token: string; status: string } | null;
+  creatorName?: string;
+  onOutcome: (lead: CloserLead) => void;
+  onGenerateLink: (lead: CloserLead) => void;
+  onCopyLink: (token: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const callDate = new Date(lead.call_datetime);
+  const isPast = callDate < new Date();
+
+  const statusBadge = (status: string) => {
+    switch (status) {
+      case "interested":
+        return <Badge className="bg-green-500/15 text-green-600 border-green-500/30 text-[11px] px-2 py-0.5"><CheckCircle className="h-3 w-3 mr-1" />Interessato</Badge>;
+      case "not_interested":
+        return <Badge className="bg-red-500/15 text-red-600 border-red-500/30 text-[11px] px-2 py-0.5"><XCircle className="h-3 w-3 mr-1" />Non interessato</Badge>;
+      case "undecided":
+        return <Badge className="bg-orange-500/15 text-orange-600 border-orange-500/30 text-[11px] px-2 py-0.5"><HelpCircle className="h-3 w-3 mr-1" />Indeciso</Badge>;
+      default:
+        return <Badge variant="secondary" className="text-[11px] px-2 py-0.5"><Clock className="h-3 w-3 mr-1" />In attesa</Badge>;
+    }
+  };
+
+  const channelIcon = (channel: string) => {
+    switch (channel) {
+      case "google_meet": return <Video className="h-3.5 w-3.5" />;
+      case "phone": return <Phone className="h-3.5 w-3.5" />;
+      default: return <MessageCircle className="h-3.5 w-3.5" />;
+    }
+  };
+
+  const channelLabel = (channel: string) => {
+    switch (channel) {
+      case "google_meet": return "Google Meet";
+      case "phone": return "Telefonata";
+      default: return "WhatsApp";
+    }
+  };
+
+  // Primary action button
+  const primaryAction = () => {
+    if (lead.status === "pending" || lead.status === "undecided") {
+      return (
+        <Button size="sm" className="h-8 text-xs px-3" onClick={(e) => { e.stopPropagation(); onOutcome(lead); }}>
+          Segna esito
+        </Button>
+      );
+    }
+    if (lead.status === "interested") {
+      if (link) {
+        return (
+          <Button size="sm" variant="outline" className="h-8 text-xs px-3" onClick={(e) => { e.stopPropagation(); onCopyLink(link.token); }}>
+            <Copy className="h-3 w-3 mr-1.5" />Copia link
+          </Button>
+        );
+      }
+      return (
+        <Button size="sm" className="h-8 text-xs px-3" onClick={(e) => { e.stopPropagation(); onGenerateLink(lead); }}>
+          <LinkIcon className="h-3 w-3 mr-1.5" />Genera link
+        </Button>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className="rounded-xl border border-border bg-card transition-colors">
+      {/* ── Compact view ── */}
+      <div className="flex items-center gap-3 px-5 py-4">
+        {/* Left: name + status + meta */}
+        <div className="flex-1 min-w-0 space-y-1.5">
+          {/* Row 1: Name + Status */}
+          <div className="flex items-center gap-2.5">
+            <span className="text-sm font-semibold text-foreground truncate">
+              {lead.first_name} {lead.last_name}
+            </span>
+            {statusBadge(lead.status)}
+          </div>
+          {/* Row 2: Date + Channel */}
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className={`flex items-center gap-1.5 ${isPast ? "text-muted-foreground" : "text-foreground font-medium"}`}>
+              <Calendar className="h-3 w-3 shrink-0" />
+              {format(callDate, "dd MMM yyyy · HH:mm", { locale: it })}
+            </span>
+            <span className="text-border">|</span>
+            <span className="flex items-center gap-1.5">
+              {channelIcon(lead.call_channel)}
+              {channelLabel(lead.call_channel)}
+            </span>
+          </div>
+        </div>
+
+        {/* Right: action + chevron */}
+        <div className="flex items-center gap-2 shrink-0">
+          {primaryAction()}
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8"
+            onClick={() => setExpanded(!expanded)}
+          >
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Expanded view ── */}
+      {expanded && (
+        <div className="border-t border-border px-5 py-4 space-y-3 bg-muted/30">
+          {/* Contacts */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {lead.phone && (
+              <div className="flex items-center gap-2 text-sm text-foreground">
+                <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span className="text-xs text-muted-foreground">Telefono:</span>
+                <span className="text-xs">{lead.phone}</span>
+              </div>
+            )}
+            {lead.email && (
+              <div className="flex items-center gap-2 text-sm text-foreground">
+                <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span className="text-xs text-muted-foreground">Email:</span>
+                <span className="text-xs truncate">{lead.email}</span>
+              </div>
+            )}
+          </div>
+
+          {/* TikTok */}
+          {lead.tiktok_username && (
+            <div className="flex items-center gap-2 text-sm">
+              <AtSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span className="text-xs text-muted-foreground">TikTok:</span>
+              <span className="text-xs text-foreground">@{lead.tiktok_username}</span>
+            </div>
+          )}
+
+          {/* Meet Link */}
+          {lead.call_channel === "google_meet" && lead.meet_link && (
+            <div className="flex items-center gap-2 text-sm">
+              <Video className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span className="text-xs text-muted-foreground">Link Meet:</span>
+              <a
+                href={lead.meet_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-primary hover:underline flex items-center gap-1"
+              >
+                Apri <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          )}
+
+          {/* Notes */}
+          {lead.notes && (
+            <div className="flex items-start gap-2 text-sm">
+              <StickyNote className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+              <span className="text-xs text-muted-foreground">Note:</span>
+              <span className="text-xs text-foreground">{lead.notes}</span>
+            </div>
+          )}
+
+          {/* Created by */}
+          <div className="flex items-center gap-2 text-sm pt-1 border-t border-border/50">
+            <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="text-xs text-muted-foreground">
+              Inserito da {creatorName || "Sconosciuto"} il {format(new Date(lead.created_at), "dd MMM yyyy", { locale: it })}
+            </span>
+          </div>
+
+          {/* Edit button */}
+          <div className="flex justify-end pt-1">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs px-3"
+              onClick={() => onOutcome(lead)}
+            >
+              <Pencil className="h-3 w-3 mr-1.5" />Modifica
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CloserPage() {
   const { data: leads = [], isLoading } = useCloserLeads();
   const { data: links = [] } = useOnboardingLinks();
   const { data: contracts = [] } = useContracts();
+  const { data: profiles = [] } = useProfiles();
   const updateStatus = useUpdateLeadStatus();
   const createLink = useCreateOnboardingLink();
 
@@ -114,56 +326,10 @@ export default function CloserPage() {
     toast.success("Link copiato!");
   };
 
-  const sourceBadge = (source: string) =>
-    source === "calendly" ? (
-      <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30">
-        <Calendar className="h-3 w-3 mr-1" /> Calendly
-      </Badge>
-    ) : (
-      <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30">
-        <Phone className="h-3 w-3 mr-1" /> Outreach
-      </Badge>
-    );
-
-  const channelBadge = (channel: string, meetLink?: string | null) => {
-    switch (channel) {
-      case "google_meet":
-        return (
-          <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/30">
-            <Video className="h-3 w-3 mr-1" /> Google Meet
-            {meetLink && (
-              <a href={meetLink} target="_blank" rel="noopener noreferrer" className="ml-1" onClick={e => e.stopPropagation()}>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            )}
-          </Badge>
-        );
-      case "phone":
-        return (
-          <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30">
-            <Phone className="h-3 w-3 mr-1" /> Telefonata
-          </Badge>
-        );
-      default:
-        return (
-          <Badge className="bg-green-500/15 text-green-600 border-green-500/30">
-            <MessageCircle className="h-3 w-3 mr-1" /> WhatsApp
-          </Badge>
-        );
-    }
-  };
-
-  const statusBadge = (status: string) => {
-    switch (status) {
-      case "interested":
-        return <Badge className="bg-green-500/15 text-green-600 border-green-500/30"><CheckCircle className="h-3 w-3 mr-1" /> Interessato</Badge>;
-      case "not_interested":
-        return <Badge className="bg-red-500/15 text-red-600 border-red-500/30"><XCircle className="h-3 w-3 mr-1" /> Non interessato</Badge>;
-      case "undecided":
-        return <Badge className="bg-orange-500/15 text-orange-600 border-orange-500/30"><HelpCircle className="h-3 w-3 mr-1" /> Indeciso</Badge>;
-      default:
-        return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" /> In attesa</Badge>;
-    }
+  const getProfileName = (userId: string | null) => {
+    if (!userId) return "Sconosciuto";
+    const p = profiles.find(p => p.id === userId);
+    return p?.full_name || "Sconosciuto";
   };
 
   return (
@@ -245,80 +411,24 @@ export default function CloserPage() {
               <p className="text-sm text-muted-foreground">Nessun lead trovato.</p>
           ) : (
                 <div className="space-y-3">
-                  {filteredLeads.map(lead => {
-                    const link = getLeadLink(lead.id);
-                    const callDate = new Date(lead.call_datetime);
-                    const isPast = callDate < new Date();
-                    return (
-                      <div
-                        key={lead.id}
-                        className="rounded-xl border border-border/50 bg-card/50 hover:bg-card/80 transition-colors overflow-hidden"
-                      >
-                        {/* Top row: name + status + actions */}
-                        <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <h3 className="text-sm font-semibold text-foreground truncate">
-                              {lead.first_name} {lead.last_name}
-                            </h3>
-                            {statusBadge(lead.status)}
-                          </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 w-7 p-0"
-                              onClick={() => {
-                                setSelectedLead(lead);
-                                setOutcomeNotes(lead.notes || "");
-                                setOutcomeDialog(true);
-                              }}
-                            >
-                              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                            </Button>
-                            {lead.status === "interested" && !link && (
-                              <Button
-                                size="sm"
-                                className="h-7 text-xs px-2.5"
-                                onClick={() => {
-                                  setSelectedLead(lead);
-                                  setContractDialog(true);
-                                }}
-                              >
-                                <LinkIcon className="h-3 w-3 mr-1" /> Genera link
-                              </Button>
-                            )}
-                            {link && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 text-xs px-2.5"
-                                onClick={() => copyLink(link.token)}
-                              >
-                                <Copy className="h-3 w-3 mr-1" /> Copia link
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Bottom row: meta info */}
-                        <div className="flex items-center gap-3 px-4 pb-3 flex-wrap text-xs text-muted-foreground">
-                          <span className={`flex items-center gap-1 ${isPast ? "text-muted-foreground" : "text-foreground"}`}>
-                            <Calendar className="h-3 w-3" />
-                            {format(callDate, "dd MMM · HH:mm", { locale: it })}
-                          </span>
-                          {channelBadge(lead.call_channel, lead.meet_link)}
-                          {(lead.phone || lead.email) && (
-                            <span className="truncate">
-                              {lead.phone || lead.email}
-                            </span>
-                          )}
-                          {lead.tiktok_username && (
-                            <span className="truncate">@{lead.tiktok_username}</span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {filteredLeads.map(lead => (
+                    <LeadCard
+                      key={lead.id}
+                      lead={lead}
+                      link={getLeadLink(lead.id)}
+                      creatorName={getProfileName(lead.created_by)}
+                      onOutcome={(l) => {
+                        setSelectedLead(l);
+                        setOutcomeNotes(l.notes || "");
+                        setOutcomeDialog(true);
+                      }}
+                      onGenerateLink={(l) => {
+                        setSelectedLead(l);
+                        setContractDialog(true);
+                      }}
+                      onCopyLink={copyLink}
+                    />
+                  ))}
                 </div>
               )}
 
