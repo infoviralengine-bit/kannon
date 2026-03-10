@@ -1012,8 +1012,8 @@ export default function CampaignDetailPage() {
                 <p className="text-xs text-muted-foreground">{videoViewsCap != null ? `cap ${formatViews(videoViewsCap)}/video` : "senza cap"}</p>
               </div>
               <StatItem label="Video / mese" value={String(kpi.data?.monthVideoCount ?? 0)} />
-              <StatItem label="Entrata / mese" value={formatCurrency(margin.data?.revenue ?? 0)} accent />
-              <StatItem label="Margine / mese" value={formatCurrency(margin.data?.margin ?? 0)} sub={`costo: ${formatCurrency(margin.data?.cost ?? 0)}`} />
+              <StatItem label="Entrata CPM" value={formatCurrency(margin.data?.cpmRevenue ?? 0)} accent />
+              <StatItem label="Margine CPM" value={formatCurrency(margin.data?.cpmMargin ?? 0)} sub={`costo: ${formatCurrency(margin.data?.cpmCost ?? 0)}`} />
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Creator attivi</p>
                 <div className="flex items-center gap-2">

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViews, sumEffectiveViewsCapped } from "@/lib/videoWindow";
-import { isFixedEarnedMonthly } from "@/lib/fixedEarned";
+
 
 function todayRange() {
   const now = new Date();
@@ -215,25 +215,14 @@ export function useCampaignMargin(campaignId: string) {
           });
       });
 
-      // Fetch planned_creators for fixed calculation
-      const { data: campFull } = await supabase.from("campaigns").select("planned_creators").eq("id", campaignId).single();
-      const clientFixed = (campaign?.client_fixed_per_creator ?? 0) * ((campFull as any)?.planned_creators ?? 1);
+      
       const clientCpm = (campaign?.client_cpm ?? 0) * (monthViews / 1000);
-      const revenue = clientFixed + clientCpm;
 
-      let cost = 0;
+      let cpmCost = 0;
       activeCreators.forEach((cr) => {
-        // Use contract terms if available, otherwise fall back to creator profile
         const contractTerms = contractTermsMap.get(cr.id);
         const creatorCpm = contractTerms?.cpm ?? cr.creator_cpm ?? 0;
-        const creatorFixed = contractTerms?.fixed ?? cr.creator_fixed ?? 0;
-        const minVideos = contractTerms?.minVideos ?? cr.min_videos_per_day ?? 5;
 
-        const videoCount = monthVideoCountByCreator.get(cr.id) ?? 0;
-        const earned = isFixedEarnedMonthly(videoCount, minVideos, year, month0);
-        if (earned) {
-          cost += creatorFixed;
-        }
         const crCampAccIds = (allAccounts ?? [])
           .filter((a) => a.creator_id === cr.id && a.campaign_id === campaignId)
           .map((a) => a.id);
@@ -241,10 +230,10 @@ export function useCampaignMargin(campaignId: string) {
           monthVids.filter((v) => crCampAccIds.includes(v.tiktok_account_id)),
           cap
         );
-        cost += creatorCpm * (crViews / 1000);
+        cpmCost += creatorCpm * (crViews / 1000);
       });
 
-      return { revenue, cost, margin: revenue - cost };
+      return { cpmRevenue: clientCpm, cpmCost, cpmMargin: clientCpm - cpmCost };
     },
     enabled: !!campaignId,
   });
