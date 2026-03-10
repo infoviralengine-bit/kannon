@@ -259,6 +259,7 @@ export default function CloserPage() {
                               <span className="text-xs text-muted-foreground">
                                 {format(new Date(lead.call_datetime), "dd MMM yyyy HH:mm", { locale: it })}
                               </span>
+                              {channelBadge(lead.call_channel, lead.meet_link)}
                               {lead.email && <span className="text-xs text-muted-foreground">• {lead.email}</span>}
                               {lead.phone && <span className="text-xs text-muted-foreground">• {lead.phone}</span>}
                               {lead.tiktok_username && <span className="text-xs text-muted-foreground">• @{lead.tiktok_username}</span>}
