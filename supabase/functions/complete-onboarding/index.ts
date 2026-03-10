@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       address_province,
       iban,
       iban_holder_name,
-      tiktok_usernames, // Record<contract_id, username>
+      tiktok_usernames, // Record<campaign_id, username>
       email,
       password,
     } = body;
@@ -114,25 +114,17 @@ Deno.serve(async (req) => {
     const contractIds: string[] = link.contract_ids;
     const ip = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
 
-    // 5. Create TikTok accounts & contract_creators
+    // 5. Create TikTok accounts per campaign & contract_creators
+    // First, collect all unique campaigns from all contracts
+    const allCampaignIds = new Set<string>();
     for (const contractId of contractIds) {
-      const username = tiktok_usernames?.[contractId];
-      if (username) {
-        // Find which campaigns this contract is linked to
-        const { data: ccLinks } = await admin
-          .from("contract_campaigns")
-          .select("campaign_id")
-          .eq("contract_id", contractId);
-
-        const campaignId = ccLinks?.[0]?.campaign_id || null;
-
-        await admin.from("tiktok_accounts").insert({
-          username: username.replace(/^@/, ""),
-          account_type: "creator",
-          creator_id: creatorId,
-          owner_profile_id: userId,
-          campaign_id: campaignId,
-        });
+      const { data: ccLinks } = await admin
+        .from("contract_campaigns")
+        .select("campaign_id")
+        .eq("contract_id", contractId);
+      
+      for (const cc of ccLinks || []) {
+        allCampaignIds.add(cc.campaign_id);
       }
 
       // Link creator to contract
@@ -148,6 +140,20 @@ Deno.serve(async (req) => {
         onboarding_link_id: link.id,
         ip_address: ip,
       });
+    }
+
+    // Create TikTok accounts keyed by campaign_id
+    for (const campaignId of allCampaignIds) {
+      const username = tiktok_usernames?.[campaignId];
+      if (username) {
+        await admin.from("tiktok_accounts").insert({
+          username: username.replace(/^@/, ""),
+          account_type: "creator",
+          creator_id: creatorId,
+          owner_profile_id: userId,
+          campaign_id: campaignId,
+        });
+      }
     }
 
     // 6. Update onboarding link
