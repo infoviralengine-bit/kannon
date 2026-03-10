@@ -69,6 +69,7 @@ function LeadCard({
   onOutcome,
   onGenerateLink,
   onCopyLink,
+  onDelete,
 }: {
   lead: CloserLead;
   link?: { token: string; status: string } | null;
@@ -76,6 +77,7 @@ function LeadCard({
   onOutcome: (lead: CloserLead) => void;
   onGenerateLink: (lead: CloserLead) => void;
   onCopyLink: (token: string) => void;
+  onDelete: (lead: CloserLead) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const callDate = new Date(lead.call_datetime);
