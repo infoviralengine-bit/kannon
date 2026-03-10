@@ -159,6 +159,8 @@ export default function CloserPage() {
         return <Badge className="bg-green-500/15 text-green-600 border-green-500/30"><CheckCircle className="h-3 w-3 mr-1" /> Interessato</Badge>;
       case "not_interested":
         return <Badge className="bg-red-500/15 text-red-600 border-red-500/30"><XCircle className="h-3 w-3 mr-1" /> Non interessato</Badge>;
+      case "undecided":
+        return <Badge className="bg-orange-500/15 text-orange-600 border-orange-500/30"><HelpCircle className="h-3 w-3 mr-1" /> Indeciso</Badge>;
       default:
         return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" /> In attesa</Badge>;
     }
