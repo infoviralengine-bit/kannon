@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Phone, CheckCircle, XCircle, Link as LinkIcon, Copy, Clock, Calendar,
   MessageCircle, Video, ExternalLink, HelpCircle, Pencil, ChevronDown,
-  Mail, AtSign, StickyNote, User,
+  Mail, AtSign, StickyNote, User, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -26,6 +26,7 @@ import {
   useOnboardingLinks,
   useUpdateLeadStatus,
   useCreateOnboardingLink,
+  useDeleteCloserLead,
   type CloserLead,
 } from "@/hooks/useCloserData";
 import { useQuery } from "@tanstack/react-query";
@@ -68,6 +69,7 @@ function LeadCard({
   onOutcome,
   onGenerateLink,
   onCopyLink,
+  onDelete,
 }: {
   lead: CloserLead;
   link?: { token: string; status: string } | null;
@@ -75,6 +77,7 @@ function LeadCard({
   onOutcome: (lead: CloserLead) => void;
   onGenerateLink: (lead: CloserLead) => void;
   onCopyLink: (token: string) => void;
+  onDelete: (lead: CloserLead) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const callDate = new Date(lead.call_datetime);
@@ -239,8 +242,16 @@ function LeadCard({
             </span>
           </div>
 
-          {/* Edit button */}
-          <div className="flex justify-end pt-1">
+          {/* Actions */}
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 text-xs px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => onDelete(lead)}
+            >
+              <Trash2 className="h-3 w-3 mr-1.5" />Elimina
+            </Button>
             <Button
               size="sm"
               variant="outline"
@@ -263,6 +274,7 @@ export default function CloserPage() {
   const { data: profiles = [] } = useProfiles();
   const updateStatus = useUpdateLeadStatus();
   const createLink = useCreateOnboardingLink();
+  const deleteLead = useDeleteCloserLead();
 
   const [selectedLead, setSelectedLead] = useState<CloserLead | null>(null);
   const [outcomeDialog, setOutcomeDialog] = useState(false);
@@ -427,6 +439,14 @@ export default function CloserPage() {
                         setContractDialog(true);
                       }}
                       onCopyLink={copyLink}
+                      onDelete={(l) => {
+                        if (confirm(`Eliminare il lead ${l.first_name} ${l.last_name}?`)) {
+                          deleteLead.mutate(l.id, {
+                            onSuccess: () => toast.success("Lead eliminato"),
+                            onError: () => toast.error("Errore nell'eliminazione"),
+                          });
+                        }
+                      }}
                     />
                   ))}
                 </div>

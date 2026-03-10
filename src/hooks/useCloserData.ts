@@ -93,6 +93,37 @@ export function useCreateOnboardingLink() {
   });
 }
 
+export function useMyLeads() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["my-leads", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("closer_leads")
+        .select("*")
+        .eq("created_by", user!.id)
+        .order("call_datetime", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as CloserLead[];
+    },
+    enabled: !!user,
+  });
+}
+
+export function useDeleteCloserLead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("closer_leads").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["closer-leads"] });
+      qc.invalidateQueries({ queryKey: ["my-leads"] });
+    },
+  });
+}
+
 export function useAddCloserLead() {
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -115,6 +146,9 @@ export function useAddCloserLead() {
       });
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["closer-leads"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["closer-leads"] });
+      qc.invalidateQueries({ queryKey: ["my-leads"] });
+    },
   });
 }
