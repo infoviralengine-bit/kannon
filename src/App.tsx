@@ -33,6 +33,7 @@ import ContractsPage from "@/pages/dashboard/ContractsPage";
 import ContractDetailPage from "@/pages/dashboard/ContractDetailPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
 import CloserPage from "@/pages/dashboard/CloserPage";
+import OnboardingMonitorPage from "@/pages/dashboard/OnboardingMonitorPage";
 
 const queryClient = new QueryClient();
 
