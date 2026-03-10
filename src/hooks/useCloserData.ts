@@ -100,9 +100,13 @@ export function useAddCloserLead() {
     mutationFn: async (lead: {
       first_name: string;
       last_name: string;
+      email?: string;
       phone?: string;
       tiktok_username?: string;
       call_datetime: string;
+      call_channel: string;
+      meet_link?: string;
+      notes?: string;
     }) => {
       const { error } = await supabase.from("closer_leads").insert({
         ...lead,
