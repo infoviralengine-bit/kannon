@@ -321,8 +321,7 @@ export default function CloserPage() {
                   })}
                 </div>
               )}
-            </CardContent>
-          </Card>
+
         </TabsContent>
 
         <TabsContent value="links">
