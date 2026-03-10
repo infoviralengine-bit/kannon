@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircle, AlertTriangle, Eye, EyeOff, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import exampleProfile1 from "@/assets/example-profile-1.png";
+import exampleProfile2 from "@/assets/example-profile-2.png";
 
 interface OnboardingLink {
   id: string;
