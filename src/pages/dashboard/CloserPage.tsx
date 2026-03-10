@@ -233,6 +233,7 @@ export default function CloserPage() {
                 <SelectItem value="all">Tutti</SelectItem>
                 <SelectItem value="pending">In attesa</SelectItem>
                 <SelectItem value="interested">Interessati</SelectItem>
+                <SelectItem value="undecided">Indecisi</SelectItem>
                 <SelectItem value="not_interested">Non interessati</SelectItem>
               </SelectContent>
             </Select>
