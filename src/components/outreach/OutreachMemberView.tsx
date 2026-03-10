@@ -42,10 +42,14 @@ export function OutreachMemberView() {
   // Lead form state
   const [leadFirstName, setLeadFirstName] = useState("");
   const [leadLastName, setLeadLastName] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
   const [leadTiktok, setLeadTiktok] = useState("");
   const [leadCallDate, setLeadCallDate] = useState("");
   const [leadCallTime, setLeadCallTime] = useState("");
+  const [leadChannel, setLeadChannel] = useState("whatsapp");
+  const [leadMeetLink, setLeadMeetLink] = useState("");
+  const [leadNotes, setLeadNotes] = useState("");
 
   // Log form state
   const [logAccountId, setLogAccountId] = useState("");
