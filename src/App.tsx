@@ -9,6 +9,8 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
+import OnboardingPage from "@/pages/OnboardingPage";
+import OnboardingCompleted from "@/pages/OnboardingCompleted";
 import CreatorArea from "@/pages/CreatorArea";
 import ClientArea from "@/pages/ClientArea";
 import GeneralePage from "@/pages/dashboard/GeneralePage";
