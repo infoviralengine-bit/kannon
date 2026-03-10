@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -24,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import CreatorTimeline from "@/components/creator/CreatorTimeline";
 
 /* ── Edit Modal ── */
 function EditCreatorModal({ open, onOpenChange, creator }: {
@@ -166,153 +168,172 @@ export default function CreatorDetailPage() {
         ))}
       </div>
 
-      {/* Payoff */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Payoff Mese</CardTitle>
-            <div className="flex gap-2">
-              <Select value={String(payoffMonth)} onValueChange={v => setPayoffMonth(parseInt(v))}>
-                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {months.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Select value={String(payoffYear)} onValueChange={v => setPayoffYear(parseInt(v))}>
-                <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {[2024, 2025, 2026].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {payoff ? (
-            !payoff.contracts?.length ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Nessun contratto assegnato a questo creator.</p>
-            ) : (
-              <>
-                {payoff.contracts.map((pc) => (
-                  <div key={pc.contractId} className="space-y-3 border-b border-border pb-4 last:border-b-0">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold">{pc.contractName}</span>
-                      <Badge className="bg-success/20 text-success border-success/30">✅ Fisso maturato</Badge>
-                    </div>
+      {/* Tabs */}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Panoramica</TabsTrigger>
+          <TabsTrigger value="percorso">Percorso</TabsTrigger>
+        </TabsList>
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs">Fisso</span>
-                      <span className="text-sm font-semibold">{formatCurrency(pc.creatorFixed)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs">CPM maturato</span>
-                      <span className="text-sm font-semibold">{formatCurrency(pc.cpmAmount)}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {formatViews(pc.monthViews)} views × {formatCurrency(pc.creatorCpm)} / 1.000 = {formatCurrency(pc.cpmAmount)}
-                    </p>
-                    <p className="text-xs text-muted-foreground italic">
-                      {pc.windowOpen} video finestra aperta — {pc.windowClosed} finestra chiusa
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold">Subtotale</span>
-                      <span className="text-sm font-bold">{formatCurrency(pc.total)}</span>
-                    </div>
-                  </div>
-                ))}
-                <div className="flex items-center justify-between border-t border-border pt-3">
-                  <span className="text-sm font-semibold">Totale mese</span>
-                  <span className="text-lg font-bold">{formatCurrency(payoff.grandTotal)}</span>
+        <TabsContent value="overview" className="space-y-6">
+          {/* Payoff */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Payoff Mese</CardTitle>
+                <div className="flex gap-2">
+                  <Select value={String(payoffMonth)} onValueChange={v => setPayoffMonth(parseInt(v))}>
+                    <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {months.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={String(payoffYear)} onValueChange={v => setPayoffYear(parseInt(v))}>
+                    <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {[2024, 2025, 2026].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </>
-            )
-          ) : (
-            <Skeleton className="h-20 w-full" />
-          )}
-        </CardContent>
-      </Card>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {payoff ? (
+                !payoff.contracts?.length ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Nessun contratto assegnato a questo creator.</p>
+                ) : (
+                  <>
+                    {payoff.contracts.map((pc) => (
+                      <div key={pc.contractId} className="space-y-3 border-b border-border pb-4 last:border-b-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold">{pc.contractName}</span>
+                          <Badge className="bg-success/20 text-success border-success/30">✅ Fisso maturato</Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs">Fisso</span>
+                          <span className="text-sm font-semibold">{formatCurrency(pc.creatorFixed)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs">CPM maturato</span>
+                          <span className="text-sm font-semibold">{formatCurrency(pc.cpmAmount)}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {formatViews(pc.monthViews)} views × {formatCurrency(pc.creatorCpm)} / 1.000 = {formatCurrency(pc.cpmAmount)}
+                        </p>
+                        <p className="text-xs text-muted-foreground italic">
+                          {pc.windowOpen} video finestra aperta — {pc.windowClosed} finestra chiusa
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold">Subtotale</span>
+                          <span className="text-sm font-bold">{formatCurrency(pc.total)}</span>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between border-t border-border pt-3">
+                      <span className="text-sm font-semibold">Totale mese</span>
+                      <span className="text-lg font-bold">{formatCurrency(payoff.grandTotal)}</span>
+                    </div>
+                  </>
+                )
+              ) : (
+                <Skeleton className="h-20 w-full" />
+              )}
+            </CardContent>
+          </Card>
 
-      {/* Accounts */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Account</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!accounts ? (
-            <Skeleton className="h-16 w-full" />
-          ) : !accounts.length ? (
-            <p className="text-sm text-muted-foreground text-center py-4">Nessun account collegato.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Campagna</TableHead>
-                  <TableHead className="text-right">Video oggi</TableHead>
-                  <TableHead className="text-right">Views totali</TableHead>
-                  
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {accounts.map(a => (
-                  <TableRow key={a.accountId}>
-                    <TableCell className="font-medium">@{a.username}</TableCell>
-                    <TableCell><Badge variant="outline">{a.accountType === "creator" ? "Creator" : "Outreach"}</Badge></TableCell>
-                    <TableCell>{a.campaignName}</TableCell>
-                    <TableCell className="text-right">{a.todayVideos}</TableCell>
-                    <TableCell className="text-right">{formatViews(a.totalViews)}</TableCell>
-                    
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.accountId}`)}>Apri</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+          {/* Accounts */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Account</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!accounts ? (
+                <Skeleton className="h-16 w-full" />
+              ) : !accounts.length ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nessun account collegato.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Username</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Campagna</TableHead>
+                      <TableHead className="text-right">Video oggi</TableHead>
+                      <TableHead className="text-right">Views totali</TableHead>
+                      <TableHead />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {accounts.map(a => (
+                      <TableRow key={a.accountId}>
+                        <TableCell className="font-medium">@{a.username}</TableCell>
+                        <TableCell><Badge variant="outline">{a.accountType === "creator" ? "Creator" : "Outreach"}</Badge></TableCell>
+                        <TableCell>{a.campaignName}</TableCell>
+                        <TableCell className="text-right">{a.todayVideos}</TableCell>
+                        <TableCell className="text-right">{formatViews(a.totalViews)}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.accountId}`)}>Apri</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
 
-      {/* Campaigns */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Campagne collegate</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!campaigns ? (
-            <Skeleton className="h-16 w-full" />
-          ) : !campaigns.length ? (
-            <p className="text-sm text-muted-foreground text-center py-4">Nessuna campagna collegata.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Campagna</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Data inizio</TableHead>
-                  <TableHead className="text-right">Views</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {campaigns.map(c => (
-                  <TableRow key={c.campaignId}>
-                    <TableCell className="font-medium">{c.name}</TableCell>
-                    <TableCell>{c.clientName}</TableCell>
-                    <TableCell>{c.startDate}</TableCell>
-                    <TableCell className="text-right">{formatViews(c.views)}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/campaigns/${c.campaignId}`)}>Apri</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+          {/* Campaigns */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Campagne collegate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!campaigns ? (
+                <Skeleton className="h-16 w-full" />
+              ) : !campaigns.length ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nessuna campagna collegata.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Campagna</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Data inizio</TableHead>
+                      <TableHead className="text-right">Views</TableHead>
+                      <TableHead />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {campaigns.map(c => (
+                      <TableRow key={c.campaignId}>
+                        <TableCell className="font-medium">{c.name}</TableCell>
+                        <TableCell>{c.clientName}</TableCell>
+                        <TableCell>{c.startDate}</TableCell>
+                        <TableCell className="text-right">{formatViews(c.views)}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/campaigns/${c.campaignId}`)}>Apri</Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="percorso">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Percorso del Creator</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">Timeline del percorso dal lead all'operatività</p>
+            </CardHeader>
+            <CardContent>
+              <CreatorTimeline creatorId={id!} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

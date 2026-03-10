@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PipelineCreator from "@/components/dashboard/PipelineCreator";
 import { useNavigate } from "react-router-dom";
 import {
   TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight,
@@ -197,6 +198,9 @@ export default function GeneralePage() {
           </span>
         </div>
       )}
+
+      {/* Pipeline Creator */}
+      <PipelineCreator selected={null} onSelect={() => {}} />
 
       {/* ROW 2 — Views Chart */}
       <Card className="border-[#1e1e2e] bg-[#111118]">
