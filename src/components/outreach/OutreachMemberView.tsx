@@ -126,17 +126,25 @@ export function OutreachMemberView() {
 
   const handleAddLead = async () => {
     if (!leadFirstName.trim() || !leadLastName.trim() || !leadCallDate || !leadCallTime) return;
+    if (!leadEmail.trim() && !leadPhone.trim()) {
+      toast.error("Inserisci almeno email o telefono");
+      return;
+    }
     try {
       await addLead.mutateAsync({
         first_name: leadFirstName.trim(),
         last_name: leadLastName.trim(),
+        email: leadEmail.trim() || undefined,
         phone: leadPhone.trim() || undefined,
         tiktok_username: leadTiktok.trim() || undefined,
         call_datetime: `${leadCallDate}T${leadCallTime}:00`,
+        call_channel: leadChannel,
+        meet_link: leadChannel === "google_meet" ? leadMeetLink.trim() || undefined : undefined,
+        notes: leadNotes.trim() || undefined,
       });
       toast.success("Lead aggiunto per il closer!");
-      setLeadFirstName(""); setLeadLastName(""); setLeadPhone(""); setLeadTiktok("");
-      setLeadCallDate(""); setLeadCallTime("");
+      setLeadFirstName(""); setLeadLastName(""); setLeadEmail(""); setLeadPhone(""); setLeadTiktok("");
+      setLeadCallDate(""); setLeadCallTime(""); setLeadChannel("whatsapp"); setLeadMeetLink(""); setLeadNotes("");
       setLeadOpen(false);
     } catch {
       toast.error("Errore nell'aggiunta del lead");
