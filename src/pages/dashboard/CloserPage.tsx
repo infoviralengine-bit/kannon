@@ -274,6 +274,7 @@ export default function CloserPage() {
   const { data: profiles = [] } = useProfiles();
   const updateStatus = useUpdateLeadStatus();
   const createLink = useCreateOnboardingLink();
+  const deleteLead = useDeleteCloserLead();
 
   const [selectedLead, setSelectedLead] = useState<CloserLead | null>(null);
   const [outcomeDialog, setOutcomeDialog] = useState(false);
