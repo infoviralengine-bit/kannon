@@ -199,6 +199,9 @@ export default function GeneralePage() {
         </div>
       )}
 
+      {/* Pipeline Creator */}
+      <PipelineCreator selected={null} onSelect={() => {}} />
+
       {/* ROW 2 — Views Chart */}
       <Card className="border-[#1e1e2e] bg-[#111118]">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
