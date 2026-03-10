@@ -431,7 +431,6 @@ export default function CloserPage() {
                   ))}
                 </div>
               )}
-              )}
 
         </TabsContent>
 
