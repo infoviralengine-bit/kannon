@@ -418,6 +418,16 @@ export default function OnboardingPage() {
                     ))}
                   </div>
                 </div>
+             </div>
+              </div>
+
+              {/* Esempi di profili corretti */}
+              <div className="mt-4 space-y-2">
+                <p className="font-semibold text-white/80 text-xs uppercase tracking-wider">📸 Esempi di profili creati correttamente</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <img src={exampleProfile1} alt="Esempio profilo TikTok 1" className="rounded-lg border border-green-500/20 w-full" />
+                  <img src={exampleProfile2} alt="Esempio profilo TikTok 2" className="rounded-lg border border-green-500/20 w-full" />
+                </div>
               </div>
             </div>
 
