@@ -25,8 +25,7 @@ Deno.serve(async (req) => {
       address_province,
       iban,
       iban_holder_name,
-      tiktok_usernames, // Record<contract_id, username>
-      email,
+      tiktok_usernames, // Record<campaign_id, username>
       password,
     } = body;
 
