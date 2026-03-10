@@ -84,6 +84,7 @@ export function useCampaignKpi(campaignId: string) {
         return s + (cap != null && cap > 0 ? Math.min(raw, cap) : raw);
       }, 0);
       const todayVideos = videos.filter((v) => v.published_at >= tStart && v.published_at < tEnd).length;
+      const monthVideoCount = monthVideos.length;
 
       const { data: cc } = await supabase
         .from("campaign_creators")
@@ -99,7 +100,7 @@ export function useCampaignKpi(campaignId: string) {
       );
       const creatorCount = (cc ?? []).filter((r) => activeCreatorIds.has(r.creator_id)).length;
 
-      return { totalViews, monthViews, todayVideos, creatorCount };
+      return { totalViews, monthViews, todayVideos, monthVideoCount, creatorCount };
     },
     enabled: !!campaignId,
   });
