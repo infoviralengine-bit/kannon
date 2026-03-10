@@ -15,7 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Phone, CheckCircle, XCircle, Link as LinkIcon, Copy, Clock, Calendar,
-  MessageCircle, Video, ExternalLink,
+  MessageCircle, Video, ExternalLink, HelpCircle, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -66,7 +66,7 @@ export default function CloserPage() {
   const pendingLeads = leads.filter(l => l.status === "pending");
   const interestedLeads = leads.filter(l => l.status === "interested");
 
-  const handleOutcome = async (status: "interested" | "not_interested") => {
+  const handleOutcome = async (status: "interested" | "not_interested" | "undecided") => {
     if (!selectedLead) return;
     try {
       await updateStatus.mutateAsync({
@@ -74,7 +74,8 @@ export default function CloserPage() {
         status,
         notes: outcomeNotes || undefined,
       });
-      toast.success(status === "interested" ? "Segnato come interessato" : "Segnato come non interessato");
+      const labels: Record<string, string> = { interested: "Interessato", not_interested: "Non interessato", undecided: "Indeciso" };
+      toast.success(`Segnato come ${labels[status]}`);
       setOutcomeDialog(false);
       setOutcomeNotes("");
       if (status === "interested") {
@@ -158,6 +159,8 @@ export default function CloserPage() {
         return <Badge className="bg-green-500/15 text-green-600 border-green-500/30"><CheckCircle className="h-3 w-3 mr-1" /> Interessato</Badge>;
       case "not_interested":
         return <Badge className="bg-red-500/15 text-red-600 border-red-500/30"><XCircle className="h-3 w-3 mr-1" /> Non interessato</Badge>;
+      case "undecided":
+        return <Badge className="bg-orange-500/15 text-orange-600 border-orange-500/30"><HelpCircle className="h-3 w-3 mr-1" /> Indeciso</Badge>;
       default:
         return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" /> In attesa</Badge>;
     }
@@ -230,6 +233,7 @@ export default function CloserPage() {
                 <SelectItem value="all">Tutti</SelectItem>
                 <SelectItem value="pending">In attesa</SelectItem>
                 <SelectItem value="interested">Interessati</SelectItem>
+                <SelectItem value="undecided">Indecisi</SelectItem>
                 <SelectItem value="not_interested">Non interessati</SelectItem>
               </SelectContent>
             </Select>
@@ -269,16 +273,30 @@ export default function CloserPage() {
                         <div className="flex items-center gap-2 shrink-0">
                           {sourceBadge(lead.source)}
                           {statusBadge(lead.status)}
-                          {lead.status === "pending" && (
+                          {lead.status !== "not_interested" && lead.status !== "interested" && (
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => {
                                 setSelectedLead(lead);
+                                setOutcomeNotes(lead.notes || "");
                                 setOutcomeDialog(true);
                               }}
                             >
                               Esito
+                            </Button>
+                          )}
+                          {(lead.status === "interested" || lead.status === "not_interested" || lead.status === "undecided") && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setSelectedLead(lead);
+                                setOutcomeNotes(lead.notes || "");
+                                setOutcomeDialog(true);
+                              }}
+                            >
+                              <Pencil className="h-3 w-3" />
                             </Button>
                           )}
                           {lead.status === "interested" && !link && (
@@ -393,6 +411,14 @@ export default function CloserPage() {
                   disabled={updateStatus.isPending}
                 >
                   <XCircle className="h-4 w-4 mr-2" /> Non interessato
+                </Button>
+                <Button
+                  className="flex-1"
+                  variant="outline"
+                  onClick={() => handleOutcome("undecided")}
+                  disabled={updateStatus.isPending}
+                >
+                  <HelpCircle className="h-4 w-4 mr-2" /> Indeciso
                 </Button>
                 <Button
                   className="flex-1"
