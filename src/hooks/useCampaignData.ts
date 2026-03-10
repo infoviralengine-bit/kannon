@@ -100,7 +100,7 @@ export function useCampaignKpi(campaignId: string) {
       );
       const creatorCount = (cc ?? []).filter((r) => activeCreatorIds.has(r.creator_id)).length;
 
-      return { totalViews, monthViews, todayVideos, creatorCount };
+      return { totalViews, monthViews, todayVideos, monthVideoCount, creatorCount };
     },
     enabled: !!campaignId,
   });
