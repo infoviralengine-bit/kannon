@@ -272,16 +272,30 @@ export default function CloserPage() {
                         <div className="flex items-center gap-2 shrink-0">
                           {sourceBadge(lead.source)}
                           {statusBadge(lead.status)}
-                          {lead.status === "pending" && (
+                          {lead.status !== "not_interested" && lead.status !== "interested" && (
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => {
                                 setSelectedLead(lead);
+                                setOutcomeNotes(lead.notes || "");
                                 setOutcomeDialog(true);
                               }}
                             >
                               Esito
+                            </Button>
+                          )}
+                          {(lead.status === "interested" || lead.status === "not_interested" || lead.status === "undecided") && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setSelectedLead(lead);
+                                setOutcomeNotes(lead.notes || "");
+                                setOutcomeDialog(true);
+                              }}
+                            >
+                              <Pencil className="h-3 w-3" />
                             </Button>
                           )}
                           {lead.status === "interested" && !link && (
