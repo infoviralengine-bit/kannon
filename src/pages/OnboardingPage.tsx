@@ -27,6 +27,12 @@ interface Contract {
   min_videos_per_day: number;
 }
 
+interface CampaignInfo {
+  campaign_id: string;
+  campaign_name: string;
+  contract_id: string;
+}
+
 /* ── Validation helpers ── */
 const validateFiscalCode = (v: string) => /^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/i.test(v.trim());
 const validateIBAN = (v: string) => {
