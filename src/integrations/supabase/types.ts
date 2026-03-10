@@ -386,6 +386,112 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_calendar: {
+        Row: {
+          content_id: string | null
+          created_at: string
+          creator_id: string
+          id: string
+          scheduled_for: string
+          status: string
+          tiktok_account_id: string | null
+        }
+        Insert: {
+          content_id?: string | null
+          created_at?: string
+          creator_id: string
+          id?: string
+          scheduled_for: string
+          status?: string
+          tiktok_account_id?: string | null
+        }
+        Update: {
+          content_id?: string | null
+          created_at?: string
+          creator_id?: string
+          id?: string
+          scheduled_for?: string
+          status?: string
+          tiktok_account_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_calendar_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "creator_content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_calendar_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_calendar_tiktok_account_id_fkey"
+            columns: ["tiktok_account_id"]
+            isOneToOne: false
+            referencedRelation: "tiktok_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creator_content: {
+        Row: {
+          body: string | null
+          campaign_id: string | null
+          created_at: string
+          creator_id: string
+          due_date: string | null
+          file_url: string | null
+          id: string
+          status: string
+          title: string
+          type: string
+        }
+        Insert: {
+          body?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          creator_id: string
+          due_date?: string | null
+          file_url?: string | null
+          id?: string
+          status?: string
+          title: string
+          type?: string
+        }
+        Update: {
+          body?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          creator_id?: string
+          due_date?: string | null
+          file_url?: string | null
+          id?: string
+          status?: string
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_content_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_content_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_payments: {
         Row: {
           cpm_amount: number
@@ -840,33 +946,42 @@ export type Database = {
           campaign_id: string | null
           created_at: string
           creator_id: string | null
+          following_count: number
           id: string
           is_active: boolean | null
           last_scraped_at: string | null
           owner_profile_id: string | null
           username: string
+          warmup_day: number
+          warmup_started_at: string | null
         }
         Insert: {
           account_type: string
           campaign_id?: string | null
           created_at?: string
           creator_id?: string | null
+          following_count?: number
           id?: string
           is_active?: boolean | null
           last_scraped_at?: string | null
           owner_profile_id?: string | null
           username: string
+          warmup_day?: number
+          warmup_started_at?: string | null
         }
         Update: {
           account_type?: string
           campaign_id?: string | null
           created_at?: string
           creator_id?: string | null
+          following_count?: number
           id?: string
           is_active?: boolean | null
           last_scraped_at?: string | null
           owner_profile_id?: string | null
           username?: string
+          warmup_day?: number
+          warmup_started_at?: string | null
         }
         Relationships: [
           {
