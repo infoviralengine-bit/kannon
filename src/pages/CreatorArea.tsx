@@ -1,37 +1,43 @@
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCreatorAreaData } from "@/hooks/usePortalData";
+import { useCreatorPortal } from "@/hooks/useCreatorPortal";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-  import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Video, Eye, Calendar } from "lucide-react";
-import { formatCurrency, formatViews } from "@/lib/format";
+import { Skeleton } from "@/components/ui/skeleton";
+import { LogOut, Flame, FileText, CalendarDays, Coins, Lock } from "lucide-react";
+import CreatorWelcome from "@/components/creator/CreatorWelcome";
+import CreatorWarmup from "@/components/creator/CreatorWarmup";
+import CreatorContent from "@/components/creator/CreatorContent";
+import CreatorCalendar from "@/components/creator/CreatorCalendar";
+import CreatorEarnings from "@/components/creator/CreatorEarnings";
+
+type Section = "warmup" | "contenuti" | "calendario" | "guadagni";
+
+const NAV_ITEMS: { key: Section; label: string; icon: typeof Flame }[] = [
+  { key: "warmup", label: "Warmup", icon: Flame },
+  { key: "contenuti", label: "Contenuti", icon: FileText },
+  { key: "calendario", label: "Calendario", icon: CalendarDays },
+  { key: "guadagni", label: "Guadagni", icon: Coins },
+];
 
 export default function CreatorArea() {
   const { profile, signOut } = useAuth();
-  const { data, isLoading } = useCreatorAreaData();
+  const { data, isLoading } = useCreatorPortal();
+  const [section, setSection] = useState<Section>("warmup");
+  const [showWelcome, setShowWelcome] = useState(false);
 
-  const today = new Date().toLocaleDateString("it-IT", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  useEffect(() => {
+    if (data?.isFirstVisit) {
+      setShowWelcome(true);
+    }
+  }, [data?.isFirstVisit]);
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="border-b border-border px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-sm">K</div>
-            <span className="font-semibold text-lg">Kannon</span>
-          </div>
-          <Skeleton className="h-8 w-24" />
-        </header>
-        <div className="max-w-5xl mx-auto p-6 space-y-6">
+        <Header name={null} onSignOut={signOut} />
+        <div className="max-w-4xl mx-auto p-6 space-y-6">
           <Skeleton className="h-10 w-64" />
-          <div className="grid gap-4 md:grid-cols-5">{[1,2,3,4,5].map(i => <Skeleton key={i} className="h-24" />)}</div>
-          <Skeleton className="h-40" />
+          <div className="grid gap-4 md:grid-cols-2">{[1, 2].map((i) => <Skeleton key={i} className="h-48" />)}</div>
         </div>
       </div>
     );
@@ -40,13 +46,7 @@ export default function CreatorArea() {
   if (!data) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="border-b border-border px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-sm">K</div>
-            <span className="font-semibold text-lg">Kannon</span>
-          </div>
-          <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="mr-2 h-4 w-4" />Esci</Button>
-        </header>
+        <Header name={profile?.full_name ?? null} onSignOut={signOut} />
         <div className="max-w-2xl mx-auto p-6 text-center mt-20">
           <h2 className="text-xl font-semibold mb-2">Nessun profilo creator collegato</h2>
           <p className="text-muted-foreground">Contatta l'agenzia per collegare il tuo account.</p>
@@ -55,195 +55,90 @@ export default function CreatorArea() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-sm">K</div>
-          <span className="font-semibold text-lg">Kannon</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">{profile?.full_name}</span>
-          <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="mr-2 h-4 w-4" />Esci</Button>
-        </div>
-      </header>
+  const unlocked = data.anyWarmupDone;
 
-      <div className="max-w-5xl mx-auto p-6 space-y-8 animate-fade-in">
-        {/* Greeting */}
-        <div>
-          <h1 className="text-2xl font-bold">Ciao, {data.creator.name}!</h1>
-          <p className="text-sm text-muted-foreground capitalize">{today}</p>
-        </div>
-
-        {/* KPI Cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-xs text-muted-foreground">Video oggi</CardTitle></CardHeader>
-            <CardContent className="flex items-center gap-2">
-              <Video className="h-4 w-4 text-primary" />
-              <span className="text-2xl font-bold">{data.todayVideos}</span>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-xs text-muted-foreground">Video settimana</CardTitle></CardHeader>
-            <CardContent><span className="text-2xl font-bold">{data.weekVideos}</span></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-xs text-muted-foreground">Video mese</CardTitle></CardHeader>
-            <CardContent><span className="text-2xl font-bold">{data.monthVideos}</span></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-xs text-muted-foreground">Views totali</CardTitle></CardHeader>
-            <CardContent><span className="text-2xl font-bold">{formatViews(data.totalViews)}</span></CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-xs text-muted-foreground">Views mese</CardTitle></CardHeader>
-            <CardContent><span className="text-2xl font-bold">{formatViews(data.monthViews)}</span></CardContent>
-          </Card>
-        </div>
-
-        {/* Payoff per contratto */}
-        <Card>
-          <CardHeader><CardTitle className="text-lg">Payoff mese corrente</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            {!data.contractBreakdowns.length ? (
-              <p className="text-sm text-muted-foreground">Nessun contratto attivo</p>
-            ) : (
-              data.contractBreakdowns.map((b) => {
-                const hasFixed = b.fixedAmount > 0;
-                return (
-                  <div key={b.contractId} className="rounded-lg border border-border/60 p-4 space-y-3">
-                    <h3 className="font-semibold text-primary">{b.contractName}</h3>
-
-                    {hasFixed && (
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-foreground">Compenso fisso</span>
-                          <span className="font-semibold">{formatCurrency(b.fixedAmount)}</span>
-                        </div>
-                        {b.fixedEarned ? (
-                          <p className="text-xs text-green-500">✓ Quota raggiunta — fisso maturato</p>
-                        ) : (
-                          <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground">
-                              Pubblica {b.monthlyTarget} video nel mese per maturare il fisso
-                            </p>
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                                <div
-                                  className="h-full rounded-full bg-primary transition-all"
-                                  style={{ width: `${Math.min(100, b.monthlyTarget > 0 ? (b.videoCount / b.monthlyTarget) * 100 : 0)}%` }}
-                                />
-                              </div>
-                              <span className="text-xs text-muted-foreground font-medium">{b.videoCount}/{b.monthlyTarget}</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-foreground">CPM</span>
-                        <span className="font-semibold">{formatCurrency(b.cpmAmount)}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        {formatViews(b.totalViews)} views × {formatCurrency(b.cpmRate)}/1k
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm border-t border-border/40 pt-2">
-                      <span className="font-medium">Subtotale</span>
-                      <span className="font-bold">{formatCurrency(b.subtotal)}</span>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-            <div className="flex items-center justify-between border-t border-border pt-3">
-              <span className="font-semibold">Totale stimato</span>
-              <span className="text-xl font-bold">{formatCurrency(data.totalPayoff)}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">Il payoff finale viene calcolato a fine mese</p>
-          </CardContent>
-        </Card>
-
-        {/* Accounts */}
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold">I miei account</h2>
-          {!data.accountRows.length ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">Nessun account collegato</CardContent></Card>
-          ) : (
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Username</TableHead>
-                    <TableHead>Campagna</TableHead>
-                    <TableHead className="text-right">Video oggi</TableHead>
-                    <TableHead className="text-right">Views totali</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.accountRows.map((a) => (
-                    <TableRow key={a.id}>
-                      <TableCell className="font-medium">@{a.username}</TableCell>
-                      <TableCell>{a.campaignName}</TableCell>
-                      <TableCell className="text-right">{a.todayVideos}</TableCell>
-                      <TableCell className="text-right">{formatViews(a.totalViews)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          )}
-        </div>
-
-        {/* Recent Videos */}
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold">I miei video (ultimi 30)</h2>
-          {!data.recentVideos.length ? (
-            <Card><CardContent className="py-8 text-center text-muted-foreground">Nessun video pubblicato</CardContent></Card>
-          ) : (
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Account</TableHead>
-                    <TableHead>Video ID</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead className="text-right">Views</TableHead>
-                    <TableHead className="text-right">Likes</TableHead>
-                    <TableHead className="text-right">Commenti</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.recentVideos.map((v) => (
-                    <TableRow key={v.id}>
-                      <TableCell>@{v.accountUsername}</TableCell>
-                      <TableCell>
-                        <a
-                          href={`https://www.tiktok.com/@/video/${v.tiktok_video_id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline"
-                        >
-                          {v.tiktok_video_id.slice(0, 12)}…
-                        </a>
-                      </TableCell>
-                      <TableCell>{new Date(v.published_at).toLocaleDateString("it-IT")}</TableCell>
-                      <TableCell className="text-right">{formatViews(v.views ?? 0)}</TableCell>
-                      <TableCell className="text-right">{formatViews(v.likes ?? 0)}</TableCell>
-                      <TableCell className="text-right">{formatViews(v.comments ?? 0)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          )}
+  if (showWelcome) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header name={profile?.full_name ?? null} onSignOut={signOut} />
+        <div className="max-w-4xl mx-auto p-6">
+          <CreatorWelcome
+            creatorName={data.creator.name}
+            onStart={() => setShowWelcome(false)}
+          />
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header name={profile?.full_name ?? null} onSignOut={signOut} />
+
+      {/* Navigation */}
+      <nav className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-10">
+        <div className="max-w-4xl mx-auto px-6 flex gap-1 overflow-x-auto">
+          {NAV_ITEMS.map((item) => {
+            const isLocked = item.key !== "warmup" && !unlocked;
+            const isActive = section === item.key;
+            return (
+              <button
+                key={item.key}
+                onClick={() => setSection(item.key)}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  isActive
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {isLocked ? (
+                  <Lock className="h-3.5 w-3.5" />
+                ) : (
+                  <item.icon className="h-3.5 w-3.5" />
+                )}
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      <div className="max-w-4xl mx-auto p-6 animate-fade-in">
+        {section === "warmup" && (
+          <CreatorWarmup
+            accounts={data.warmupAccounts}
+            allDone={data.allWarmupDone}
+            creatorName={data.creator.name}
+            creatorId={data.creator.id}
+          />
+        )}
+        {section === "contenuti" && (
+          <CreatorContent content={data.content} locked={!unlocked} />
+        )}
+        {section === "calendario" && (
+          <CreatorCalendar calendar={data.calendar} locked={!unlocked} />
+        )}
+        {section === "guadagni" && (
+          <CreatorEarnings earnings={data.earnings} locked={!unlocked} />
+        )}
+      </div>
     </div>
+  );
+}
+
+function Header({ name, onSignOut }: { name: string | null; onSignOut: () => void }) {
+  return (
+    <header className="border-b border-border px-6 py-4 flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-sm">K</div>
+        <span className="font-semibold text-lg">Kannon</span>
+      </div>
+      <div className="flex items-center gap-3">
+        {name && <span className="text-sm text-muted-foreground">{name}</span>}
+        <Button variant="ghost" size="sm" onClick={onSignOut}>
+          <LogOut className="mr-2 h-4 w-4" />Esci
+        </Button>
+      </div>
+    </header>
   );
 }
