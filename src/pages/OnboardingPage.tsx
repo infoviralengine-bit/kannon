@@ -48,6 +48,7 @@ export default function OnboardingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [link, setLink] = useState<OnboardingLink | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [campaigns, setCampaigns] = useState<CampaignInfo[]>([]);
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
