@@ -242,8 +242,16 @@ function LeadCard({
             </span>
           </div>
 
-          {/* Edit button */}
-          <div className="flex justify-end pt-1">
+          {/* Actions */}
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 text-xs px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => onDelete(lead)}
+            >
+              <Trash2 className="h-3 w-3 mr-1.5" />Elimina
+            </Button>
             <Button
               size="sm"
               variant="outline"
