@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PipelineCreator from "@/components/dashboard/PipelineCreator";
 import { useNavigate } from "react-router-dom";
 import {
   TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight,
