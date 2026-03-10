@@ -420,7 +420,8 @@ export default function OnboardingPage() {
                     ))}
                   </div>
                 </div>
-             </div>
+              </div>
+              </div>
               </div>
 
               {/* Esempi di profili corretti */}
