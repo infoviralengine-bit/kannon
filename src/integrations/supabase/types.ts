@@ -298,8 +298,61 @@ export type Database = {
           },
         ]
       }
+      contract_signatures: {
+        Row: {
+          contract_id: string
+          created_at: string
+          creator_id: string
+          id: string
+          ip_address: string | null
+          onboarding_link_id: string | null
+          signed_at: string
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          creator_id: string
+          id?: string
+          ip_address?: string | null
+          onboarding_link_id?: string | null
+          signed_at?: string
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          creator_id?: string
+          id?: string
+          ip_address?: string | null
+          onboarding_link_id?: string | null
+          signed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_signatures_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_signatures_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_signatures_onboarding_link_id_fkey"
+            columns: ["onboarding_link_id"]
+            isOneToOne: false
+            referencedRelation: "onboarding_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
+          contract_text: string
           created_at: string
           creator_cpm: number
           creator_fixed: number
@@ -310,6 +363,7 @@ export type Database = {
           type: string
         }
         Insert: {
+          contract_text?: string
           created_at?: string
           creator_cpm?: number
           creator_fixed?: number
@@ -320,6 +374,7 @@ export type Database = {
           type?: string
         }
         Update: {
+          contract_text?: string
           created_at?: string
           creator_cpm?: number
           creator_fixed?: number
@@ -386,10 +441,18 @@ export type Database = {
       }
       creators: {
         Row: {
+          address_city: string | null
+          address_province: string | null
+          address_street: string | null
+          address_zip: string | null
           created_at: string
           creator_cpm: number | null
           creator_fixed: number | null
+          date_of_birth: string | null
           email: string | null
+          fiscal_code: string | null
+          iban: string | null
+          iban_holder_name: string | null
           id: string
           min_videos_per_day: number | null
           name: string
@@ -398,10 +461,18 @@ export type Database = {
           status: string
         }
         Insert: {
+          address_city?: string | null
+          address_province?: string | null
+          address_street?: string | null
+          address_zip?: string | null
           created_at?: string
           creator_cpm?: number | null
           creator_fixed?: number | null
+          date_of_birth?: string | null
           email?: string | null
+          fiscal_code?: string | null
+          iban?: string | null
+          iban_holder_name?: string | null
           id?: string
           min_videos_per_day?: number | null
           name: string
@@ -410,10 +481,18 @@ export type Database = {
           status?: string
         }
         Update: {
+          address_city?: string | null
+          address_province?: string | null
+          address_street?: string | null
+          address_zip?: string | null
           created_at?: string
           creator_cpm?: number | null
           creator_fixed?: number | null
+          date_of_birth?: string | null
           email?: string | null
+          fiscal_code?: string | null
+          iban?: string | null
+          iban_holder_name?: string | null
           id?: string
           min_videos_per_day?: number | null
           name?: string
@@ -474,6 +553,7 @@ export type Database = {
           completed_at: string | null
           contract_ids: string[]
           created_at: string
+          creator_id: string | null
           id: string
           lead_id: string
           status: string
@@ -483,6 +563,7 @@ export type Database = {
           completed_at?: string | null
           contract_ids?: string[]
           created_at?: string
+          creator_id?: string | null
           id?: string
           lead_id: string
           status?: string
@@ -492,12 +573,20 @@ export type Database = {
           completed_at?: string | null
           contract_ids?: string[]
           created_at?: string
+          creator_id?: string | null
           id?: string
           lead_id?: string
           status?: string
           token?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "onboarding_links_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "onboarding_links_lead_id_fkey"
             columns: ["lead_id"]

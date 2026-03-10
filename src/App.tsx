@@ -9,6 +9,8 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
+import OnboardingPage from "@/pages/OnboardingPage";
+import OnboardingCompleted from "@/pages/OnboardingCompleted";
 import CreatorArea from "@/pages/CreatorArea";
 import ClientArea from "@/pages/ClientArea";
 import GeneralePage from "@/pages/dashboard/GeneralePage";
@@ -43,6 +45,8 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/onboarding/completed" element={<OnboardingCompleted />} />
+            <Route path="/onboarding/:token" element={<OnboardingPage />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
             {/* Dashboard routes - admin, team & outreach */}
