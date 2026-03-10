@@ -92,7 +92,12 @@ Deno.serve(async (req) => {
       if (user_id === caller.id) {
         return new Response(JSON.stringify({ error: "Non puoi eliminare te stesso" }), { status: 400, headers: corsHeaders });
       }
-      // Delete role, profile, then auth user
+      // Nullify foreign key references to profiles
+      await supabaseAdmin.from("creators").update({ profile_id: null }).eq("profile_id", user_id);
+      await supabaseAdmin.from("campaigns").update({ client_profile_id: null }).eq("client_profile_id", user_id);
+      await supabaseAdmin.from("tiktok_accounts").update({ owner_profile_id: null }).eq("owner_profile_id", user_id);
+      // Delete owned records
+      await supabaseAdmin.from("notifications").delete().eq("user_id", user_id);
       await supabaseAdmin.from("user_roles").delete().eq("user_id", user_id);
       await supabaseAdmin.from("profiles").delete().eq("id", user_id);
       const { error } = await supabaseAdmin.auth.admin.deleteUser(user_id);
