@@ -239,85 +239,81 @@ export default function CloserPage() {
             </Select>
           </div>
 
-          <Card>
-            <CardContent className="pt-6">
-              {isLoading ? (
-                <p className="text-sm text-muted-foreground">Caricamento...</p>
-              ) : filteredLeads.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nessun lead trovato.</p>
-              ) : (
+          {isLoading ? (
+              <p className="text-sm text-muted-foreground">Caricamento...</p>
+          ) : filteredLeads.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nessun lead trovato.</p>
+          ) : (
                 <div className="space-y-3">
                   {filteredLeads.map(lead => {
                     const link = getLeadLink(lead.id);
+                    const callDate = new Date(lead.call_datetime);
+                    const isPast = callDate < new Date();
                     return (
                       <div
                         key={lead.id}
-                        className="flex items-center justify-between py-3 px-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                        className="rounded-xl border border-border/50 bg-card/50 hover:bg-card/80 transition-colors overflow-hidden"
                       >
-                        <div className="flex items-center gap-4 flex-1 min-w-0">
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">
+                        {/* Top row: name + status + actions */}
+                        <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <h3 className="text-sm font-semibold text-foreground truncate">
                               {lead.first_name} {lead.last_name}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              <span className="text-xs text-muted-foreground">
-                                {format(new Date(lead.call_datetime), "dd MMM yyyy HH:mm", { locale: it })}
-                              </span>
-                              {channelBadge(lead.call_channel, lead.meet_link)}
-                              {lead.email && <span className="text-xs text-muted-foreground">• {lead.email}</span>}
-                              {lead.phone && <span className="text-xs text-muted-foreground">• {lead.phone}</span>}
-                              {lead.tiktok_username && <span className="text-xs text-muted-foreground">• @{lead.tiktok_username}</span>}
-                            </div>
+                            </h3>
+                            {statusBadge(lead.status)}
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0"
+                              onClick={() => {
+                                setSelectedLead(lead);
+                                setOutcomeNotes(lead.notes || "");
+                                setOutcomeDialog(true);
+                              }}
+                            >
+                              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                            </Button>
+                            {lead.status === "interested" && !link && (
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs px-2.5"
+                                onClick={() => {
+                                  setSelectedLead(lead);
+                                  setContractDialog(true);
+                                }}
+                              >
+                                <LinkIcon className="h-3 w-3 mr-1" /> Genera link
+                              </Button>
+                            )}
+                            {link && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs px-2.5"
+                                onClick={() => copyLink(link.token)}
+                              >
+                                <Copy className="h-3 w-3 mr-1" /> Copia link
+                              </Button>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {sourceBadge(lead.source)}
-                          {statusBadge(lead.status)}
-                          {lead.status !== "not_interested" && lead.status !== "interested" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedLead(lead);
-                                setOutcomeNotes(lead.notes || "");
-                                setOutcomeDialog(true);
-                              }}
-                            >
-                              Esito
-                            </Button>
+
+                        {/* Bottom row: meta info */}
+                        <div className="flex items-center gap-3 px-4 pb-3 flex-wrap text-xs text-muted-foreground">
+                          <span className={`flex items-center gap-1 ${isPast ? "text-muted-foreground" : "text-foreground"}`}>
+                            <Calendar className="h-3 w-3" />
+                            {format(callDate, "dd MMM · HH:mm", { locale: it })}
+                          </span>
+                          {channelBadge(lead.call_channel, lead.meet_link)}
+                          {(lead.phone || lead.email) && (
+                            <span className="truncate">
+                              {lead.phone || lead.email}
+                            </span>
                           )}
-                          {(lead.status === "interested" || lead.status === "not_interested" || lead.status === "undecided") && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setSelectedLead(lead);
-                                setOutcomeNotes(lead.notes || "");
-                                setOutcomeDialog(true);
-                              }}
-                            >
-                              <Pencil className="h-3 w-3" />
-                            </Button>
-                          )}
-                          {lead.status === "interested" && !link && (
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                setSelectedLead(lead);
-                                setContractDialog(true);
-                              }}
-                            >
-                              <LinkIcon className="h-3 w-3 mr-1" /> Genera link
-                            </Button>
-                          )}
-                          {link && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => copyLink(link.token)}
-                            >
-                              <Copy className="h-3 w-3 mr-1" /> Copia link
-                            </Button>
+                          {lead.tiktok_username && (
+                            <span className="truncate">@{lead.tiktok_username}</span>
                           )}
                         </div>
                       </div>
@@ -325,8 +321,7 @@ export default function CloserPage() {
                   })}
                 </div>
               )}
-            </CardContent>
-          </Card>
+
         </TabsContent>
 
         <TabsContent value="links">
