@@ -1,27 +1,34 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { UserPlus, Users, Flame, Rocket, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { UserPlus, Users, Flame, Rocket, Clock, AlertCircle } from "lucide-react";
 import { useState } from "react";
 
 type Phase = "all" | "lead" | "onboarding" | "warmup" | "operativi";
+type OnboardingPhase = "lead" | "onboarding" | "warmup" | "operativi";
 
 interface CreatorPipelineRow {
   id: string;
   name: string;
   email: string | null;
-  phase: "lead" | "onboarding" | "warmup" | "operativi";
+  phase: OnboardingPhase;
   phaseLabel: string;
   createdAt: string;
   accountCount: number;
   warmupProgress: string;
+  isLead: boolean; // true if from closer_leads, not yet a creator
+  manualPhase: string | null;
 }
 
 function formatDate(iso: string | null) {
@@ -30,6 +37,25 @@ function formatDate(iso: string | null) {
   const months = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"];
   return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
+
+function computePhase(c: any, accs: any[], linkedCreatorIds: Set<string>): OnboardingPhase {
+  // Manual override takes priority
+  if (c.onboarding_phase && ["lead", "onboarding", "warmup", "operativi"].includes(c.onboarding_phase)) {
+    return c.onboarding_phase as OnboardingPhase;
+  }
+  const allWarmupDone = accs.length > 0 && accs.every((a: any) => a.warmup_day >= 3 && a.following_count >= 40);
+  if (allWarmupDone) return "operativi";
+  if (c.profile_id) return "warmup";
+  if (linkedCreatorIds.has(c.id)) return "onboarding";
+  return "lead";
+}
+
+const phaseLabels: Record<OnboardingPhase, string> = {
+  lead: "Lead",
+  onboarding: "In onboarding",
+  warmup: "Warmup",
+  operativi: "Operativo",
+};
 
 function useOnboardingPipeline() {
   return useQuery({
@@ -41,43 +67,20 @@ function useOnboardingPipeline() {
         { data: onboardingLinks },
         { data: leads },
       ] = await Promise.all([
-        supabase.from("creators").select("id, name, email, profile_id, created_at, status"),
+        supabase.from("creators").select("id, name, email, profile_id, created_at, status, onboarding_phase"),
         supabase.from("tiktok_accounts").select("creator_id, warmup_day, following_count"),
         supabase.from("onboarding_links").select("creator_id, completed_at, status"),
         supabase.from("closer_leads").select("id, first_name, last_name, email, status, created_at"),
       ]);
 
-      const allCreators = creators ?? [];
+      const allCreators = (creators ?? []) as any[];
       const allAccounts = accounts ?? [];
       const allLinks = onboardingLinks ?? [];
+      const linkedCreatorIds = new Set(allLinks.filter(l => l.creator_id).map(l => l.creator_id as string));
 
-      // Linked creator IDs
-      const linkedCreatorIds = new Set(allLinks.filter(l => l.creator_id).map(l => l.creator_id));
-
-      // Build creator rows
       const rows: CreatorPipelineRow[] = allCreators.map(c => {
         const accs = allAccounts.filter(a => a.creator_id === c.id);
-        const allWarmupDone = accs.length > 0 && accs.every(a => a.warmup_day >= 3 && a.following_count >= 40);
-        const hasProfile = !!c.profile_id;
-
-        let phase: CreatorPipelineRow["phase"];
-        let phaseLabel: string;
-
-        if (allWarmupDone) {
-          phase = "operativi";
-          phaseLabel = "Operativo";
-        } else if (hasProfile) {
-          phase = "warmup";
-          const done = accs.filter(a => a.warmup_day >= 3 && a.following_count >= 40).length;
-          phaseLabel = `Warmup (${done}/${accs.length})`;
-        } else if (linkedCreatorIds.has(c.id)) {
-          phase = "onboarding";
-          phaseLabel = "In onboarding";
-        } else {
-          phase = "lead";
-          phaseLabel = "Lead";
-        }
-
+        const phase = computePhase(c, accs, linkedCreatorIds);
         const warmupDone = accs.filter(a => a.warmup_day >= 3 && a.following_count >= 40).length;
 
         return {
@@ -85,16 +88,17 @@ function useOnboardingPipeline() {
           name: c.name,
           email: c.email,
           phase,
-          phaseLabel,
+          phaseLabel: phaseLabels[phase],
           createdAt: c.created_at,
           accountCount: accs.length,
           warmupProgress: accs.length > 0 ? `${warmupDone}/${accs.length}` : "—",
+          isLead: false,
+          manualPhase: c.onboarding_phase,
         };
       });
 
-      // Also add leads that have no creator yet
-      const creatorEmails = new Set(allCreators.map(c => c.email).filter(Boolean));
-      const leadCreatorIds = new Set(allLinks.map(l => l.creator_id).filter(Boolean));
+      // Unlinked leads
+      const creatorEmails = new Set(allCreators.map((c: any) => c.email).filter(Boolean));
       const unlinkedLeads = (leads ?? []).filter(l => {
         if (l.email && creatorEmails.has(l.email)) return false;
         return l.status !== "done" && l.status !== "signed";
@@ -109,18 +113,20 @@ function useOnboardingPipeline() {
         createdAt: l.created_at,
         accountCount: 0,
         warmupProgress: "—",
+        isLead: true,
+        manualPhase: null,
       }));
 
-      // Counts
+      const allRows = [...leadRows, ...rows];
       const counts = {
-        lead: rows.filter(r => r.phase === "lead").length + leadRows.length,
-        onboarding: rows.filter(r => r.phase === "onboarding").length,
-        warmup: rows.filter(r => r.phase === "warmup").length,
-        operativi: rows.filter(r => r.phase === "operativi").length,
-        totale: rows.length + leadRows.length,
+        lead: allRows.filter(r => r.phase === "lead").length,
+        onboarding: allRows.filter(r => r.phase === "onboarding").length,
+        warmup: allRows.filter(r => r.phase === "warmup").length,
+        operativi: allRows.filter(r => r.phase === "operativi").length,
+        totale: allRows.length,
       };
 
-      return { rows: [...leadRows, ...rows], counts };
+      return { rows: allRows, counts };
     },
     refetchInterval: 30_000,
   });
@@ -141,6 +147,40 @@ const filterButtons: { key: Phase; label: string; icon: React.ElementType }[] = 
   { key: "operativi", label: "Operativi", icon: Rocket },
 ];
 
+function PhaseSelector({ creatorId, currentPhase }: { creatorId: string; currentPhase: OnboardingPhase }) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async (newPhase: string) => {
+      const { error } = await supabase
+        .from("creators")
+        .update({ onboarding_phase: newPhase } as any)
+        .eq("id", creatorId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Fase aggiornata" });
+      qc.invalidateQueries({ queryKey: ["onboarding-pipeline"] });
+    },
+    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+  });
+
+  return (
+    <Select value={currentPhase} onValueChange={v => mutation.mutate(v)} disabled={mutation.isPending}>
+      <SelectTrigger className="w-[140px] h-8 text-xs">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="lead">Lead</SelectItem>
+        <SelectItem value="onboarding">Onboarding</SelectItem>
+        <SelectItem value="warmup">Warmup</SelectItem>
+        <SelectItem value="operativi">Operativo</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+
 export default function OnboardingMonitorPage() {
   const navigate = useNavigate();
   const { data, isLoading } = useOnboardingPipeline();
@@ -152,7 +192,7 @@ export default function OnboardingMonitorPage() {
     <div className="space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-foreground tracking-tight">Onboarding Creator</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Monitora lo stato di avanzamento di ogni creator nel percorso di onboarding</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Monitora e gestisci lo stato di avanzamento di ogni creator</p>
       </div>
 
       {/* Phase stat boxes */}
@@ -162,7 +202,6 @@ export default function OnboardingMonitorPage() {
             ? data?.counts.totale ?? 0
             : data?.counts[fb.key] ?? 0;
           const isSelected = filter === fb.key;
-          const cfg = phaseConfig[fb.key] ?? { color: "text-muted-foreground", bg: "bg-muted/10", icon: Users };
           const Icon = fb.icon;
 
           return (
@@ -209,9 +248,10 @@ export default function OnboardingMonitorPage() {
                   <TableHead>Nome</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Fase</TableHead>
+                  <TableHead>Modifica fase</TableHead>
                   <TableHead>Account</TableHead>
                   <TableHead>Warmup</TableHead>
-                  <TableHead>Data creazione</TableHead>
+                  <TableHead>Data</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -224,16 +264,23 @@ export default function OnboardingMonitorPage() {
                       <TableCell className="font-medium">{row.name}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">{row.email ?? "—"}</TableCell>
                       <TableCell>
-                        <Badge className={`${cfg?.bg} ${cfg?.color} border text-xs gap-1`}>
+                        <Badge variant="outline" className={`${cfg?.bg} ${cfg?.color} text-xs gap-1`}>
                           <PhaseIcon className="h-3 w-3" />
                           {row.phaseLabel}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {!row.isLead ? (
+                          <PhaseSelector creatorId={row.id} currentPhase={row.phase} />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell>{row.accountCount || "—"}</TableCell>
                       <TableCell>{row.warmupProgress}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">{formatDate(row.createdAt)}</TableCell>
                       <TableCell>
-                        {!row.id.startsWith("lead-") && (
+                        {!row.isLead && (
                           <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${row.id}`)}>
                             Apri
                           </Button>
