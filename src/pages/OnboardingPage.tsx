@@ -383,26 +383,40 @@ export default function OnboardingPage() {
             {/* Card 2 — Crea il tuo profilo */}
             <div className="rounded-xl border border-white/10 bg-white/5 p-5 space-y-4">
               <h3 className="text-sm font-semibold">🎭 Crea il tuo profilo</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                <div className="space-y-2">
-                  <p className="font-medium text-green-400">✅ Fai così</p>
-                  <ul className="space-y-1.5 text-white/60">
-                    <li>Handle casual e organico (es. @marco.creator)</li>
-                    <li>Nome visualizzato semplice e personale</li>
-                    <li>Foto profilo: selfie o foto spontanea</li>
-                    <li>Bio breve e autentica</li>
-                    <li>Verifica l'account nelle impostazioni TikTok</li>
-                  </ul>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm mt-1">
+                <div className="space-y-2.5">
+                  <p className="font-semibold text-green-400 text-xs uppercase tracking-wider">✅ Fai così</p>
+                  <div className="space-y-2">
+                    {[
+                      "Handle casual e organico (es. @marco.creator)",
+                      "Nome visualizzato semplice e personale",
+                      "Foto profilo: selfie o foto spontanea",
+                      "Bio breve e autentica",
+                      "Verifica l'account nelle impostazioni TikTok",
+                    ].map((text, i) => (
+                      <div key={i} className="flex items-start gap-2.5 rounded-lg bg-green-500/5 border border-green-500/10 px-3 py-2">
+                        <span className="text-green-400 mt-0.5 shrink-0 text-xs">✓</span>
+                        <span className="text-white/70 text-[13px] leading-snug">{text}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <p className="font-medium text-red-400">❌ Evita</p>
-                  <ul className="space-y-1.5 text-white/60">
-                    <li>Nomi corporate o spammy (es. @promofinanza2024)</li>
-                    <li>Nome che sembra un brand</li>
-                    <li>Logo o immagini corporate</li>
-                    <li>Frasi promozionali o troppo formali</li>
-                    <li>Lasciare il profilo incompleto</li>
-                  </ul>
+                <div className="space-y-2.5">
+                  <p className="font-semibold text-red-400 text-xs uppercase tracking-wider">❌ Evita</p>
+                  <div className="space-y-2">
+                    {[
+                      "Nomi corporate o spammy (es. @promofinanza2024)",
+                      "Nome che sembra un brand",
+                      "Logo o immagini corporate",
+                      "Frasi promozionali o troppo formali",
+                      "Lasciare il profilo incompleto",
+                    ].map((text, i) => (
+                      <div key={i} className="flex items-start gap-2.5 rounded-lg bg-red-500/5 border border-red-500/10 px-3 py-2">
+                        <span className="text-red-400 mt-0.5 shrink-0 text-xs">✗</span>
+                        <span className="text-white/70 text-[13px] leading-snug">{text}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
