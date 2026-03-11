@@ -463,6 +463,7 @@ export default function SettingsPage() {
                   <SelectItem value="client">Client</SelectItem>
                   <SelectItem value="outreach">Outreach</SelectItem>
                   <SelectItem value="closer">Closer</SelectItem>
+                  <SelectItem value="campaign_manager">Campaign Manager</SelectItem>
                 </SelectContent>
               </Select>
             </div>
