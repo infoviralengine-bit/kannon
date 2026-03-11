@@ -112,6 +112,13 @@ export function AppSidebar() {
               {renderMenuItems([{ title: "Recruiting", url: "/dashboard/recruiting", icon: Search }])}
             </SidebarGroupContent>
           </SidebarGroup>
+        ) : isCampaignManager ? (
+          /* Campaign manager sees only Campaign Manager page */
+          <SidebarGroup>
+            <SidebarGroupContent>
+              {renderMenuItems([{ title: "Campaign Manager", url: "/dashboard/campaign-manager", icon: BarChart2 }])}
+            </SidebarGroupContent>
+          </SidebarGroup>
         ) : isCloser ? (
           /* Closer sees only Closer page */
           <SidebarGroup>

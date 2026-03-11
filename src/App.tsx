@@ -78,6 +78,7 @@ const App = () => (
               <Route path="finance" element={<FinancePage />} />
               <Route path="closer" element={<CloserPage />} />
               <Route path="onboarding" element={<OnboardingMonitorPage />} />
+              <Route path="campaign-manager" element={<CampaignManagerPage />} />
               <Route path="settings" element={<SettingsPage />} />
               {/* Redirect old payments route */}
               <Route path="payments" element={<Navigate to="/dashboard/payments-receivable" replace />} />
