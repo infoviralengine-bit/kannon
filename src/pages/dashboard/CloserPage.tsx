@@ -319,7 +319,8 @@ export default function CloserPage() {
         lead_id: selectedLead.id,
         contract_ids: selectedContracts,
       });
-      const url = `${window.location.origin}/onboarding/${link.token}`;
+      const publishedOrigin = "https://kannon.lovable.app";
+      const url = `${publishedOrigin}/onboarding/${link.token}`;
       await navigator.clipboard.writeText(url);
       toast.success("Link copiato negli appunti!");
       setContractDialog(false);
