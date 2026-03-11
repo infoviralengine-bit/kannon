@@ -64,9 +64,7 @@ function getOnboardingBaseUrl() {
   const host = window.location.hostname;
   const isPreviewHost = host.includes("lovableproject.com") || host.startsWith("id-preview--");
 
-  if (isPreviewHost) {
-    return "https://kannon.lovable.app";
-  }
+  if (isPreviewHost) return null;
 
   return window.location.origin;
 }
