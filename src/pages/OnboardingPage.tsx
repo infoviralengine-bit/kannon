@@ -523,7 +523,17 @@ export default function OnboardingPage() {
                   className="px-5 py-4 max-h-60 overflow-y-auto text-xs text-white/70 whitespace-pre-wrap leading-relaxed"
                   onScroll={(e) => handleContractScroll(c.id, e.currentTarget)}
                 >
-                  {c.contract_text || "Testo del contratto non ancora disponibile. Contatta il team per assistenza."}
+                  {(c.contract_text
+                    ? c.contract_text
+                        .replace(/\{\{nome\}\}/gi, firstName || "{{nome}}")
+                        .replace(/\{\{cognome\}\}/gi, lastName || "{{cognome}}")
+                        .replace(/\{\{data_nascita\}\}/gi, dob ? new Date(dob).toLocaleDateString("it-IT") : "{{data_nascita}}")
+                        .replace(/\{\{codice_fiscale\}\}/gi, fiscalCode || "{{codice_fiscale}}")
+                        .replace(/\{\{indirizzo\}\}/gi,
+                          [street, zip, city, province].filter(Boolean).join(", ") || "{{indirizzo}}"
+                        )
+                    : "Testo del contratto non ancora disponibile. Contatta il team per assistenza."
+                  )}
                 </div>
                 <div className="px-5 py-3 border-t border-white/10 bg-white/[0.02]">
                   <label className="flex items-center gap-3 cursor-pointer">
