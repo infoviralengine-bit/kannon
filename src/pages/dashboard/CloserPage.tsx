@@ -60,6 +60,15 @@ function useProfiles() {
   });
 }
 
+function getOnboardingBaseUrl() {
+  const host = window.location.hostname;
+  if (host.startsWith("id-preview--") && host.endsWith(".lovable.app")) {
+    const projectSlug = host.replace("id-preview--", "").replace(".lovable.app", "");
+    return `https://${projectSlug}.lovableproject.com`;
+  }
+  return window.location.origin;
+}
+
 /* ── Lead Card Component ─────────────────────────────────── */
 
 function LeadCard({
