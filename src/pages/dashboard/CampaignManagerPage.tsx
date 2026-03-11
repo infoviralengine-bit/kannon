@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,13 +10,12 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { TrendingUp, TrendingDown, Minus, ArrowUp, ArrowDown, Eye, Users, FileText, DollarSign } from "lucide-react";
+import { Minus, ArrowUp, ArrowDown, Eye, Users, FileText, DollarSign, ExternalLink } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   Area, AreaChart,
 } from "recharts";
-import { useCampaignManagerData, Period, CreatorRank } from "@/hooks/useCampaignManagerData";
+import { useCampaignManagerData, Period } from "@/hooks/useCampaignManagerData";
 import { formatViews, formatCurrency } from "@/lib/format";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
@@ -51,42 +50,13 @@ function TrendBadge({ current, prev }: { current: number; prev: number }) {
   return <span className="text-xs text-red-500 flex items-center gap-1"><ArrowDown className="h-3 w-3" /> {pct}%</span>;
 }
 
-function MiniSparkline({ data }: { data: number[] }) {
-  const max = Math.max(...data, 1);
-  const w = 80;
-  const h = 24;
-  const points = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - (v / max) * h}`).join(" ");
-  return (
-    <svg width={w} height={h} className="inline-block">
-      <polyline fill="none" stroke="hsl(var(--primary))" strokeWidth={1.5} points={points} />
-    </svg>
-  );
-}
-
-function StatusBadge({ dailyViews }: { dailyViews: number[] }) {
-  const first = dailyViews.slice(0, 3).reduce((s, v) => s + v, 0);
-  const last = dailyViews.slice(-3).reduce((s, v) => s + v, 0);
-  const change = first === 0 ? (last > 0 ? 100 : 0) : ((last - first) / first) * 100;
-
-  if (change > 5)
-    return <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50">🟢 In crescita</Badge>;
-  if (change < -5)
-    return <Badge variant="outline" className="text-red-500 border-red-200 bg-red-50">🔴 In calo</Badge>;
-  return <Badge variant="outline" className="text-muted-foreground border-muted bg-muted/50">⚪ Stabile</Badge>;
-}
-
 export default function CampaignManagerPage() {
   const [period, setPeriod] = useState<Period>("30d");
-  const [campaignFilter, setCampaignFilter] = useState("all");
-  const [showAll, setShowAll] = useState(false);
-  const creatorRef = useRef<HTMLDivElement>(null);
+  const [videoCampaignFilter, setVideoCampaignFilter] = useState("all");
+  const [videoCreatorFilter, setVideoCreatorFilter] = useState("all");
+  const [showAllVideos, setShowAllVideos] = useState(false);
 
   const { data, isLoading } = useCampaignManagerData(period);
-
-  const campaignNames = useMemo(
-    () => data ? [...new Set(data.campaigns.map((c) => c.name))] : [],
-    [data]
-  );
 
   const chartCampaignNames = useMemo(() => {
     if (!data) return [];
@@ -97,80 +67,66 @@ export default function CampaignManagerPage() {
     return [...names];
   }, [data]);
 
-  const filteredCreators = useMemo(() => {
+  // Unique creators for filter
+  const creatorOptions = useMemo(() => {
     if (!data) return [];
-    let list = data.creatorRanking;
-    if (campaignFilter !== "all") {
-      list = list.filter((c) => c.campaignId === campaignFilter);
-    }
-    return showAll ? list : list.slice(0, 20);
-  }, [data, campaignFilter, showAll]);
+    const map = new Map<string, string>();
+    data.videos.forEach((v) => {
+      if (!map.has(v.creatorId)) map.set(v.creatorId, v.creatorName);
+    });
+    return [...map.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [data]);
 
-  const totalFilteredCreators = useMemo(() => {
+  const filteredVideos = useMemo(() => {
+    if (!data) return [];
+    let list = data.videos;
+    if (videoCampaignFilter !== "all") {
+      list = list.filter((v) => v.campaignId === videoCampaignFilter);
+    }
+    if (videoCreatorFilter !== "all") {
+      list = list.filter((v) => v.creatorId === videoCreatorFilter);
+    }
+    return showAllVideos ? list : list.slice(0, 30);
+  }, [data, videoCampaignFilter, videoCreatorFilter, showAllVideos]);
+
+  const totalFilteredVideos = useMemo(() => {
     if (!data) return 0;
-    if (campaignFilter === "all") return data.creatorRanking.length;
-    return data.creatorRanking.filter((c) => c.campaignId === campaignFilter).length;
-  }, [data, campaignFilter]);
+    let list = data.videos;
+    if (videoCampaignFilter !== "all") list = list.filter((v) => v.campaignId === videoCampaignFilter);
+    if (videoCreatorFilter !== "all") list = list.filter((v) => v.creatorId === videoCreatorFilter);
+    return list.length;
+  }, [data, videoCampaignFilter, videoCreatorFilter]);
 
   // Insights
   const insights = useMemo(() => {
     if (!data) return [];
     const items: { emoji: string; title: string; text: string }[] = [];
 
-    // Best campaign
     const bestCamp = [...data.campaigns].sort((a, b) => b.views - a.views)[0];
     if (bestCamp) {
       const pct = trendPercent(bestCamp.views, bestCamp.prevViews);
       if (pct > 0) {
-        items.push({
-          emoji: "📈",
-          title: `${bestCamp.name} in crescita`,
-          text: `+${pct}% di views rispetto al periodo precedente.`,
-        });
+        items.push({ emoji: "📈", title: `${bestCamp.name} in crescita`, text: `+${pct}% di views rispetto al periodo precedente.` });
       }
     }
 
-    // Worst campaign
-    const worstCamp = [...data.campaigns].sort((a, b) => {
-      const pa = trendPercent(a.views, a.prevViews);
-      const pb = trendPercent(b.views, b.prevViews);
-      return pa - pb;
-    })[0];
+    const worstCamp = [...data.campaigns].sort((a, b) => trendPercent(a.views, a.prevViews) - trendPercent(b.views, b.prevViews))[0];
     if (worstCamp && trendPercent(worstCamp.views, worstCamp.prevViews) < -5) {
-      items.push({
-        emoji: "📉",
-        title: `${worstCamp.name} in calo`,
-        text: `${trendPercent(worstCamp.views, worstCamp.prevViews)}% rispetto al periodo precedente.`,
-      });
+      items.push({ emoji: "📉", title: `${worstCamp.name} in calo`, text: `${trendPercent(worstCamp.views, worstCamp.prevViews)}% rispetto al periodo precedente.` });
     }
 
-    // Top creator
     const topCreator = data.creatorRanking[0];
     if (topCreator) {
-      items.push({
-        emoji: "🏆",
-        title: `Top creator: ${topCreator.creatorName}`,
-        text: `${formatViews(topCreator.views)} views nel periodo.`,
-      });
+      items.push({ emoji: "🏆", title: `Top creator: ${topCreator.creatorName}`, text: `${formatViews(topCreator.views)} views nel periodo.` });
     }
 
-    // Inactive creators
     const inactive = data.creatorRanking.filter((c) => c.dailyViews.every((v) => v === 0));
     if (inactive.length > 0) {
-      items.push({
-        emoji: "⚠️",
-        title: `${inactive.length} creator inattivi`,
-        text: `Nessun contenuto pubblicato negli ultimi 7 giorni.`,
-      });
+      items.push({ emoji: "⚠️", title: `${inactive.length} creator inattivi`, text: `Nessun contenuto pubblicato negli ultimi 7 giorni.` });
     }
 
     return items;
   }, [data]);
-
-  const scrollToCampaign = (campId: string) => {
-    setCampaignFilter(campId);
-    creatorRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
 
   if (isLoading) {
     return (
@@ -250,7 +206,6 @@ export default function CampaignManagerPage() {
 
       {/* ROW 2 — Chart + Campaign summary */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        {/* Left: Chart (3/5) */}
         <Card className="lg:col-span-3">
           <CardContent className="pt-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Views nel tempo</h2>
@@ -262,15 +217,7 @@ export default function CampaignManagerPage() {
                   <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
                   <Tooltip />
                   {chartCampaignNames.map((name, i) => (
-                    <Area
-                      key={name}
-                      type="monotone"
-                      dataKey={name}
-                      stroke={CHART_COLORS[i % CHART_COLORS.length]}
-                      fill={CHART_COLORS[i % CHART_COLORS.length]}
-                      fillOpacity={0.15}
-                      strokeWidth={2}
-                    />
+                    <Area key={name} type="monotone" dataKey={name} stroke={CHART_COLORS[i % CHART_COLORS.length]} fill={CHART_COLORS[i % CHART_COLORS.length]} fillOpacity={0.15} strokeWidth={2} />
                   ))}
                 </AreaChart>
               ) : (
@@ -281,14 +228,7 @@ export default function CampaignManagerPage() {
                   <Tooltip />
                   <Legend />
                   {chartCampaignNames.map((name, i) => (
-                    <Line
-                      key={name}
-                      type="monotone"
-                      dataKey={name}
-                      stroke={CHART_COLORS[i % CHART_COLORS.length]}
-                      strokeWidth={2}
-                      dot={false}
-                    />
+                    <Line key={name} type="monotone" dataKey={name} stroke={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={2} dot={false} />
                   ))}
                 </LineChart>
               )}
@@ -296,7 +236,6 @@ export default function CampaignManagerPage() {
           </CardContent>
         </Card>
 
-        {/* Right: Campaign list (2/5) */}
         <Card className="lg:col-span-2">
           <CardContent className="pt-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Campagne: riepilogo</h2>
@@ -304,7 +243,7 @@ export default function CampaignManagerPage() {
               {data.campaigns.map((camp) => (
                 <button
                   key={camp.id}
-                  onClick={() => scrollToCampaign(camp.id)}
+                  onClick={() => { setVideoCampaignFilter(camp.id); setVideoCreatorFilter("all"); setShowAllVideos(false); }}
                   className="w-full text-left p-3 rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -326,14 +265,14 @@ export default function CampaignManagerPage() {
         </Card>
       </div>
 
-      {/* ROW 3 — Creator Ranking */}
-      <div ref={creatorRef}>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-foreground">Performance Creator</h2>
-              <Select value={campaignFilter} onValueChange={setCampaignFilter}>
-                <SelectTrigger className="w-[200px]">
+      {/* ROW 3 — Video List */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+            <h2 className="text-lg font-semibold text-foreground">Video Pubblicati</h2>
+            <div className="flex gap-2">
+              <Select value={videoCampaignFilter} onValueChange={(v) => { setVideoCampaignFilter(v); setShowAllVideos(false); }}>
+                <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Tutte le campagne" />
                 </SelectTrigger>
                 <SelectContent>
@@ -343,71 +282,77 @@ export default function CampaignManagerPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={videoCreatorFilter} onValueChange={(v) => { setVideoCreatorFilter(v); setShowAllVideos(false); }}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Tutti i creator" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tutti i creator</SelectItem>
+                  {creatorOptions.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Creator</TableHead>
-                  <TableHead>Account TikTok</TableHead>
-                  <TableHead>Campagna</TableHead>
-                  <TableHead className="text-right">Views</TableHead>
-                  <TableHead className="text-right">Contenuti</TableHead>
-                  <TableHead>Trend</TableHead>
-                  <TableHead>Stato</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Video</TableHead>
+                <TableHead>Creator</TableHead>
+                <TableHead>Campagna</TableHead>
+                <TableHead className="text-right">Views</TableHead>
+                <TableHead className="text-right">Likes</TableHead>
+                <TableHead className="text-right">Commenti</TableHead>
+                <TableHead>Data</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredVideos.map((v) => (
+                <TableRow key={v.videoId}>
+                  <TableCell>
+                    <a
+                      href={`https://www.tiktok.com/@${v.username}/video/${v.tiktokVideoId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-sm text-primary hover:underline"
+                    >
+                      @{v.username}
+                      <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
+                  </TableCell>
+                  <TableCell className="text-sm">{v.creatorName}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="text-xs">{v.campaignName}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-bold">{formatViews(v.views)}</TableCell>
+                  <TableCell className="text-right">{formatViews(v.likes)}</TableCell>
+                  <TableCell className="text-right">{formatViews(v.comments)}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {new Date(v.publishedAt).toLocaleDateString("it-IT")}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCreators.map((cr) => {
-                  const initials = cr.creatorName
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2);
-                  return (
-                    <TableRow key={cr.creatorId + cr.campaignId}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-7 w-7">
-                            <AvatarFallback className="text-xs bg-primary/10 text-primary">{initials}</AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium text-sm">{cr.creatorName}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {cr.accounts.map((a) => `@${a}`).join(", ")}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="text-xs">{cr.campaignName}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-bold">{formatViews(cr.views)}</TableCell>
-                      <TableCell className="text-right">{cr.contentCount}</TableCell>
-                      <TableCell><MiniSparkline data={cr.dailyViews} /></TableCell>
-                      <TableCell><StatusBadge dailyViews={cr.dailyViews} /></TableCell>
-                    </TableRow>
-                  );
-                })}
-                {filteredCreators.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                      Nessun creator trovato
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+              ))}
+              {filteredVideos.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    Nessun video trovato
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
 
-            {!showAll && totalFilteredCreators > 20 && (
-              <div className="flex justify-center mt-4">
-                <Button variant="outline" size="sm" onClick={() => setShowAll(true)}>
-                  Mostra tutti ({totalFilteredCreators})
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          {!showAllVideos && totalFilteredVideos > 30 && (
+            <div className="flex justify-center mt-4">
+              <Button variant="outline" size="sm" onClick={() => setShowAllVideos(true)}>
+                Mostra tutti ({totalFilteredVideos})
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* ROW 4 — Insights */}
       {insights.length > 0 && (
