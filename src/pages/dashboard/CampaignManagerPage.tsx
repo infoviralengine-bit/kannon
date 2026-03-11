@@ -78,7 +78,7 @@ export default function CampaignManagerPage() {
   }, [data]);
 
   const filteredVideos = useMemo(() => {
-    if (!data) return [];
+    if (!data || !data.videos) return [];
     let list = data.videos;
     if (videoCampaignFilter !== "all") {
       list = list.filter((v) => v.campaignId === videoCampaignFilter);
