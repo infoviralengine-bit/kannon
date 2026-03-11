@@ -329,6 +329,11 @@ export default function CloserPage() {
         contract_ids: selectedContracts,
       });
       const onboardingBaseUrl = getOnboardingBaseUrl();
+      if (!onboardingBaseUrl) {
+        toast.error("Stai usando l'ambiente Test: genera il link da https://kannon.lovable.app/dashboard/closer");
+        return;
+      }
+
       const url = `${onboardingBaseUrl}/onboarding/${link.token}`;
       await navigator.clipboard.writeText(url);
       toast.success("Link copiato negli appunti!");
@@ -344,6 +349,11 @@ export default function CloserPage() {
 
   const copyLink = (token: string) => {
     const onboardingBaseUrl = getOnboardingBaseUrl();
+    if (!onboardingBaseUrl) {
+      toast.error("Stai usando l'ambiente Test: copia il link solo da https://kannon.lovable.app/dashboard/closer");
+      return;
+    }
+
     const url = `${onboardingBaseUrl}/onboarding/${token}`;
     navigator.clipboard.writeText(url);
     toast.success("Link copiato!");
