@@ -334,7 +334,8 @@ export default function CloserPage() {
   const getLeadLink = (leadId: string) => links.find(l => l.lead_id === leadId);
 
   const copyLink = (token: string) => {
-    const url = `${window.location.origin}/onboarding/${token}`;
+    const publishedOrigin = "https://kannon.lovable.app";
+    const url = `${publishedOrigin}/onboarding/${token}`;
     navigator.clipboard.writeText(url);
     toast.success("Link copiato!");
   };
