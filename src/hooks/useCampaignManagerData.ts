@@ -33,8 +33,11 @@ export interface CampaignManagerData {
   // Daily views per campaign
   dailyViews: DailyViewPoint[];
 
-  // Creator ranking
-  creatorRanking: CreatorRank[];
+  // Video list
+  videos: VideoItem[];
+
+  // For insights
+  creatorRanking: { creatorName: string; views: number; dailyViews: number[] }[];
 }
 
 export interface CampaignSummary {
@@ -50,15 +53,18 @@ export interface DailyViewPoint {
   [campaignName: string]: number | string;
 }
 
-export interface CreatorRank {
+export interface VideoItem {
+  videoId: string;
+  tiktokVideoId: string;
+  username: string;
   creatorId: string;
   creatorName: string;
   campaignId: string;
   campaignName: string;
-  accounts: string[];
   views: number;
-  contentCount: number;
-  dailyViews: number[]; // last 7 days for sparkline
+  likes: number;
+  comments: number;
+  publishedAt: string;
 }
 
 export function useCampaignManagerData(period: Period) {
