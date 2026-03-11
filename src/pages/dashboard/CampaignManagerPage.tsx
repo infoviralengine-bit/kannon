@@ -69,7 +69,7 @@ export default function CampaignManagerPage() {
 
   // Unique creators for filter
   const creatorOptions = useMemo(() => {
-    if (!data) return [];
+    if (!data || !data.videos) return [];
     const map = new Map<string, string>();
     data.videos.forEach((v) => {
       if (!map.has(v.creatorId)) map.set(v.creatorId, v.creatorName);
@@ -78,7 +78,7 @@ export default function CampaignManagerPage() {
   }, [data]);
 
   const filteredVideos = useMemo(() => {
-    if (!data) return [];
+    if (!data || !data.videos) return [];
     let list = data.videos;
     if (videoCampaignFilter !== "all") {
       list = list.filter((v) => v.campaignId === videoCampaignFilter);
@@ -90,7 +90,7 @@ export default function CampaignManagerPage() {
   }, [data, videoCampaignFilter, videoCreatorFilter, showAllVideos]);
 
   const totalFilteredVideos = useMemo(() => {
-    if (!data) return 0;
+    if (!data || !data.videos) return 0;
     let list = data.videos;
     if (videoCampaignFilter !== "all") list = list.filter((v) => v.campaignId === videoCampaignFilter);
     if (videoCreatorFilter !== "all") list = list.filter((v) => v.creatorId === videoCreatorFilter);
