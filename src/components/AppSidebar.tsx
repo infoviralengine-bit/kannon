@@ -38,6 +38,7 @@ const creatorItems = [
 ];
 
 const altroItems = [
+  { title: "Campaign Manager", url: "/dashboard/campaign-manager", icon: BarChart2 },
   { title: "Outreach", url: "/dashboard/outreach", icon: MessageCircle },
   { title: "Closer", url: "/dashboard/closer", icon: PhoneCall },
   { title: "Onboarding", url: "/dashboard/onboarding", icon: ClipboardList },
