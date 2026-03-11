@@ -62,10 +62,10 @@ function useProfiles() {
 
 function getOnboardingBaseUrl() {
   const host = window.location.hostname;
-  const isPreviewHost = host.includes("lovableproject.com") || host.startsWith("id-preview--");
-
-  if (isPreviewHost) return null;
-
+  // Preview URLs require Lovable login — use published URL for onboarding links
+  if (host.includes("lovableproject.com") || host.startsWith("id-preview--")) {
+    return "https://kannon.lovable.app";
+  }
   return window.location.origin;
 }
 
