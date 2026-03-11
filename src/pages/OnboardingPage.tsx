@@ -183,7 +183,7 @@ export default function OnboardingPage() {
     try {
       const res = await supabase.functions.invoke("complete-onboarding", {
         body: {
-          token,
+          token: link.token,
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           date_of_birth: dob,
