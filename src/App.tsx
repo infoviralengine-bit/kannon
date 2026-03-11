@@ -34,6 +34,7 @@ import ContractDetailPage from "@/pages/dashboard/ContractDetailPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
 import CloserPage from "@/pages/dashboard/CloserPage";
 import OnboardingMonitorPage from "@/pages/dashboard/OnboardingMonitorPage";
+import CampaignManagerPage from "@/pages/dashboard/CampaignManagerPage";
 
 const queryClient = new QueryClient();
 
