@@ -328,8 +328,8 @@ export default function CloserPage() {
         lead_id: selectedLead.id,
         contract_ids: selectedContracts,
       });
-      const publishedOrigin = "https://kannon.lovable.app";
-      const url = `${publishedOrigin}/onboarding/${link.token}`;
+      const onboardingBaseUrl = getOnboardingBaseUrl();
+      const url = `${onboardingBaseUrl}/onboarding/${link.token}`;
       await navigator.clipboard.writeText(url);
       toast.success("Link copiato negli appunti!");
       setContractDialog(false);
@@ -343,8 +343,8 @@ export default function CloserPage() {
   const getLeadLink = (leadId: string) => links.find(l => l.lead_id === leadId);
 
   const copyLink = (token: string) => {
-    const publishedOrigin = "https://kannon.lovable.app";
-    const url = `${publishedOrigin}/onboarding/${token}`;
+    const onboardingBaseUrl = getOnboardingBaseUrl();
+    const url = `${onboardingBaseUrl}/onboarding/${token}`;
     navigator.clipboard.writeText(url);
     toast.success("Link copiato!");
   };
