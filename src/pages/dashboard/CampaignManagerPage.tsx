@@ -69,7 +69,7 @@ export default function CampaignManagerPage() {
 
   // Unique creators for filter
   const creatorOptions = useMemo(() => {
-    if (!data) return [];
+    if (!data || !data.videos) return [];
     const map = new Map<string, string>();
     data.videos.forEach((v) => {
       if (!map.has(v.creatorId)) map.set(v.creatorId, v.creatorName);
