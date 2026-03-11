@@ -62,10 +62,12 @@ function useProfiles() {
 
 function getOnboardingBaseUrl() {
   const host = window.location.hostname;
-  if (host.startsWith("id-preview--") && host.endsWith(".lovable.app")) {
-    const projectSlug = host.replace("id-preview--", "").replace(".lovable.app", "");
-    return `https://${projectSlug}.lovableproject.com`;
+  const isPreviewHost = host.includes("lovableproject.com") || host.startsWith("id-preview--");
+
+  if (isPreviewHost) {
+    return "https://kannon.lovable.app";
   }
+
   return window.location.origin;
 }
 
