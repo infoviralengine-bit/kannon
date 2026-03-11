@@ -83,81 +83,87 @@ export default function OnboardingPage() {
     if (!token) return;
 
     (async () => {
-      const normalizedToken = token.trim().toLowerCase().replace(/[^a-f0-9]/g, "");
-      if (normalizedToken.length !== 64) {
-        setError("Link non valido o scaduto.");
+      try {
+        const normalizedToken = token.trim().toLowerCase().replace(/[^a-f0-9]/g, "");
+        if (normalizedToken.length !== 64) {
+          setError("Link non valido o scaduto.");
+          setLoading(false);
+          return;
+        }
+
+        const { data: linkData, error: linkErr } = await supabase
+          .from("onboarding_links")
+          .select("id, token, lead_id, contract_ids, status")
+          .eq("token", normalizedToken)
+          .maybeSingle();
+
+        if (linkErr) {
+          console.error("Errore verifica onboarding link:", linkErr);
+          setError("Errore durante la verifica del link. Riprova tra qualche minuto.");
+          setLoading(false);
+          return;
+        }
+
+        if (!linkData) {
+          setError("Link non valido o scaduto.");
+          setLoading(false);
+          return;
+        }
+
+        if (linkData.status === "completed") {
+          setError("Questo link è già stato utilizzato.");
+          setLoading(false);
+          return;
+        }
+
+        setLink(linkData as OnboardingLink);
+
+        const [{ data: leadData }, { data: cData, error: cErr }, { data: ccData, error: ccErr }] = await Promise.all([
+          supabase
+            .from("closer_leads")
+            .select("first_name, last_name")
+            .eq("id", linkData.lead_id)
+            .maybeSingle(),
+          supabase
+            .from("contracts")
+            .select("id, name, contract_text, creator_cpm, creator_fixed, min_videos_per_day")
+            .in("id", linkData.contract_ids),
+          supabase
+            .from("contract_campaigns")
+            .select("contract_id, campaign_id, campaigns(name)")
+            .in("contract_id", linkData.contract_ids),
+        ]);
+
+        if (leadData) {
+          setFirstName((leadData as { first_name?: string }).first_name || "");
+          setLastName((leadData as { last_name?: string }).last_name || "");
+        }
+
+        if (cErr || ccErr) {
+          console.error("Errore caricamento dati onboarding:", { cErr, ccErr });
+          setError("Impossibile caricare i dati del contratto. Contatta il supporto.");
+          setLoading(false);
+          return;
+        }
+
+        setContracts((cData ?? []) as Contract[]);
+
+        const campaignInfos: CampaignInfo[] = (ccData ?? []).map((cc: any) => ({
+          campaign_id: cc.campaign_id,
+          campaign_name: cc.campaigns?.name || "Campagna",
+          contract_id: cc.contract_id,
+        }));
+
+        // Deduplicate by campaign_id
+        const uniqueCampaigns = Array.from(new Map(campaignInfos.map(c => [c.campaign_id, c])).values());
+        setCampaigns(uniqueCampaigns);
+
         setLoading(false);
-        return;
-      }
-
-      const { data: linkData, error: linkErr } = await supabase
-        .from("onboarding_links")
-        .select("id, token, lead_id, contract_ids, status")
-        .eq("token", normalizedToken)
-        .maybeSingle();
-
-      if (linkErr) {
-        console.error("Errore verifica onboarding link:", linkErr);
-        setError("Errore durante la verifica del link. Riprova tra qualche minuto.");
+      } catch (err) {
+        console.error("Errore inizializzazione onboarding:", err);
+        setError("Errore di connessione. Riprova tra qualche minuto.");
         setLoading(false);
-        return;
       }
-
-      if (!linkData) {
-        setError("Link non valido o scaduto.");
-        setLoading(false);
-        return;
-      }
-
-      if (linkData.status === "completed") {
-        setError("Questo link è già stato utilizzato.");
-        setLoading(false);
-        return;
-      }
-
-      setLink(linkData as OnboardingLink);
-
-      const [{ data: leadData }, { data: cData, error: cErr }, { data: ccData, error: ccErr }] = await Promise.all([
-        supabase
-          .from("closer_leads")
-          .select("first_name, last_name")
-          .eq("id", linkData.lead_id)
-          .maybeSingle(),
-        supabase
-          .from("contracts")
-          .select("id, name, contract_text, creator_cpm, creator_fixed, min_videos_per_day")
-          .in("id", linkData.contract_ids),
-        supabase
-          .from("contract_campaigns")
-          .select("contract_id, campaign_id, campaigns(name)")
-          .in("contract_id", linkData.contract_ids),
-      ]);
-
-      if (leadData) {
-        setFirstName((leadData as { first_name?: string }).first_name || "");
-        setLastName((leadData as { last_name?: string }).last_name || "");
-      }
-
-      if (cErr || ccErr) {
-        console.error("Errore caricamento dati onboarding:", { cErr, ccErr });
-        setError("Impossibile caricare i dati del contratto. Contatta il supporto.");
-        setLoading(false);
-        return;
-      }
-
-      setContracts((cData ?? []) as Contract[]);
-
-      const campaignInfos: CampaignInfo[] = (ccData ?? []).map((cc: any) => ({
-        campaign_id: cc.campaign_id,
-        campaign_name: cc.campaigns?.name || "Campagna",
-        contract_id: cc.contract_id,
-      }));
-
-      // Deduplicate by campaign_id
-      const uniqueCampaigns = Array.from(new Map(campaignInfos.map(c => [c.campaign_id, c])).values());
-      setCampaigns(uniqueCampaigns);
-
-      setLoading(false);
     })();
   }, [token]);
 
