@@ -191,43 +191,44 @@ export function useCampaignManagerData(period: Period) {
         return point;
       });
 
-      // Creator ranking
-      const creatorCampaignMap = new Map<string, Set<string>>();
-      allCC.forEach((r) => {
-        const set = creatorCampaignMap.get(r.creator_id) ?? new Set();
-        set.add(r.campaign_id);
-        creatorCampaignMap.set(r.creator_id, set);
-      });
+      // Video list from current period
+      const videoItems: VideoItem[] = currentVideos.map((v) => {
+        const accountId = v.tiktok_account_id;
+        const username = accountUsernameMap.get(accountId) ?? "";
+        const creatorId = accountCreatorMap.get(accountId) ?? "";
+        const creatorName = creatorNameMap.get(creatorId) ?? "Sconosciuto";
+        const campaignId = accountCampaignMap.get(accountId) ?? "";
+        const campaignName = campaignNameMap.get(campaignId) ?? "";
+        return {
+          videoId: v.id,
+          tiktokVideoId: v.tiktok_video_id,
+          username,
+          creatorId,
+          creatorName,
+          campaignId,
+          campaignName,
+          views: v.views ?? 0,
+          likes: v.likes ?? 0,
+          comments: v.comments ?? 0,
+          publishedAt: v.published_at,
+        };
+      }).sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
-      // Group accounts by creator
-      const accountsByCreator = new Map<string, typeof allAccounts>();
+      // Simplified creator ranking for insights
+      const accountsByCreator = new Map<string, string[]>();
       allAccounts.forEach((a) => {
         if (!a.creator_id) return;
         const list = accountsByCreator.get(a.creator_id) ?? [];
-        list.push(a);
+        list.push(a.id);
         accountsByCreator.set(a.creator_id, list);
       });
 
-      // 7-day range for sparklines
       const spark7 = dateRange(7);
-
-      const creatorRanking: CreatorRank[] = [];
-      allCreators.forEach((creator) => {
-        const accs = accountsByCreator.get(creator.id) ?? [];
-        if (!accs.length) return;
-
-        const accIds = new Set(accs.map((a) => a.id));
-        const cVideos = currentVideos.filter((v) => accIds.has(v.tiktok_account_id));
-        const views = cVideos.reduce((s, v) => s + (v.views ?? 0), 0);
-
-        // Get campaign for first account
-        const campIds = creatorCampaignMap.get(creator.id);
-        if (!campIds?.size) return;
-
-        const campId = [...campIds][0];
-        const campName = campaignNameMap.get(campId) ?? "";
-
-        // Sparkline: last 7 days
+      const creatorRanking = allCreators.map((creator) => {
+        const accIds = new Set(accountsByCreator.get(creator.id) ?? []);
+        const views = currentVideos
+          .filter((v) => accIds.has(v.tiktok_account_id))
+          .reduce((s, v) => s + (v.views ?? 0), 0);
         const sparkVideos = allVideos.filter(
           (v) => accIds.has(v.tiktok_account_id) && v.published_at >= spark7.start && v.published_at < spark7.end
         );
@@ -236,25 +237,10 @@ export function useCampaignManagerData(period: Period) {
           const d = new Date();
           d.setDate(d.getDate() - (6 - i));
           const key = d.toISOString().slice(0, 10);
-          const dayViews = sparkVideos
-            .filter((v) => v.published_at.slice(0, 10) === key)
-            .reduce((s, v) => s + (v.views ?? 0), 0);
-          dailySpark.push(dayViews);
+          dailySpark.push(sparkVideos.filter((v) => v.published_at.slice(0, 10) === key).reduce((s, v) => s + (v.views ?? 0), 0));
         }
-
-        creatorRanking.push({
-          creatorId: creator.id,
-          creatorName: creator.name,
-          campaignId: campId,
-          campaignName: campName,
-          accounts: accs.map((a) => a.username),
-          views,
-          contentCount: cVideos.length,
-          dailyViews: dailySpark,
-        });
-      });
-
-      creatorRanking.sort((a, b) => b.views - a.views);
+        return { creatorName: creator.name, views, dailyViews: dailySpark };
+      }).filter((c) => c.views > 0).sort((a, b) => b.views - a.views);
 
       return {
         totalViews,
@@ -267,6 +253,7 @@ export function useCampaignManagerData(period: Period) {
         prevAvgCpm,
         campaigns: campaignSummaries,
         dailyViews,
+        videos: videoItems,
         creatorRanking,
       };
     },
