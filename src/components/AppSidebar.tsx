@@ -70,6 +70,7 @@ export function AppSidebar() {
   // Outreach role: only show Recruiting
   const isOutreach = role === "outreach";
   const isCloser = role === "closer";
+  const isCampaignManager = role === "campaign_manager";
 
   const allAltroItems = role === "admin"
     ? [...altroItems, { title: "Impostazioni", url: "/dashboard/settings", icon: Settings }]
