@@ -32,6 +32,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   if (role === "closer" && !window.location.pathname.startsWith("/dashboard/closer")) {
     return <Navigate to="/dashboard/closer" replace />;
   }
+  if (role === "campaign_manager" && !window.location.pathname.startsWith("/dashboard/campaign-manager")) {
+    return <Navigate to="/dashboard/campaign-manager" replace />;
+  }
   if ((role === "admin" || role === "team") && (window.location.pathname === "/" || window.location.pathname === "/login")) {
     return <Navigate to="/dashboard" replace />;
   }

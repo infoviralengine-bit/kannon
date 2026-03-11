@@ -34,6 +34,7 @@ import ContractDetailPage from "@/pages/dashboard/ContractDetailPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
 import CloserPage from "@/pages/dashboard/CloserPage";
 import OnboardingMonitorPage from "@/pages/dashboard/OnboardingMonitorPage";
+import CampaignManagerPage from "@/pages/dashboard/CampaignManagerPage";
 
 const queryClient = new QueryClient();
 
@@ -52,7 +53,7 @@ const App = () => (
 
             {/* Dashboard routes - admin, team & outreach */}
             <Route path="/dashboard" element={
-              <ProtectedRoute allowedRoles={["admin", "team", "outreach", "closer"]}>
+              <ProtectedRoute allowedRoles={["admin", "team", "outreach", "closer", "campaign_manager"]}>
                 <DashboardLayout />
               </ProtectedRoute>
             }>
@@ -77,6 +78,7 @@ const App = () => (
               <Route path="finance" element={<FinancePage />} />
               <Route path="closer" element={<CloserPage />} />
               <Route path="onboarding" element={<OnboardingMonitorPage />} />
+              <Route path="campaign-manager" element={<CampaignManagerPage />} />
               <Route path="settings" element={<SettingsPage />} />
               {/* Redirect old payments route */}
               <Route path="payments" element={<Navigate to="/dashboard/payments-receivable" replace />} />

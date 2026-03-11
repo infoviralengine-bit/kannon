@@ -1,6 +1,6 @@
 import {
   Globe, Megaphone, Users, Smartphone, Wallet, CreditCard,
-  BarChart3, Film, TrendingUp, Search, FileText, MessageCircle,
+  BarChart3, BarChart2, Film, TrendingUp, Search, FileText, MessageCircle,
   CalendarDays, Landmark, Settings, LogOut, ArrowDownCircle, ArrowUpCircle, PhoneCall, ClipboardList
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -38,6 +38,7 @@ const creatorItems = [
 ];
 
 const altroItems = [
+  { title: "Campaign Manager", url: "/dashboard/campaign-manager", icon: BarChart2 },
   { title: "Outreach", url: "/dashboard/outreach", icon: MessageCircle },
   { title: "Closer", url: "/dashboard/closer", icon: PhoneCall },
   { title: "Onboarding", url: "/dashboard/onboarding", icon: ClipboardList },
@@ -70,6 +71,7 @@ export function AppSidebar() {
   // Outreach role: only show Recruiting
   const isOutreach = role === "outreach";
   const isCloser = role === "closer";
+  const isCampaignManager = role === "campaign_manager";
 
   const allAltroItems = role === "admin"
     ? [...altroItems, { title: "Impostazioni", url: "/dashboard/settings", icon: Settings }]
@@ -109,6 +111,13 @@ export function AppSidebar() {
           <SidebarGroup>
             <SidebarGroupContent>
               {renderMenuItems([{ title: "Recruiting", url: "/dashboard/recruiting", icon: Search }])}
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : isCampaignManager ? (
+          /* Campaign manager sees only Campaign Manager page */
+          <SidebarGroup>
+            <SidebarGroupContent>
+              {renderMenuItems([{ title: "Campaign Manager", url: "/dashboard/campaign-manager", icon: BarChart2 }])}
             </SidebarGroupContent>
           </SidebarGroup>
         ) : isCloser ? (
