@@ -115,7 +115,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName }
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         {b.fixedEarned ? (
-                          <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                          <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
                         ) : (
                           <XCircle className="h-3.5 w-3.5 text-muted-foreground" />
                         )}

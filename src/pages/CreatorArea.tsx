@@ -136,10 +136,9 @@ export default function CreatorArea() {
         )}
         {section === "dashboard" && (
           <CreatorDashboard
-            accounts={data.warmupAccounts}
+            accountStats={data.accountStats}
             earnings={data.earnings}
             creatorName={data.creator.name}
-            totalVideos={data.earnings.totalVideos}
           />
         )}
         {section === "contenuti" && (
