@@ -202,6 +202,8 @@ export function useCreatorPortal() {
         warmupAccounts,
         allWarmupDone,
         anyWarmupDone,
+        isOperativo,
+        unlocked,
         isFirstVisit,
         content,
         calendar,
