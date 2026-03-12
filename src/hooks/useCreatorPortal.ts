@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { sumEffectiveViewsCapped } from "@/lib/videoWindow";
+import { isFixedEarnedMonthly, getMonthlyTarget } from "@/lib/fixedEarned";
 
 export interface WarmupAccount {
   id: string;
@@ -12,6 +14,47 @@ export interface WarmupAccount {
   followingCount: number;
   isReady: boolean;
   needsMoreFollowing: boolean;
+}
+
+export interface AccountStats {
+  id: string;
+  username: string;
+  campaignName: string;
+  totalViews: number;
+  totalVideos: number;
+  monthViews: number;
+  monthVideos: number;
+}
+
+export interface ContractBreakdown {
+  contractId: string;
+  contractName: string;
+  videoCount: number;
+  monthlyTarget: number;
+  fixedAmount: number;
+  fixedEarned: boolean;
+  cpmRate: number;
+  cpmAmount: number;
+  totalViews: number;
+  subtotal: number;
+}
+
+export interface EarningsData {
+  monthEarnings: number;
+  totalEarnings: number;
+  totalViews: number;
+  totalVideos: number;
+  monthViews: number;
+  monthVideos: number;
+  contractBreakdowns: ContractBreakdown[];
+  payments: {
+    period: string;
+    gross: number;
+    tax: number;
+    net: number;
+    isPaid: boolean;
+    paidAt: string | null;
+  }[];
 }
 
 export interface CreatorContentItem {
@@ -34,21 +77,6 @@ export interface CalendarEntry {
   accountUsername: string | null;
 }
 
-export interface EarningsData {
-  monthEarnings: number;
-  totalEarnings: number;
-  totalViews: number;
-  totalVideos: number;
-  payments: {
-    period: string;
-    gross: number;
-    tax: number;
-    net: number;
-    isPaid: boolean;
-    paidAt: string | null;
-  }[];
-}
-
 export function useCreatorPortal() {
   const { user } = useAuth();
 
@@ -65,20 +93,42 @@ export function useCreatorPortal() {
         .single();
       if (crErr || !creator) return null;
 
-      // Get accounts with warmup data
+      // Get accounts
       const { data: accounts } = await supabase
         .from("tiktok_accounts")
         .select("*")
         .eq("creator_id", creator.id);
       const accs = (accounts ?? []) as any[];
+      const accIds = accs.map((a: any) => a.id);
 
-      // Get campaigns for names
+      // Get campaigns for names and caps
       const campIds = [...new Set(accs.map((a: any) => a.campaign_id).filter(Boolean))] as string[];
-      let campMap = new Map<string, string>();
+      let campaigns: { id: string; name: string; video_views_cap: number | null }[] = [];
       if (campIds.length) {
-        const { data } = await supabase.from("campaigns").select("id, name").in("id", campIds);
-        (data ?? []).forEach((c: any) => campMap.set(c.id, c.name));
+        const { data } = await supabase.from("campaigns").select("id, name, video_views_cap").in("id", campIds);
+        campaigns = data ?? [];
       }
+      const campMap = new Map(campaigns.map((c) => [c.id, c.name]));
+      const capByCampaign = new Map(campaigns.map((c) => [c.id, c.video_views_cap]));
+
+      // Get ALL videos for these accounts
+      let allVideos: any[] = [];
+      if (accIds.length) {
+        const { data } = await supabase
+          .from("videos")
+          .select("*")
+          .in("tiktok_account_id", accIds)
+          .order("published_at", { ascending: false });
+        allVideos = data ?? [];
+      }
+
+      // Month range
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const mStart = new Date(year, month, 1).toISOString();
+      const mEnd = new Date(year, month + 1, 1).toISOString();
+      const monthVideosList = allVideos.filter((v) => v.published_at >= mStart && v.published_at < mEnd);
 
       // Build warmup accounts
       const creatorIsOperativo = creator.onboarding_phase === "operativo";
@@ -86,7 +136,6 @@ export function useCreatorPortal() {
       const warmupAccounts: WarmupAccount[] = accs.map((a: any) => {
         const day = a.warmup_day ?? 0;
         const following = a.following_count ?? 0;
-        // If creator is operativo, all accounts are considered ready
         const isReady = creatorIsOperativo || (day >= 3 && following >= 40);
         const needsMoreFollowing = !creatorIsOperativo && day >= 3 && following < 40;
         return {
@@ -102,107 +151,168 @@ export function useCreatorPortal() {
         };
       });
 
+      // Per-account stats
+      const accountStats: AccountStats[] = accs.map((a: any) => {
+        const accVids = allVideos.filter((v) => v.tiktok_account_id === a.id);
+        const accMonthVids = monthVideosList.filter((v) => v.tiktok_account_id === a.id);
+        return {
+          id: a.id,
+          username: a.username,
+          campaignName: a.campaign_id ? campMap.get(a.campaign_id) ?? "—" : "—",
+          totalViews: accVids.reduce((s, v) => s + (v.views ?? 0), 0),
+          totalVideos: accVids.length,
+          monthViews: accMonthVids.reduce((s, v) => s + (v.views ?? 0), 0),
+          monthVideos: accMonthVids.length,
+        };
+      });
+
       const allWarmupDone = warmupAccounts.length > 0 && warmupAccounts.every((a) => a.isReady);
       const anyWarmupDone = warmupAccounts.some((a) => a.isReady);
       const isOperativo = creatorIsOperativo || allWarmupDone;
       const unlocked = anyWarmupDone || isOperativo;
 
-      // Check if first visit (no warmup started on any account)
       const isFirstVisit = !isOperativo && warmupAccounts.every((a) => a.warmupDay === 0 && !a.warmupStartedAt);
 
-      // Fetch content
+      // --- Contract-based earnings calculation ---
+      const { data: contractCreators } = await supabase
+        .from("contract_creators" as any)
+        .select("contract_id, creator_id")
+        .eq("creator_id", creator.id);
+      const ccRows = (contractCreators ?? []) as any[];
+      const contractIds = ccRows.map((r: any) => r.contract_id);
+
+      let allContracts: any[] = [];
+      let allContractCampaigns: any[] = [];
+      if (contractIds.length) {
+        const [{ data: cData }, { data: ccData }] = await Promise.all([
+          supabase.from("contracts" as any).select("*").in("id", contractIds).eq("is_active", true),
+          supabase.from("contract_campaigns" as any).select("contract_id, campaign_id").in("contract_id", contractIds),
+        ]);
+        allContracts = (cData ?? []) as any[];
+        allContractCampaigns = (ccData ?? []) as any[];
+      }
+
+      const contractCampMap = new Map<string, string[]>();
+      allContractCampaigns.forEach((r: any) => {
+        const list = contractCampMap.get(r.contract_id) ?? [];
+        list.push(r.campaign_id);
+        contractCampMap.set(r.contract_id, list);
+      });
+
+      const contractBreakdowns: ContractBreakdown[] = allContracts.map((contract: any) => {
+        const cCampIds = contractCampMap.get(contract.id) ?? [];
+        const campIdSet = new Set(cCampIds);
+        const contractAccounts = accs.filter((a: any) => a.campaign_id && campIdSet.has(a.campaign_id));
+        const contractAccIds = new Set(contractAccounts.map((a: any) => a.id));
+        const contractMonthVideos = monthVideosList.filter((v) => contractAccIds.has(v.tiktok_account_id));
+        const videoCount = contractMonthVideos.length;
+
+        const cpmRate = Number(contract.creator_cpm ?? 0.5);
+        const fixedAmt = Number(contract.creator_fixed ?? 0);
+        const minVpd = contract.min_videos_per_day ?? 5;
+        const target = getMonthlyTarget(minVpd, year, month);
+
+        let totalContractViews = 0;
+        cCampIds.forEach((campId) => {
+          const cap = capByCampaign.get(campId) ?? null;
+          const campAccIds = contractAccounts.filter((a: any) => a.campaign_id === campId).map((a: any) => a.id);
+          const campAccSet = new Set(campAccIds);
+          const campVideos = contractMonthVideos.filter((v) => campAccSet.has(v.tiktok_account_id));
+          totalContractViews += sumEffectiveViewsCapped(campVideos, cap);
+        });
+
+        const fixedEarned = minVpd === 0 || isFixedEarnedMonthly(videoCount, minVpd, year, month);
+        const cpmAmount = cpmRate * (totalContractViews / 1000);
+        const subtotal = (fixedEarned ? fixedAmt : 0) + cpmAmount;
+
+        return {
+          contractId: contract.id,
+          contractName: contract.name,
+          videoCount,
+          monthlyTarget: target,
+          fixedAmount: fixedAmt,
+          fixedEarned,
+          cpmRate,
+          cpmAmount,
+          totalViews: totalContractViews,
+          subtotal,
+        };
+      });
+
+      const currentMonthEarnings = contractBreakdowns.reduce((s, b) => s + b.subtotal, 0);
+
+      // Historical payments
+      const { data: payments } = await supabase
+        .from("creator_payments")
+        .select("*")
+        .eq("creator_id", creator.id)
+        .order("period_year", { ascending: false })
+        .order("period_month", { ascending: false });
+      const paymentRows = (payments ?? []) as any[];
+
+      const totalViews = allVideos.reduce((s, v) => s + (v.views ?? 0), 0);
+      const totalVideos = allVideos.length;
+      const monthViews = monthVideosList.reduce((s, v) => s + (v.views ?? 0), 0);
+      const monthVideosCount = monthVideosList.length;
+
+      const totalPaidEarnings = paymentRows.reduce((s: number, p: any) => s + Number(p.total_amount ?? 0), 0);
+
+      const earnings: EarningsData = {
+        monthEarnings: currentMonthEarnings,
+        totalEarnings: totalPaidEarnings + currentMonthEarnings,
+        totalViews,
+        totalVideos,
+        monthViews,
+        monthVideos: monthVideosCount,
+        contractBreakdowns,
+        payments: paymentRows.map((p: any) => {
+          const gross = Number(p.total_amount ?? 0);
+          const tax = gross * 0.2;
+          return {
+            period: `${String(p.period_month).padStart(2, "0")}/${p.period_year}`,
+            gross,
+            tax,
+            net: gross - tax,
+            isPaid: p.is_paid,
+            paidAt: p.paid_at,
+          };
+        }),
+      };
+
+      // Fetch content & calendar
       let content: CreatorContentItem[] = [];
+      let calendar: CalendarEntry[] = [];
       if (unlocked) {
-        const { data } = await supabase
+        const { data: cData } = await supabase
           .from("creator_content" as any)
           .select("*")
           .eq("creator_id", creator.id)
           .order("created_at", { ascending: false });
-        content = ((data ?? []) as any[]).map((c: any) => ({
-          id: c.id,
-          title: c.title,
-          type: c.type,
-          body: c.body,
-          file_url: c.file_url,
-          due_date: c.due_date,
-          status: c.status,
+        content = ((cData ?? []) as any[]).map((c: any) => ({
+          id: c.id, title: c.title, type: c.type, body: c.body,
+          file_url: c.file_url, due_date: c.due_date, status: c.status,
           campaignName: c.campaign_id ? campMap.get(c.campaign_id) ?? "—" : "—",
         }));
-      }
 
-      // Fetch calendar
-      let calendar: CalendarEntry[] = [];
-      if (unlocked) {
-        const { data } = await supabase
+        const { data: calData } = await supabase
           .from("creator_calendar" as any)
           .select("*")
           .eq("creator_id", creator.id)
           .order("scheduled_for", { ascending: true });
-        const contentMap = new Map(content.map((c) => [c.id, c.title]));
-        const accMap = new Map(accs.map((a: any) => [a.id, a.username]));
-        calendar = ((data ?? []) as any[]).map((e: any) => ({
-          id: e.id,
-          scheduled_for: e.scheduled_for,
-          status: e.status,
-          contentTitle: e.content_id ? contentMap.get(e.content_id) ?? null : null,
+        const contentMapCal = new Map(content.map((c) => [c.id, c.title]));
+        const accMapCal = new Map(accs.map((a: any) => [a.id, a.username]));
+        calendar = ((calData ?? []) as any[]).map((e: any) => ({
+          id: e.id, scheduled_for: e.scheduled_for, status: e.status,
+          contentTitle: e.content_id ? contentMapCal.get(e.content_id) ?? null : null,
           contentId: e.content_id,
-          accountUsername: e.tiktok_account_id ? accMap.get(e.tiktok_account_id) ?? null : null,
+          accountUsername: e.tiktok_account_id ? accMapCal.get(e.tiktok_account_id) ?? null : null,
         }));
-      }
-
-      // Fetch earnings
-      let earnings: EarningsData = { monthEarnings: 0, totalEarnings: 0, totalViews: 0, totalVideos: 0, payments: [] };
-      if (unlocked) {
-        const { data: payments } = await supabase
-          .from("creator_payments")
-          .select("*")
-          .eq("creator_id", creator.id)
-          .order("period_year", { ascending: false })
-          .order("period_month", { ascending: false });
-        const paymentRows = (payments ?? []) as any[];
-        
-        const now = new Date();
-        const curMonth = now.getMonth() + 1;
-        const curYear = now.getFullYear();
-        
-        const monthPayment = paymentRows.find((p: any) => p.period_month === curMonth && p.period_year === curYear);
-        
-        // Get total views & video count
-        const accIds = accs.map((a: any) => a.id);
-        let totalViews = 0;
-        let totalVideos = 0;
-        if (accIds.length) {
-          const { data: vData } = await supabase
-            .from("videos")
-            .select("views")
-            .in("tiktok_account_id", accIds);
-          totalViews = (vData ?? []).reduce((s: number, v: any) => s + (v.views ?? 0), 0);
-          totalVideos = (vData ?? []).length;
-        }
-
-        earnings = {
-          monthEarnings: monthPayment ? Number(monthPayment.total_amount ?? 0) : 0,
-          totalEarnings: paymentRows.reduce((s: number, p: any) => s + Number(p.total_amount ?? 0), 0),
-          totalViews,
-          totalVideos,
-          payments: paymentRows.map((p: any) => {
-            const gross = Number(p.total_amount ?? 0);
-            const tax = gross * 0.2;
-            return {
-              period: `${String(p.period_month).padStart(2, "0")}/${p.period_year}`,
-              gross,
-              tax,
-              net: gross - tax,
-              isPaid: p.is_paid,
-              paidAt: p.paid_at,
-            };
-          }),
-        };
       }
 
       return {
         creator,
         warmupAccounts,
+        accountStats,
         allWarmupDone,
         anyWarmupDone,
         isOperativo,
