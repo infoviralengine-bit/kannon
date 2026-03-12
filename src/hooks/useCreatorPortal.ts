@@ -147,8 +147,8 @@ export function useCreatorPortal() {
       }
 
       // Fetch earnings
-      let earnings: EarningsData = { monthEarnings: 0, totalEarnings: 0, totalViews: 0, payments: [] };
-      if (anyWarmupDone) {
+      let earnings: EarningsData = { monthEarnings: 0, totalEarnings: 0, totalViews: 0, totalVideos: 0, payments: [] };
+      if (unlocked) {
         const { data: payments } = await supabase
           .from("creator_payments")
           .select("*")
