@@ -81,17 +81,20 @@ export function useCreatorPortal() {
       }
 
       // Build warmup accounts
+      const creatorIsOperativo = creator.onboarding_phase === "operativo";
+
       const warmupAccounts: WarmupAccount[] = accs.map((a: any) => {
         const day = a.warmup_day ?? 0;
         const following = a.following_count ?? 0;
-        const isReady = day >= 3 && following >= 40;
-        const needsMoreFollowing = day >= 3 && following < 40;
+        // If creator is operativo, all accounts are considered ready
+        const isReady = creatorIsOperativo || (day >= 3 && following >= 40);
+        const needsMoreFollowing = !creatorIsOperativo && day >= 3 && following < 40;
         return {
           id: a.id,
           username: a.username,
           campaignName: a.campaign_id ? campMap.get(a.campaign_id) ?? "—" : "—",
           campaignId: a.campaign_id,
-          warmupDay: day,
+          warmupDay: creatorIsOperativo ? 3 : day,
           warmupStartedAt: a.warmup_started_at,
           followingCount: following,
           isReady,
@@ -101,7 +104,7 @@ export function useCreatorPortal() {
 
       const allWarmupDone = warmupAccounts.length > 0 && warmupAccounts.every((a) => a.isReady);
       const anyWarmupDone = warmupAccounts.some((a) => a.isReady);
-      const isOperativo = creator.onboarding_phase === "operativo" || allWarmupDone;
+      const isOperativo = creatorIsOperativo || allWarmupDone;
       const unlocked = anyWarmupDone || isOperativo;
 
       // Check if first visit (no warmup started on any account)
