@@ -38,7 +38,7 @@ export interface EarningsData {
   monthEarnings: number;
   totalEarnings: number;
   totalViews: number;
-  payments: {
+  totalVideos: number;
     period: string;
     gross: number;
     tax: number;
