@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
         phone: link.closer_leads?.phone || null,
         profile_id: userId,
         status: "active",
+        onboarding_phase: "warmup",
         date_of_birth,
         fiscal_code,
         address_street,

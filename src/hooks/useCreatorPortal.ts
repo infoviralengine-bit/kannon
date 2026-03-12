@@ -101,7 +101,7 @@ export function useCreatorPortal() {
 
       const allWarmupDone = warmupAccounts.length > 0 && warmupAccounts.every((a) => a.isReady);
       const anyWarmupDone = warmupAccounts.some((a) => a.isReady);
-      const isOperativo = creator.onboarding_phase === "operativo";
+      const isOperativo = creator.onboarding_phase === "operativo" || allWarmupDone;
       const unlocked = anyWarmupDone || isOperativo;
 
       // Check if first visit (no warmup started on any account)
