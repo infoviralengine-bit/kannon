@@ -164,10 +164,24 @@ export function useCreatorPortal() {
         
         const monthPayment = paymentRows.find((p: any) => p.period_month === curMonth && p.period_year === curYear);
         
+        // Get total views & video count
+        const accIds = accs.map((a: any) => a.id);
+        let totalViews = 0;
+        let totalVideos = 0;
+        if (accIds.length) {
+          const { data: vData } = await supabase
+            .from("videos")
+            .select("views")
+            .in("tiktok_account_id", accIds);
+          totalViews = (vData ?? []).reduce((s: number, v: any) => s + (v.views ?? 0), 0);
+          totalVideos = (vData ?? []).length;
+        }
+
         earnings = {
           monthEarnings: monthPayment ? Number(monthPayment.total_amount ?? 0) : 0,
           totalEarnings: paymentRows.reduce((s: number, p: any) => s + Number(p.total_amount ?? 0), 0),
-          totalViews: 0,
+          totalViews,
+          totalVideos,
           payments: paymentRows.map((p: any) => {
             const gross = Number(p.total_amount ?? 0);
             const tax = gross * 0.2;
@@ -181,16 +195,6 @@ export function useCreatorPortal() {
             };
           }),
         };
-
-        // Get total views
-        const accIds = accs.map((a: any) => a.id);
-        if (accIds.length) {
-          const { data: vData } = await supabase
-            .from("videos")
-            .select("views")
-            .in("tiktok_account_id", accIds);
-          earnings.totalViews = (vData ?? []).reduce((s: number, v: any) => s + (v.views ?? 0), 0);
-        }
       }
 
       return {
