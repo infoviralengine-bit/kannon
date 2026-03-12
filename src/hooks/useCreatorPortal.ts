@@ -38,6 +38,7 @@ export interface EarningsData {
   monthEarnings: number;
   totalEarnings: number;
   totalViews: number;
+  totalVideos: number;
   payments: {
     period: string;
     gross: number;
@@ -100,13 +101,15 @@ export function useCreatorPortal() {
 
       const allWarmupDone = warmupAccounts.length > 0 && warmupAccounts.every((a) => a.isReady);
       const anyWarmupDone = warmupAccounts.some((a) => a.isReady);
+      const isOperativo = creator.onboarding_phase === "operativo";
+      const unlocked = anyWarmupDone || isOperativo;
 
       // Check if first visit (no warmup started on any account)
-      const isFirstVisit = warmupAccounts.every((a) => a.warmupDay === 0 && !a.warmupStartedAt);
+      const isFirstVisit = !isOperativo && warmupAccounts.every((a) => a.warmupDay === 0 && !a.warmupStartedAt);
 
       // Fetch content
       let content: CreatorContentItem[] = [];
-      if (anyWarmupDone) {
+      if (unlocked) {
         const { data } = await supabase
           .from("creator_content" as any)
           .select("*")
@@ -126,7 +129,7 @@ export function useCreatorPortal() {
 
       // Fetch calendar
       let calendar: CalendarEntry[] = [];
-      if (anyWarmupDone) {
+      if (unlocked) {
         const { data } = await supabase
           .from("creator_calendar" as any)
           .select("*")
@@ -145,8 +148,8 @@ export function useCreatorPortal() {
       }
 
       // Fetch earnings
-      let earnings: EarningsData = { monthEarnings: 0, totalEarnings: 0, totalViews: 0, payments: [] };
-      if (anyWarmupDone) {
+      let earnings: EarningsData = { monthEarnings: 0, totalEarnings: 0, totalViews: 0, totalVideos: 0, payments: [] };
+      if (unlocked) {
         const { data: payments } = await supabase
           .from("creator_payments")
           .select("*")
@@ -161,10 +164,24 @@ export function useCreatorPortal() {
         
         const monthPayment = paymentRows.find((p: any) => p.period_month === curMonth && p.period_year === curYear);
         
+        // Get total views & video count
+        const accIds = accs.map((a: any) => a.id);
+        let totalViews = 0;
+        let totalVideos = 0;
+        if (accIds.length) {
+          const { data: vData } = await supabase
+            .from("videos")
+            .select("views")
+            .in("tiktok_account_id", accIds);
+          totalViews = (vData ?? []).reduce((s: number, v: any) => s + (v.views ?? 0), 0);
+          totalVideos = (vData ?? []).length;
+        }
+
         earnings = {
           monthEarnings: monthPayment ? Number(monthPayment.total_amount ?? 0) : 0,
           totalEarnings: paymentRows.reduce((s: number, p: any) => s + Number(p.total_amount ?? 0), 0),
-          totalViews: 0,
+          totalViews,
+          totalVideos,
           payments: paymentRows.map((p: any) => {
             const gross = Number(p.total_amount ?? 0);
             const tax = gross * 0.2;
@@ -178,16 +195,6 @@ export function useCreatorPortal() {
             };
           }),
         };
-
-        // Get total views
-        const accIds = accs.map((a: any) => a.id);
-        if (accIds.length) {
-          const { data: vData } = await supabase
-            .from("videos")
-            .select("views")
-            .in("tiktok_account_id", accIds);
-          earnings.totalViews = (vData ?? []).reduce((s: number, v: any) => s + (v.views ?? 0), 0);
-        }
       }
 
       return {
@@ -195,6 +202,8 @@ export function useCreatorPortal() {
         warmupAccounts,
         allWarmupDone,
         anyWarmupDone,
+        isOperativo,
+        unlocked,
         isFirstVisit,
         content,
         calendar,

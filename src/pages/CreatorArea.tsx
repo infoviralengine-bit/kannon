@@ -3,33 +3,39 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCreatorPortal } from "@/hooks/useCreatorPortal";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Flame, FileText, CalendarDays, Coins, Lock } from "lucide-react";
+import { LogOut, Flame, FileText, CalendarDays, Coins, Lock, LayoutDashboard } from "lucide-react";
 import CreatorWelcome from "@/components/creator/CreatorWelcome";
 import CreatorWarmup from "@/components/creator/CreatorWarmup";
-import CreatorContent from "@/components/creator/CreatorContent";
-import CreatorCalendar from "@/components/creator/CreatorCalendar";
+import CreatorDashboard from "@/components/creator/CreatorDashboard";
 import CreatorEarnings from "@/components/creator/CreatorEarnings";
+import { ComingSoon } from "@/components/ComingSoon";
 
-type Section = "warmup" | "contenuti" | "calendario" | "guadagni";
-
-const NAV_ITEMS: { key: Section; label: string; icon: typeof Flame }[] = [
-  { key: "warmup", label: "Warmup", icon: Flame },
-  { key: "contenuti", label: "Contenuti", icon: FileText },
-  { key: "calendario", label: "Calendario", icon: CalendarDays },
-  { key: "guadagni", label: "Guadagni", icon: Coins },
-];
+type Section = "dashboard" | "warmup" | "contenuti" | "calendario" | "guadagni";
 
 export default function CreatorArea() {
   const { profile, signOut } = useAuth();
   const { data, isLoading } = useCreatorPortal();
-  const [section, setSection] = useState<Section>("warmup");
+  const [section, setSection] = useState<Section>("dashboard");
   const [showWelcome, setShowWelcome] = useState(false);
 
+  const isOperativo = data?.isOperativo ?? false;
+
   useEffect(() => {
-    if (data?.isFirstVisit) {
+    if (data?.isFirstVisit && !isOperativo) {
       setShowWelcome(true);
     }
-  }, [data?.isFirstVisit]);
+  }, [data?.isFirstVisit, isOperativo]);
+
+  // Set default section based on status
+  useEffect(() => {
+    if (data) {
+      if (isOperativo) {
+        setSection("dashboard");
+      } else {
+        setSection("warmup");
+      }
+    }
+  }, [data, isOperativo]);
 
   if (isLoading) {
     return (
@@ -55,7 +61,7 @@ export default function CreatorArea() {
     );
   }
 
-  const unlocked = data.anyWarmupDone;
+  const unlocked = data.unlocked;
 
   if (showWelcome) {
     return (
@@ -71,6 +77,22 @@ export default function CreatorArea() {
     );
   }
 
+  // Build nav items based on status
+  const NAV_ITEMS: { key: Section; label: string; icon: typeof Flame }[] = isOperativo
+    ? [
+        { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { key: "guadagni", label: "Guadagni", icon: Coins },
+        { key: "contenuti", label: "Contenuti", icon: FileText },
+        { key: "calendario", label: "Calendario", icon: CalendarDays },
+      ]
+    : [
+        { key: "warmup", label: "Warmup", icon: Flame },
+        { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { key: "contenuti", label: "Contenuti", icon: FileText },
+        { key: "calendario", label: "Calendario", icon: CalendarDays },
+        { key: "guadagni", label: "Guadagni", icon: Coins },
+      ];
+
   return (
     <div className="min-h-screen bg-background">
       <Header name={profile?.full_name ?? null} onSignOut={signOut} />
@@ -79,7 +101,7 @@ export default function CreatorArea() {
       <nav className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-10">
         <div className="max-w-4xl mx-auto px-6 flex gap-1 overflow-x-auto">
           {NAV_ITEMS.map((item) => {
-            const isLocked = item.key !== "warmup" && !unlocked;
+            const isLocked = !isOperativo && item.key !== "warmup" && !unlocked;
             const isActive = section === item.key;
             return (
               <button
@@ -104,7 +126,7 @@ export default function CreatorArea() {
       </nav>
 
       <div className="max-w-4xl mx-auto p-6 animate-fade-in">
-        {section === "warmup" && (
+        {section === "warmup" && !isOperativo && (
           <CreatorWarmup
             accounts={data.warmupAccounts}
             allDone={data.allWarmupDone}
@@ -112,11 +134,19 @@ export default function CreatorArea() {
             creatorId={data.creator.id}
           />
         )}
+        {section === "dashboard" && (
+          <CreatorDashboard
+            accounts={data.warmupAccounts}
+            earnings={data.earnings}
+            creatorName={data.creator.name}
+            totalVideos={data.earnings.totalVideos}
+          />
+        )}
         {section === "contenuti" && (
-          <CreatorContent content={data.content} locked={!unlocked} />
+          <ComingSoon icon={FileText} title="Contenuti" />
         )}
         {section === "calendario" && (
-          <CreatorCalendar calendar={data.calendar} locked={!unlocked} />
+          <ComingSoon icon={CalendarDays} title="Calendario" />
         )}
         {section === "guadagni" && (
           <CreatorEarnings earnings={data.earnings} locked={!unlocked} />
