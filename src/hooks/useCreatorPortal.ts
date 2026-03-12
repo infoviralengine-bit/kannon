@@ -128,7 +128,7 @@ export function useCreatorPortal() {
 
       // Fetch calendar
       let calendar: CalendarEntry[] = [];
-      if (anyWarmupDone) {
+      if (unlocked) {
         const { data } = await supabase
           .from("creator_calendar" as any)
           .select("*")
