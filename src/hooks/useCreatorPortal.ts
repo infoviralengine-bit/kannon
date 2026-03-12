@@ -131,7 +131,8 @@ export function useCreatorPortal() {
       const monthVideosList = allVideos.filter((v) => v.published_at >= mStart && v.published_at < mEnd);
 
       // Build warmup accounts
-      const creatorIsOperativo = creator.onboarding_phase === "operativo";
+      const creatorPhase = String(creator.onboarding_phase ?? "").trim().toLowerCase();
+      const creatorIsOperativo = creatorPhase.startsWith("operativ");
 
       const warmupAccounts: WarmupAccount[] = accs.map((a: any) => {
         const day = a.warmup_day ?? 0;
