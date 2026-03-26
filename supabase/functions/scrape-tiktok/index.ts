@@ -169,7 +169,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
       profileScrapeSections: ["videos"],
       profileSorting: "latest",
       excludePinnedPosts: false,
-      resultsPerPage: 5,
+      resultsPerPage: 100,
     };
 
     log(`Step 5: Avvio run Apify con input: ${JSON.stringify(apifyInput)}`);
