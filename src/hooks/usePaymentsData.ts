@@ -549,7 +549,7 @@ export function useCampaignCycles(campaignId: string) {
 
       const { data: camp } = await supabase
         .from("campaigns")
-        .select("name, client_name, client_fixed_per_creator, client_cpm, planned_creators")
+        .select("name, client_name, client_fixed_per_creator, client_cpm, planned_creators, video_views_cap, monthly_spend_cap")
         .eq("id", campaignId)
         .single();
 
@@ -558,6 +558,58 @@ export function useCampaignCycles(campaignId: string) {
         .select("campaign_id")
         .eq("campaign_id", campaignId);
       const realCreators = ccRows?.length ?? 0;
+
+      // ── Live recalculation for unpaid cycles ──
+      const hasUnpaid = (payments ?? []).some(p => !p.is_paid);
+      let liveViewsTotal = 0;
+      if (hasUnpaid) {
+        const { data: rpcRows } = await supabase.rpc("get_campaign_total_views", {
+          p_campaign_ids: [campaignId],
+        });
+        liveViewsTotal = Number((rpcRows as any)?.[0]?.total_views ?? 0);
+      }
+
+      // Find last paid cumulative views
+      const sortedPayments = [...(payments ?? [])].sort((a, b) => a.cycle_number - b.cycle_number);
+      let lastPaidCumulative = 0;
+      sortedPayments.forEach(p => {
+        if (p.is_paid) lastPaidCumulative = p.views_paid_cumulative ?? 0;
+      });
+
+      const unpaidPayments = sortedPayments.filter(p => !p.is_paid);
+      const lastUnpaidId = unpaidPayments.length > 0 ? unpaidPayments[unpaidPayments.length - 1].id : null;
+
+      const recalculated = new Map<string, { cpmViews: number; cpmAmount: number; fixedAmount: number; totalAmount: number; viewsPaidCumulative: number }>();
+
+      if (hasUnpaid) {
+        const clientCpm = Number(camp?.client_cpm ?? 2);
+        const clientFixed = Number(camp?.client_fixed_per_creator ?? 200);
+        const plannedCreators = camp?.planned_creators ?? 1;
+        const spendCap = (camp as any)?.monthly_spend_cap as number | null;
+        const totalNewViews = Math.max(0, liveViewsTotal - lastPaidCumulative);
+
+        unpaidPayments.forEach((p, idx) => {
+          const cycle = (cycles ?? []).find(c => c.id === p.cycle_id);
+          const isLast = cycle?.is_last_cycle ?? false;
+
+          if (p.id === lastUnpaidId) {
+            const prevCyclesCpmViews = unpaidPayments.slice(0, idx).reduce((s, up) => s + up.cpm_views, 0);
+            const cpmViews = Math.max(0, totalNewViews - prevCyclesCpmViews);
+            const fixedAmount = isLast ? 0 : clientFixed * plannedCreators;
+            let cpmAmount = clientCpm * (cpmViews / 1000);
+            if (spendCap != null && cpmAmount > spendCap) cpmAmount = spendCap;
+            const totalAmount = fixedAmount + cpmAmount;
+
+            recalculated.set(p.id, {
+              cpmViews,
+              cpmAmount,
+              fixedAmount,
+              totalAmount,
+              viewsPaidCumulative: lastPaidCumulative + totalNewViews,
+            });
+          }
+        });
+      }
 
       const now = new Date();
       const todayStr = now.toISOString().slice(0, 10);
@@ -568,6 +620,7 @@ export function useCampaignCycles(campaignId: string) {
         const p = (payments ?? []).find((p) => p.cycle_id === c.id);
         let payment: ClientPaymentRow | null = null;
         if (p) {
+          const recalc = recalculated.get(p.id);
           const dueDate = p.due_date;
           const dd = new Date(dueDate);
           const monthIdx = dd.getMonth();
@@ -581,14 +634,14 @@ export function useCampaignCycles(campaignId: string) {
             cycleLabel: `Ciclo ${p.cycle_number} — ${monthNamesShort[monthIdx]} ${yr}`,
             monthLabel: `${monthNamesFull[monthIdx]} ${yr}`,
             dueDate,
-            fixedAmount: Number(p.fixed_amount),
-            cpmViews: p.cpm_views,
-            cpmAmount: Number(p.cpm_amount),
-            totalAmount: Number(p.total_amount),
+            fixedAmount: recalc?.fixedAmount ?? Number(p.fixed_amount),
+            cpmViews: recalc?.cpmViews ?? p.cpm_views,
+            cpmAmount: recalc?.cpmAmount ?? Number(p.cpm_amount),
+            totalAmount: recalc?.totalAmount ?? Number(p.total_amount),
             isPaid: p.is_paid,
             paidAt: p.paid_at,
             isOverdue: !p.is_paid && dueDate < todayStr,
-            viewsPaidCumulative: (p as any).views_paid_cumulative ?? 0,
+            viewsPaidCumulative: recalc?.viewsPaidCumulative ?? ((p as any).views_paid_cumulative ?? 0),
             cycleStartDate: c.cycle_start_date,
             cycleEndDate: c.cycle_end_date,
             isLastCycle: c.is_last_cycle,
