@@ -9,9 +9,10 @@ interface Props {
   accountStats: AccountStats[];
   earnings: EarningsData;
   creatorName: string;
+  monthLabel?: string;
 }
 
-export default function CreatorDashboard({ accountStats, earnings, creatorName }: Props) {
+export default function CreatorDashboard({ accountStats, earnings, creatorName, monthLabel = "questo mese" }: Props) {
   const hasContracts = earnings.contractBreakdowns.length > 0;
 
   return (
