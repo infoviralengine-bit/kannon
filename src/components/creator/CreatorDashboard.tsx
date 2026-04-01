@@ -67,7 +67,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground">Views questo mese</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">Views {monthLabel}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <Eye className="h-4 w-4 text-primary" />
