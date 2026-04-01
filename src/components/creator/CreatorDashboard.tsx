@@ -46,7 +46,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground">Guadagno mese</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">Guadagno {monthLabel}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" />
