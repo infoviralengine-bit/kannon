@@ -165,20 +165,23 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     log(`Step 4: Username da scrapare: [${allUsernames.join(", ")}]`);
 
     const apifyInput = {
-      startUrls: allUsernames.map((u) => ({ url: `https://www.tiktok.com/@${u}` })),
+      startUrls: allUsernames.map((u) => `https://www.tiktok.com/@${u}`),
       maxItems: allUsernames.length * 100,
     };
 
     log(`Step 5: Avvio run Apify con input: ${JSON.stringify(apifyInput)}`);
 
+    const apifyHeaders = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiToken}`,
+    };
+
     // Step 5: Start Apify run
     const runRes = await fetch(
-      `https://api.apify.com/v2/acts/5K30i8aFccKNF5ICs/runs?token=${apiToken}`,
+      `https://api.apify.com/v2/acts/5K30i8aFccKNF5ICs/runs`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: apifyHeaders,
         body: JSON.stringify(apifyInput),
       }
     );
@@ -186,7 +189,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     if (!runRes.ok) {
       const errText = await runRes.text();
       if (runRes.status === 401 || runRes.status === 403) {
-        throw new Error(`API token Apify non valido (status ${runRes.status}): ${errText}`);
+        throw new Error(`API token Apify non valido o actor non accessibile via API (status ${runRes.status}): ${errText}`);
       }
       throw new Error(`Apify run failed (status ${runRes.status}): ${errText}`);
     }
@@ -208,8 +211,15 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
       await new Promise((r) => setTimeout(r, 15000));
       pollCount++;
       const statusRes = await fetch(
-        `https://api.apify.com/v2/actor-runs/${runId}?token=${apiToken}`
+        `https://api.apify.com/v2/actor-runs/${runId}`,
+        {
+          headers: { Authorization: `Bearer ${apiToken}` },
+        }
       );
+      if (!statusRes.ok) {
+        const errText = await statusRes.text();
+        throw new Error(`Apify status check failed (status ${statusRes.status}): ${errText}`);
+      }
       const statusData = await statusRes.json();
       runStatus = statusData.data?.status;
       log(`Step 6: Poll #${pollCount} - Status: ${runStatus}`);
@@ -225,8 +235,15 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     log(`Step 7: Recupero risultati dal dataset: ${datasetId}`);
     
     const itemsRes = await fetch(
-      `https://api.apify.com/v2/datasets/${datasetId}/items?format=json&token=${apiToken}`
+      `https://api.apify.com/v2/datasets/${datasetId}/items?format=json`,
+      {
+        headers: { Authorization: `Bearer ${apiToken}` },
+      }
     );
+    if (!itemsRes.ok) {
+      const errText = await itemsRes.text();
+      throw new Error(`Apify dataset fetch failed (status ${itemsRes.status}): ${errText}`);
+    }
     const items = await itemsRes.json();
     const now = new Date().toISOString();
 
@@ -234,6 +251,10 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
 
     if (!Array.isArray(items)) {
       throw new Error(`Apify items non è un array. Tipo: ${typeof items}. Contenuto: ${JSON.stringify(items).substring(0, 500)}`);
+    }
+
+    if (items.length > 0 && items.every((item) => item?.noResults === true)) {
+      throw new Error("Apify ha restituito solo record { noResults: true }. Questo indica che l'actor non sta realmente eseguendo lo scraping via API (tipicamente DEMO/API-disabled mode lato vendor) oppure che il run API non equivale al run manuale in console.");
     }
 
     // Log first item structure for debugging
