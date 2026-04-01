@@ -207,8 +207,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
       await new Promise((r) => setTimeout(r, 15000));
       pollCount++;
       const statusRes = await fetch(
-        `https://api.apify.com/v2/actor-runs/${runId}`,
-        { headers: { Authorization: `Bearer ${apiToken}` } }
+        `https://api.apify.com/v2/actor-runs/${runId}?token=${apiToken}`
       );
       const statusData = await statusRes.json();
       runStatus = statusData.data?.status;
