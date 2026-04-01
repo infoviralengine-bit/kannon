@@ -26,34 +26,48 @@ Deno.serve(async (req) => {
       .eq("key", "calendly_webhook_secret")
       .single();
 
-    if (secretSetting?.value && calendlySignature) {
+    if (secretSetting?.value) {
+      if (!calendlySignature) {
+        console.error("Missing Calendly webhook signature");
+        return new Response(JSON.stringify({ error: "Missing signature" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Parse signature header: t=timestamp,v1=signature
       const parts = calendlySignature.split(",");
       const timestamp = parts.find((p: string) => p.startsWith("t="))?.slice(2);
       const signature = parts.find((p: string) => p.startsWith("v1="))?.slice(3);
 
-      if (timestamp && signature) {
-        const encoder = new TextEncoder();
-        const key = await crypto.subtle.importKey(
-          "raw",
-          encoder.encode(secretSetting.value),
-          { name: "HMAC", hash: "SHA-256" },
-          false,
-          ["sign"]
-        );
-        const signaturePayload = `${timestamp}.${body}`;
-        const expectedSig = await crypto.subtle.sign("HMAC", key, encoder.encode(signaturePayload));
-        const expectedHex = Array.from(new Uint8Array(expectedSig))
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
+      if (!timestamp || !signature) {
+        console.error("Malformed Calendly webhook signature");
+        return new Response(JSON.stringify({ error: "Invalid signature format" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-        if (expectedHex !== signature) {
-          console.error("Invalid Calendly webhook signature");
-          return new Response(JSON.stringify({ error: "Invalid signature" }), {
-            status: 401,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
+      const encoder = new TextEncoder();
+      const key = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(secretSetting.value),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"]
+      );
+      const signaturePayload = `${timestamp}.${body}`;
+      const expectedSig = await crypto.subtle.sign("HMAC", key, encoder.encode(signaturePayload));
+      const expectedHex = Array.from(new Uint8Array(expectedSig))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+      if (expectedHex !== signature) {
+        console.error("Invalid Calendly webhook signature");
+        return new Response(JSON.stringify({ error: "Invalid signature" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
     }
 
