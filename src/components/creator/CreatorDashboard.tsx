@@ -131,7 +131,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
               </TableBody>
             </Table>
             <div className="mt-3 text-right">
-              <span className="text-sm text-muted-foreground mr-2">Totale mese:</span>
+              <span className="text-sm text-muted-foreground mr-2">Totale {monthLabel}:</span>
               <span className="text-lg font-bold">{formatCurrency(earnings.monthEarnings)}</span>
             </div>
           </CardContent>
