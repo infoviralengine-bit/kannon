@@ -125,8 +125,9 @@ function PeriodSelector({ value, onChange }: { value: number; onChange: (v: numb
 export default function GeneralePage() {
   const navigate = useNavigate();
   const [chartDays, setChartDays] = useState(30);
+  const [kpiPeriod, setKpiPeriod] = useState<number | undefined>(30);
 
-  const financial = useFinancialKpis();
+  const financial = useFinancialKpis(kpiPeriod);
   const viewsChart = useViewsChart(chartDays);
   const campaignCards = useActiveCampaignCards();
   const creatorStatus = useCreatorStatus();
