@@ -76,7 +76,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground">Video questo mese</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">Video {monthLabel}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <Video className="h-4 w-4 text-primary" />
