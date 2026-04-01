@@ -77,11 +77,14 @@ export interface CalendarEntry {
   accountUsername: string | null;
 }
 
-export function useCreatorPortal() {
+export function useCreatorPortal(selectedYear?: number, selectedMonth?: number) {
   const { user } = useAuth();
+  const now = new Date();
+  const year = selectedYear ?? now.getFullYear();
+  const month = selectedMonth ?? now.getMonth();
 
   return useQuery({
-    queryKey: ["creator-portal", user?.id],
+    queryKey: ["creator-portal", user?.id, year, month],
     queryFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
