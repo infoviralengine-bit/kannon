@@ -125,10 +125,7 @@ export function useCreatorPortal(selectedYear?: number, selectedMonth?: number) 
         allVideos = data ?? [];
       }
 
-      // Month range
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth();
+      // Month range (using params from closure)
       const mStart = new Date(year, month, 1).toISOString();
       const mEnd = new Date(year, month + 1, 1).toISOString();
       const monthVideosList = allVideos.filter((v) => v.published_at >= mStart && v.published_at < mEnd);
