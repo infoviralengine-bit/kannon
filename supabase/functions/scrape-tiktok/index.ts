@@ -165,18 +165,15 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     log(`Step 4: Username da scrapare: [${allUsernames.join(", ")}]`);
 
     const apifyInput = {
-      profiles: allUsernames,
-      profileScrapeSections: ["videos"],
-      profileSorting: "latest",
-      excludePinnedPosts: false,
-      resultsPerPage: 100,
+      startUrls: allUsernames.map((u) => `https://www.tiktok.com/@${u}`),
+      maxItems: allUsernames.length * 100,
     };
 
     log(`Step 5: Avvio run Apify con input: ${JSON.stringify(apifyInput)}`);
 
     // Step 5: Start Apify run
     const runRes = await fetch(
-      "https://api.apify.com/v2/acts/clockworks~free-tiktok-scraper/runs",
+      "https://api.apify.com/v2/acts/apidojo~tiktok-scraper/runs",
       {
         method: "POST",
         headers: {
@@ -245,7 +242,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     if (items.length > 0) {
       const sample = items[0];
       log(`Step 7: Struttura primo item - keys: [${Object.keys(sample).join(", ")}]`);
-      log(`Step 7: Primo item id=${sample.id}, videoId=${sample.videoId}, authorMeta.name=${sample.authorMeta?.name}, author=${sample.author}, playCount=${sample.playCount}, views=${sample.views}`);
+      log(`Step 7: Primo item id=${sample.id}, channel.username=${sample.channel?.username}, views=${sample.views}, likes=${sample.likes}`);
     }
 
     const processedAccounts = new Set<string>();
@@ -254,17 +251,17 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       try {
-        const tiktokVideoId = item.id || item.videoId;
+        const tiktokVideoId = item.id;
         if (!tiktokVideoId) {
-          log(`  Item #${i}: SKIP - nessun id/videoId trovato`);
+          log(`  Item #${i}: SKIP - nessun id trovato`);
           continue;
         }
 
         const authorUsername = (
-          item.authorMeta?.name || item.author || ""
+          item.channel?.username || item.channel?.name || ""
         ).toLowerCase().replace(/^@/, "");
         if (!authorUsername) {
-          log(`  Item #${i}: SKIP - nessun authorUsername (videoId: ${tiktokVideoId})`);
+          log(`  Item #${i}: SKIP - nessun authorUsername (id: ${tiktokVideoId})`);
           continue;
         }
 
@@ -274,12 +271,12 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
           continue;
         }
 
-        const playCount = item.playCount ?? item.views ?? 0;
-        const diggCount = item.diggCount ?? item.likes ?? 0;
-        const commentCount = item.commentCount ?? item.comments ?? 0;
-        const createTime = item.createTime
-          ? new Date(item.createTime * 1000).toISOString()
-          : now;
+        const playCount = item.views ?? 0;
+        const diggCount = item.likes ?? 0;
+        const commentCount = item.comments ?? 0;
+        const createTime = item.uploadedAt
+          ? new Date(item.uploadedAt * 1000).toISOString()
+          : (item.uploadedAtFormatted || now);
 
         for (const account of matchedAccounts) {
           const campaign = campaignMap.get(account.campaign_id!);
