@@ -192,6 +192,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     }
 
     const runData = await runRes.json();
+    log(`Step 5: Run response: ${JSON.stringify(runData).substring(0, 500)}`);
     const runId = runData.data?.id;
     if (!runId) throw new Error(`No run ID returned from Apify. Response: ${JSON.stringify(runData)}`);
 
