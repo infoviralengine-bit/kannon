@@ -77,11 +77,14 @@ export interface CalendarEntry {
   accountUsername: string | null;
 }
 
-export function useCreatorPortal() {
+export function useCreatorPortal(selectedYear?: number, selectedMonth?: number) {
   const { user } = useAuth();
+  const now = new Date();
+  const year = selectedYear ?? now.getFullYear();
+  const month = selectedMonth ?? now.getMonth();
 
   return useQuery({
-    queryKey: ["creator-portal", user?.id],
+    queryKey: ["creator-portal", user?.id, year, month],
     queryFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
@@ -122,10 +125,7 @@ export function useCreatorPortal() {
         allVideos = data ?? [];
       }
 
-      // Month range
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth();
+      // Month range (using params from closure)
       const mStart = new Date(year, month, 1).toISOString();
       const mEnd = new Date(year, month + 1, 1).toISOString();
       const monthVideosList = allVideos.filter((v) => v.published_at >= mStart && v.published_at < mEnd);

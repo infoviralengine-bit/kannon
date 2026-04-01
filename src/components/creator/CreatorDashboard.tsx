@@ -9,9 +9,10 @@ interface Props {
   accountStats: AccountStats[];
   earnings: EarningsData;
   creatorName: string;
+  monthLabel?: string;
 }
 
-export default function CreatorDashboard({ accountStats, earnings, creatorName }: Props) {
+export default function CreatorDashboard({ accountStats, earnings, creatorName, monthLabel = "questo mese" }: Props) {
   const hasContracts = earnings.contractBreakdowns.length > 0;
 
   return (
@@ -45,7 +46,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName }
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground">Guadagno mese</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">Guadagno {monthLabel}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" />
@@ -66,7 +67,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName }
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground">Views questo mese</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">Views {monthLabel}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <Eye className="h-4 w-4 text-primary" />
@@ -75,7 +76,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName }
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground">Video questo mese</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">Video {monthLabel}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <Video className="h-4 w-4 text-primary" />
@@ -90,7 +91,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName }
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="h-4 w-4 text-primary" />
-              Dettaglio guadagni mese corrente
+              Dettaglio guadagni {monthLabel}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -130,7 +131,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName }
               </TableBody>
             </Table>
             <div className="mt-3 text-right">
-              <span className="text-sm text-muted-foreground mr-2">Totale mese:</span>
+              <span className="text-sm text-muted-foreground mr-2">Totale {monthLabel}:</span>
               <span className="text-lg font-bold">{formatCurrency(earnings.monthEarnings)}</span>
             </div>
           </CardContent>
@@ -168,11 +169,11 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName }
                     <p className="font-semibold">{acc.totalVideos}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Views mese</p>
+                    <p className="text-xs text-muted-foreground">Views {monthLabel}</p>
                     <p className="font-semibold">{formatViews(acc.monthViews)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Video mese</p>
+                    <p className="text-xs text-muted-foreground">Video {monthLabel}</p>
                     <p className="font-semibold">{acc.monthVideos}</p>
                   </div>
                 </div>
