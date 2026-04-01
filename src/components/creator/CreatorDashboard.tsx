@@ -91,7 +91,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="h-4 w-4 text-primary" />
-              Dettaglio guadagni mese corrente
+              Dettaglio guadagni {monthLabel}
             </CardTitle>
           </CardHeader>
           <CardContent>
