@@ -177,7 +177,6 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${apiToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(apifyInput),
