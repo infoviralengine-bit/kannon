@@ -121,6 +121,32 @@ function PeriodSelector({ value, onChange }: { value: number; onChange: (v: numb
   );
 }
 
+/* ─── KPI Period Selector ─── */
+function KpiPeriodSelector({ value, onChange }: { value: number | undefined; onChange: (v: number | undefined) => void }) {
+  const options: { label: string; value: number | undefined }[] = [
+    { label: "30gg", value: 30 },
+    { label: "90gg", value: 90 },
+    { label: "Tutto", value: undefined },
+  ];
+  return (
+    <div className="flex gap-1 bg-[#0d0d14] rounded-lg p-1">
+      {options.map((o) => (
+        <button
+          key={o.label}
+          onClick={() => onChange(o.value)}
+          className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+            value === o.value
+              ? "bg-[#7c3aed]/20 text-[#a78bfa]"
+              : "text-[#64748b] hover:text-[#94a3b8]"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /* ─── Main Page ─── */
 export default function GeneralePage() {
   const navigate = useNavigate();
