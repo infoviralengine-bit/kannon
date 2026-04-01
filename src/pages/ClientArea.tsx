@@ -382,7 +382,8 @@ export default function ClientArea() {
                       <TableCell className="text-right tabular-nums">{acc.total_videos}</TableCell>
                       <TableCell className="text-right tabular-nums">{acc.videos_today}</TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
