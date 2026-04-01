@@ -173,7 +173,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
 
     // Step 5: Start Apify run
     const runRes = await fetch(
-      "https://api.apify.com/v2/acts/clockworks~free-tiktok-scraper/runs",
+      "https://api.apify.com/v2/acts/apidojo~tiktok-scraper/runs",
       {
         method: "POST",
         headers: {
