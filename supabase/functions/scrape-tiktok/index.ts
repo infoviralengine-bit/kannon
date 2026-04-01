@@ -165,11 +165,8 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     log(`Step 4: Username da scrapare: [${allUsernames.join(", ")}]`);
 
     const apifyInput = {
-      profiles: allUsernames,
-      profileScrapeSections: ["videos"],
-      profileSorting: "latest",
-      excludePinnedPosts: false,
-      resultsPerPage: 100,
+      startUrls: allUsernames.map((u) => `https://www.tiktok.com/@${u}`),
+      maxItems: allUsernames.length * 100,
     };
 
     log(`Step 5: Avvio run Apify con input: ${JSON.stringify(apifyInput)}`);
