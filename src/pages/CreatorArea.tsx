@@ -98,35 +98,77 @@ export default function CreatorArea() {
         { key: "guadagni", label: "Guadagni", icon: Coins },
       ];
 
+  const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonth === now.getMonth();
+
+  const goToPrevMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const goToNextMonth = () => {
+    if (isCurrentMonth) return;
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(selectedYear + 1);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header name={profile?.full_name ?? null} onSignOut={signOut} />
 
       {/* Navigation */}
       <nav className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-10">
-        <div className="max-w-4xl mx-auto px-6 flex gap-1 overflow-x-auto">
-          {NAV_ITEMS.map((item) => {
-            const isLocked = !isOperativo && item.key !== "warmup" && !unlocked;
-            const isActive = section === item.key;
-            return (
-              <button
-                key={item.key}
-                onClick={() => setSection(item.key)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                  isActive
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {isLocked ? (
-                  <Lock className="h-3.5 w-3.5" />
-                ) : (
-                  <item.icon className="h-3.5 w-3.5" />
-                )}
-                {item.label}
-              </button>
-            );
-          })}
+        <div className="max-w-4xl mx-auto px-6 flex items-center justify-between">
+          <div className="flex gap-1 overflow-x-auto">
+            {NAV_ITEMS.map((item) => {
+              const isLocked = !isOperativo && item.key !== "warmup" && !unlocked;
+              const isActive = section === item.key;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => setSection(item.key)}
+                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                    isActive
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {isLocked ? (
+                    <Lock className="h-3.5 w-3.5" />
+                  ) : (
+                    <item.icon className="h-3.5 w-3.5" />
+                  )}
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Month selector */}
+          <div className="flex items-center gap-1 ml-4 shrink-0">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToPrevMonth}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm font-medium min-w-[120px] text-center">
+              {MONTH_NAMES[selectedMonth]} {selectedYear}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={goToNextMonth}
+              disabled={isCurrentMonth}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </nav>
 
