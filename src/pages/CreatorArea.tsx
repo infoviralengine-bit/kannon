@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCreatorPortal } from "@/hooks/useCreatorPortal";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogOut, Flame, FileText, CalendarDays, Coins, Lock, LayoutDashboard } from "lucide-react";
+import { LogOut, Flame, FileText, CalendarDays, Coins, Lock, LayoutDashboard, ChevronLeft, ChevronRight } from "lucide-react";
 import CreatorWelcome from "@/components/creator/CreatorWelcome";
 import CreatorWarmup from "@/components/creator/CreatorWarmup";
 import CreatorDashboard from "@/components/creator/CreatorDashboard";
@@ -12,9 +12,14 @@ import { ComingSoon } from "@/components/ComingSoon";
 
 type Section = "dashboard" | "warmup" | "contenuti" | "calendario" | "guadagni";
 
+const MONTH_NAMES = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+
 export default function CreatorArea() {
   const { profile, signOut } = useAuth();
-  const { data, isLoading } = useCreatorPortal();
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const { data, isLoading } = useCreatorPortal(selectedYear, selectedMonth);
   const [section, setSection] = useState<Section>("dashboard");
   const [showWelcome, setShowWelcome] = useState(false);
 
