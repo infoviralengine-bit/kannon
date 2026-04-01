@@ -153,6 +153,10 @@ export default function GeneralePage() {
       </div>
 
       {/* ROW 1 — Financial KPIs */}
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-[#94a3b8]">KPI Finanziari</span>
+        <KpiPeriodSelector value={kpiPeriod} onChange={setKpiPeriod} />
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiFinancialCard
           label="Entrate Fisse"

@@ -21,16 +21,21 @@ export interface FinancialKpi {
   creatorCpmTotal: number;
 }
 
-export function useFinancialKpis() {
+export function useFinancialKpis(periodDays?: number) {
+  // periodDays: 30, 90, or undefined (all time)
   const now = new Date();
-  const y = now.getFullYear();
-  const m = now.getMonth();
-  const mStart = new Date(y, m, 1).toISOString();
-  const mEnd = new Date(y, m + 1, 1).toISOString();
 
   return useQuery({
-    queryKey: ["dashboard-financial-kpis", y, m],
+    queryKey: ["dashboard-financial-kpis", periodDays ?? "all"],
     queryFn: async (): Promise<FinancialKpi> => {
+      const mStart = periodDays ? new Date(now.getTime() - periodDays * 86400000).toISOString() : undefined;
+      const mEnd = now.toISOString();
+
+      let videosQuery = supabase.from("videos").select("tiktok_account_id, views, views_final, window_closed, published_at");
+      if (mStart) {
+        videosQuery = videosQuery.gte("published_at", mStart).lt("published_at", mEnd);
+      }
+
       const [
         { data: campaigns },
         { data: contracts },
@@ -45,8 +50,7 @@ export function useFinancialKpis() {
         supabase.from("contract_creators").select("contract_id, creator_id"),
         supabase.from("contract_campaigns").select("contract_id, campaign_id"),
         supabase.from("tiktok_accounts").select("id, creator_id, campaign_id"),
-        supabase.from("videos").select("tiktok_account_id, views, views_final, window_closed, published_at")
-          .gte("published_at", mStart).lt("published_at", mEnd),
+        videosQuery,
         supabase.from("campaign_creators").select("campaign_id, creator_id"),
       ]);
 
