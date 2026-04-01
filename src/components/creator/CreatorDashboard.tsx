@@ -169,11 +169,11 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
                     <p className="font-semibold">{acc.totalVideos}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Views mese</p>
+                    <p className="text-xs text-muted-foreground">Views {monthLabel}</p>
                     <p className="font-semibold">{formatViews(acc.monthViews)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Video mese</p>
+                    <p className="text-xs text-muted-foreground">Video {monthLabel}</p>
                     <p className="font-semibold">{acc.monthVideos}</p>
                   </div>
                 </div>
