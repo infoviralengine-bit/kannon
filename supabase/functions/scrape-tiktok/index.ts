@@ -165,7 +165,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     log(`Step 4: Username da scrapare: [${allUsernames.join(", ")}]`);
 
     const apifyInput = {
-      startUrls: allUsernames.map((u) => ({ url: `https://www.tiktok.com/@${u}` })),
+      startUrls: allUsernames.map((u) => `https://www.tiktok.com/@${u}`),
       maxItems: allUsernames.length * 100,
     };
 
@@ -173,11 +173,10 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
 
     // Step 5: Start Apify run
     const runRes = await fetch(
-      "https://api.apify.com/v2/acts/apidojo~tiktok-scraper/runs",
+      `https://api.apify.com/v2/acts/5K30i8aFccKNF5ICs/runs?token=${apiToken}`,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${apiToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(apifyInput),
@@ -193,6 +192,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     }
 
     const runData = await runRes.json();
+    log(`Step 5: Run response: ${JSON.stringify(runData).substring(0, 500)}`);
     const runId = runData.data?.id;
     if (!runId) throw new Error(`No run ID returned from Apify. Response: ${JSON.stringify(runData)}`);
 
@@ -208,8 +208,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
       await new Promise((r) => setTimeout(r, 15000));
       pollCount++;
       const statusRes = await fetch(
-        `https://api.apify.com/v2/actor-runs/${runId}`,
-        { headers: { Authorization: `Bearer ${apiToken}` } }
+        `https://api.apify.com/v2/actor-runs/${runId}?token=${apiToken}`
       );
       const statusData = await statusRes.json();
       runStatus = statusData.data?.status;
@@ -226,8 +225,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     log(`Step 7: Recupero risultati dal dataset: ${datasetId}`);
     
     const itemsRes = await fetch(
-      `https://api.apify.com/v2/datasets/${datasetId}/items?format=json`,
-      { headers: { Authorization: `Bearer ${apiToken}` } }
+      `https://api.apify.com/v2/datasets/${datasetId}/items?format=json&token=${apiToken}`
     );
     const items = await itemsRes.json();
     const now = new Date().toISOString();
