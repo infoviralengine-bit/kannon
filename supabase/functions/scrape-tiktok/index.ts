@@ -167,6 +167,9 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     const apifyInput = {
       startUrls: allUsernames.map((u) => ({ url: `https://www.tiktok.com/@${u}` })),
       maxItems: allUsernames.length * 100,
+      proxyConfiguration: {
+        useApifyProxy: true,
+      },
     };
 
     log(`Step 5: Avvio run Apify con input: ${JSON.stringify(apifyInput)}`);
