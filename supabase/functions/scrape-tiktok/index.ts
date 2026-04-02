@@ -165,12 +165,10 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     log(`Step 4: Username da scrapare: [${allUsernames.join(", ")}]`);
 
     const apifyInput = {
-      startUrls: allUsernames.map((u) => ({ url: `https://www.tiktok.com/@${u}` })),
+      startUrls: allUsernames.map((u) => `https://www.tiktok.com/@${u}`),
       maxItems: allUsernames.length * 100,
-      proxyConfiguration: {
-        useApifyProxy: true,
-        apifyProxyGroups: ["RESIDENTIAL"],
-      },
+      dateRange: "DEFAULT",
+      customMapFunction: "(object) => { return {...object} }",
     };
 
     log(`Step 5: Avvio run Apify con input: ${JSON.stringify(apifyInput)}`);
@@ -265,7 +263,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     if (items.length > 0) {
       const sample = items[0];
       log(`Step 7: Struttura primo item - keys: [${Object.keys(sample).join(", ")}]`);
-      log(`Step 7: Primo item id=${sample.id}, channel.username=${sample.channel?.username}, views=${sample.views}, likes=${sample.likes}`);
+      log(`Step 7: Primo item DUMP: ${JSON.stringify(sample).substring(0, 1000)}`);
     }
 
     const processedAccounts = new Set<string>();
