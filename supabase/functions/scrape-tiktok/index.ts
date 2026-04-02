@@ -272,7 +272,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
         }
 
         const authorUsername = (
-          item.channel?.username || item.channel?.name || ""
+          item.authorMeta?.name || item.authorMeta?.nickName || ""
         ).toLowerCase().replace(/^@/, "");
         if (!authorUsername) {
           log(`  Item #${i}: SKIP - nessun authorUsername (id: ${tiktokVideoId})`);
@@ -285,12 +285,12 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
           continue;
         }
 
-        const playCount = item.views ?? 0;
-        const diggCount = item.likes ?? 0;
-        const commentCount = item.comments ?? 0;
-        const createTime = item.uploadedAt
-          ? new Date(item.uploadedAt * 1000).toISOString()
-          : (item.uploadedAtFormatted || now);
+        const playCount = item.playCount ?? 0;
+        const diggCount = item.diggCount ?? 0;
+        const commentCount = item.commentCount ?? 0;
+        const createTime = item.createTime
+          ? new Date(item.createTime * 1000).toISOString()
+          : now;
 
         for (const account of matchedAccounts) {
           const campaign = campaignMap.get(account.campaign_id!);
