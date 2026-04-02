@@ -231,10 +231,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     log(`Step 7: Recupero risultati dal dataset: ${datasetId}`);
     
     const itemsRes = await fetch(
-      `https://api.apify.com/v2/datasets/${datasetId}/items?format=json`,
-      {
-        headers: { Authorization: `Bearer ${apiToken}` },
-      }
+      `https://api.apify.com/v2/datasets/${datasetId}/items?format=json&token=${apiToken}`
     );
     if (!itemsRes.ok) {
       const errText = await itemsRes.text();
