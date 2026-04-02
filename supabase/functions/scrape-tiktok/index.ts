@@ -169,6 +169,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
       maxItems: allUsernames.length * 100,
       proxyConfiguration: {
         useApifyProxy: true,
+        apifyProxyGroups: ["RESIDENTIAL"],
       },
     };
 
