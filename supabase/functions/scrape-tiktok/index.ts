@@ -165,19 +165,21 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     log(`Step 4: Username da scrapare: [${allUsernames.join(", ")}]`);
 
     const apifyInput = {
-      startUrls: allUsernames.map((u) => `https://www.tiktok.com/@${u}`),
-      maxItems: allUsernames.length * 100,
-      dateRange: "DEFAULT",
-      sortType: "RELEVANCE",
-      customMapFunction: "(object) => { return {...object} }",
-      location: "IT",
+      profiles: allUsernames,
+      resultsPerPage: 100,
+      profileScrapeSections: ["videos"],
+      profileSorting: "latest",
+      excludePinnedPosts: false,
+      shouldDownloadVideos: false,
+      shouldDownloadCovers: false,
+      shouldDownloadSubtitles: false,
     };
 
     log(`Step 5: Avvio run Apify con input: ${JSON.stringify(apifyInput)}`);
 
-    // Step 5: Start Apify run (token as query param)
+    // Step 5: Start Apify run (clockworks/free-tiktok-scraper)
     const runRes = await fetch(
-      `https://api.apify.com/v2/acts/apidojo~tiktok-scraper/runs?token=${apiToken}`,
+      `https://api.apify.com/v2/acts/clockworks~free-tiktok-scraper/runs?token=${apiToken}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
