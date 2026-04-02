@@ -263,7 +263,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     if (items.length > 0) {
       const sample = items[0];
       log(`Step 7: Struttura primo item - keys: [${Object.keys(sample).join(", ")}]`);
-      log(`Step 7: Primo item id=${sample.id}, channel.username=${sample.channel?.username}, views=${sample.views}, likes=${sample.likes}`);
+      log(`Step 7: Primo item DUMP: ${JSON.stringify(sample).substring(0, 1000)}`);
     }
 
     const processedAccounts = new Set<string>();
