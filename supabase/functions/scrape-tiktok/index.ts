@@ -168,22 +168,19 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
       startUrls: allUsernames.map((u) => `https://www.tiktok.com/@${u}`),
       maxItems: allUsernames.length * 100,
       dateRange: "DEFAULT",
+      sortType: "RELEVANCE",
       customMapFunction: "(object) => { return {...object} }",
+      location: "IT",
     };
 
     log(`Step 5: Avvio run Apify con input: ${JSON.stringify(apifyInput)}`);
 
-    const apifyHeaders = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiToken}`,
-    };
-
-    // Step 5: Start Apify run
+    // Step 5: Start Apify run (token as query param)
     const runRes = await fetch(
-      `https://api.apify.com/v2/acts/5K30i8aFccKNF5ICs/runs`,
+      `https://api.apify.com/v2/acts/apidojo~tiktok-scraper/runs?token=${apiToken}`,
       {
         method: "POST",
-        headers: apifyHeaders,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(apifyInput),
       }
     );
@@ -213,10 +210,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
       await new Promise((r) => setTimeout(r, 15000));
       pollCount++;
       const statusRes = await fetch(
-        `https://api.apify.com/v2/actor-runs/${runId}`,
-        {
-          headers: { Authorization: `Bearer ${apiToken}` },
-        }
+        `https://api.apify.com/v2/actor-runs/${runId}?token=${apiToken}`
       );
       if (!statusRes.ok) {
         const errText = await statusRes.text();
@@ -237,10 +231,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
     log(`Step 7: Recupero risultati dal dataset: ${datasetId}`);
     
     const itemsRes = await fetch(
-      `https://api.apify.com/v2/datasets/${datasetId}/items?format=json`,
-      {
-        headers: { Authorization: `Bearer ${apiToken}` },
-      }
+      `https://api.apify.com/v2/datasets/${datasetId}/items?format=json&token=${apiToken}`
     );
     if (!itemsRes.ok) {
       const errText = await itemsRes.text();
