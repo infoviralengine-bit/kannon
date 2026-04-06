@@ -213,24 +213,40 @@ export function useCreatorPortal(selectedPeriod?: number) {
         const campIdSet = new Set(cCampIds);
         const contractAccounts = accs.filter((a: any) => a.campaign_id && campIdSet.has(a.campaign_id));
         const contractAccIds = new Set(contractAccounts.map((a: any) => a.id));
-        const contractMonthVideos = monthVideosList.filter((v) => contractAccIds.has(v.tiktok_account_id));
-        const videoCount = contractMonthVideos.length;
+
+        // Use contract's own period based on start_date
+        const contractStart = contract.start_date
+          ? parseContractStartDate(contract.start_date)
+          : new Date(Date.UTC(year, month, 1));
+        const activePeriod = selectedPeriod ?? getCurrentPeriodNumber(contractStart);
+        const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod);
+        const pStartISO = periodStart.toISOString();
+        const pEndDate = new Date(periodEnd);
+        pEndDate.setUTCDate(pEndDate.getUTCDate() + 1);
+        const pEndISO = pEndDate.toISOString();
+
+        const contractPeriodVideos = allVideos.filter((v) =>
+          contractAccIds.has(v.tiktok_account_id) &&
+          v.published_at >= pStartISO &&
+          v.published_at < pEndISO
+        );
+        const videoCount = contractPeriodVideos.length;
 
         const cpmRate = Number(contract.creator_cpm ?? 0.5);
         const fixedAmt = Number(contract.creator_fixed ?? 0);
         const minVpd = contract.min_videos_per_day ?? 5;
-        const target = getMonthlyTarget(minVpd, year, month);
+        const target = getPeriodTarget(minVpd, periodStart, periodEnd);
 
         let totalContractViews = 0;
         cCampIds.forEach((campId) => {
           const cap = capByCampaign.get(campId) ?? null;
           const campAccIds = contractAccounts.filter((a: any) => a.campaign_id === campId).map((a: any) => a.id);
           const campAccSet = new Set(campAccIds);
-          const campVideos = contractMonthVideos.filter((v) => campAccSet.has(v.tiktok_account_id));
+          const campVideos = contractPeriodVideos.filter((v) => campAccSet.has(v.tiktok_account_id));
           totalContractViews += sumEffectiveViewsCapped(campVideos, cap);
         });
 
-        const fixedEarned = minVpd === 0 || isFixedEarnedMonthly(videoCount, minVpd, year, month);
+        const fixedEarned = minVpd === 0 || isFixedEarnedInPeriod(videoCount, minVpd, periodStart, periodEnd);
         const cpmAmount = cpmRate * (totalContractViews / 1000);
         const subtotal = (fixedEarned ? fixedAmt : 0) + cpmAmount;
 
