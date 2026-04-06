@@ -360,6 +360,7 @@ export type Database = {
           is_active: boolean
           min_videos_per_day: number
           name: string
+          start_date: string
           type: string
         }
         Insert: {
@@ -371,6 +372,7 @@ export type Database = {
           is_active?: boolean
           min_videos_per_day?: number
           name: string
+          start_date?: string
           type?: string
         }
         Update: {
@@ -382,6 +384,7 @@ export type Database = {
           is_active?: boolean
           min_videos_per_day?: number
           name?: string
+          start_date?: string
           type?: string
         }
         Relationships: []
@@ -503,7 +506,9 @@ export type Database = {
           is_paid: boolean
           notes: string | null
           paid_at: string | null
+          period_end: string | null
           period_month: number
+          period_start: string | null
           period_year: number
           total_amount: number
         }
@@ -517,7 +522,9 @@ export type Database = {
           is_paid?: boolean
           notes?: string | null
           paid_at?: string | null
+          period_end?: string | null
           period_month: number
+          period_start?: string | null
           period_year: number
           total_amount?: number
         }
@@ -531,7 +538,9 @@ export type Database = {
           is_paid?: boolean
           notes?: string | null
           paid_at?: string | null
+          period_end?: string | null
           period_month?: number
+          period_start?: string | null
           period_year?: number
           total_amount?: number
         }
