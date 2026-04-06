@@ -1,7 +1,15 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViews, sumEffectiveViewsCapped } from "@/lib/videoWindow";
-import { isFixedEarnedMonthly, getWorkingDaysInMonth } from "@/lib/fixedEarned";
+import {
+  getContractPeriod,
+  getPeriodTarget,
+  isFixedEarnedInPeriod,
+  parseContractStartDate,
+  getCurrentPeriodNumber,
+  formatPeriodRange,
+  getWorkingDaysInRange,
+} from "@/lib/contractPeriods";
 
 function monthRange(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString();
