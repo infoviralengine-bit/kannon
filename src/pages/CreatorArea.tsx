@@ -128,20 +128,25 @@ export default function CreatorArea() {
             })}
           </div>
 
-          {/* Month selector */}
+          {/* Period selector */}
           <div className="flex items-center gap-1 ml-4 shrink-0">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToPrevMonth}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setSelectedPeriod(Math.max(1, currentPeriod - 1))}
+              disabled={currentPeriod <= 1}
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium min-w-[120px] text-center">
-              {MONTH_NAMES[selectedMonth]} {selectedYear}
+            <span className="text-sm font-medium min-w-[100px] text-center">
+              Periodo {currentPeriod}
             </span>
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={goToNextMonth}
-              disabled={isCurrentMonth}
+              onClick={() => setSelectedPeriod(currentPeriod + 1)}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
