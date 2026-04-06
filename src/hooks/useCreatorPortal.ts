@@ -91,7 +91,7 @@ export function useCreatorPortal(selectedPeriod?: number) {
   const month = now.getMonth();
 
   return useQuery({
-    queryKey: ["creator-portal", user?.id, year, month],
+    queryKey: ["creator-portal", user?.id, selectedPeriod],
     queryFn: async () => {
       if (!user) throw new Error("Not authenticated");
 
