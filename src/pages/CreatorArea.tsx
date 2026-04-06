@@ -94,26 +94,7 @@ export default function CreatorArea() {
         { key: "guadagni", label: "Guadagni", icon: Coins },
       ];
 
-  const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonth === now.getMonth();
-
-  const goToPrevMonth = () => {
-    if (selectedMonth === 0) {
-      setSelectedMonth(11);
-      setSelectedYear(selectedYear - 1);
-    } else {
-      setSelectedMonth(selectedMonth - 1);
-    }
-  };
-
-  const goToNextMonth = () => {
-    if (isCurrentMonth) return;
-    if (selectedMonth === 11) {
-      setSelectedMonth(0);
-      setSelectedYear(selectedYear + 1);
-    } else {
-      setSelectedMonth(selectedMonth + 1);
-    }
-  };
+  const currentPeriod = selectedPeriod ?? 1;
 
   return (
     <div className="min-h-screen bg-background">
