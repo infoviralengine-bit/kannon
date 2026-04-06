@@ -12,14 +12,10 @@ import { ComingSoon } from "@/components/ComingSoon";
 
 type Section = "dashboard" | "warmup" | "contenuti" | "calendario" | "guadagni";
 
-const MONTH_NAMES = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
-
 export default function CreatorArea() {
   const { profile, signOut } = useAuth();
-  const now = new Date();
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
-  const { data, isLoading } = useCreatorPortal(selectedYear, selectedMonth);
+  const [selectedPeriod, setSelectedPeriod] = useState<number | undefined>(undefined);
+  const { data, isLoading } = useCreatorPortal(selectedPeriod);
   const [section, setSection] = useState<Section>("dashboard");
   const [showWelcome, setShowWelcome] = useState(false);
 
