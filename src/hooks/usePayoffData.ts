@@ -165,7 +165,9 @@ export function usePayoffData(year: number, month: number, periodNumber?: number
           const crViews = crAccIds.reduce((s, id) => s + (viewsByAccount.get(id) ?? 0), 0);
           const min = cr.min_videos_per_day ?? 5;
           const videoCount = monthVideoCountByCreator.get(cid) ?? 0;
-          const earned = isFixedEarnedMonthly(videoCount, min, year, month);
+          const pStart = new Date(Date.UTC(year, month, 1));
+          const pEnd = new Date(Date.UTC(year, month + 1, 0));
+          const earned = isFixedEarnedInPeriod(videoCount, min, pStart, pEnd);
           creatorCost += (earned ? (cr.creator_fixed ?? 200) : 0) + (cr.creator_cpm ?? 0.5) * (crViews / 1000);
         });
 
