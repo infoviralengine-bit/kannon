@@ -57,7 +57,7 @@ export interface PaymentHistoryRow {
   paidAt: string;
 }
 
-export function usePayoffData(year: number, month: number) {
+export function usePayoffData(year: number, month: number, periodNumber?: number) {
   const { start: mStart, end: mEnd } = monthRange(year, month);
 
   return useQuery({
