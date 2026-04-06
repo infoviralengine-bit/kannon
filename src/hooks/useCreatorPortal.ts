@@ -2,7 +2,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { sumEffectiveViewsCapped } from "@/lib/videoWindow";
-import { isFixedEarnedMonthly, getMonthlyTarget } from "@/lib/fixedEarned";
+import {
+  getContractPeriod,
+  getPeriodTarget,
+  isFixedEarnedInPeriod,
+  parseContractStartDate,
+  getCurrentPeriodNumber,
+  formatPeriodRange,
+} from "@/lib/contractPeriods";
 
 export interface WarmupAccount {
   id: string;
