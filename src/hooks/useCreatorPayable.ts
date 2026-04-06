@@ -108,15 +108,15 @@ export function useCreatorPayable(periodNumber: number) {
       fetchEndDate.setUTCDate(fetchEndDate.getUTCDate() + 1);
       const fetchEnd = fetchEndDate.toISOString();
 
-      const [{ data: videos }, { data: existingPayments }] = await Promise.all([
-        supabase.from("videos")
-          .select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at")
-          .gte("published_at", fetchStart).lt("published_at", fetchEnd),
-        supabase.from("creator_payments")
-          .select("*")
-          .eq("period_start" as any, globalStart.toISOString().split("T")[0])
-          .eq("period_end" as any, globalEnd.toISOString().split("T")[0]),
-      ]);
+      const { data: videos } = await supabase.from("videos")
+        .select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at")
+        .gte("published_at", fetchStart).lt("published_at", fetchEnd);
+
+      // Query payments - use period_start if available, fall back to scanning all
+      const { data: existingPayments } = await (supabase.from("creator_payments") as any)
+        .select("*")
+        .eq("period_start", globalStart.toISOString().split("T")[0])
+        .eq("period_end", globalEnd.toISOString().split("T")[0]);
 
       const allVideos = (videos ?? []) as any[];
       const allPayments = (existingPayments ?? []) as any[];
