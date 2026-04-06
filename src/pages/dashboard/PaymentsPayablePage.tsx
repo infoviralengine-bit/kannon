@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpCircle, Check, ChevronDown, ChevronRight,
-  AlertTriangle, FileText, Calendar,
+  ChevronLeft, FileText,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency, formatViews } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
 import { useCreatorPayable, type CreatorPayableRow } from "@/hooks/useCreatorPayable";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,16 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
-
-const MONTHS = [
-  "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
-  "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre",
-];
 
 function Shimmer({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse rounded-lg bg-[#1a1a28] ${className}`} />;
@@ -36,20 +28,24 @@ function Shimmer({ className = "" }: { className?: string }) {
 
 export default function PaymentsPayablePage() {
   const navigate = useNavigate();
-  const now = new Date();
-  const [month, setMonth] = useState(now.getMonth());
-  const [year, setYear] = useState(now.getFullYear());
+  const [periodNumber, setPeriodNumber] = useState<number>(1);
   const [showOnlyActive, setShowOnlyActive] = useState(true);
   const [expandedCreators, setExpandedCreators] = useState<Set<string>>(new Set());
   const [confirm, setConfirm] = useState<CreatorPayableRow | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const { data, isLoading } = useCreatorPayable(year, month);
+  const { data, isLoading } = useCreatorPayable(periodNumber);
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  // Filter
-  const rows = (data ?? []).filter((r) => {
+  // Set initial period to current when meta loads
+  useEffect(() => {
+    if (data?.meta && periodNumber === 1 && data.meta.currentPeriod > 1) {
+      setPeriodNumber(data.meta.currentPeriod);
+    }
+  }, [data?.meta?.currentPeriod]);
+
+  const rows = (data?.rows ?? []).filter((r) => {
     if (!showOnlyActive) return true;
     return r.totalAmount > 0 || r.monthVideoCount > 0;
   });
@@ -69,10 +65,18 @@ export default function PaymentsPayablePage() {
   async function handleMarkPaid(row: CreatorPayableRow) {
     setSaving(true);
     try {
-      const payload = {
+      // Use the first contract's period dates as reference
+      const firstBreakdown = row.contracts[0];
+      const periodStart = firstBreakdown?.periodStart;
+      const periodEnd = firstBreakdown?.periodEnd;
+      const pStartDate = periodStart ? new Date(periodStart) : new Date();
+
+      const payload: any = {
         creator_id: row.creatorId,
-        period_month: month + 1,
-        period_year: year,
+        period_month: pStartDate.getUTCMonth() + 1,
+        period_year: pStartDate.getUTCFullYear(),
+        period_start: periodStart,
+        period_end: periodEnd,
         fixed_amount: row.contracts.reduce((s, c) => s + (c.fixedEarned ? c.fixedAmount : 0), 0),
         fixed_earned: row.contracts.some((c) => c.fixedEarned),
         cpm_amount: row.contracts.reduce((s, c) => s + c.cpmAmount, 0),
@@ -136,26 +140,31 @@ export default function PaymentsPayablePage() {
               Solo con attività
             </Label>
           </div>
-          <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
-            <SelectTrigger className="w-[130px] bg-[#111118] border-[#1e1e2e]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {MONTHS.map((m, i) => (
-                <SelectItem key={i} value={String(i)}>{m}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-            <SelectTrigger className="w-[85px] bg-[#111118] border-[#1e1e2e]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {[2024, 2025, 2026, 2027].map((y) => (
-                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
+          {/* Period Navigator */}
+          <div className="flex items-center gap-1 bg-[#111118] border border-[#1e1e2e] rounded-lg px-2 py-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setPeriodNumber((p) => Math.max(1, p - 1))}
+              disabled={periodNumber <= 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="text-center min-w-[180px]">
+              <p className="text-xs font-medium text-[#f8fafc]">Periodo {periodNumber}</p>
+              <p className="text-[10px] text-[#64748b]">{data?.meta?.periodLabel ?? "..."}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setPeriodNumber((p) => p + 1)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -168,7 +177,7 @@ export default function PaymentsPayablePage() {
         <Card className="border-[#1e1e2e] bg-[#111118]">
           <CardContent className="py-12 text-center text-[#64748b]">
             {showOnlyActive
-              ? "Nessun creator con attività per questo mese. Disattiva il filtro per vedere tutti."
+              ? "Nessun creator con attività per questo periodo. Disattiva il filtro per vedere tutti."
               : "Nessun creator attivo."}
           </CardContent>
         </Card>
@@ -180,7 +189,7 @@ export default function PaymentsPayablePage() {
                 <TableHead className="w-8" />
                 <TableHead className="text-[#64748b]">Creator</TableHead>
                 <TableHead className="text-[#64748b]">Contratti</TableHead>
-                <TableHead className="text-[#64748b] text-right">Video mese</TableHead>
+                <TableHead className="text-[#64748b] text-right">Video</TableHead>
                 <TableHead className="text-[#64748b] text-right">Totale (€)</TableHead>
                 <TableHead className="text-[#64748b]">Status</TableHead>
                 <TableHead className="text-[#64748b] text-right">Azioni</TableHead>
@@ -189,7 +198,6 @@ export default function PaymentsPayablePage() {
             <TableBody>
               {rows.map((cr) => {
                 const isExpanded = expandedCreators.has(cr.creatorId);
-                const hasMultiContracts = cr.contracts.length > 1;
 
                 return (
                   <>
@@ -336,7 +344,7 @@ export default function PaymentsPayablePage() {
           <DialogHeader>
             <DialogTitle>Conferma pagamento</DialogTitle>
             <DialogDescription>
-              Segna come pagato <strong>{confirm?.creatorName}</strong> per {MONTHS[month]} {year}?
+              Segna come pagato <strong>{confirm?.creatorName}</strong> per Periodo {periodNumber}?
             </DialogDescription>
           </DialogHeader>
           {confirm && (
