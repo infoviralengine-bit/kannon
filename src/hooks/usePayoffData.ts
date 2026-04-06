@@ -61,7 +61,7 @@ export function usePayoffData(year: number, month: number, periodNumber?: number
   const { start: mStart, end: mEnd } = monthRange(year, month);
 
   return useQuery({
-    queryKey: ["payoff", year, month],
+    queryKey: ["payoff", year, month, periodNumber],
     queryFn: async () => {
       const [
         { data: creators },
