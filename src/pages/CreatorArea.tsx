@@ -12,14 +12,10 @@ import { ComingSoon } from "@/components/ComingSoon";
 
 type Section = "dashboard" | "warmup" | "contenuti" | "calendario" | "guadagni";
 
-const MONTH_NAMES = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
-
 export default function CreatorArea() {
   const { profile, signOut } = useAuth();
-  const now = new Date();
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
-  const { data, isLoading } = useCreatorPortal(selectedYear, selectedMonth);
+  const [selectedPeriod, setSelectedPeriod] = useState<number | undefined>(undefined);
+  const { data, isLoading } = useCreatorPortal(selectedPeriod);
   const [section, setSection] = useState<Section>("dashboard");
   const [showWelcome, setShowWelcome] = useState(false);
 
@@ -98,26 +94,7 @@ export default function CreatorArea() {
         { key: "guadagni", label: "Guadagni", icon: Coins },
       ];
 
-  const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonth === now.getMonth();
-
-  const goToPrevMonth = () => {
-    if (selectedMonth === 0) {
-      setSelectedMonth(11);
-      setSelectedYear(selectedYear - 1);
-    } else {
-      setSelectedMonth(selectedMonth - 1);
-    }
-  };
-
-  const goToNextMonth = () => {
-    if (isCurrentMonth) return;
-    if (selectedMonth === 11) {
-      setSelectedMonth(0);
-      setSelectedYear(selectedYear + 1);
-    } else {
-      setSelectedMonth(selectedMonth + 1);
-    }
-  };
+  const currentPeriod = selectedPeriod ?? 1;
 
   return (
     <div className="min-h-screen bg-background">
@@ -151,20 +128,25 @@ export default function CreatorArea() {
             })}
           </div>
 
-          {/* Month selector */}
+          {/* Period selector */}
           <div className="flex items-center gap-1 ml-4 shrink-0">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goToPrevMonth}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setSelectedPeriod(Math.max(1, currentPeriod - 1))}
+              disabled={currentPeriod <= 1}
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium min-w-[120px] text-center">
-              {MONTH_NAMES[selectedMonth]} {selectedYear}
+            <span className="text-sm font-medium min-w-[100px] text-center">
+              Periodo {currentPeriod}
             </span>
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={goToNextMonth}
-              disabled={isCurrentMonth}
+              onClick={() => setSelectedPeriod(currentPeriod + 1)}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -186,7 +168,7 @@ export default function CreatorArea() {
             accountStats={data.accountStats}
             earnings={data.earnings}
             creatorName={data.creator.name}
-            monthLabel={MONTH_NAMES[selectedMonth].toLowerCase() + " " + selectedYear}
+            monthLabel={`Periodo ${currentPeriod}`}
           />
         )}
         {section === "contenuti" && (

@@ -1,7 +1,15 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViews, sumEffectiveViewsCapped } from "@/lib/videoWindow";
-import { isFixedEarnedMonthly, getWorkingDaysInMonth } from "@/lib/fixedEarned";
+import {
+  getContractPeriod,
+  getPeriodTarget,
+  isFixedEarnedInPeriod,
+  parseContractStartDate,
+  getCurrentPeriodNumber,
+  formatPeriodRange,
+  getWorkingDaysInRange,
+} from "@/lib/contractPeriods";
 
 function monthRange(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString();
@@ -49,11 +57,11 @@ export interface PaymentHistoryRow {
   paidAt: string;
 }
 
-export function usePayoffData(year: number, month: number) {
+export function usePayoffData(year: number, month: number, periodNumber?: number) {
   const { start: mStart, end: mEnd } = monthRange(year, month);
 
   return useQuery({
-    queryKey: ["payoff", year, month],
+    queryKey: ["payoff", year, month, periodNumber],
     queryFn: async () => {
       const [
         { data: creators },
@@ -157,7 +165,9 @@ export function usePayoffData(year: number, month: number) {
           const crViews = crAccIds.reduce((s, id) => s + (viewsByAccount.get(id) ?? 0), 0);
           const min = cr.min_videos_per_day ?? 5;
           const videoCount = monthVideoCountByCreator.get(cid) ?? 0;
-          const earned = isFixedEarnedMonthly(videoCount, min, year, month);
+          const pStart = new Date(Date.UTC(year, month, 1));
+          const pEnd = new Date(Date.UTC(year, month + 1, 0));
+          const earned = isFixedEarnedInPeriod(videoCount, min, pStart, pEnd);
           creatorCost += (earned ? (cr.creator_fixed ?? 200) : 0) + (cr.creator_cpm ?? 0.5) * (crViews / 1000);
         });
 
@@ -174,12 +184,14 @@ export function usePayoffData(year: number, month: number) {
       });
 
       // ── Creator Payoff ──
-      const workingDays = getWorkingDaysInMonth(year, month);
+      const pStartRef = new Date(Date.UTC(year, month, 1));
+      const pEndRef = new Date(Date.UTC(year, month + 1, 0));
+      const workingDays = getWorkingDaysInRange(pStartRef, pEndRef);
       const creatorRows: CreatorPayoffRow[] = allCreators.map((cr) => {
         const views = creatorMonthViews(cr.id);
         const min = cr.min_videos_per_day ?? 5;
         const videoCount = monthVideoCountByCreator.get(cr.id) ?? 0;
-        const earned = isFixedEarnedMonthly(videoCount, min, year, month);
+        const earned = isFixedEarnedInPeriod(videoCount, min, pStartRef, pEndRef);
         const fixedAmt = cr.creator_fixed ?? 200;
         const cpmAmt = (cr.creator_cpm ?? 0.5) * (views / 1000);
         const total = (earned ? fixedAmt : 0) + cpmAmt;
