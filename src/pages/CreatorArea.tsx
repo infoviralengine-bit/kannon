@@ -168,7 +168,7 @@ export default function CreatorArea() {
             accountStats={data.accountStats}
             earnings={data.earnings}
             creatorName={data.creator.name}
-            monthLabel={MONTH_NAMES[selectedMonth].toLowerCase() + " " + selectedYear}
+            monthLabel={`Periodo ${currentPeriod}`}
           />
         )}
         {section === "contenuti" && (
