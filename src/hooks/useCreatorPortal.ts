@@ -84,11 +84,11 @@ export interface CalendarEntry {
   accountUsername: string | null;
 }
 
-export function useCreatorPortal(selectedYear?: number, selectedMonth?: number) {
+export function useCreatorPortal(selectedPeriod?: number) {
   const { user } = useAuth();
   const now = new Date();
-  const year = selectedYear ?? now.getFullYear();
-  const month = selectedMonth ?? now.getMonth();
+  const year = now.getFullYear();
+  const month = now.getMonth();
 
   return useQuery({
     queryKey: ["creator-portal", user?.id, year, month],
