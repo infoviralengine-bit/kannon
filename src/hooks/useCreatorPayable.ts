@@ -11,44 +11,45 @@ import {
 } from "@/lib/contractPeriods";
 
 /* ══════════════════════════════════════
-   Creator-centric payments with rolling 30-day contract periods
+   Contract-centric payable data
+   Each contract has its own period timeline
    ══════════════════════════════════════ */
 
-export interface ContractBreakdown {
-  contractId: string;
-  contractName: string;
-  monthVideoCount: number;
+export interface CreatorInContract {
+  creatorId: string;
+  creatorName: string;
+  videoCount: number;
   monthlyTarget: number;
   fixedAmount: number;
   fixedEarned: boolean;
   cpmAmount: number;
   subtotal: number;
-  periodStart: string;
-  periodEnd: string;
-}
-
-export interface CreatorPayableRow {
-  creatorId: string;
-  creatorName: string;
-  contracts: ContractBreakdown[];
-  totalAmount: number;
-  monthVideoCount: number;
-  hasContracts: boolean;
   isPaid: boolean;
   paidAt: string | null;
   paymentId: string | null;
 }
 
-export interface PayableMeta {
-  referenceStartDate: Date | null;
+export interface ContractPayableSection {
+  contractId: string;
+  contractName: string;
+  startDate: string;
   currentPeriod: number;
-  periodLabel: string;
+  creators: CreatorInContract[];
+  totalAmount: number;
+  totalVideoCount: number;
 }
 
-export function useCreatorPayable(periodNumber: number) {
+/**
+ * Fetch all contract payable data.
+ * periodByContract maps contractId → selected period number.
+ * Contracts not in the map use their current period.
+ */
+export function useContractPayable(periodByContract: Record<string, number>) {
+  const periodKey = JSON.stringify(periodByContract);
+
   return useQuery({
-    queryKey: ["creator-payable", periodNumber],
-    queryFn: async (): Promise<{ rows: CreatorPayableRow[]; meta: PayableMeta }> => {
+    queryKey: ["contract-payable", periodKey],
+    queryFn: async (): Promise<ContractPayableSection[]> => {
       const [
         { data: creators },
         { data: contracts },
@@ -72,67 +73,10 @@ export function useCreatorPayable(periodNumber: number) {
       const allAccounts = (accounts ?? []) as any[];
       const allCampaigns = (campaigns ?? []) as any[];
 
-      // Find earliest contract start_date for reference
-      let earliestStart: Date | null = null;
-      allContracts.forEach((c) => {
-        if (c.start_date) {
-          const d = parseContractStartDate(c.start_date);
-          if (!earliestStart || d < earliestStart) earliestStart = d;
-        }
-      });
-
-      if (!earliestStart) {
-        earliestStart = new Date();
-      }
-
-      const currentPeriod = getCurrentPeriodNumber(earliestStart);
-      const refPeriod = getContractPeriod(earliestStart, periodNumber);
-      const periodLabel = formatPeriodRange(refPeriod.periodStart, refPeriod.periodEnd);
-
-      // We need to fetch videos across the widest possible period range
-      // Since contracts may have different start dates, compute the full range
-      let globalStart = refPeriod.periodStart;
-      let globalEnd = refPeriod.periodEnd;
-      allContracts.forEach((c) => {
-        if (c.start_date) {
-          const sd = parseContractStartDate(c.start_date);
-          const p = getContractPeriod(sd, periodNumber);
-          if (p.periodStart < globalStart) globalStart = p.periodStart;
-          if (p.periodEnd > globalEnd) globalEnd = p.periodEnd;
-        }
-      });
-
-      // Fetch videos in the global range + 1 day buffer
-      const fetchStart = globalStart.toISOString();
-      const fetchEndDate = new Date(globalEnd);
-      fetchEndDate.setUTCDate(fetchEndDate.getUTCDate() + 1);
-      const fetchEnd = fetchEndDate.toISOString();
-
-      const { data: videos } = await supabase.from("videos")
-        .select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at")
-        .gte("published_at", fetchStart).lt("published_at", fetchEnd);
-
-      // Query payments - use period_start if available, fall back to scanning all
-      const { data: existingPayments } = await (supabase.from("creator_payments") as any)
-        .select("*")
-        .eq("period_start", globalStart.toISOString().split("T")[0])
-        .eq("period_end", globalEnd.toISOString().split("T")[0]);
-
-      const allVideos = (videos ?? []) as any[];
-      const allPayments = (existingPayments ?? []) as any[];
-
       const capByCampaign = new Map<string, number | null>();
       allCampaigns.forEach((c) => capByCampaign.set(c.id, c.video_views_cap));
 
-      // Build creator → contracts map
-      const creatorContracts = new Map<string, string[]>();
-      allCCr.forEach((r) => {
-        const list = creatorContracts.get(r.creator_id) ?? [];
-        list.push(r.contract_id);
-        creatorContracts.set(r.creator_id, list);
-      });
-
-      const contractMap = new Map(allContracts.map((c) => [c.id, c]));
+      const creatorMap = new Map(allCreators.map((c) => [c.id, c.name]));
 
       // Contract → campaigns
       const contractCampMap = new Map<string, string[]>();
@@ -142,109 +86,141 @@ export function useCreatorPayable(periodNumber: number) {
         contractCampMap.set(r.contract_id, list);
       });
 
-      // Also try to find payments by period_month/period_year for backward compat
-      // We'll match payments by creator_id + period_start or by period_month/year
-      const paymentsByCreator = new Map<string, any>();
-      allPayments.forEach((p) => {
-        paymentsByCreator.set(p.creator_id, p);
+      // Contract → creators
+      const contractCreatorMap = new Map<string, string[]>();
+      allCCr.forEach((r) => {
+        const list = contractCreatorMap.get(r.contract_id) ?? [];
+        list.push(r.creator_id);
+        contractCreatorMap.set(r.contract_id, list);
       });
 
-      allCreators.sort((a, b) => a.name.localeCompare(b.name));
-      const rows = allCreators.map((cr): CreatorPayableRow => {
-        const crContractIds = creatorContracts.get(cr.id) ?? [];
-        const hasContracts = crContractIds.length > 0;
+      // Compute the widest date range needed across all contracts/periods
+      let globalStart: Date | null = null;
+      let globalEnd: Date | null = null;
 
-        const crAccounts = allAccounts.filter((a) => a.creator_id === cr.id);
-        const crAccIds = new Set(crAccounts.map((a) => a.id));
+      allContracts.forEach((contract) => {
+        const sd = contract.start_date
+          ? parseContractStartDate(contract.start_date)
+          : new Date();
+        const pn = periodByContract[contract.id] ?? getCurrentPeriodNumber(sd);
+        const { periodStart, periodEnd } = getContractPeriod(sd, pn);
+        if (!globalStart || periodStart < globalStart) globalStart = periodStart;
+        if (!globalEnd || periodEnd > globalEnd) globalEnd = periodEnd;
+      });
 
-        const breakdowns: ContractBreakdown[] = [];
-        let totalVideoCount = 0;
+      if (!globalStart || !globalEnd) {
+        return [];
+      }
 
-        crContractIds.forEach((contractId) => {
-          const contract = contractMap.get(contractId);
-          if (!contract) return;
+      const fetchStart = globalStart.toISOString();
+      const fetchEndDate = new Date(globalEnd);
+      fetchEndDate.setUTCDate(fetchEndDate.getUTCDate() + 1);
+      const fetchEnd = fetchEndDate.toISOString();
 
-          // Compute this contract's period
-          const contractStart = contract.start_date
-            ? parseContractStartDate(contract.start_date)
-            : earliestStart!;
-          const { periodStart, periodEnd } = getContractPeriod(contractStart, periodNumber);
-          const pStartISO = periodStart.toISOString();
-          const pEndDate = new Date(periodEnd);
-          pEndDate.setUTCDate(pEndDate.getUTCDate() + 1);
-          const pEndISO = pEndDate.toISOString();
+      const [{ data: videos }, { data: allPayments }] = await Promise.all([
+        supabase.from("videos")
+          .select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at")
+          .gte("published_at", fetchStart).lt("published_at", fetchEnd),
+        supabase.from("creator_payments").select("*"),
+      ]);
 
-          const campIds = contractCampMap.get(contractId) ?? [];
-          const campIdSet = new Set(campIds);
-          const contractAccounts = crAccounts.filter((a) => a.campaign_id && campIdSet.has(a.campaign_id));
-          const contractAccIds = new Set(contractAccounts.map((a) => a.id));
+      const allVideos = (videos ?? []) as any[];
+      const paymentsList = (allPayments ?? []) as any[];
 
-          // Filter videos within this contract's period
-          const contractVideos = allVideos.filter((v) =>
-            contractAccIds.has(v.tiktok_account_id) &&
-            v.published_at >= pStartISO &&
-            v.published_at < pEndISO
-          );
-          const videoCount = contractVideos.length;
-          totalVideoCount += videoCount;
+      // Build sections per contract
+      return allContracts.map((contract): ContractPayableSection => {
+        const sd = contract.start_date
+          ? parseContractStartDate(contract.start_date)
+          : new Date();
+        const currentPeriod = getCurrentPeriodNumber(sd);
+        const selectedPeriod = periodByContract[contract.id] ?? currentPeriod;
+        const { periodStart, periodEnd } = getContractPeriod(sd, selectedPeriod);
 
-          const cpmRate = Number(contract.creator_cpm ?? 0.5);
-          const fixedAmt = Number(contract.creator_fixed ?? 0);
-          const minVpd = contract.min_videos_per_day ?? 5;
-          const target = getPeriodTarget(minVpd, periodStart, periodEnd);
+        const pStartISO = periodStart.toISOString();
+        const pEndDate = new Date(periodEnd);
+        pEndDate.setUTCDate(pEndDate.getUTCDate() + 1);
+        const pEndISO = pEndDate.toISOString();
 
-          // CPM with per-campaign cap
-          let totalViews = 0;
-          campIds.forEach((campId) => {
-            const cap = capByCampaign.get(campId) ?? null;
-            const campAccIds = contractAccounts.filter((a) => a.campaign_id === campId).map((a) => a.id);
-            const campAccSet = new Set(campAccIds);
-            const campVideos = contractVideos.filter((v) => campAccSet.has(v.tiktok_account_id));
-            totalViews += sumEffectiveViewsCapped(campVideos, cap);
-          });
+        const campIds = contractCampMap.get(contract.id) ?? [];
+        const campIdSet = new Set(campIds);
+        const creatorIds = contractCreatorMap.get(contract.id) ?? [];
 
-          const fixedEarned = isFixedEarnedInPeriod(videoCount, minVpd, periodStart, periodEnd);
-          const cpmAmount = cpmRate * (totalViews / 1000);
-          const subtotal = (fixedEarned ? fixedAmt : 0) + cpmAmount;
+        const cpmRate = Number(contract.creator_cpm ?? 0.5);
+        const fixedAmt = Number(contract.creator_fixed ?? 0);
+        const minVpd = contract.min_videos_per_day ?? 5;
+        const target = getPeriodTarget(minVpd, periodStart, periodEnd);
 
-          breakdowns.push({
-            contractId,
-            contractName: contract.name,
-            monthVideoCount: videoCount,
-            monthlyTarget: target,
-            fixedAmount: fixedAmt,
-            fixedEarned,
-            cpmAmount,
-            subtotal,
-            periodStart: periodStart.toISOString().split("T")[0],
-            periodEnd: periodEnd.toISOString().split("T")[0],
-          });
-        });
+        let sectionTotal = 0;
+        let sectionVideos = 0;
 
-        const totalAmount = breakdowns.reduce((s, b) => s + b.subtotal, 0);
-        const payment = paymentsByCreator.get(cr.id);
+        const creatorsInContract: CreatorInContract[] = creatorIds
+          .map((creatorId) => {
+            const name = creatorMap.get(creatorId) ?? "—";
+            const crAccounts = allAccounts.filter(
+              (a) => a.creator_id === creatorId && a.campaign_id && campIdSet.has(a.campaign_id)
+            );
+            const crAccIds = new Set(crAccounts.map((a) => a.id));
+
+            // Videos in this contract's period
+            const crVideos = allVideos.filter((v) =>
+              crAccIds.has(v.tiktok_account_id) &&
+              v.published_at >= pStartISO &&
+              v.published_at < pEndISO
+            );
+            const videoCount = crVideos.length;
+
+            // CPM with per-campaign cap
+            let totalViews = 0;
+            campIds.forEach((campId) => {
+              const cap = capByCampaign.get(campId) ?? null;
+              const campAccs = crAccounts.filter((a) => a.campaign_id === campId);
+              const campAccSet = new Set(campAccs.map((a) => a.id));
+              const campVideos = crVideos.filter((v) => campAccSet.has(v.tiktok_account_id));
+              totalViews += sumEffectiveViewsCapped(campVideos, cap);
+            });
+
+            const fixedEarned = isFixedEarnedInPeriod(videoCount, minVpd, periodStart, periodEnd);
+            const cpmAmount = cpmRate * (totalViews / 1000);
+            const subtotal = (fixedEarned ? fixedAmt : 0) + cpmAmount;
+
+            sectionTotal += subtotal;
+            sectionVideos += videoCount;
+
+            // Find payment for this creator + period
+            const pStartStr = periodStart.toISOString().split("T")[0];
+            const pEndStr = periodEnd.toISOString().split("T")[0];
+            const payment = paymentsList.find(
+              (p) => p.creator_id === creatorId &&
+                ((p.period_start === pStartStr && p.period_end === pEndStr) ||
+                 (!p.period_start && p.period_month === periodStart.getUTCMonth() + 1 && p.period_year === periodStart.getUTCFullYear()))
+            );
+
+            return {
+              creatorId,
+              creatorName: name,
+              videoCount,
+              monthlyTarget: target,
+              fixedAmount: fixedAmt,
+              fixedEarned,
+              cpmAmount,
+              subtotal,
+              isPaid: payment?.is_paid ?? false,
+              paidAt: payment?.paid_at ?? null,
+              paymentId: payment?.id ?? null,
+            };
+          })
+          .sort((a, b) => a.creatorName.localeCompare(b.creatorName));
 
         return {
-          creatorId: cr.id,
-          creatorName: cr.name,
-          contracts: breakdowns,
-          totalAmount,
-          monthVideoCount: totalVideoCount,
-          hasContracts,
-          isPaid: payment?.is_paid ?? false,
-          paidAt: payment?.paid_at ?? null,
-          paymentId: payment?.id ?? null,
+          contractId: contract.id,
+          contractName: contract.name,
+          startDate: contract.start_date ?? new Date().toISOString().split("T")[0],
+          currentPeriod,
+          creators: creatorsInContract,
+          totalAmount: sectionTotal,
+          totalVideoCount: sectionVideos,
         };
       });
-
-      return {
-        rows,
-        meta: {
-          referenceStartDate: earliestStart,
-          currentPeriod,
-          periodLabel,
-        },
-      };
     },
   });
 }
