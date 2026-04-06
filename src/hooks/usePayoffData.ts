@@ -184,12 +184,14 @@ export function usePayoffData(year: number, month: number, periodNumber?: number
       });
 
       // ── Creator Payoff ──
-      const workingDays = getWorkingDaysInMonth(year, month);
+      const pStartRef = new Date(Date.UTC(year, month, 1));
+      const pEndRef = new Date(Date.UTC(year, month + 1, 0));
+      const workingDays = getWorkingDaysInRange(pStartRef, pEndRef);
       const creatorRows: CreatorPayoffRow[] = allCreators.map((cr) => {
         const views = creatorMonthViews(cr.id);
         const min = cr.min_videos_per_day ?? 5;
         const videoCount = monthVideoCountByCreator.get(cr.id) ?? 0;
-        const earned = isFixedEarnedMonthly(videoCount, min, year, month);
+        const earned = isFixedEarnedInPeriod(videoCount, min, pStartRef, pEndRef);
         const fixedAmt = cr.creator_fixed ?? 200;
         const cpmAmt = (cr.creator_cpm ?? 0.5) * (views / 1000);
         const total = (earned ? fixedAmt : 0) + cpmAmt;
