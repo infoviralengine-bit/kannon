@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreatorPortal } from "@/hooks/useCreatorPortal";
-import { getCurrentPeriodNumber, parseContractStartDate } from "@/lib/contractPeriods";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LogOut, Flame, FileText, CalendarDays, Coins, Lock, LayoutDashboard, ChevronLeft, ChevronRight } from "lucide-react";
