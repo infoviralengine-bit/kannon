@@ -52,16 +52,29 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Parse optional datasetId from request body
+  let datasetId: string | null = null;
+  try {
+    const body = await req.json();
+    datasetId = body?.datasetId || null;
+  } catch {
+    // No body or invalid JSON — that's fine, run normally
+  }
+
   // Return immediately, process in background
-  EdgeRuntime.waitUntil(runScraping(supabaseAdmin));
+  EdgeRuntime.waitUntil(runScraping(supabaseAdmin, datasetId));
+
+  const message = datasetId
+    ? `Import da dataset ${datasetId} avviato in background.`
+    : "Scraping avviato in background. Controlla i log per i risultati.";
 
   return new Response(
-    JSON.stringify({ success: true, message: "Scraping avviato in background. Controlla i log per i risultati." }),
+    JSON.stringify({ success: true, message }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 });
 
-async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
+async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, existingDatasetId: string | null = null) {
   let totalCreated = 0;
   let totalUpdated = 0;
   let accountsProcessed = 0;
@@ -164,72 +177,81 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
 
     log(`Step 4: Username da scrapare: [${allUsernames.join(", ")}]`);
 
-    const apifyInput = {
-      profiles: allUsernames,
-      resultsPerPage: 100,
-      profileScrapeSections: ["videos"],
-      profileSorting: "latest",
-      excludePinnedPosts: false,
-      shouldDownloadVideos: false,
-      shouldDownloadCovers: false,
-      shouldDownloadSubtitles: false,
-    };
+    let datasetId: string;
 
-    log(`Step 5: Avvio run Apify con input: ${JSON.stringify(apifyInput)}`);
+    if (existingDatasetId) {
+      // Use existing dataset from a manual Apify run
+      datasetId = existingDatasetId;
+      log(`Step 5: Uso dataset esistente: ${datasetId} (skip lancio run)`);
+    } else {
+      const apifyInput = {
+        profiles: allUsernames,
+        resultsPerPage: 100,
+        profileScrapeSections: ["videos"],
+        profileSorting: "latest",
+        excludePinnedPosts: false,
+        shouldDownloadVideos: false,
+        shouldDownloadCovers: false,
+        shouldDownloadSubtitles: false,
+      };
 
-    // Step 5: Start Apify run (clockworks/free-tiktok-scraper)
-    const runRes = await fetch(
-      `https://api.apify.com/v2/acts/clockworks~free-tiktok-scraper/runs?token=${apiToken}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(apifyInput),
-      }
-    );
+      log(`Step 5: Avvio run Apify con input: ${JSON.stringify(apifyInput)}`);
 
-    if (!runRes.ok) {
-      const errText = await runRes.text();
-      if (runRes.status === 401 || runRes.status === 403) {
-        throw new Error(`API token Apify non valido o actor non accessibile via API (status ${runRes.status}): ${errText}`);
-      }
-      throw new Error(`Apify run failed (status ${runRes.status}): ${errText}`);
-    }
-
-    const runData = await runRes.json();
-    log(`Step 5: Run response: ${JSON.stringify(runData).substring(0, 500)}`);
-    const runId = runData.data?.id;
-    if (!runId) throw new Error(`No run ID returned from Apify. Response: ${JSON.stringify(runData)}`);
-
-    log(`Step 5: Run Apify avviato con ID: ${runId}`);
-
-    // Step 6: Poll for completion
-    const maxWait = 15 * 60 * 1000;
-    const start = Date.now();
-    let runStatus = "";
-    let pollCount = 0;
-
-    while (Date.now() - start < maxWait) {
-      await new Promise((r) => setTimeout(r, 15000));
-      pollCount++;
-      const statusRes = await fetch(
-        `https://api.apify.com/v2/actor-runs/${runId}?token=${apiToken}`
+      // Step 5: Start Apify run (clockworks/free-tiktok-scraper)
+      const runRes = await fetch(
+        `https://api.apify.com/v2/acts/clockworks~free-tiktok-scraper/runs?token=${apiToken}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(apifyInput),
+        }
       );
-      if (!statusRes.ok) {
-        const errText = await statusRes.text();
-        throw new Error(`Apify status check failed (status ${statusRes.status}): ${errText}`);
-      }
-      const statusData = await statusRes.json();
-      runStatus = statusData.data?.status;
-      log(`Step 6: Poll #${pollCount} - Status: ${runStatus}`);
-      if (runStatus === "SUCCEEDED" || runStatus === "FAILED" || runStatus === "ABORTED" || runStatus === "TIMED-OUT") break;
-    }
 
-    if (runStatus !== "SUCCEEDED") {
-      throw new Error(`Apify run ended with status: ${runStatus || "TIMEOUT"}`);
+      if (!runRes.ok) {
+        const errText = await runRes.text();
+        if (runRes.status === 401 || runRes.status === 403) {
+          throw new Error(`API token Apify non valido o actor non accessibile via API (status ${runRes.status}): ${errText}`);
+        }
+        throw new Error(`Apify run failed (status ${runRes.status}): ${errText}`);
+      }
+
+      const runData = await runRes.json();
+      log(`Step 5: Run response: ${JSON.stringify(runData).substring(0, 500)}`);
+      const runId = runData.data?.id;
+      if (!runId) throw new Error(`No run ID returned from Apify. Response: ${JSON.stringify(runData)}`);
+
+      log(`Step 5: Run Apify avviato con ID: ${runId}`);
+
+      // Step 6: Poll for completion
+      const maxWait = 15 * 60 * 1000;
+      const start = Date.now();
+      let runStatus = "";
+      let pollCount = 0;
+
+      while (Date.now() - start < maxWait) {
+        await new Promise((r) => setTimeout(r, 15000));
+        pollCount++;
+        const statusRes = await fetch(
+          `https://api.apify.com/v2/actor-runs/${runId}?token=${apiToken}`
+        );
+        if (!statusRes.ok) {
+          const errText = await statusRes.text();
+          throw new Error(`Apify status check failed (status ${statusRes.status}): ${errText}`);
+        }
+        const statusData = await statusRes.json();
+        runStatus = statusData.data?.status;
+        log(`Step 6: Poll #${pollCount} - Status: ${runStatus}`);
+        if (runStatus === "SUCCEEDED" || runStatus === "FAILED" || runStatus === "ABORTED" || runStatus === "TIMED-OUT") break;
+      }
+
+      if (runStatus !== "SUCCEEDED") {
+        throw new Error(`Apify run ended with status: ${runStatus || "TIMEOUT"}`);
+      }
+
+      datasetId = runData.data?.defaultDatasetId;
     }
 
     // Step 7: Get results
-    const datasetId = runData.data?.defaultDatasetId;
     log(`Step 7: Recupero risultati dal dataset: ${datasetId}`);
     
     const itemsRes = await fetch(

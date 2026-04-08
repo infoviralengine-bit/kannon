@@ -30,16 +30,20 @@ export default function AccountPage() {
   } = useAccountList();
 
   const [scraping, setScraping] = useState(false);
+  const [datasetIdInput, setDatasetIdInput] = useState("");
+  const [showDatasetDialog, setShowDatasetDialog] = useState(false);
 
-  async function handleScrapeNow() {
+  async function runScrapeAndPoll(body?: Record<string, string>) {
     setScraping(true);
     try {
-      const { data, error } = await supabase.functions.invoke("scrape-tiktok");
+      const { data, error } = await supabase.functions.invoke("scrape-tiktok", {
+        body: body || {},
+      });
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
       toast({
-        title: "Scraping avviato",
-        description: data?.message || "Scraping in background. Controlla i log per i risultati.",
+        title: body?.datasetId ? "Import avviato" : "Scraping avviato",
+        description: data?.message || "In background. Controlla i log per i risultati.",
       });
       const pollInterval = setInterval(async () => {
         const { data: logs } = await supabase
@@ -54,12 +58,12 @@ export default function AccountPage() {
           queryClient.invalidateQueries({ queryKey: ["tiktok_accounts"] });
           if (logs.status === "success") {
             toast({
-              title: "Scraping completato",
+              title: "Completato",
               description: `${logs.videos_created} nuovi video, ${logs.videos_updated} aggiornati (${logs.accounts_processed} account)`,
             });
           } else {
             toast({
-              title: "Scraping terminato con errori",
+              title: "Terminato con errori",
               description: logs.error_message?.substring(0, 200) || "Controlla i log per dettagli",
               variant: "destructive",
             });
@@ -71,9 +75,20 @@ export default function AccountPage() {
         setScraping(false);
       }, 20 * 60 * 1000);
     } catch (e: any) {
-      toast({ title: "Errore scraping", description: e.message, variant: "destructive" });
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
       setScraping(false);
     }
+  }
+
+  function handleScrapeNow() {
+    runScrapeAndPoll();
+  }
+
+  function handleImportDataset() {
+    if (!datasetIdInput.trim()) return;
+    setShowDatasetDialog(false);
+    runScrapeAndPoll({ datasetId: datasetIdInput.trim() });
+    setDatasetIdInput("");
   }
 
   const [open, setOpen] = useState(false);
@@ -179,10 +194,40 @@ export default function AccountPage() {
         <h1 className="text-2xl font-bold">Account</h1>
         <div className="flex items-center gap-2">
           {role === "admin" && (
-            <Button variant="outline" onClick={handleScrapeNow} disabled={scraping}>
-              {scraping ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-              {scraping ? "Scraping..." : "🔄 Scrapa Ora"}
-            </Button>
+            <>
+              <Button variant="outline" onClick={handleScrapeNow} disabled={scraping}>
+                {scraping ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                {scraping ? "Scraping..." : "🔄 Scrapa Ora"}
+              </Button>
+              <Dialog open={showDatasetDialog} onOpenChange={setShowDatasetDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" disabled={scraping}>📥 Importa Dataset</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Importa da Dataset Apify</DialogTitle>
+                    <DialogDescription>
+                      Incolla il Dataset ID di una run completata manualmente su Apify. Lo trovi nella pagina della run sotto "Default dataset".
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Dataset ID</Label>
+                      <Input
+                        placeholder="es. abc123XYZ..."
+                        value={datasetIdInput}
+                        onChange={(e) => setDatasetIdInput(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={handleImportDataset} disabled={!datasetIdInput.trim()}>
+                      Importa
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
           )}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
