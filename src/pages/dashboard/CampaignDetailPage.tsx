@@ -998,11 +998,11 @@ export default function CampaignDetailPage() {
         </CardHeader>
         <CardContent>
           {kpiLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-              {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14" />)}
+             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6">
+              {[...Array(7)].map((_, i) => <Skeleton key={i} className="h-14" />)}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6">
               <StatItem label="Views totali" value={formatViews(kpi.data?.totalViews ?? 0)} accent />
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center">
@@ -1012,6 +1012,7 @@ export default function CampaignDetailPage() {
                 <p className="text-xs text-muted-foreground">{videoViewsCap != null ? `cap ${formatViews(videoViewsCap)}/video` : "senza cap"}</p>
               </div>
               <StatItem label="Video / mese" value={String(kpi.data?.monthVideoCount ?? 0)} />
+              <StatItem label="Video totali" value={String(kpi.data?.totalVideoCount ?? 0)} />
               <StatItem label="Entrata CPM" value={formatCurrency(margin.data?.cpmRevenue ?? 0)} accent />
               <StatItem label="Margine CPM" value={formatCurrency(margin.data?.cpmMargin ?? 0)} sub={`costo: ${formatCurrency(margin.data?.cpmCost ?? 0)}`} />
               <div className="space-y-1">

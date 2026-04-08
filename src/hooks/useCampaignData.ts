@@ -63,7 +63,7 @@ export function useCampaignKpi(campaignId: string) {
       const accIds = (accounts ?? []).map((a) => a.id);
 
       if (!accIds.length) {
-        return { totalViews: 0, monthViews: 0, todayVideos: 0, creatorCount: 0, monthVideoCount: 0 };
+        return { totalViews: 0, monthViews: 0, todayVideos: 0, creatorCount: 0, monthVideoCount: 0, totalVideoCount: 0 };
       }
 
       // Use server-side RPC for total views (no 1000-row limit)
@@ -95,13 +95,19 @@ export function useCampaignKpi(campaignId: string) {
         return s + (cap != null && cap > 0 ? Math.min(raw, cap) : raw);
       }, 0);
 
-      // Today videos count
-      const { count: todayVideos } = await supabase
-        .from("videos")
-        .select("id", { count: "exact", head: true })
-        .in("tiktok_account_id", accIds)
-        .gte("published_at", tStart)
-        .lt("published_at", tEnd);
+      // Today videos count + total video count
+      const [{ count: todayVideos }, { count: totalVideoCount }] = await Promise.all([
+        supabase
+          .from("videos")
+          .select("id", { count: "exact", head: true })
+          .in("tiktok_account_id", accIds)
+          .gte("published_at", tStart)
+          .lt("published_at", tEnd),
+        supabase
+          .from("videos")
+          .select("id", { count: "exact", head: true })
+          .in("tiktok_account_id", accIds),
+      ]);
 
       const monthVideoCount = videos.length;
 
@@ -119,7 +125,7 @@ export function useCampaignKpi(campaignId: string) {
       );
       const creatorCount = (cc ?? []).filter((r) => activeCreatorIds.has(r.creator_id)).length;
 
-      return { totalViews, monthViews, todayVideos: todayVideos ?? 0, monthVideoCount, creatorCount };
+      return { totalViews, monthViews, todayVideos: todayVideos ?? 0, monthVideoCount, totalVideoCount: totalVideoCount ?? 0, creatorCount };
     },
     enabled: !!campaignId,
   });
