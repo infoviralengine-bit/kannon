@@ -104,17 +104,25 @@ export function useCampaignTable() {
       const { data: campaigns } = await supabase.from("campaigns").select("*");
       if (!campaigns?.length) return [] as CampaignRow[];
 
+      const campaignIds = campaigns.map((c) => c.id);
+
       const [
         { data: ccRows },
         { data: creators },
         { data: accounts },
-        { data: allVideos },
+        { data: totalViewsData },
       ] = await Promise.all([
         supabase.from("campaign_creators").select("campaign_id, creator_id"),
         supabase.from("creators").select("id, status"),
         supabase.from("tiktok_accounts").select("id, campaign_id"),
-        supabase.from("videos").select("tiktok_account_id, views, published_at"),
+        supabase.rpc("get_campaign_total_views", { p_campaign_ids: campaignIds }),
       ]);
+
+      // Build a map of campaign_id -> total views from server-side RPC (no 1000-row limit)
+      const totalViewsMap = new Map<string, number>();
+      (totalViewsData ?? []).forEach((r: { campaign_id: string; total_views: number }) => {
+        totalViewsMap.set(r.campaign_id, r.total_views);
+      });
 
       const accountsByCampaign = new Map<string, string[]>();
       (accounts ?? []).forEach((a) => {
@@ -126,15 +134,34 @@ export function useCampaignTable() {
 
       const creatorMap = new Map((creators ?? []).map((c) => [c.id, c]));
 
-      return campaigns.map((c): CampaignRow => {
-        const accIds = new Set(accountsByCampaign.get(c.id) ?? []);
-        const campVideos = (allVideos ?? []).filter((v) => accIds.has(v.tiktok_account_id));
+      // For month views we still need video data, but scoped to this month
+      // Fetch month videos with pagination to avoid 1000-row limit
+      const accIds = (accounts ?? []).map((a) => a.id);
+      let monthVideos: { tiktok_account_id: string; views: number }[] = [];
+      if (accIds.length) {
+        let page = 0;
+        const pageSize = 1000;
+        while (true) {
+          const { data: batch } = await supabase
+            .from("videos")
+            .select("tiktok_account_id, views")
+            .in("tiktok_account_id", accIds)
+            .gte("published_at", mStart)
+            .lt("published_at", mEnd)
+            .range(page * pageSize, (page + 1) * pageSize - 1);
+          if (!batch || batch.length === 0) break;
+          monthVideos = monthVideos.concat(batch);
+          if (batch.length < pageSize) break;
+          page++;
+        }
+      }
 
-        const totalViews = campVideos.reduce((s, v) => s + (v.views ?? 0), 0);
-        const monthVideos = campVideos.filter(
-          (v) => v.published_at >= mStart && v.published_at < mEnd
-        );
-        const monthViews = monthVideos.reduce((s, v) => s + (v.views ?? 0), 0);
+      return campaigns.map((c): CampaignRow => {
+        const campAccIds = new Set(accountsByCampaign.get(c.id) ?? []);
+
+        const totalViews = totalViewsMap.get(c.id) ?? 0;
+        const campMonthVideos = monthVideos.filter((v) => campAccIds.has(v.tiktok_account_id));
+        const monthViews = campMonthVideos.reduce((s, v) => s + (v.views ?? 0), 0);
 
         const campaignCreatorIds = (ccRows ?? [])
           .filter((r) => r.campaign_id === c.id)
