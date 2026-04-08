@@ -1,0 +1,1 @@
+UPDATE contracts SET start_date = '2026-03-02' WHERE id = 'ed5040ff-cc40-4786-9f2b-4e4de0f64c4c';

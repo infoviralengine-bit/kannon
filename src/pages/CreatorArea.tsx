@@ -94,7 +94,7 @@ export default function CreatorArea() {
         { key: "guadagni", label: "Guadagni", icon: Coins },
       ];
 
-  const currentPeriod = selectedPeriod ?? 1;
+  const currentPeriod = selectedPeriod ?? data?.defaultPeriod ?? 1;
 
   return (
     <div className="min-h-screen bg-background">

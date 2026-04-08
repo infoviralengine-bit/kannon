@@ -132,12 +132,6 @@ export function useCreatorPortal(selectedPeriod?: number) {
         allVideos = data ?? [];
       }
 
-      // Determine the period for contract-based earnings
-      // We still use calendar month for general stats (warmup, account stats)
-      const mStart = new Date(year, month, 1).toISOString();
-      const mEnd = new Date(year, month + 1, 1).toISOString();
-      const monthVideosList = allVideos.filter((v) => v.published_at >= mStart && v.published_at < mEnd);
-
       // Build warmup accounts
       const creatorPhase = String(creator.onboarding_phase ?? "").trim().toLowerCase();
       const creatorIsOperativo = creatorPhase.startsWith("operativ");
@@ -160,18 +154,17 @@ export function useCreatorPortal(selectedPeriod?: number) {
         };
       });
 
-      // Per-account stats
+      // Per-account stats - period stats filled after contract computation
       const accountStats: AccountStats[] = accs.map((a: any) => {
         const accVids = allVideos.filter((v) => v.tiktok_account_id === a.id);
-        const accMonthVids = monthVideosList.filter((v) => v.tiktok_account_id === a.id);
         return {
           id: a.id,
           username: a.username,
           campaignName: a.campaign_id ? campMap.get(a.campaign_id) ?? "—" : "—",
           totalViews: accVids.reduce((s, v) => s + (v.views ?? 0), 0),
           totalVideos: accVids.length,
-          monthViews: accMonthVids.reduce((s, v) => s + (v.views ?? 0), 0),
-          monthVideos: accMonthVids.length,
+          monthViews: 0,
+          monthVideos: 0,
         };
       });
 
@@ -277,8 +270,54 @@ export function useCreatorPortal(selectedPeriod?: number) {
 
       const totalViews = allVideos.reduce((s, v) => s + (v.views ?? 0), 0);
       const totalVideos = allVideos.length;
-      const monthViews = monthVideosList.reduce((s, v) => s + (v.views ?? 0), 0);
-      const monthVideosCount = monthVideosList.length;
+
+      // Compute period views/videos from contract periods (not calendar month)
+      const periodVideoIds = new Set<string>();
+      let periodViewsTotal = 0;
+      allContracts.forEach((contract: any) => {
+        const contractStart = contract.start_date
+          ? parseContractStartDate(contract.start_date)
+          : new Date(Date.UTC(year, month, 1));
+        const activePeriod = selectedPeriod ?? getCurrentPeriodNumber(contractStart);
+        const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod);
+        const pStartISO = periodStart.toISOString();
+        const pEndDate = new Date(periodEnd);
+        pEndDate.setUTCDate(pEndDate.getUTCDate() + 1);
+        const pEndISO = pEndDate.toISOString();
+        allVideos.forEach((v) => {
+          if (accIds.includes(v.tiktok_account_id) && v.published_at >= pStartISO && v.published_at < pEndISO && !periodVideoIds.has(v.id)) {
+            periodVideoIds.add(v.id);
+            periodViewsTotal += v.views ?? 0;
+          }
+        });
+      });
+      const monthViews = periodViewsTotal;
+      const monthVideosCount = periodVideoIds.size;
+
+      // Update account stats with period data
+      accountStats.forEach((acc) => {
+        let accPViews = 0;
+        let accPVideos = 0;
+        allContracts.forEach((contract: any) => {
+          const contractStart = contract.start_date
+            ? parseContractStartDate(contract.start_date)
+            : new Date(Date.UTC(year, month, 1));
+          const activePeriod = selectedPeriod ?? getCurrentPeriodNumber(contractStart);
+          const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod);
+          const pStartISO = periodStart.toISOString();
+          const pEndDate = new Date(periodEnd);
+          pEndDate.setUTCDate(pEndDate.getUTCDate() + 1);
+          const pEndISO = pEndDate.toISOString();
+          allVideos.forEach((v) => {
+            if (v.tiktok_account_id === acc.id && v.published_at >= pStartISO && v.published_at < pEndISO) {
+              accPViews += v.views ?? 0;
+              accPVideos++;
+            }
+          });
+        });
+        acc.monthViews = accPViews;
+        acc.monthVideos = accPVideos;
+      });
 
       const totalPaidEarnings = paymentRows.reduce((s: number, p: any) => s + Number(p.total_amount ?? 0), 0);
 
@@ -334,6 +373,14 @@ export function useCreatorPortal(selectedPeriod?: number) {
         }));
       }
 
+      // Compute default period (max current period across all contracts)
+      const defaultPeriod = allContracts.length > 0
+        ? Math.max(...allContracts.map((c: any) => {
+            const sd = c.start_date ? parseContractStartDate(c.start_date) : new Date();
+            return getCurrentPeriodNumber(sd);
+          }))
+        : 1;
+
       return {
         creator,
         warmupAccounts,
@@ -346,6 +393,7 @@ export function useCreatorPortal(selectedPeriod?: number) {
         content,
         calendar,
         earnings,
+        defaultPeriod,
       };
     },
     enabled: !!user,
