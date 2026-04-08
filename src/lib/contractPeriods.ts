@@ -1,8 +1,13 @@
 /**
  * Rolling 30-day period logic based on contract start dates.
- * Period 1: startDate → startDate + 29 days (30 days inclusive)
- * Period 2: startDate + 30 → startDate + 59 days
- * etc.
+ *
+ * When `firstPeriodStart` is provided:
+ *   Period 1: firstPeriodStart → startDate - 1 day (exceptional, may be != 30 days)
+ *   Period N (N>=2): startDate + (N-2)*30 → startDate + (N-2)*30 + 29
+ *
+ * When `firstPeriodStart` is NOT provided (standard):
+ *   Period 1: startDate → startDate + 29 days (30 days inclusive)
+ *   Period N: startDate + (N-1)*30 → startDate + (N-1)*30 + 29
  */
 
 /**
@@ -12,12 +17,35 @@
 export function getContractPeriod(
   startDate: Date,
   periodNumber: number,
+  firstPeriodStart?: Date | null,
 ): { periodStart: Date; periodEnd: Date } {
   const base = new Date(Date.UTC(
     startDate.getUTCFullYear(),
     startDate.getUTCMonth(),
     startDate.getUTCDate(),
   ));
+
+  if (firstPeriodStart && periodNumber === 1) {
+    const fps = new Date(Date.UTC(
+      firstPeriodStart.getUTCFullYear(),
+      firstPeriodStart.getUTCMonth(),
+      firstPeriodStart.getUTCDate(),
+    ));
+    const periodEnd = new Date(base);
+    periodEnd.setUTCDate(periodEnd.getUTCDate() - 1);
+    return { periodStart: fps, periodEnd };
+  }
+
+  if (firstPeriodStart) {
+    // Period N >= 2: offset from startDate by (N-2)*30
+    const periodStart = new Date(base);
+    periodStart.setUTCDate(periodStart.getUTCDate() + (periodNumber - 2) * 30);
+    const periodEnd = new Date(periodStart);
+    periodEnd.setUTCDate(periodEnd.getUTCDate() + 29);
+    return { periodStart, periodEnd };
+  }
+
+  // Standard: no firstPeriodStart
   const periodStart = new Date(base);
   periodStart.setUTCDate(periodStart.getUTCDate() + (periodNumber - 1) * 30);
   const periodEnd = new Date(periodStart);
@@ -29,7 +57,11 @@ export function getContractPeriod(
  * Determine which period number a given date falls into.
  * Returns 1 if the date is before the start date.
  */
-export function getPeriodNumberForDate(startDate: Date, date: Date): number {
+export function getPeriodNumberForDate(
+  startDate: Date,
+  date: Date,
+  firstPeriodStart?: Date | null,
+): number {
   const baseMs = Date.UTC(
     startDate.getUTCFullYear(),
     startDate.getUTCMonth(),
@@ -40,6 +72,20 @@ export function getPeriodNumberForDate(startDate: Date, date: Date): number {
     date.getUTCMonth(),
     date.getUTCDate(),
   );
+
+  if (firstPeriodStart) {
+    const fpsMs = Date.UTC(
+      firstPeriodStart.getUTCFullYear(),
+      firstPeriodStart.getUTCMonth(),
+      firstPeriodStart.getUTCDate(),
+    );
+    if (dateMs < fpsMs) return 1;
+    if (dateMs < baseMs) return 1; // still in the exceptional period 1
+    // From startDate onwards: period = floor(diff/30) + 2
+    const diffDays = Math.floor((dateMs - baseMs) / (1000 * 60 * 60 * 24));
+    return Math.floor(diffDays / 30) + 2;
+  }
+
   const diffDays = Math.floor((dateMs - baseMs) / (1000 * 60 * 60 * 24));
   if (diffDays < 0) return 1;
   return Math.floor(diffDays / 30) + 1;
@@ -48,8 +94,11 @@ export function getPeriodNumberForDate(startDate: Date, date: Date): number {
 /**
  * Get the current period number based on today's date.
  */
-export function getCurrentPeriodNumber(startDate: Date): number {
-  return getPeriodNumberForDate(startDate, new Date());
+export function getCurrentPeriodNumber(
+  startDate: Date,
+  firstPeriodStart?: Date | null,
+): number {
+  return getPeriodNumberForDate(startDate, new Date(), firstPeriodStart);
 }
 
 /**
