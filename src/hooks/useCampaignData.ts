@@ -63,7 +63,7 @@ export function useCampaignKpi(campaignId: string) {
       const accIds = (accounts ?? []).map((a) => a.id);
 
       if (!accIds.length) {
-        return { totalViews: 0, monthViews: 0, todayVideos: 0, creatorCount: 0, monthVideoCount: 0 };
+        return { totalViews: 0, monthViews: 0, todayVideos: 0, creatorCount: 0, monthVideoCount: 0, totalVideoCount: 0 };
       }
 
       // Use server-side RPC for total views (no 1000-row limit)
