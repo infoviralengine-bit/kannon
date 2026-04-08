@@ -222,6 +222,7 @@ export function useContractPayable(periodByContract: Record<string, number>) {
           contractId: contract.id,
           contractName: contract.name,
           startDate: contract.start_date ?? new Date().toISOString().split("T")[0],
+          firstPeriodStart: contract.first_period_start ?? null,
           currentPeriod,
           creators: creatorsInContract,
           totalAmount: sectionTotal,
