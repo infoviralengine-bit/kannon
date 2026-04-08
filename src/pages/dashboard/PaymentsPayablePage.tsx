@@ -62,9 +62,10 @@ export default function PaymentsPayablePage() {
     setPeriodByContract((prev) => ({ ...prev, [contractId]: Math.max(1, period) }));
   }
 
-  function getPeriodLabel(startDate: string, periodNumber: number): string {
+  function getPeriodLabel(startDate: string, periodNumber: number, firstPeriodStartStr?: string | null): string {
     const sd = parseContractStartDate(startDate);
-    const { periodStart, periodEnd } = getContractPeriod(sd, periodNumber);
+    const fps = firstPeriodStartStr ? parseContractStartDate(firstPeriodStartStr) : null;
+    const { periodStart, periodEnd } = getContractPeriod(sd, periodNumber, fps);
     return formatPeriodRange(periodStart, periodEnd);
   }
 
@@ -73,7 +74,8 @@ export default function PaymentsPayablePage() {
     try {
       const { creator, section, periodNumber } = data;
       const sd = parseContractStartDate(section.startDate);
-      const { periodStart, periodEnd } = getContractPeriod(sd, periodNumber);
+      const fps = section.firstPeriodStart ? parseContractStartDate(section.firstPeriodStart) : null;
+      const { periodStart, periodEnd } = getContractPeriod(sd, periodNumber, fps);
 
       const payload: any = {
         creator_id: creator.creatorId,
@@ -192,7 +194,7 @@ export default function PaymentsPayablePage() {
                     </Button>
                     <div className="text-center min-w-[160px]">
                       <p className="text-xs font-medium text-[#f8fafc]">Periodo {pn}</p>
-                      <p className="text-[10px] text-[#64748b]">{getPeriodLabel(section.startDate, pn)}</p>
+                      <p className="text-[10px] text-[#64748b]">{getPeriodLabel(section.startDate, pn, section.firstPeriodStart)}</p>
                     </div>
                     <Button
                       variant="ghost" size="icon" className="h-7 w-7"

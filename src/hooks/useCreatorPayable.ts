@@ -33,6 +33,7 @@ export interface ContractPayableSection {
   contractId: string;
   contractName: string;
   startDate: string;
+  firstPeriodStart: string | null;
   currentPeriod: number;
   creators: CreatorInContract[];
   totalAmount: number;
@@ -102,8 +103,11 @@ export function useContractPayable(periodByContract: Record<string, number>) {
         const sd = contract.start_date
           ? parseContractStartDate(contract.start_date)
           : new Date();
-        const pn = periodByContract[contract.id] ?? getCurrentPeriodNumber(sd);
-        const { periodStart, periodEnd } = getContractPeriod(sd, pn);
+        const fps = contract.first_period_start
+          ? parseContractStartDate(contract.first_period_start)
+          : null;
+        const pn = periodByContract[contract.id] ?? getCurrentPeriodNumber(sd, fps);
+        const { periodStart, periodEnd } = getContractPeriod(sd, pn, fps);
         if (!globalStart || periodStart < globalStart) globalStart = periodStart;
         if (!globalEnd || periodEnd > globalEnd) globalEnd = periodEnd;
       });
@@ -132,9 +136,12 @@ export function useContractPayable(periodByContract: Record<string, number>) {
         const sd = contract.start_date
           ? parseContractStartDate(contract.start_date)
           : new Date();
-        const currentPeriod = getCurrentPeriodNumber(sd);
+        const fps = contract.first_period_start
+          ? parseContractStartDate(contract.first_period_start)
+          : null;
+        const currentPeriod = getCurrentPeriodNumber(sd, fps);
         const selectedPeriod = periodByContract[contract.id] ?? currentPeriod;
-        const { periodStart, periodEnd } = getContractPeriod(sd, selectedPeriod);
+        const { periodStart, periodEnd } = getContractPeriod(sd, selectedPeriod, fps);
 
         const pStartISO = periodStart.toISOString();
         const pEndDate = new Date(periodEnd);
@@ -215,6 +222,7 @@ export function useContractPayable(periodByContract: Record<string, number>) {
           contractId: contract.id,
           contractName: contract.name,
           startDate: contract.start_date ?? new Date().toISOString().split("T")[0],
+          firstPeriodStart: contract.first_period_start ?? null,
           currentPeriod,
           creators: creatorsInContract,
           totalAmount: sectionTotal,

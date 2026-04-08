@@ -356,6 +356,7 @@ export type Database = {
           created_at: string
           creator_cpm: number
           creator_fixed: number
+          first_period_start: string | null
           id: string
           is_active: boolean
           min_videos_per_day: number
@@ -368,6 +369,7 @@ export type Database = {
           created_at?: string
           creator_cpm?: number
           creator_fixed?: number
+          first_period_start?: string | null
           id?: string
           is_active?: boolean
           min_videos_per_day?: number
@@ -380,6 +382,7 @@ export type Database = {
           created_at?: string
           creator_cpm?: number
           creator_fixed?: number
+          first_period_start?: string | null
           id?: string
           is_active?: boolean
           min_videos_per_day?: number
