@@ -33,6 +33,7 @@ export interface ContractPayableSection {
   contractId: string;
   contractName: string;
   startDate: string;
+  firstPeriodStart: string | null;
   currentPeriod: number;
   creators: CreatorInContract[];
   totalAmount: number;
