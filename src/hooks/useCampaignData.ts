@@ -63,28 +63,47 @@ export function useCampaignKpi(campaignId: string) {
       const accIds = (accounts ?? []).map((a) => a.id);
 
       if (!accIds.length) {
-        return { totalViews: 0, monthViews: 0, todayVideos: 0, creatorCount: 0 };
+        return { totalViews: 0, monthViews: 0, todayVideos: 0, creatorCount: 0, monthVideoCount: 0 };
       }
 
-      const { data: allVideos } = await supabase
-        .from("videos")
-        .select("views, views_final, window_closed, published_at")
-        .in("tiktok_account_id", accIds);
+      // Use server-side RPC for total views (no 1000-row limit)
+      const { data: totalViewsData } = await supabase.rpc("get_campaign_total_views", {
+        p_campaign_ids: [campaignId],
+      });
+      const totalViews = (totalViewsData as any)?.[0]?.total_views ?? 0;
 
-      const videos = allVideos ?? [];
-      
-      // Apply cap per video
-      const totalViews = videos.reduce((s, v) => {
+      // Paginate month videos
+      let videos: { views: number | null; published_at: string }[] = [];
+      let page = 0;
+      const pageSize = 1000;
+      while (true) {
+        const { data: batch } = await supabase
+          .from("videos")
+          .select("views, published_at")
+          .in("tiktok_account_id", accIds)
+          .gte("published_at", mStart)
+          .lt("published_at", mEnd)
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        if (!batch || batch.length === 0) break;
+        videos = videos.concat(batch);
+        if (batch.length < pageSize) break;
+        page++;
+      }
+
+      const monthViews = videos.reduce((s, v) => {
         const raw = v.views ?? 0;
         return s + (cap != null && cap > 0 ? Math.min(raw, cap) : raw);
       }, 0);
-      const monthVideos = videos.filter((v) => v.published_at >= mStart && v.published_at < mEnd);
-      const monthViews = monthVideos.reduce((s, v) => {
-        const raw = v.views ?? 0;
-        return s + (cap != null && cap > 0 ? Math.min(raw, cap) : raw);
-      }, 0);
-      const todayVideos = videos.filter((v) => v.published_at >= tStart && v.published_at < tEnd).length;
-      const monthVideoCount = monthVideos.length;
+
+      // Today videos count
+      const { count: todayVideos } = await supabase
+        .from("videos")
+        .select("id", { count: "exact", head: true })
+        .in("tiktok_account_id", accIds)
+        .gte("published_at", tStart)
+        .lt("published_at", tEnd);
+
+      const monthVideoCount = videos.length;
 
       const { data: cc } = await supabase
         .from("campaign_creators")
@@ -100,7 +119,7 @@ export function useCampaignKpi(campaignId: string) {
       );
       const creatorCount = (cc ?? []).filter((r) => activeCreatorIds.has(r.creator_id)).length;
 
-      return { totalViews, monthViews, todayVideos, monthVideoCount, creatorCount };
+      return { totalViews, monthViews, todayVideos: todayVideos ?? 0, monthVideoCount, creatorCount };
     },
     enabled: !!campaignId,
   });
