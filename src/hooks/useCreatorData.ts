@@ -327,3 +327,78 @@ export function useCreatorCampaigns(creatorId: string) {
     enabled: !!creatorId,
   });
 }
+
+/* ── Creator Videos List ── */
+
+export interface CreatorVideoRow {
+  id: string;
+  tiktokVideoId: string;
+  accountUsername: string;
+  campaignName: string | null;
+  publishedAt: string;
+  views: number;
+  likes: number;
+  comments: number;
+  windowClosed: boolean;
+  windowExpiresAt: string | null;
+  viewsFinal: number | null;
+}
+
+export function useCreatorVideos(creatorId: string) {
+  return useQuery({
+    queryKey: ["creator-videos", creatorId],
+    queryFn: async () => {
+      const { data: accounts } = await supabase
+        .from("tiktok_accounts")
+        .select("id, username, campaign_id")
+        .eq("creator_id", creatorId);
+      if (!accounts?.length) return [] as CreatorVideoRow[];
+
+      const accIds = accounts.map((a) => a.id);
+      const campIds = [...new Set(accounts.map((a) => a.campaign_id).filter(Boolean))] as string[];
+
+      let campMap = new Map<string, string>();
+      if (campIds.length) {
+        const { data: camps } = await supabase.from("campaigns").select("id, name").in("id", campIds);
+        (camps ?? []).forEach((c) => campMap.set(c.id, c.name));
+      }
+
+      const accMap = new Map(accounts.map((a) => [a.id, a]));
+
+      // Paginated fetch
+      let allVideos: any[] = [];
+      const pageSize = 1000;
+      let page = 0;
+      while (true) {
+        const { data: batch } = await supabase
+          .from("videos")
+          .select("id, tiktok_video_id, tiktok_account_id, published_at, views, likes, comments, window_closed, window_expires_at, views_final")
+          .in("tiktok_account_id", accIds)
+          .order("published_at", { ascending: false })
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        if (!batch || batch.length === 0) break;
+        allVideos = allVideos.concat(batch);
+        if (batch.length < pageSize) break;
+        page++;
+      }
+
+      return allVideos.map((v): CreatorVideoRow => {
+        const acc = accMap.get(v.tiktok_account_id);
+        return {
+          id: v.id,
+          tiktokVideoId: v.tiktok_video_id,
+          accountUsername: acc?.username ?? "—",
+          campaignName: acc?.campaign_id ? campMap.get(acc.campaign_id) ?? null : null,
+          publishedAt: v.published_at,
+          views: v.views ?? 0,
+          likes: v.likes ?? 0,
+          comments: v.comments ?? 0,
+          windowClosed: v.window_closed,
+          windowExpiresAt: v.window_expires_at,
+          viewsFinal: v.views_final,
+        };
+      });
+    },
+    enabled: !!creatorId,
+  });
+}

@@ -7,8 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { formatViews, formatCurrency } from "@/lib/format";
 import {
   useCreatorDetail, useCreatorKpi, useCreatorPayoff,
-  useCreatorAccounts, useCreatorCampaigns,
+  useCreatorAccounts, useCreatorCampaigns, useCreatorVideos,
 } from "@/hooks/useCreatorData";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,6 +89,7 @@ export default function CreatorDetailPage() {
   const { data: kpi } = useCreatorKpi(id!);
   const { data: accounts } = useCreatorAccounts(id!);
   const { data: campaigns } = useCreatorCampaigns(id!);
+  const { data: videos } = useCreatorVideos(id!);
 
   const now = new Date();
   const [payoffYear, setPayoffYear] = useState(now.getFullYear());
@@ -172,6 +174,7 @@ export default function CreatorDetailPage() {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Panoramica</TabsTrigger>
+          <TabsTrigger value="videos">Video ({videos?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="percorso">Percorso</TabsTrigger>
         </TabsList>
 
@@ -317,6 +320,73 @@ export default function CreatorDetailPage() {
                     ))}
                   </TableBody>
                 </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="videos" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Tutti i video pubblicati</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!videos ? (
+                <Skeleton className="h-32 w-full" />
+              ) : !videos.length ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Nessun video pubblicato.</p>
+              ) : (
+                <div className="relative w-full overflow-auto max-h-[600px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Account</TableHead>
+                        <TableHead>Campagna</TableHead>
+                        <TableHead className="text-right">Views</TableHead>
+                        <TableHead className="text-right">Likes</TableHead>
+                        <TableHead className="text-right">Commenti</TableHead>
+                        <TableHead>Finestra</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {videos.map((v) => {
+                        const pubDate = new Date(v.publishedAt);
+                        const dateStr = pubDate.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" });
+                        const timeStr = pubDate.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+                        const effectiveViews = v.windowClosed && v.viewsFinal != null ? v.viewsFinal : v.views;
+
+                        let windowLabel = "Aperta";
+                        let windowClass = "bg-success/20 text-success border-success/30";
+                        if (v.windowClosed) {
+                          windowLabel = "Chiusa";
+                          windowClass = "bg-muted text-muted-foreground border-border";
+                        } else if (v.windowExpiresAt) {
+                          const hoursLeft = (new Date(v.windowExpiresAt).getTime() - Date.now()) / 3600000;
+                          if (hoursLeft < 24 && hoursLeft > 0) {
+                            windowLabel = "In chiusura";
+                            windowClass = "bg-warning/20 text-warning border-warning/30";
+                          }
+                        }
+
+                        return (
+                          <TableRow key={v.id}>
+                            <TableCell className="whitespace-nowrap">
+                              <span className="text-sm">{dateStr}</span>
+                              <span className="text-xs text-muted-foreground ml-1">{timeStr}</span>
+                            </TableCell>
+                            <TableCell className="font-medium">@{v.accountUsername}</TableCell>
+                            <TableCell>{v.campaignName ?? "—"}</TableCell>
+                            <TableCell className="text-right font-medium">{effectiveViews.toLocaleString("it-IT")}</TableCell>
+                            <TableCell className="text-right">{v.likes.toLocaleString("it-IT")}</TableCell>
+                            <TableCell className="text-right">{v.comments.toLocaleString("it-IT")}</TableCell>
+                            <TableCell><Badge className={windowClass}>{windowLabel}</Badge></TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>
