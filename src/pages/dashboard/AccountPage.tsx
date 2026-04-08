@@ -194,10 +194,40 @@ export default function AccountPage() {
         <h1 className="text-2xl font-bold">Account</h1>
         <div className="flex items-center gap-2">
           {role === "admin" && (
-            <Button variant="outline" onClick={handleScrapeNow} disabled={scraping}>
-              {scraping ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-              {scraping ? "Scraping..." : "🔄 Scrapa Ora"}
-            </Button>
+            <>
+              <Button variant="outline" onClick={handleScrapeNow} disabled={scraping}>
+                {scraping ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                {scraping ? "Scraping..." : "🔄 Scrapa Ora"}
+              </Button>
+              <Dialog open={showDatasetDialog} onOpenChange={setShowDatasetDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" disabled={scraping}>📥 Importa Dataset</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Importa da Dataset Apify</DialogTitle>
+                    <DialogDescription>
+                      Incolla il Dataset ID di una run completata manualmente su Apify. Lo trovi nella pagina della run sotto "Default dataset".
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Dataset ID</Label>
+                      <Input
+                        placeholder="es. abc123XYZ..."
+                        value={datasetIdInput}
+                        onChange={(e) => setDatasetIdInput(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={handleImportDataset} disabled={!datasetIdInput.trim()}>
+                      Importa
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
           )}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
