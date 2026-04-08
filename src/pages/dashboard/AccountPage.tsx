@@ -30,16 +30,20 @@ export default function AccountPage() {
   } = useAccountList();
 
   const [scraping, setScraping] = useState(false);
+  const [datasetIdInput, setDatasetIdInput] = useState("");
+  const [showDatasetDialog, setShowDatasetDialog] = useState(false);
 
-  async function handleScrapeNow() {
+  async function runScrapeAndPoll(body?: Record<string, string>) {
     setScraping(true);
     try {
-      const { data, error } = await supabase.functions.invoke("scrape-tiktok");
+      const { data, error } = await supabase.functions.invoke("scrape-tiktok", {
+        body: body || {},
+      });
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
       toast({
-        title: "Scraping avviato",
-        description: data?.message || "Scraping in background. Controlla i log per i risultati.",
+        title: body?.datasetId ? "Import avviato" : "Scraping avviato",
+        description: data?.message || "In background. Controlla i log per i risultati.",
       });
       const pollInterval = setInterval(async () => {
         const { data: logs } = await supabase
@@ -54,12 +58,12 @@ export default function AccountPage() {
           queryClient.invalidateQueries({ queryKey: ["tiktok_accounts"] });
           if (logs.status === "success") {
             toast({
-              title: "Scraping completato",
+              title: "Completato",
               description: `${logs.videos_created} nuovi video, ${logs.videos_updated} aggiornati (${logs.accounts_processed} account)`,
             });
           } else {
             toast({
-              title: "Scraping terminato con errori",
+              title: "Terminato con errori",
               description: logs.error_message?.substring(0, 200) || "Controlla i log per dettagli",
               variant: "destructive",
             });
@@ -71,9 +75,20 @@ export default function AccountPage() {
         setScraping(false);
       }, 20 * 60 * 1000);
     } catch (e: any) {
-      toast({ title: "Errore scraping", description: e.message, variant: "destructive" });
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
       setScraping(false);
     }
+  }
+
+  function handleScrapeNow() {
+    runScrapeAndPoll();
+  }
+
+  function handleImportDataset() {
+    if (!datasetIdInput.trim()) return;
+    setShowDatasetDialog(false);
+    runScrapeAndPoll({ datasetId: datasetIdInput.trim() });
+    setDatasetIdInput("");
   }
 
   const [open, setOpen] = useState(false);
