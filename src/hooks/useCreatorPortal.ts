@@ -386,7 +386,8 @@ export function useCreatorPortal(selectedPeriod?: number) {
       const defaultPeriod = allContracts.length > 0
         ? Math.max(...allContracts.map((c: any) => {
             const sd = c.start_date ? parseContractStartDate(c.start_date) : new Date();
-            return getCurrentPeriodNumber(sd);
+            const fps = c.first_period_start ? parseContractStartDate(c.first_period_start) : null;
+            return getCurrentPeriodNumber(sd, fps);
           }))
         : 1;
 
