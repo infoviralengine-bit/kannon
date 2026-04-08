@@ -154,18 +154,17 @@ export function useCreatorPortal(selectedPeriod?: number) {
         };
       });
 
-      // Per-account stats
+      // Per-account stats - period stats filled after contract computation
       const accountStats: AccountStats[] = accs.map((a: any) => {
         const accVids = allVideos.filter((v) => v.tiktok_account_id === a.id);
-        const accMonthVids = monthVideosList.filter((v) => v.tiktok_account_id === a.id);
         return {
           id: a.id,
           username: a.username,
           campaignName: a.campaign_id ? campMap.get(a.campaign_id) ?? "—" : "—",
           totalViews: accVids.reduce((s, v) => s + (v.views ?? 0), 0),
           totalVideos: accVids.length,
-          monthViews: accMonthVids.reduce((s, v) => s + (v.views ?? 0), 0),
-          monthVideos: accMonthVids.length,
+          monthViews: 0,
+          monthVideos: 0,
         };
       });
 
