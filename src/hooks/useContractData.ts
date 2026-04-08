@@ -2,6 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViewsCapped } from "@/lib/videoWindow";
 import { isFixedEarnedMonthly, getMonthlyTarget, getWorkingDaysInMonth } from "@/lib/fixedEarned";
+import {
+  getContractPeriod,
+  getCurrentPeriodNumber,
+  parseContractStartDate,
+  getPeriodTarget,
+  isFixedEarnedInPeriod,
+  formatPeriodRange,
+} from "@/lib/contractPeriods";
 
 /* ── Contract List ── */
 
@@ -118,48 +126,83 @@ export interface ContractCreatorRow {
   creatorId: string;
   name: string;
   accounts: ContractCreatorAccount[];
-  monthVideos: number;
+  videoCount: number;
+  target: number;
+  totalViews: number;
+  cpmRate: number;
   cpmAmount: number;
+  fixedAmount: number;
   fixedEarned: boolean;
+  subtotal: number;
 }
 
-export function useContractCreators(contractId: string, year?: number, month?: number) {
-  const now = new Date();
-  const y = year ?? now.getFullYear();
-  const m = month ?? now.getMonth();
-  const mStart = new Date(y, m, 1).toISOString();
-  const mEnd = new Date(y, m + 1, 1).toISOString();
+export interface ContractCreatorsResult {
+  creators: ContractCreatorRow[];
+  periodStart: Date;
+  periodEnd: Date;
+  periodLabel: string;
+  currentPeriod: number;
+  maxPeriod: number;
+}
 
+export function useContractCreators(contractId: string, selectedPeriod?: number) {
   return useQuery({
-    queryKey: ["contract-creators", contractId, y, m],
-    queryFn: async () => {
+    queryKey: ["contract-creators", contractId, selectedPeriod],
+    queryFn: async (): Promise<ContractCreatorsResult | null> => {
       const [
         { data: links },
         { data: campLinks },
+        { data: contract },
       ] = await Promise.all([
         supabase.from("contract_creators" as any).select("id, creator_id").eq("contract_id", contractId),
         supabase.from("contract_campaigns" as any).select("campaign_id").eq("contract_id", contractId),
+        supabase.from("contracts" as any).select("*").eq("id", contractId).single(),
       ]);
 
       const creatorIds = ((links ?? []) as any[]).map((l) => l.creator_id);
       const campIds = ((campLinks ?? []) as any[]).map((l) => l.campaign_id);
-      if (!creatorIds.length) return [];
+      if (!creatorIds.length || !contract) return { creators: [], periodStart: new Date(), periodEnd: new Date(), periodLabel: "", currentPeriod: 1, maxPeriod: 1 };
 
+      const contractStart = (contract as any).start_date
+        ? parseContractStartDate((contract as any).start_date)
+        : new Date();
+      const currentPeriod = getCurrentPeriodNumber(contractStart);
+      const activePeriod = selectedPeriod ?? currentPeriod;
+      const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod);
+      const periodLabel = formatPeriodRange(periodStart, periodEnd);
+
+      const pStartISO = periodStart.toISOString();
+      const pEndDate = new Date(periodEnd);
+      pEndDate.setUTCDate(pEndDate.getUTCDate() + 1);
+      const pEndISO = pEndDate.toISOString();
+
+      // Fetch all data with pagination for videos
       const [
         { data: creators },
         { data: accounts },
-        { data: videos },
         { data: campaigns },
-        { data: contract },
       ] = await Promise.all([
         supabase.from("creators").select("id, name").in("id", creatorIds),
         supabase.from("tiktok_accounts").select("id, creator_id, username, campaign_id").in("creator_id", creatorIds),
-        supabase.from("videos")
-          .select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at")
-          .gte("published_at", mStart).lt("published_at", mEnd),
         supabase.from("campaigns").select("id, name, video_views_cap").in("id", campIds.length ? campIds : ["__none__"]),
-        supabase.from("contracts" as any).select("creator_cpm, creator_fixed, min_videos_per_day").eq("id", contractId).single(),
       ]);
+
+      // Paginated video fetch
+      let allVideos: any[] = [];
+      const pageSize = 1000;
+      let page = 0;
+      while (true) {
+        const { data: batch } = await supabase
+          .from("videos")
+          .select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at")
+          .gte("published_at", pStartISO)
+          .lt("published_at", pEndISO)
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        if (!batch || batch.length === 0) break;
+        allVideos = allVideos.concat(batch);
+        if (batch.length < pageSize) break;
+        page++;
+      }
 
       const campMap = new Map(((campaigns ?? []) as any[]).map((c) => [c.id, c]));
       const campIdSet = new Set(campIds);
@@ -167,18 +210,17 @@ export function useContractCreators(contractId: string, year?: number, month?: n
       const cpmRate = Number((contract as any)?.creator_cpm ?? 0.5);
       const fixedAmt = Number((contract as any)?.creator_fixed ?? 0);
       const minVpd = (contract as any)?.min_videos_per_day ?? 5;
+      const target = getPeriodTarget(minVpd, periodStart, periodEnd);
 
       const sortedCreators = ((creators ?? []) as any[]).sort((a: any, b: any) => a.name.localeCompare(b.name));
-      return sortedCreators.map((cr): ContractCreatorRow => {
+      const creatorRows = sortedCreators.map((cr): ContractCreatorRow => {
         const crAccounts = ((accounts ?? []) as any[]).filter((a) => a.creator_id === cr.id);
-        // Only accounts linked to contract campaigns
         const contractAccounts = crAccounts.filter((a) => a.campaign_id && campIdSet.has(a.campaign_id));
         const contractAccIds = new Set(contractAccounts.map((a) => a.id));
 
-        const crVideos = ((videos ?? []) as any[]).filter((v) => contractAccIds.has(v.tiktok_account_id));
-        const monthVideos = crVideos.length;
+        const crVideos = allVideos.filter((v) => contractAccIds.has(v.tiktok_account_id));
+        const videoCount = crVideos.length;
 
-        // CPM with per-campaign cap
         let totalViews = 0;
         campIds.forEach((campId) => {
           const cap = campMap.get(campId)?.video_views_cap as number | null;
@@ -188,8 +230,9 @@ export function useContractCreators(contractId: string, year?: number, month?: n
           totalViews += sumEffectiveViewsCapped(campVideos, cap);
         });
 
-        const fixedEarned = isFixedEarnedMonthly(monthVideos, minVpd, y, m);
+        const fixedEarned = minVpd === 0 || isFixedEarnedInPeriod(videoCount, minVpd, periodStart, periodEnd);
         const cpmAmount = cpmRate * (totalViews / 1000);
+        const subtotal = (fixedEarned ? fixedAmt : 0) + cpmAmount;
 
         return {
           id: linkMap.get(cr.id) ?? "",
@@ -201,11 +244,25 @@ export function useContractCreators(contractId: string, year?: number, month?: n
             campaignId: a.campaign_id,
             campaignName: a.campaign_id ? campMap.get(a.campaign_id)?.name ?? null : null,
           })),
-          monthVideos,
+          videoCount,
+          target,
+          totalViews,
+          cpmRate,
           cpmAmount,
+          fixedAmount: fixedAmt,
           fixedEarned,
+          subtotal,
         };
       });
+
+      return {
+        creators: creatorRows,
+        periodStart,
+        periodEnd,
+        periodLabel,
+        currentPeriod,
+        maxPeriod: currentPeriod,
+      };
     },
     enabled: !!contractId,
   });

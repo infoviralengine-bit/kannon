@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { FileText, Plus, Trash2, ChevronRight, Pencil, AlertTriangle } from "lucide-react";
+import { FileText, Plus, Trash2, ChevronRight, ChevronLeft, Pencil, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatViews } from "@/lib/format";
@@ -217,7 +217,11 @@ export default function ContractDetailPage() {
 
   const { data: contract, isLoading: contractLoading } = useContractDetail(contractId);
   const campaigns = useContractCampaigns(contractId);
-  const creators = useContractCreators(contractId);
+  const [selectedPeriod, setSelectedPeriod] = useState<number | undefined>(undefined);
+  const creators = useContractCreators(contractId, selectedPeriod);
+
+  const crData = creators.data;
+  const creatorRows = crData?.creators ?? [];
 
   const [addCampOpen, setAddCampOpen] = useState(false);
   const [addCreatorOpen, setAddCreatorOpen] = useState(false);
@@ -407,35 +411,82 @@ export default function ContractDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Creators */}
+      {/* Creator Performance */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg">Creator assegnati</CardTitle>
-          <Button size="sm" onClick={() => setAddCreatorOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" /> Aggiungi Creator
-          </Button>
+          <div>
+            <CardTitle className="text-lg">Performance Creator</CardTitle>
+            {crData && (
+              <p className="text-sm text-muted-foreground mt-1">{crData.periodLabel}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Period navigator */}
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={!crData || (selectedPeriod ?? crData.currentPeriod) <= 1}
+              onClick={() => setSelectedPeriod((prev) => (prev ?? crData!.currentPeriod) - 1)}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm font-medium min-w-[80px] text-center">
+              Periodo {selectedPeriod ?? crData?.currentPeriod ?? 1}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={!crData || (selectedPeriod ?? crData.currentPeriod) >= crData.maxPeriod}
+              onClick={() => setSelectedPeriod((prev) => (prev ?? crData!.currentPeriod) + 1)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button size="sm" onClick={() => setAddCreatorOpen(true)} className="ml-2">
+              <Plus className="mr-1 h-4 w-4" /> Aggiungi Creator
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
-          {creators.isLoading ? <Skeleton className="h-24" /> : !creators.data?.length ? (
+          {creators.isLoading ? <Skeleton className="h-24" /> : !creatorRows.length ? (
             <p className="text-sm text-muted-foreground text-center py-6">Nessun creator assegnato</p>
           ) : (
             <div className="space-y-4">
-              {creators.data.map((cr) => (
+              {creatorRows.map((cr) => (
                 <div key={cr.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold cursor-pointer hover:underline" onClick={() => navigate(`/dashboard/creators/${cr.creatorId}`)}>
-                        {cr.name}
-                      </span>
-                      <Badge variant="secondary">{cr.monthVideos} video/mese</Badge>
-                      <span className="text-sm text-muted-foreground">CPM: {formatCurrency(cr.cpmAmount)}</span>
-                      <Badge variant={cr.fixedEarned ? "default" : "destructive"}>
-                        Fisso {cr.fixedEarned ? "✅" : "❌"}
-                      </Badge>
-                    </div>
+                    <span className="font-semibold cursor-pointer hover:underline" onClick={() => navigate(`/dashboard/creators/${cr.creatorId}`)}>
+                      {cr.name}
+                    </span>
                     <Button variant="ghost" size="icon" onClick={() => removeCreator.mutate(cr.id)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
+                  </div>
+
+                  {/* KPIs grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    <div className="bg-muted/50 rounded-md p-2.5">
+                      <p className="text-[11px] text-muted-foreground uppercase">Video</p>
+                      <p className="text-sm font-bold">{cr.videoCount} / {cr.target}</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-md p-2.5">
+                      <p className="text-[11px] text-muted-foreground uppercase">Views</p>
+                      <p className="text-sm font-bold">{formatViews(cr.totalViews)}</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-md p-2.5">
+                      <p className="text-[11px] text-muted-foreground uppercase">Fisso</p>
+                      <p className="text-sm font-bold">
+                        {formatCurrency(cr.fixedAmount)}{" "}
+                        <span>{cr.fixedEarned ? "✅" : "❌"}</span>
+                      </p>
+                    </div>
+                    <div className="bg-muted/50 rounded-md p-2.5">
+                      <p className="text-[11px] text-muted-foreground uppercase">CPM ({formatCurrency(cr.cpmRate)})</p>
+                      <p className="text-sm font-bold">{formatCurrency(cr.cpmAmount)}</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-md p-2.5">
+                      <p className="text-[11px] text-muted-foreground uppercase">Subtotale</p>
+                      <p className="text-sm font-bold text-primary">{formatCurrency(cr.subtotal)}</p>
+                    </div>
                   </div>
 
                   {/* Accounts */}
@@ -492,7 +543,7 @@ export default function ContractDetailPage() {
         open={addCreatorOpen}
         onOpenChange={setAddCreatorOpen}
         contractId={contractId}
-        existingCreatorIds={(creators.data ?? []).map((c) => c.creatorId)}
+        existingCreatorIds={creatorRows.map((c) => c.creatorId)}
       />
       {contract && (
         <EditContractModal
