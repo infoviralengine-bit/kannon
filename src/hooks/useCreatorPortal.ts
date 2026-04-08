@@ -211,8 +211,11 @@ export function useCreatorPortal(selectedPeriod?: number) {
         const contractStart = contract.start_date
           ? parseContractStartDate(contract.start_date)
           : new Date(Date.UTC(year, month, 1));
-        const activePeriod = selectedPeriod ?? getCurrentPeriodNumber(contractStart);
-        const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod);
+        const fps = contract.first_period_start
+          ? parseContractStartDate(contract.first_period_start)
+          : null;
+        const activePeriod = selectedPeriod ?? getCurrentPeriodNumber(contractStart, fps);
+        const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod, fps);
         const pStartISO = periodStart.toISOString();
         const pEndDate = new Date(periodEnd);
         pEndDate.setUTCDate(pEndDate.getUTCDate() + 1);
