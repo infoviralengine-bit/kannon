@@ -7,8 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { formatViews, formatCurrency } from "@/lib/format";
 import {
   useCreatorDetail, useCreatorKpi, useCreatorPayoff,
-  useCreatorAccounts, useCreatorCampaigns,
+  useCreatorAccounts, useCreatorCampaigns, useCreatorVideos,
 } from "@/hooks/useCreatorData";
+import { CappedViewsBadge } from "@/components/CappedViewsBadge";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
