@@ -390,6 +390,7 @@ export default function CreatorDetailPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
 
         <TabsContent value="percorso">
           <Card>
