@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
   );
 });
 
-async function runScraping(supabaseAdmin: ReturnType<typeof createClient>) {
+async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, existingDatasetId: string | null = null) {
   let totalCreated = 0;
   let totalUpdated = 0;
   let accountsProcessed = 0;
