@@ -399,6 +399,28 @@ export function useCreatorPortal(selectedPeriod?: number) {
           }))
         : 1;
 
+      // Build period videos for the video list (grouped by campaign/account)
+      const accMap = new Map(accs.map((a: any) => [a.id, a]));
+      const periodVideosForList = allVideos
+        .filter((v) => periodVideoIds.has(v.id))
+        .map((v) => {
+          const acc = accMap.get(v.tiktok_account_id);
+          return {
+            id: v.id,
+            tiktokVideoId: v.tiktok_video_id,
+            accountUsername: acc?.username ?? "—",
+            accountId: v.tiktok_account_id,
+            campaignName: acc?.campaign_id ? campMap.get(acc.campaign_id) ?? "—" : "—",
+            campaignId: acc?.campaign_id ?? null,
+            views: v.views ?? 0,
+            likes: v.likes ?? 0,
+            comments: v.comments ?? 0,
+            publishedAt: v.published_at,
+            windowClosed: v.window_closed ?? false,
+            viewsFinal: v.views_final ?? null,
+          };
+        });
+
       return {
         creator,
         warmupAccounts,
@@ -412,6 +434,7 @@ export function useCreatorPortal(selectedPeriod?: number) {
         calendar,
         earnings,
         defaultPeriod,
+        periodVideos: periodVideosForList,
       };
     },
     enabled: !!user,
