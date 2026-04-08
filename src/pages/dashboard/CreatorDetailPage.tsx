@@ -89,6 +89,7 @@ export default function CreatorDetailPage() {
   const { data: kpi } = useCreatorKpi(id!);
   const { data: accounts } = useCreatorAccounts(id!);
   const { data: campaigns } = useCreatorCampaigns(id!);
+  const { data: videos } = useCreatorVideos(id!);
 
   const now = new Date();
   const [payoffYear, setPayoffYear] = useState(now.getFullYear());
