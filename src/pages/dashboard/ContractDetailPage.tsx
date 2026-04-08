@@ -217,7 +217,11 @@ export default function ContractDetailPage() {
 
   const { data: contract, isLoading: contractLoading } = useContractDetail(contractId);
   const campaigns = useContractCampaigns(contractId);
-  const creators = useContractCreators(contractId);
+  const [selectedPeriod, setSelectedPeriod] = useState<number | undefined>(undefined);
+  const creators = useContractCreators(contractId, selectedPeriod);
+
+  const crData = creators.data;
+  const creatorRows = crData?.creators ?? [];
 
   const [addCampOpen, setAddCampOpen] = useState(false);
   const [addCreatorOpen, setAddCreatorOpen] = useState(false);
