@@ -174,6 +174,7 @@ export default function CreatorDetailPage() {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Panoramica</TabsTrigger>
+          <TabsTrigger value="videos">Video ({videos?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="percorso">Percorso</TabsTrigger>
         </TabsList>
 
