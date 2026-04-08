@@ -121,15 +121,23 @@ export function useCreatorPortal(selectedPeriod?: number) {
       const campMap = new Map(campaigns.map((c) => [c.id, c.name]));
       const capByCampaign = new Map(campaigns.map((c) => [c.id, c.video_views_cap]));
 
-      // Get ALL videos for these accounts
+      // Get ALL videos for these accounts (with pagination for >1000)
       let allVideos: any[] = [];
       if (accIds.length) {
-        const { data } = await supabase
-          .from("videos")
-          .select("*")
-          .in("tiktok_account_id", accIds)
-          .order("published_at", { ascending: false });
-        allVideos = data ?? [];
+        const pageSize = 1000;
+        let from = 0;
+        while (true) {
+          const { data } = await supabase
+            .from("videos")
+            .select("*")
+            .in("tiktok_account_id", accIds)
+            .order("published_at", { ascending: false })
+            .range(from, from + pageSize - 1);
+          const rows = data ?? [];
+          allVideos.push(...rows);
+          if (rows.length < pageSize) break;
+          from += pageSize;
+        }
       }
 
       // Build warmup accounts
