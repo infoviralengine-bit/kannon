@@ -2,6 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViewsCapped } from "@/lib/videoWindow";
 import { isFixedEarnedMonthly, getMonthlyTarget, getWorkingDaysInMonth } from "@/lib/fixedEarned";
+import {
+  getContractPeriod,
+  getCurrentPeriodNumber,
+  parseContractStartDate,
+  getPeriodTarget,
+  isFixedEarnedInPeriod,
+  formatPeriodRange,
+} from "@/lib/contractPeriods";
 
 /* ── Contract List ── */
 
