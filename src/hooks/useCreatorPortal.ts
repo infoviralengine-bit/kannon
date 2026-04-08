@@ -270,8 +270,54 @@ export function useCreatorPortal(selectedPeriod?: number) {
 
       const totalViews = allVideos.reduce((s, v) => s + (v.views ?? 0), 0);
       const totalVideos = allVideos.length;
-      const monthViews = monthVideosList.reduce((s, v) => s + (v.views ?? 0), 0);
-      const monthVideosCount = monthVideosList.length;
+
+      // Compute period views/videos from contract periods (not calendar month)
+      const periodVideoIds = new Set<string>();
+      let periodViewsTotal = 0;
+      allContracts.forEach((contract: any) => {
+        const contractStart = contract.start_date
+          ? parseContractStartDate(contract.start_date)
+          : new Date(Date.UTC(year, month, 1));
+        const activePeriod = selectedPeriod ?? getCurrentPeriodNumber(contractStart);
+        const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod);
+        const pStartISO = periodStart.toISOString();
+        const pEndDate = new Date(periodEnd);
+        pEndDate.setUTCDate(pEndDate.getUTCDate() + 1);
+        const pEndISO = pEndDate.toISOString();
+        allVideos.forEach((v) => {
+          if (accIds.includes(v.tiktok_account_id) && v.published_at >= pStartISO && v.published_at < pEndISO && !periodVideoIds.has(v.id)) {
+            periodVideoIds.add(v.id);
+            periodViewsTotal += v.views ?? 0;
+          }
+        });
+      });
+      const monthViews = periodViewsTotal;
+      const monthVideosCount = periodVideoIds.size;
+
+      // Update account stats with period data
+      accountStats.forEach((acc) => {
+        let accPViews = 0;
+        let accPVideos = 0;
+        allContracts.forEach((contract: any) => {
+          const contractStart = contract.start_date
+            ? parseContractStartDate(contract.start_date)
+            : new Date(Date.UTC(year, month, 1));
+          const activePeriod = selectedPeriod ?? getCurrentPeriodNumber(contractStart);
+          const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod);
+          const pStartISO = periodStart.toISOString();
+          const pEndDate = new Date(periodEnd);
+          pEndDate.setUTCDate(pEndDate.getUTCDate() + 1);
+          const pEndISO = pEndDate.toISOString();
+          allVideos.forEach((v) => {
+            if (v.tiktok_account_id === acc.id && v.published_at >= pStartISO && v.published_at < pEndISO) {
+              accPViews += v.views ?? 0;
+              accPVideos++;
+            }
+          });
+        });
+        acc.monthViews = accPViews;
+        acc.monthVideos = accPVideos;
+      });
 
       const totalPaidEarnings = paymentRows.reduce((s: number, p: any) => s + Number(p.total_amount ?? 0), 0);
 
