@@ -106,7 +106,7 @@ export function useUpdateTemplate() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, name, content, is_active }: { id: string; name?: string; content?: string; is_active?: boolean }) => {
-      const updates: Record<string, unknown> = {};
+      const updates: { name?: string; content?: string; is_active?: boolean } = {};
       if (name !== undefined) updates.name = name;
       if (content !== undefined) updates.content = content;
       if (is_active !== undefined) updates.is_active = is_active;

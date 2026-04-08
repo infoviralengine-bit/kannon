@@ -65,7 +65,7 @@ export function useUpdateLeadStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status, notes }: { id: string; status: string; notes?: string }) => {
-      const updates: Record<string, unknown> = { status };
+      const updates: { status: string; notes?: string } = { status };
       if (notes !== undefined) updates.notes = notes;
       const { error } = await supabase.from("closer_leads").update(updates).eq("id", id);
       if (error) throw error;
