@@ -4,15 +4,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Eye, Video, TrendingUp, Smartphone, FileText, CheckCircle, XCircle } from "lucide-react";
 import { AccountStats, EarningsData } from "@/hooks/useCreatorPortal";
 import { formatCurrency, formatViews } from "@/lib/format";
+import CreatorVideoList, { CreatorVideo } from "./CreatorVideoList";
 
 interface Props {
   accountStats: AccountStats[];
   earnings: EarningsData;
   creatorName: string;
   monthLabel?: string;
+  periodVideos?: CreatorVideo[];
 }
 
-export default function CreatorDashboard({ accountStats, earnings, creatorName, monthLabel = "questo mese" }: Props) {
+export default function CreatorDashboard({ accountStats, earnings, creatorName, monthLabel = "questo mese", periodVideos = [] }: Props) {
   const hasContracts = earnings.contractBreakdowns.length > 0;
 
   return (
@@ -189,6 +191,9 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
           )}
         </div>
       </div>
+
+      {/* Video list */}
+      <CreatorVideoList videos={periodVideos} monthLabel={monthLabel} />
     </div>
   );
 }

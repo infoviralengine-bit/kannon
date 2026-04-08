@@ -121,15 +121,23 @@ export function useCreatorPortal(selectedPeriod?: number) {
       const campMap = new Map(campaigns.map((c) => [c.id, c.name]));
       const capByCampaign = new Map(campaigns.map((c) => [c.id, c.video_views_cap]));
 
-      // Get ALL videos for these accounts
+      // Get ALL videos for these accounts (with pagination for >1000)
       let allVideos: any[] = [];
       if (accIds.length) {
-        const { data } = await supabase
-          .from("videos")
-          .select("*")
-          .in("tiktok_account_id", accIds)
-          .order("published_at", { ascending: false });
-        allVideos = data ?? [];
+        const pageSize = 1000;
+        let from = 0;
+        while (true) {
+          const { data } = await supabase
+            .from("videos")
+            .select("*")
+            .in("tiktok_account_id", accIds)
+            .order("published_at", { ascending: false })
+            .range(from, from + pageSize - 1);
+          const rows = data ?? [];
+          allVideos.push(...rows);
+          if (rows.length < pageSize) break;
+          from += pageSize;
+        }
       }
 
       // Build warmup accounts
@@ -391,6 +399,28 @@ export function useCreatorPortal(selectedPeriod?: number) {
           }))
         : 1;
 
+      // Build period videos for the video list (grouped by campaign/account)
+      const accMap = new Map(accs.map((a: any) => [a.id, a]));
+      const periodVideosForList = allVideos
+        .filter((v) => periodVideoIds.has(v.id))
+        .map((v) => {
+          const acc = accMap.get(v.tiktok_account_id);
+          return {
+            id: v.id,
+            tiktokVideoId: v.tiktok_video_id,
+            accountUsername: acc?.username ?? "—",
+            accountId: v.tiktok_account_id,
+            campaignName: acc?.campaign_id ? campMap.get(acc.campaign_id) ?? "—" : "—",
+            campaignId: acc?.campaign_id ?? null,
+            views: v.views ?? 0,
+            likes: v.likes ?? 0,
+            comments: v.comments ?? 0,
+            publishedAt: v.published_at,
+            windowClosed: v.window_closed ?? false,
+            viewsFinal: v.views_final ?? null,
+          };
+        });
+
       return {
         creator,
         warmupAccounts,
@@ -404,6 +434,7 @@ export function useCreatorPortal(selectedPeriod?: number) {
         calendar,
         earnings,
         defaultPeriod,
+        periodVideos: periodVideosForList,
       };
     },
     enabled: !!user,
