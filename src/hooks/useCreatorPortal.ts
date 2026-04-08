@@ -373,6 +373,14 @@ export function useCreatorPortal(selectedPeriod?: number) {
         }));
       }
 
+      // Compute default period (max current period across all contracts)
+      const defaultPeriod = allContracts.length > 0
+        ? Math.max(...allContracts.map((c: any) => {
+            const sd = c.start_date ? parseContractStartDate(c.start_date) : new Date();
+            return getCurrentPeriodNumber(sd);
+          }))
+        : 1;
+
       return {
         creator,
         warmupAccounts,
@@ -385,6 +393,7 @@ export function useCreatorPortal(selectedPeriod?: number) {
         content,
         calendar,
         earnings,
+        defaultPeriod,
       };
     },
     enabled: !!user,
