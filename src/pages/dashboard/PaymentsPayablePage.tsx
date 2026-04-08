@@ -62,9 +62,10 @@ export default function PaymentsPayablePage() {
     setPeriodByContract((prev) => ({ ...prev, [contractId]: Math.max(1, period) }));
   }
 
-  function getPeriodLabel(startDate: string, periodNumber: number): string {
+  function getPeriodLabel(startDate: string, periodNumber: number, firstPeriodStartStr?: string | null): string {
     const sd = parseContractStartDate(startDate);
-    const { periodStart, periodEnd } = getContractPeriod(sd, periodNumber);
+    const fps = firstPeriodStartStr ? parseContractStartDate(firstPeriodStartStr) : null;
+    const { periodStart, periodEnd } = getContractPeriod(sd, periodNumber, fps);
     return formatPeriodRange(periodStart, periodEnd);
   }
 
