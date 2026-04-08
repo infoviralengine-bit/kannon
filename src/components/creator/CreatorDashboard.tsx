@@ -14,7 +14,7 @@ interface Props {
   periodVideos?: CreatorVideo[];
 }
 
-export default function CreatorDashboard({ accountStats, earnings, creatorName, monthLabel = "questo mese" }: Props) {
+export default function CreatorDashboard({ accountStats, earnings, creatorName, monthLabel = "questo mese", periodVideos = [] }: Props) {
   const hasContracts = earnings.contractBreakdowns.length > 0;
 
   return (
