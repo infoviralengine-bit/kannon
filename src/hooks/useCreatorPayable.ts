@@ -135,9 +135,12 @@ export function useContractPayable(periodByContract: Record<string, number>) {
         const sd = contract.start_date
           ? parseContractStartDate(contract.start_date)
           : new Date();
-        const currentPeriod = getCurrentPeriodNumber(sd);
+        const fps = contract.first_period_start
+          ? parseContractStartDate(contract.first_period_start)
+          : null;
+        const currentPeriod = getCurrentPeriodNumber(sd, fps);
         const selectedPeriod = periodByContract[contract.id] ?? currentPeriod;
-        const { periodStart, periodEnd } = getContractPeriod(sd, selectedPeriod);
+        const { periodStart, periodEnd } = getContractPeriod(sd, selectedPeriod, fps);
 
         const pStartISO = periodStart.toISOString();
         const pEndDate = new Date(periodEnd);
