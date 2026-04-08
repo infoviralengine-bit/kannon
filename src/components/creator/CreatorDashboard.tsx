@@ -191,6 +191,9 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
           )}
         </div>
       </div>
+
+      {/* Video list */}
+      <CreatorVideoList videos={periodVideos} monthLabel={monthLabel} />
     </div>
   );
 }
