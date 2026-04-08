@@ -169,6 +169,7 @@ export default function CreatorArea() {
             earnings={data.earnings}
             creatorName={data.creator.name}
             monthLabel={`Periodo ${currentPeriod}`}
+            periodVideos={data.periodVideos}
           />
         )}
         {section === "contenuti" && (
