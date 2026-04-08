@@ -52,11 +52,24 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Parse optional datasetId from request body
+  let datasetId: string | null = null;
+  try {
+    const body = await req.json();
+    datasetId = body?.datasetId || null;
+  } catch {
+    // No body or invalid JSON — that's fine, run normally
+  }
+
   // Return immediately, process in background
-  EdgeRuntime.waitUntil(runScraping(supabaseAdmin));
+  EdgeRuntime.waitUntil(runScraping(supabaseAdmin, datasetId));
+
+  const message = datasetId
+    ? `Import da dataset ${datasetId} avviato in background.`
+    : "Scraping avviato in background. Controlla i log per i risultati.";
 
   return new Response(
-    JSON.stringify({ success: true, message: "Scraping avviato in background. Controlla i log per i risultati." }),
+    JSON.stringify({ success: true, message }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 });
