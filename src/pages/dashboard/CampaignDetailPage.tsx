@@ -998,11 +998,11 @@ export default function CampaignDetailPage() {
         </CardHeader>
         <CardContent>
           {kpiLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-              {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14" />)}
+             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6">
+              {[...Array(7)].map((_, i) => <Skeleton key={i} className="h-14" />)}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6">
               <StatItem label="Views totali" value={formatViews(kpi.data?.totalViews ?? 0)} accent />
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center">
