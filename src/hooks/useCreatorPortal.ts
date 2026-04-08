@@ -132,12 +132,6 @@ export function useCreatorPortal(selectedPeriod?: number) {
         allVideos = data ?? [];
       }
 
-      // Determine the period for contract-based earnings
-      // We still use calendar month for general stats (warmup, account stats)
-      const mStart = new Date(year, month, 1).toISOString();
-      const mEnd = new Date(year, month + 1, 1).toISOString();
-      const monthVideosList = allVideos.filter((v) => v.published_at >= mStart && v.published_at < mEnd);
-
       // Build warmup accounts
       const creatorPhase = String(creator.onboarding_phase ?? "").trim().toLowerCase();
       const creatorIsOperativo = creatorPhase.startsWith("operativ");
