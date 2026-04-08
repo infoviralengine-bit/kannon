@@ -121,14 +121,28 @@ export function useContractPayable(periodByContract: Record<string, number>) {
       fetchEndDate.setUTCDate(fetchEndDate.getUTCDate() + 1);
       const fetchEnd = fetchEndDate.toISOString();
 
-      const [{ data: videos }, { data: allPayments }] = await Promise.all([
-        supabase.from("videos")
-          .select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at")
-          .gte("published_at", fetchStart).lt("published_at", fetchEnd),
+      // Fetch videos with pagination (Supabase default limit is 1000)
+      const fetchAllVideos = async () => {
+        const all: any[] = [];
+        const pageSize = 1000;
+        let from = 0;
+        while (true) {
+          const { data } = await supabase.from("videos")
+            .select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at")
+            .gte("published_at", fetchStart).lt("published_at", fetchEnd)
+            .range(from, from + pageSize - 1);
+          const rows = data ?? [];
+          all.push(...rows);
+          if (rows.length < pageSize) break;
+          from += pageSize;
+        }
+        return all;
+      };
+
+      const [allVideos, { data: allPayments }] = await Promise.all([
+        fetchAllVideos(),
         supabase.from("creator_payments").select("*"),
       ]);
-
-      const allVideos = (videos ?? []) as any[];
       const paymentsList = (allPayments ?? []) as any[];
 
       // Build sections per contract
