@@ -9,7 +9,7 @@ import {
   useCreatorDetail, useCreatorKpi, useCreatorPayoff,
   useCreatorAccounts, useCreatorCampaigns, useCreatorVideos,
 } from "@/hooks/useCreatorData";
-import { CappedBadge } from "@/components/CappedViewsBadge";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
