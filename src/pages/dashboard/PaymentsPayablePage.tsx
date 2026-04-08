@@ -194,7 +194,7 @@ export default function PaymentsPayablePage() {
                     </Button>
                     <div className="text-center min-w-[160px]">
                       <p className="text-xs font-medium text-[#f8fafc]">Periodo {pn}</p>
-                      <p className="text-[10px] text-[#64748b]">{getPeriodLabel(section.startDate, pn)}</p>
+                      <p className="text-[10px] text-[#64748b]">{getPeriodLabel(section.startDate, pn, section.firstPeriodStart)}</p>
                     </div>
                     <Button
                       variant="ghost" size="icon" className="h-7 w-7"
