@@ -74,7 +74,8 @@ export default function PaymentsPayablePage() {
     try {
       const { creator, section, periodNumber } = data;
       const sd = parseContractStartDate(section.startDate);
-      const { periodStart, periodEnd } = getContractPeriod(sd, periodNumber);
+      const fps = section.firstPeriodStart ? parseContractStartDate(section.firstPeriodStart) : null;
+      const { periodStart, periodEnd } = getContractPeriod(sd, periodNumber, fps);
 
       const payload: any = {
         creator_id: creator.creatorId,
