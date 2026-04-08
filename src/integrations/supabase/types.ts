@@ -1117,6 +1117,13 @@ export type Database = {
         Args: { p_days?: number; p_user_id: string }
         Returns: Json
       }
+      get_creator_contract_campaigns: {
+        Args: { _user_id: string }
+        Returns: {
+          campaign_id: string
+          contract_id: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

@@ -196,7 +196,7 @@ export function useCreatorPortal(selectedPeriod?: number) {
       if (contractIds.length) {
         const [{ data: cData }, { data: ccData }] = await Promise.all([
           supabase.from("contracts" as any).select("*").in("id", contractIds).eq("is_active", true),
-          supabase.from("contract_campaigns" as any).select("contract_id, campaign_id").in("contract_id", contractIds),
+          supabase.rpc("get_creator_contract_campaigns", { _user_id: user.id }),
         ]);
         allContracts = (cData ?? []) as any[];
         allContractCampaigns = (ccData ?? []) as any[];
