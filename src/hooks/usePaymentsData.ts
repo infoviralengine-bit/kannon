@@ -537,7 +537,7 @@ export function useCampaignCycles(campaignId: string) {
 
       const { data: camp } = await supabase
         .from("campaigns")
-        .select("name, client_name, client_fixed_per_creator, client_cpm, planned_creators, video_views_cap, monthly_spend_cap")
+        .select("name, client_name, client_fixed, client_cpm, video_views_cap, monthly_spend_cap")
         .eq("id", campaignId)
         .single();
 
@@ -571,8 +571,7 @@ export function useCampaignCycles(campaignId: string) {
 
       if (hasUnpaid) {
         const clientCpm = Number(camp?.client_cpm ?? 2);
-        const clientFixed = Number(camp?.client_fixed_per_creator ?? 200);
-        const plannedCreators = camp?.planned_creators ?? 1;
+        const clientFixed = Number(camp?.client_fixed ?? 0);
         const spendCap = (camp as any)?.monthly_spend_cap as number | null;
         const totalNewViews = Math.max(0, liveViewsTotal - lastPaidCumulative);
 
@@ -583,7 +582,7 @@ export function useCampaignCycles(campaignId: string) {
           if (p.id === lastUnpaidId) {
             const prevCyclesCpmViews = unpaidPayments.slice(0, idx).reduce((s, up) => s + up.cpm_views, 0);
             const cpmViews = Math.max(0, totalNewViews - prevCyclesCpmViews);
-            const fixedAmount = isLast ? 0 : clientFixed * plannedCreators;
+            const fixedAmount = isLast ? 0 : clientFixed;
             let cpmAmount = clientCpm * (cpmViews / 1000);
             if (spendCap != null && cpmAmount > spendCap) cpmAmount = spendCap;
             const totalAmount = fixedAmount + cpmAmount;
@@ -634,10 +633,8 @@ export function useCampaignCycles(campaignId: string) {
             cycleEndDate: c.cycle_end_date,
             isLastCycle: c.is_last_cycle,
             isFirstCycle: p.cycle_number === 1,
-            clientFixedPerCreator: Number(camp?.client_fixed_per_creator ?? 200),
+            clientFixed: Number(camp?.client_fixed ?? 0),
             clientCpm: Number(camp?.client_cpm ?? 2),
-            creatorCount: camp?.planned_creators ?? 1,
-            plannedCreators: camp?.planned_creators ?? 1,
           };
         }
 

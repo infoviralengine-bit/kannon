@@ -142,7 +142,7 @@ export function useCampaignMargin(campaignId: string) {
     queryFn: async () => {
       const { data: campaign } = await supabase
         .from("campaigns")
-        .select("client_cpm, client_fixed_per_creator, video_views_cap")
+        .select("client_cpm, client_fixed, video_views_cap")
         .eq("id", campaignId)
         .single();
 
