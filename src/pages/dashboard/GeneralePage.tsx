@@ -354,10 +354,12 @@ export default function GeneralePage() {
 
                     {c.spendCap && (
                       <div className="mb-3">
-                        <div className="flex justify-between text-[10px] text-[#64748b] mb-1">
-                          <span>Spesa {formatCurrency(c.revenueMonth)}</span>
-                          <span>Cap {formatCurrency(c.spendCap)}</span>
-                        </div>
+                        {!isTeam && (
+                          <div className="flex justify-between text-[10px] text-[#64748b] mb-1">
+                            <span>Spesa {formatCurrency(c.revenueMonth)}</span>
+                            <span>Cap {formatCurrency(c.spendCap)}</span>
+                          </div>
+                        )}
                         <div className="h-1.5 rounded-full bg-[#1a1a28] overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
@@ -473,7 +475,7 @@ export default function GeneralePage() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-semibold text-[#f8fafc]">{formatViews(p.viewsMonth)}</p>
-                        <p className="text-[10px] text-emerald-400">{formatCurrency(p.cpmEarned)}</p>
+                        {!isTeam && <p className="text-[10px] text-emerald-400">{formatCurrency(p.cpmEarned)}</p>}
                       </div>
                     </div>
                   );
@@ -484,82 +486,84 @@ export default function GeneralePage() {
         </Card>
 
         {/* Payment Deadlines */}
-        <Card className="border-[#1e1e2e] bg-[#111118]">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-[#f8fafc] flex items-center gap-2">
-              <Clock className="h-4 w-4 text-[#64748b]" />
-              Scadenze Pagamenti
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Da Ricevere (Clienti) */}
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold mb-2">Da Ricevere (Clienti)</p>
-              {deadlines.isLoading ? (
-                <div className="space-y-2">
-                  {[1, 2].map((i) => <Shimmer key={i} className="h-10" />)}
-                </div>
-              ) : !deadlines.data?.deadlines.length ? (
-                <p className="text-[11px] text-[#64748b] py-2">Nessuna scadenza clienti in arrivo</p>
-              ) : (
-                <div className="space-y-2">
-                  {deadlines.data.deadlines.map((d, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-3 rounded-lg border border-[#1e1e2e] bg-[#0d0d14]"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-[#f8fafc] truncate">{d.campaignName}</p>
-                        <p className="text-[10px] text-[#64748b]">{d.clientName}</p>
+        {!isTeam && (
+          <Card className="border-[#1e1e2e] bg-[#111118]">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold text-[#f8fafc] flex items-center gap-2">
+                <Clock className="h-4 w-4 text-[#64748b]" />
+                Scadenze Pagamenti
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Da Ricevere (Clienti) */}
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold mb-2">Da Ricevere (Clienti)</p>
+                {deadlines.isLoading ? (
+                  <div className="space-y-2">
+                    {[1, 2].map((i) => <Shimmer key={i} className="h-10" />)}
+                  </div>
+                ) : !deadlines.data?.deadlines.length ? (
+                  <p className="text-[11px] text-[#64748b] py-2">Nessuna scadenza clienti in arrivo</p>
+                ) : (
+                  <div className="space-y-2">
+                    {deadlines.data.deadlines.map((d, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-3 rounded-lg border border-[#1e1e2e] bg-[#0d0d14]"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-[#f8fafc] truncate">{d.campaignName}</p>
+                          <p className="text-[10px] text-[#64748b]">{d.clientName}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-semibold text-[#f8fafc]">{formatCurrency(d.amount)}</span>
+                          <Badge
+                            className={`text-[10px] ${
+                              d.isOverdue
+                                ? "bg-red-500/15 text-red-400 border-red-500/30"
+                                : d.daysUntil <= 3
+                                  ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                                  : "bg-[#1a1a28] text-[#64748b] border-[#2a2a3e]"
+                            }`}
+                          >
+                            {d.isOverdue ? "Scaduto" : `${d.daysUntil}gg`}
+                          </Badge>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-semibold text-[#f8fafc]">{formatCurrency(d.amount)}</span>
-                        <Badge
-                          className={`text-[10px] ${
-                            d.isOverdue
-                              ? "bg-red-500/15 text-red-400 border-red-500/30"
-                              : d.daysUntil <= 3
-                                ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-                                : "bg-[#1a1a28] text-[#64748b] border-[#2a2a3e]"
-                          }`}
-                        >
-                          {d.isOverdue ? "Scaduto" : `${d.daysUntil}gg`}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-            {/* Da Pagare (Creator) */}
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold mb-2">Da Pagare (Creator)</p>
-              {deadlines.isLoading ? (
-                <div className="space-y-2">
-                  {[1, 2].map((i) => <Shimmer key={`cr-${i}`} className="h-10" />)}
-                </div>
-              ) : !deadlines.data?.creatorDeadlines?.filter((d) => !d.isPaid).length ? (
-                <p className="text-[11px] text-[#64748b] py-2">Nessun pagamento creator in sospeso</p>
-              ) : (
-                <div className="space-y-2">
-                  {deadlines.data.creatorDeadlines.filter((d) => !d.isPaid).map((d, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-3 rounded-lg border border-[#1e1e2e] bg-[#0d0d14]"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-[#f8fafc] truncate">{d.creatorName}</p>
-                        <p className="text-[10px] text-[#64748b]">{d.periodLabel}</p>
+              {/* Da Pagare (Creator) */}
+              <div>
+                <p className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold mb-2">Da Pagare (Creator)</p>
+                {deadlines.isLoading ? (
+                  <div className="space-y-2">
+                    {[1, 2].map((i) => <Shimmer key={`cr-${i}`} className="h-10" />)}
+                  </div>
+                ) : !deadlines.data?.creatorDeadlines?.filter((d) => !d.isPaid).length ? (
+                  <p className="text-[11px] text-[#64748b] py-2">Nessun pagamento creator in sospeso</p>
+                ) : (
+                  <div className="space-y-2">
+                    {deadlines.data.creatorDeadlines.filter((d) => !d.isPaid).map((d, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-3 rounded-lg border border-[#1e1e2e] bg-[#0d0d14]"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-[#f8fafc] truncate">{d.creatorName}</p>
+                          <p className="text-[10px] text-[#64748b]">{d.periodLabel}</p>
+                        </div>
+                        <span className="text-sm font-semibold text-[#f8fafc]">{formatCurrency(d.amount)}</span>
                       </div>
-                      <span className="text-sm font-semibold text-[#f8fafc]">{formatCurrency(d.amount)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

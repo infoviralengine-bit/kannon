@@ -388,6 +388,8 @@ function CyclesSection({ campaignId, campaign, cycles }: {
   campaign: { start_date: string; end_date: string | null; client_fixed: number | null; client_cpm: number | null; video_views_cap?: number | null; monthly_spend_cap?: number | null };
   cycles: ReturnType<typeof useCampaignCycles>;
 }) {
+  const { role } = useAuth();
+  const isTeam = role === "team";
   const { toast } = useToast();
   const qc = useQueryClient();
   const [generating, setGenerating] = useState(false);
@@ -541,10 +543,10 @@ function CyclesSection({ campaignId, campaign, cycles }: {
               <TableRow>
                 <TableHead>Ciclo</TableHead>
                 <TableHead>Periodo</TableHead>
-                <TableHead className="text-right">Fisso (€)</TableHead>
+                {!isTeam && <TableHead className="text-right">Fisso (€)</TableHead>}
                 <TableHead className="text-right">Views <CappedBadge /></TableHead>
-                <TableHead className="text-right">CPM (€)</TableHead>
-                <TableHead className="text-right">Totale (€)</TableHead>
+                {!isTeam && <TableHead className="text-right">CPM (€)</TableHead>}
+                {!isTeam && <TableHead className="text-right">Totale (€)</TableHead>}
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -558,10 +560,10 @@ function CyclesSection({ campaignId, campaign, cycles }: {
                   <TableCell>
                     {new Date(c.startDate).toLocaleDateString("it-IT")} — {new Date(c.endDate).toLocaleDateString("it-IT")}
                   </TableCell>
-                  <TableCell className="text-right">{c.payment ? formatCurrency(c.payment.fixedAmount) : "—"}</TableCell>
+                  {!isTeam && <TableCell className="text-right">{c.payment ? formatCurrency(c.payment.fixedAmount) : "—"}</TableCell>}
                   <TableCell className="text-right">{c.payment ? formatViews(c.payment.cpmViews) : "—"}</TableCell>
-                  <TableCell className="text-right">{c.payment ? formatCurrency(c.payment.cpmAmount) : "—"}</TableCell>
-                  <TableCell className="text-right font-semibold">{c.payment ? formatCurrency(c.payment.totalAmount) : "—"}</TableCell>
+                  {!isTeam && <TableCell className="text-right">{c.payment ? formatCurrency(c.payment.cpmAmount) : "—"}</TableCell>}
+                  {!isTeam && <TableCell className="text-right font-semibold">{c.payment ? formatCurrency(c.payment.totalAmount) : "—"}</TableCell>}
                   <TableCell>
                     {c.payment ? (
                       c.payment.isPaid ? (
@@ -954,11 +956,11 @@ export default function CampaignDetailPage() {
                 <StatItem label="Video minimi/mese" value={String(campAny.min_monthly_videos ?? 0)} />
                 <StatItem label="Durata" value={`${format(new Date(campaign.start_date), "dd/MM/yy")} → ${campaign.end_date ? format(new Date(campaign.end_date), "dd/MM/yy") : "∞"}`} />
                 <StatItem label="Cap per video" value={videoViewsCap != null ? `${formatViews(videoViewsCap)}` : "—"} sub={videoViewsCap != null ? "views max" : "nessun limite"} />
-                <StatItem label="Cap di spesa" value={monthlySpendCap != null ? formatCurrency(monthlySpendCap) : "—"} sub={monthlySpendCap != null ? "per ciclo" : "nessun limite"} />
+                {!isTeam && <StatItem label="Cap di spesa" value={monthlySpendCap != null ? formatCurrency(monthlySpendCap) : "—"} sub={monthlySpendCap != null ? "per ciclo" : "nessun limite"} />}
               </div>
 
               {/* Spend progress bar */}
-              {monthlySpendCap != null && allCyclesWithSpend.length > 0 && (
+              {!isTeam && monthlySpendCap != null && allCyclesWithSpend.length > 0 && (
                 <div className="space-y-3">
                   {allCyclesWithSpend.map((cycle, idx) => (
                     <div key={idx} className={cn("rounded-lg p-4", cycle.isCurrent ? "bg-secondary/50" : "bg-secondary/30")}>

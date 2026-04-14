@@ -13,6 +13,7 @@ import {
   parseContractStartDate,
   formatPeriodRange,
 } from "@/lib/contractPeriods";
+import { useAuth } from "@/contexts/AuthContext";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -38,7 +39,12 @@ interface ConfirmData {
 
 export default function PaymentsPayablePage() {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [periodByContract, setPeriodByContract] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (role === "team") navigate("/dashboard", { replace: true });
+  }, [role, navigate]);
   const [showOnlyActive, setShowOnlyActive] = useState(true);
   const [confirm, setConfirm] = useState<ConfirmData | null>(null);
   const [saving, setSaving] = useState(false);
