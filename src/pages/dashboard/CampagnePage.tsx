@@ -44,11 +44,11 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
   const [name, setName] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientCpm, setClientCpm] = useState("2.00");
-  const [clientFixed, setClientFixed] = useState("200.00");
+  const [clientFixed, setClientFixed] = useState("0.00");
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [notes, setNotes] = useState("");
-  const [plannedCreators, setPlannedCreators] = useState("1");
+  const [minMonthlyVideos, setMinMonthlyVideos] = useState("0");
   const [videoViewsCap, setVideoViewsCap] = useState("");
   const [monthlySpendCap, setMonthlySpendCap] = useState("");
 
@@ -56,19 +56,18 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
     mutationFn: async () => {
       if (!name || !clientName || !startDate) throw new Error("Compila i campi obbligatori");
       const startStr = format(startDate, "yyyy-MM-dd");
-      const parsedPlanned = parseInt(plannedCreators);
-      const numPlanned = Math.max(1, isNaN(parsedPlanned) ? 1 : parsedPlanned);
       const parsedViewsCap = videoViewsCap.trim() ? parseInt(videoViewsCap) : null;
       const parsedSpendCap = monthlySpendCap.trim() ? parseFloat(monthlySpendCap) : null;
+      const fixedVal = isNaN(parseFloat(clientFixed)) ? 0 : parseFloat(clientFixed);
       const { data: newCamp, error } = await supabase.from("campaigns").insert({
         name,
         client_name: clientName,
         client_cpm: isNaN(parseFloat(clientCpm)) ? 2 : parseFloat(clientCpm),
-        client_fixed_per_creator: isNaN(parseFloat(clientFixed)) ? 200 : parseFloat(clientFixed),
+        client_fixed: fixedVal,
         start_date: startStr,
         end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
         notes: notes || null,
-        planned_creators: numPlanned,
+        min_monthly_videos: isNaN(parseInt(minMonthlyVideos)) ? 0 : parseInt(minMonthlyVideos),
         video_views_cap: parsedViewsCap,
         monthly_spend_cap: parsedSpendCap,
       } as any).select().single();
@@ -86,8 +85,7 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
       if (cycleErr) throw cycleErr;
 
       // Create client payment for cycle 1 (fixed only, 0 CPM)
-      const fixedPerCreator = isNaN(parseFloat(clientFixed)) ? 200 : parseFloat(clientFixed);
-      const fixedTotal = fixedPerCreator * numPlanned;
+      const fixedTotal = fixedVal;
       await supabase.from("client_payments").insert({
         campaign_id: newCamp.id,
         cycle_id: cycle.id,
@@ -106,8 +104,8 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
       qc.invalidateQueries({ queryKey: ["campaign-table"] });
       qc.invalidateQueries({ queryKey: ["active-campaigns-count"] });
       onOpenChange(false);
-      setName(""); setClientName(""); setClientCpm("2.00"); setClientFixed("200.00");
-      setStartDate(undefined); setEndDate(undefined); setNotes(""); setPlannedCreators("1");
+      setName(""); setClientName(""); setClientCpm("2.00"); setClientFixed("0.00");
+      setStartDate(undefined); setEndDate(undefined); setNotes(""); setMinMonthlyVideos("0");
       setVideoViewsCap(""); setMonthlySpendCap("");
     },
     onError: (e: Error) => {
@@ -136,7 +134,7 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
               <Input type="number" step="0.01" value={clientCpm} onChange={(e) => setClientCpm(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Fisso per Creator (€)</Label>
+              <Label>Fisso mensile (€, totale campagna)</Label>
               <Input type="number" step="0.01" value={clientFixed} onChange={(e) => setClientFixed(e.target.value)} />
             </div>
           </div>
@@ -171,8 +169,8 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label>N° creator previsti</Label>
-            <Input type="number" min="1" step="1" value={plannedCreators} onChange={(e) => setPlannedCreators(e.target.value)} />
+            <Label>Video minimi al mese</Label>
+            <Input type="number" min="0" step="1" value={minMonthlyVideos} onChange={(e) => setMinMonthlyVideos(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
