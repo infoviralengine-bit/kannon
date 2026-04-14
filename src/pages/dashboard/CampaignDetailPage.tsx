@@ -813,6 +813,7 @@ export default function CampaignDetailPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const { role } = useAuth();
+  const isTeam = role === "team";
 
   const campaignId = id!;
   const { data: campaign, isLoading: campLoading } = useCampaignDetail(campaignId);
@@ -948,8 +949,8 @@ export default function CampaignDetailPage() {
           ) : (
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-                <StatItem label="CPM Cliente" value={formatCurrency(campaign.client_cpm ?? 0)} sub="per 1.000 views" />
-                <StatItem label="Fisso mensile" value={formatCurrency(campaign.client_fixed ?? 0)} sub="totale campagna" />
+                {!isTeam && <StatItem label="CPM Cliente" value={formatCurrency(campaign.client_cpm ?? 0)} sub="per 1.000 views" />}
+                {!isTeam && <StatItem label="Fisso mensile" value={formatCurrency(campaign.client_fixed ?? 0)} sub="totale campagna" />}
                 <StatItem label="Video minimi/mese" value={String(campAny.min_monthly_videos ?? 0)} />
                 <StatItem label="Durata" value={`${format(new Date(campaign.start_date), "dd/MM/yy")} → ${campaign.end_date ? format(new Date(campaign.end_date), "dd/MM/yy") : "∞"}`} />
                 <StatItem label="Cap per video" value={videoViewsCap != null ? `${formatViews(videoViewsCap)}` : "—"} sub={videoViewsCap != null ? "views max" : "nessun limite"} />
@@ -1013,8 +1014,8 @@ export default function CampaignDetailPage() {
               </div>
               <StatItem label="Video / mese" value={String(kpi.data?.monthVideoCount ?? 0)} />
               <StatItem label="Video totali" value={String(kpi.data?.totalVideoCount ?? 0)} />
-              <StatItem label="Entrata CPM" value={formatCurrency(margin.data?.cpmRevenue ?? 0)} accent />
-              <StatItem label="Margine CPM" value={formatCurrency(margin.data?.cpmMargin ?? 0)} sub={`costo: ${formatCurrency(margin.data?.cpmCost ?? 0)}`} />
+              {!isTeam && <StatItem label="Entrata CPM" value={formatCurrency(margin.data?.cpmRevenue ?? 0)} accent />}
+              {!isTeam && <StatItem label="Margine CPM" value={formatCurrency(margin.data?.cpmMargin ?? 0)} sub={`costo: ${formatCurrency(margin.data?.cpmCost ?? 0)}`} />}
               <StatItem label="Creator attivi" value={String(kpi.data?.creatorCount ?? 0)} />
             </div>
           )}

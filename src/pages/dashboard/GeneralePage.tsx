@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import PipelineCreator from "@/components/dashboard/PipelineCreator";
 import { useNavigate } from "react-router-dom";
 import {
@@ -150,6 +151,8 @@ function KpiPeriodSelector({ value, onChange }: { value: number | undefined; onC
 /* ─── Main Page ─── */
 export default function GeneralePage() {
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const isTeam = role === "team";
   const [chartDays, setChartDays] = useState(30);
   const [kpiPeriod, setKpiPeriod] = useState<number | undefined>(30);
 
@@ -179,55 +182,59 @@ export default function GeneralePage() {
       </div>
 
       {/* ROW 1 — Financial KPIs */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-[#94a3b8]">KPI Finanziari</span>
-        <KpiPeriodSelector value={kpiPeriod} onChange={setKpiPeriod} />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiFinancialCard
-          label="Entrate Fisse"
-          icon={TrendingUp}
-          value={kpi?.fixedIncome ?? 0}
-          accentClass="text-emerald-400"
-          loading={kpiLoading}
-        />
-        <KpiFinancialCard
-          label="Uscite Fisse"
-          icon={TrendingDown}
-          value={kpi?.fixedExpense ?? 0}
-          accentClass="text-red-400"
-          loading={kpiLoading}
-        />
-        <KpiFinancialCard
-          label="Margine CPM"
-          icon={DollarSign}
-          value={kpi?.cpmMargin ?? 0}
-          accentClass="text-[#a78bfa]"
-          loading={kpiLoading}
-        />
-        <KpiFinancialCard
-          label="Margine Totale"
-          icon={DollarSign}
-          value={(kpi?.fixedIncome ?? 0) - (kpi?.fixedExpense ?? 0) + (kpi?.cpmMargin ?? 0)}
-          accentClass="text-amber-400"
-          loading={kpiLoading}
-        />
-      </div>
-
-      {/* CPM detail bar */}
-      {!kpiLoading && kpi && kpi.clientCpmTotal > 0 && (
-        <div className="flex items-center gap-3 px-1">
-          <span className="text-xs text-[#64748b]">CPM Margin</span>
-          <div className="flex-1 h-1.5 rounded-full bg-[#1a1a28] overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] transition-all duration-700"
-              style={{ width: `${Math.max(0, Math.min(100, (kpi.cpmMargin / kpi.clientCpmTotal) * 100))}%` }}
+      {!isTeam && (
+        <>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-[#94a3b8]">KPI Finanziari</span>
+            <KpiPeriodSelector value={kpiPeriod} onChange={setKpiPeriod} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiFinancialCard
+              label="Entrate Fisse"
+              icon={TrendingUp}
+              value={kpi?.fixedIncome ?? 0}
+              accentClass="text-emerald-400"
+              loading={kpiLoading}
+            />
+            <KpiFinancialCard
+              label="Uscite Fisse"
+              icon={TrendingDown}
+              value={kpi?.fixedExpense ?? 0}
+              accentClass="text-red-400"
+              loading={kpiLoading}
+            />
+            <KpiFinancialCard
+              label="Margine CPM"
+              icon={DollarSign}
+              value={kpi?.cpmMargin ?? 0}
+              accentClass="text-[#a78bfa]"
+              loading={kpiLoading}
+            />
+            <KpiFinancialCard
+              label="Margine Totale"
+              icon={DollarSign}
+              value={(kpi?.fixedIncome ?? 0) - (kpi?.fixedExpense ?? 0) + (kpi?.cpmMargin ?? 0)}
+              accentClass="text-amber-400"
+              loading={kpiLoading}
             />
           </div>
-          <span className="text-xs font-medium text-[#a78bfa]">
-            {((kpi.cpmMargin / kpi.clientCpmTotal) * 100).toFixed(1)}%
-          </span>
-        </div>
+
+          {/* CPM detail bar */}
+          {!kpiLoading && kpi && kpi.clientCpmTotal > 0 && (
+            <div className="flex items-center gap-3 px-1">
+              <span className="text-xs text-[#64748b]">CPM Margin</span>
+              <div className="flex-1 h-1.5 rounded-full bg-[#1a1a28] overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] transition-all duration-700"
+                  style={{ width: `${Math.max(0, Math.min(100, (kpi.cpmMargin / kpi.clientCpmTotal) * 100))}%` }}
+                />
+              </div>
+              <span className="text-xs font-medium text-[#a78bfa]">
+                {((kpi.cpmMargin / kpi.clientCpmTotal) * 100).toFixed(1)}%
+              </span>
+            </div>
+          )}
+        </>
       )}
 
       {/* Pipeline Creator */}
@@ -362,15 +369,17 @@ export default function GeneralePage() {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-3 gap-3 pt-2 border-t border-[#1e1e2e]">
+                    <div className={`grid ${isTeam ? 'grid-cols-2' : 'grid-cols-3'} gap-3 pt-2 border-t border-[#1e1e2e]`}>
                       <div>
                         <p className="text-[10px] text-[#64748b] uppercase">Views</p>
                         <p className="text-sm font-semibold text-[#f8fafc]">{formatViews(c.viewsMonth)}</p>
                       </div>
-                      <div>
-                        <p className="text-[10px] text-[#64748b] uppercase">Entrata</p>
-                        <p className="text-sm font-semibold text-emerald-400">{formatCurrency(c.revenueMonth)}</p>
-                      </div>
+                      {!isTeam && (
+                        <div>
+                          <p className="text-[10px] text-[#64748b] uppercase">Entrata</p>
+                          <p className="text-sm font-semibold text-emerald-400">{formatCurrency(c.revenueMonth)}</p>
+                        </div>
+                      )}
                       <div>
                         <p className="text-[10px] text-[#64748b] uppercase">Creator</p>
                         <p className="text-sm font-semibold text-[#f8fafc]">{c.creatorCount}</p>
