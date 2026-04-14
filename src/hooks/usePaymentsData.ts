@@ -29,10 +29,8 @@ export interface ClientPaymentRow {
   cycleEndDate: string;
   isLastCycle: boolean;
   isFirstCycle: boolean;
-  clientFixedPerCreator: number;
+  clientFixed: number;
   clientCpm: number;
-  creatorCount: number;
-  plannedCreators: number;
 }
 
 export function useClientPayments(filterMonth?: number, filterYear?: number) {
@@ -46,25 +44,19 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       if (error) throw error;
 
       const campIds = [...new Set((payments ?? []).map((p) => p.campaign_id))];
-      let campMap = new Map<string, { name: string; client_name: string; client_fixed_per_creator: number; client_cpm: number; planned_creators: number; video_views_cap: number | null; monthly_spend_cap: number | null }>();
-      let creatorCountMap = new Map<string, number>();
+      let campMap = new Map<string, { name: string; client_name: string; client_fixed: number; client_cpm: number; video_views_cap: number | null; monthly_spend_cap: number | null }>();
 
       if (campIds.length) {
-        const [{ data: camps }, { data: ccRows }] = await Promise.all([
-          supabase.from("campaigns").select("id, name, client_name, client_fixed_per_creator, client_cpm, planned_creators, video_views_cap, monthly_spend_cap").in("id", campIds),
-          supabase.from("campaign_creators").select("campaign_id").in("campaign_id", campIds),
+        const [{ data: camps }] = await Promise.all([
+          supabase.from("campaigns").select("id, name, client_name, client_fixed, client_cpm, video_views_cap, monthly_spend_cap").in("id", campIds),
         ]);
         (camps ?? []).forEach((c) => campMap.set(c.id, {
           name: c.name, client_name: c.client_name,
-          client_fixed_per_creator: Number(c.client_fixed_per_creator ?? 200),
+          client_fixed: Number(c.client_fixed ?? 0),
           client_cpm: Number(c.client_cpm ?? 2),
-          planned_creators: c.planned_creators ?? 1,
           video_views_cap: (c as any).video_views_cap as number | null,
           monthly_spend_cap: (c as any).monthly_spend_cap as number | null,
         }));
-        (ccRows ?? []).forEach((r) => {
-          creatorCountMap.set(r.campaign_id, (creatorCountMap.get(r.campaign_id) ?? 0) + 1);
-        });
       }
 
       // Fetch all cycles for these campaigns
@@ -123,9 +115,8 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
         const totalLiveViews = liveViewsByCampaign.get(campId) ?? 0;
         const prevPaidCumulative = lastPaidCumulativeBycamp.get(campId) ?? 0;
         const totalNewViews = Math.max(0, totalLiveViews - prevPaidCumulative);
-        const creatorCount = camp?.planned_creators ?? 1;
         const clientCpm = camp?.client_cpm ?? 2;
-        const clientFixed = camp?.client_fixed_per_creator ?? 200;
+        const clientFixed = camp?.client_fixed ?? 0;
         const spendCap = camp?.monthly_spend_cap ?? null;
 
         // If there's only one unpaid cycle, all new views go to it
@@ -146,7 +137,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
             // This is the current/latest unpaid cycle — recalculate with live views
             const prevCyclesCpmViews = unpaidList.slice(0, idx).reduce((s, up) => s + up.cpm_views, 0);
             const cpmViews = Math.max(0, totalNewViews - prevCyclesCpmViews);
-            const fixedAmount = isLast ? 0 : clientFixed * creatorCount;
+            const fixedAmount = isLast ? 0 : clientFixed;
             let cpmAmount = clientCpm * (cpmViews / 1000);
             // Cap applies only to CPM, fixed is always added on top
             if (spendCap != null && cpmAmount > spendCap) cpmAmount = spendCap;
@@ -175,7 +166,6 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
         const monthIdx = dd.getMonth();
         const yr = dd.getFullYear();
         const cycle = cycleMap.get(p.cycle_id);
-        const realCreators = creatorCountMap.get(p.campaign_id) ?? 0;
 
         // Use recalculated values for unpaid payments, stored values for paid ones
         const recalc = recalculated.get(p.id);
@@ -206,11 +196,9 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           cycleEndDate: cycle?.cycle_end_date ?? dueDate,
           isLastCycle: cycle?.is_last_cycle ?? false,
           isFirstCycle: p.cycle_number === 1 && cpmViews === 0,
-          clientFixedPerCreator: camp?.client_fixed_per_creator ?? 200,
-          clientCpm: camp?.client_cpm ?? 2,
-          creatorCount: camp?.planned_creators ?? 1,
-          plannedCreators: camp?.planned_creators ?? 1,
-        };
+            clientFixed: camp?.client_fixed ?? 0,
+            clientCpm: camp?.client_cpm ?? 2,
+          };
       });
     },
   });
