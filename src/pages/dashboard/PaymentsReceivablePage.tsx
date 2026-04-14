@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,6 +11,7 @@ import { CappedBadge } from "@/components/CappedViewsBadge";
 import {
   useClientPayments, type ClientPaymentRow,
 } from "@/hooks/usePaymentsData";
+import { useAuth } from "@/contexts/AuthContext";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,7 +23,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 
 export default function PaymentsReceivablePage() {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const { data, isLoading } = useClientPayments();
+
+  useEffect(() => {
+    if (role === "team") navigate("/dashboard", { replace: true });
+  }, [role, navigate]);
   const { toast } = useToast();
   const qc = useQueryClient();
   const [confirm, setConfirm] = useState<ClientPaymentRow | null>(null);

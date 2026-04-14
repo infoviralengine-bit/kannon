@@ -72,6 +72,14 @@ export function AppSidebar() {
   const isOutreach = role === "outreach";
   const isCloser = role === "closer";
   const isCampaignManager = role === "campaign_manager";
+  const isTeam = role === "team";
+
+  const visibleClientiItems = isTeam
+    ? clientiItems.filter((i) => i.url !== "/dashboard/payments-receivable")
+    : clientiItems;
+  const visibleCreatorItems = isTeam
+    ? creatorItems.filter((i) => i.url !== "/dashboard/payments-payable")
+    : creatorItems;
 
   const allAltroItems = role === "admin"
     ? [...altroItems, { title: "Impostazioni", url: "/dashboard/settings", icon: Settings }]
@@ -139,14 +147,14 @@ export function AppSidebar() {
             <SidebarGroup>
               <SidebarGroupLabel>Clienti</SidebarGroupLabel>
               <SidebarGroupContent>
-                {renderMenuItems(clientiItems)}
+                {renderMenuItems(visibleClientiItems)}
               </SidebarGroupContent>
             </SidebarGroup>
 
             <SidebarGroup>
               <SidebarGroupLabel>Creator</SidebarGroupLabel>
               <SidebarGroupContent>
-                {renderMenuItems(creatorItems)}
+                {renderMenuItems(visibleCreatorItems)}
               </SidebarGroupContent>
             </SidebarGroup>
 
