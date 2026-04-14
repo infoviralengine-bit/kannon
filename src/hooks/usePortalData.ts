@@ -208,9 +208,9 @@ export function useClientAreaData() {
           status: string;
           start_date: string;
           end_date: string | null;
-          planned_creators: number;
           client_cpm: number | null;
-          client_fixed_per_creator: number | null;
+          client_fixed: number | null;
+          min_monthly_videos: number | null;
           video_views_cap: number | null;
           monthly_spend_cap: number | null;
         };
