@@ -53,48 +53,48 @@ export type Database = {
       campaigns: {
         Row: {
           client_cpm: number | null
-          client_fixed_per_creator: number | null
+          client_fixed: number | null
           client_name: string
           client_profile_id: string | null
           created_at: string
           end_date: string | null
           id: string
+          min_monthly_videos: number | null
           monthly_spend_cap: number | null
           name: string
           notes: string | null
-          planned_creators: number
           start_date: string
           status: string
           video_views_cap: number | null
         }
         Insert: {
           client_cpm?: number | null
-          client_fixed_per_creator?: number | null
+          client_fixed?: number | null
           client_name: string
           client_profile_id?: string | null
           created_at?: string
           end_date?: string | null
           id?: string
+          min_monthly_videos?: number | null
           monthly_spend_cap?: number | null
           name: string
           notes?: string | null
-          planned_creators?: number
           start_date: string
           status?: string
           video_views_cap?: number | null
         }
         Update: {
           client_cpm?: number | null
-          client_fixed_per_creator?: number | null
+          client_fixed?: number | null
           client_name?: string
           client_profile_id?: string | null
           created_at?: string
           end_date?: string | null
           id?: string
+          min_monthly_videos?: number | null
           monthly_spend_cap?: number | null
           name?: string
           notes?: string | null
-          planned_creators?: number
           start_date?: string
           status?: string
           video_views_cap?: number | null
