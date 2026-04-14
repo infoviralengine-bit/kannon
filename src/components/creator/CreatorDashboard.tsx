@@ -5,6 +5,7 @@ import { Eye, Video, TrendingUp, Smartphone, FileText, CheckCircle, XCircle } fr
 import { AccountStats, EarningsData } from "@/hooks/useCreatorPortal";
 import { formatCurrency, formatViews } from "@/lib/format";
 import CreatorVideoList, { CreatorVideo } from "./CreatorVideoList";
+import { TikTokLink } from "@/components/TikTokLink";
 
 interface Props {
   accountStats: AccountStats[];

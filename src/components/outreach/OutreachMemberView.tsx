@@ -11,6 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Send, MessageSquare, TrendingUp, Smartphone, Pencil, FileText, Copy, Check, Trash2, UserPlus, Calendar, Phone, Video, MessageCircle, Clock, CheckCircle, XCircle, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
+import { cleanUsername } from "@/lib/utils";
+import { TikTokLink } from "@/components/TikTokLink";
 import {
   useOutreachAccounts,
   useAddOutreachAccount,

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Minus, ArrowUp, ArrowDown, Eye, Users, FileText, DollarSign, ExternalLink } from "lucide-react";
+import { cleanUsername } from "@/lib/utils";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   Area, AreaChart,

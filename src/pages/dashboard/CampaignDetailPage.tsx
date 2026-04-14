@@ -7,7 +7,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { cn, cleanUsername } from "@/lib/utils";
+import { TikTokLink } from "@/components/TikTokLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatViews, formatCurrency } from "@/lib/format";

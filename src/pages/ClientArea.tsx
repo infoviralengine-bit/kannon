@@ -13,6 +13,7 @@ import {
   CalendarDays, AtSign, ExternalLink, BarChart3, Wallet,
 } from "lucide-react";
 import { formatViews, formatCurrency } from "@/lib/format";
+import { TikTokLink } from "@/components/TikTokLink";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip,
   ResponsiveContainer, CartesianGrid,

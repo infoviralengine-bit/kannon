@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { formatViews, formatCurrency } from "@/lib/format";
+import { cleanUsername } from "@/lib/utils";
+import { TikTokLink } from "@/components/TikTokLink";
 import { format } from "date-fns";
 import { getWindowStatus, getWindowDaysRemaining } from "@/lib/videoWindow";
 

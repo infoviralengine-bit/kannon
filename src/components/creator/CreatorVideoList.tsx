@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Video, Eye, Heart, MessageCircle, Clock, CheckCircle, ExternalLink } from "lucide-react";
 import { formatViews } from "@/lib/format";
+import { cleanUsername } from "@/lib/utils";
 
 export interface CreatorVideo {
   id: string;

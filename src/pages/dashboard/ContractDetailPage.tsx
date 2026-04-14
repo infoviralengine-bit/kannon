@@ -5,6 +5,7 @@ import { FileText, Plus, Trash2, ChevronRight, ChevronLeft, Pencil, AlertTriangl
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatViews } from "@/lib/format";
+import { TikTokLink } from "@/components/TikTokLink";
 import {
   useContractDetail, useContractCampaigns, useContractCreators,
   useActiveCampaignsForSelect, useActiveCreatorsForSelect,

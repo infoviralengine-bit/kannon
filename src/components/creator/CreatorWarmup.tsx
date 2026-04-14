@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, AlertTriangle, Flame } from "lucide-react";
 import { WarmupAccount, useCompleteWarmupDay } from "@/hooks/useCreatorPortal";
 import { toast } from "sonner";
+import { TikTokLink } from "@/components/TikTokLink";
 
 const CHECKLIST = [
   "Ho seguito almeno 40 creator della mia nicchia",

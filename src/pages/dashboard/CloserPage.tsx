@@ -13,6 +13,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TikTokLink } from "@/components/TikTokLink";
 import {
   Phone, CheckCircle, XCircle, Link as LinkIcon, Copy, Clock, Calendar,
   MessageCircle, Video, ExternalLink, HelpCircle, Pencil, ChevronDown,
