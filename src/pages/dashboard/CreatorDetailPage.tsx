@@ -269,7 +269,7 @@ export default function CreatorDetailPage() {
                   <TableBody>
                     {accounts.map(a => (
                       <TableRow key={a.accountId}>
-                        <TableCell className="font-medium">@{a.username}</TableCell>
+                        <TableCell className="font-medium"><TikTokLink username={a.username} /></TableCell>
                         <TableCell><Badge variant="outline">{a.accountType === "creator" ? "Creator" : "Outreach"}</Badge></TableCell>
                         <TableCell>{a.campaignName}</TableCell>
                         <TableCell className="text-right">{a.todayVideos}</TableCell>

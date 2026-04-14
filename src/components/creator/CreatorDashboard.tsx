@@ -150,14 +150,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
             <Card key={acc.id}>
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <a
-                    href={`https://www.tiktok.com/@${acc.username}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-semibold text-primary hover:underline"
-                  >
-                    @{acc.username}
-                  </a>
+                  <TikTokLink username={acc.username} className="font-semibold" />
                   <Badge variant="default">Attivo</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">{acc.campaignName}</p>

@@ -214,7 +214,7 @@ function LeadCard({
             <div className="flex items-center gap-2 text-sm">
               <AtSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <span className="text-xs text-muted-foreground">TikTok:</span>
-              <span className="text-xs text-foreground">@{lead.tiktok_username}</span>
+              <TikTokLink username={lead.tiktok_username} className="text-xs" />
             </div>
           )}
 

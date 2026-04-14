@@ -342,7 +342,7 @@ export default function AccountPage() {
           <DialogHeader>
             <DialogTitle>Elimina Account</DialogTitle>
             <DialogDescription>
-              Sei sicuro di voler eliminare <strong>@{deleteTarget?.username?.replace(/^@/, '')}</strong>? Verranno eliminati anche tutti i video e le statistiche di outreach associate. Questa azione è irreversibile.
+              Sei sicuro di voler eliminare <strong>@{cleanUsername(deleteTarget?.username)}</strong>? Verranno eliminati anche tutti i video e le statistiche di outreach associate. Questa azione è irreversibile.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -414,7 +414,7 @@ function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigat
                   const videosToday = getVideosToday(a.id);
                   return (
                     <TableRow key={a.id}>
-                      <TableCell className="font-medium pl-6">@{a.username?.replace(/^@/, '')}</TableCell>
+                      <TableCell className="font-medium pl-6"><TikTokLink username={a.username} /></TableCell>
                       <TableCell>{campaign?.name || "—"}</TableCell>
                       <TableCell className="text-right">{videosToday}</TableCell>
                       <TableCell className="text-right">{formatViews(getTotalViews(a.id))}</TableCell>
@@ -459,7 +459,7 @@ function OutreachTable({ accounts, getOutreachToday, getOutreachMonth, navigate,
             const dmMonth = getOutreachMonth(a.id);
             return (
               <TableRow key={a.id}>
-                <TableCell className="font-medium">@{a.username?.replace(/^@/, '')}</TableCell>
+                <TableCell className="font-medium"><TikTokLink username={a.username} /></TableCell>
                 <TableCell className="text-right">{dm}</TableCell>
                 <TableCell className="text-right">{replies}</TableCell>
                 <TableCell className="text-right">{rate}%</TableCell>

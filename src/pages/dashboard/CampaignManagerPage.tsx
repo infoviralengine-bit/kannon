@@ -313,12 +313,12 @@ export default function CampaignManagerPage() {
                 <TableRow key={v.videoId}>
                   <TableCell>
                     <a
-                      href={`https://www.tiktok.com/@${v.username}/video/${v.tiktokVideoId}`}
+                      href={`https://www.tiktok.com/@${cleanUsername(v.username)}/video/${v.tiktokVideoId}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1.5 text-sm text-primary hover:underline"
                     >
-                      @{v.username}
+                      @{cleanUsername(v.username)}
                       <ExternalLink className="h-3 w-3 shrink-0" />
                     </a>
                   </TableCell>

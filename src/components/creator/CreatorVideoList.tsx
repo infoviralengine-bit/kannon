@@ -78,12 +78,12 @@ export default function CreatorVideoList({ videos, monthLabel }: Props) {
               <div key={accId}>
                 <div className="flex items-center gap-2 mb-2">
                   <a
-                    href={`https://www.tiktok.com/@${username}`}
+                    href={`https://www.tiktok.com/@${cleanUsername(username)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
                   >
-                    @{username}
+                    @{cleanUsername(username)}
                     <ExternalLink className="h-3 w-3" />
                   </a>
                   <span className="text-xs text-muted-foreground">

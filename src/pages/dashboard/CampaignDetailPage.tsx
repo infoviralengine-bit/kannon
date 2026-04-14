@@ -1056,7 +1056,7 @@ export default function CampaignDetailPage() {
               <TableBody>
               {accounts.data.map((a) => (
                   <TableRow key={a.accountId}>
-                    <TableCell className="font-medium">@{a.username}</TableCell>
+                    <TableCell className="font-medium"><TikTokLink username={a.username} /></TableCell>
                     <TableCell>{a.creatorName}</TableCell>
                     <TableCell className="text-right">{a.todayVideos}</TableCell>
                     <TableCell className="text-right">{formatViews(a.totalViews)}</TableCell>

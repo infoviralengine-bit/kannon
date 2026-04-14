@@ -364,19 +364,10 @@ export default function ClientArea() {
                 </TableHeader>
                 <TableBody>
                   {data.accounts.map((acc) => {
-                    const cleanUsername = acc.username.replace(/^@/, '');
                     return (
                     <TableRow key={acc.username} className="group">
                       <TableCell>
-                        <a
-                          href={`https://www.tiktok.com/@${cleanUsername}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline transition-colors"
-                        >
-                          @{cleanUsername}
-                          <ExternalLink className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </a>
+                        <TikTokLink username={acc.username} />
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{formatViews(acc.views_30d)}</TableCell>
                       <TableCell className="text-right tabular-nums">{acc.total_videos}</TableCell>
