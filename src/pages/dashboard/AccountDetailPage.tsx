@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { formatViews, formatCurrency } from "@/lib/format";
+import { cleanUsername } from "@/lib/utils";
+import { TikTokLink } from "@/components/TikTokLink";
 import { format } from "date-fns";
 import { getWindowStatus, getWindowDaysRemaining } from "@/lib/videoWindow";
 
@@ -48,12 +50,12 @@ export default function AccountDetailPage() {
         <BreadcrumbList>
           <BreadcrumbItem><BreadcrumbLink asChild><Link to="/dashboard/accounts">Account</Link></BreadcrumbLink></BreadcrumbItem>
           <BreadcrumbSeparator />
-          <BreadcrumbItem><BreadcrumbPage>@{data.account.username}</BreadcrumbPage></BreadcrumbItem>
+          <BreadcrumbItem><BreadcrumbPage>@{cleanUsername(data.account.username)}</BreadcrumbPage></BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
       <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-bold">@{data.account.username}</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><TikTokLink username={data.account.username} className="text-2xl" /></h1>
         <Badge variant={isCreator ? "default" : "secondary"}>
           {isCreator ? "Creator" : "Outreach"}
         </Badge>
@@ -232,7 +234,7 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
                   <TableRow key={v.id}>
                     <TableCell>
                       <a
-                        href={`https://www.tiktok.com/@${data.account?.username}/video/${v.tiktok_video_id}`}
+                        href={`https://www.tiktok.com/@${cleanUsername(data.account?.username)}/video/${v.tiktok_video_id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-primary hover:underline inline-flex items-center gap-1"

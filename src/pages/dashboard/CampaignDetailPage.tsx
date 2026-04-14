@@ -7,7 +7,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { cn, cleanUsername } from "@/lib/utils";
+import { TikTokLink } from "@/components/TikTokLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatViews, formatCurrency } from "@/lib/format";
@@ -1056,7 +1057,7 @@ export default function CampaignDetailPage() {
               <TableBody>
               {accounts.data.map((a) => (
                   <TableRow key={a.accountId}>
-                    <TableCell className="font-medium">@{a.username}</TableCell>
+                    <TableCell className="font-medium"><TikTokLink username={a.username} /></TableCell>
                     <TableCell>{a.creatorName}</TableCell>
                     <TableCell className="text-right">{a.todayVideos}</TableCell>
                     <TableCell className="text-right">{formatViews(a.totalViews)}</TableCell>

@@ -11,6 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Send, MessageSquare, TrendingUp, Smartphone, Pencil, FileText, Copy, Check, Trash2, UserPlus, Calendar, Phone, Video, MessageCircle, Clock, CheckCircle, XCircle, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
+import { cleanUsername } from "@/lib/utils";
+import { TikTokLink } from "@/components/TikTokLink";
 import {
   useOutreachAccounts,
   useAddOutreachAccount,
@@ -222,7 +224,7 @@ export function OutreachMemberView() {
                   <SelectTrigger><SelectValue placeholder="Seleziona account" /></SelectTrigger>
                   <SelectContent>
                     {activeAccounts.map(a => (
-                      <SelectItem key={a.id} value={a.id}>@{a.username}</SelectItem>
+<SelectItem key={a.id} value={a.id}>@{cleanUsername(a.username)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -365,7 +367,7 @@ export function OutreachMemberView() {
           <SelectContent>
             <SelectItem value="all">Tutti gli account</SelectItem>
             {accounts.map(a => (
-              <SelectItem key={a.id} value={a.id}>@{a.username}</SelectItem>
+              <SelectItem key={a.id} value={a.id}>@{cleanUsername(a.username)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -397,7 +399,7 @@ export function OutreachMemberView() {
                 <div key={acc.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-secondary/50">
                   <div className="flex items-center gap-2">
                     <Smartphone className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-foreground">@{acc.username}</span>
+                    <TikTokLink username={acc.username} className="text-sm font-medium" />
                     {!acc.is_active && <Badge variant="secondary" className="text-xs">Disattivato</Badge>}
                   </div>
                   <Switch
@@ -468,7 +470,7 @@ export function OutreachMemberView() {
                   <div key={s.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-secondary/30">
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-muted-foreground w-20">{format(new Date(s.date), "dd/MM/yyyy")}</span>
-                      <span className="text-sm text-foreground">@{acc?.username ?? "?"}</span>
+                      <TikTokLink username={acc?.username} className="text-sm" />
                       {tpl && <Badge variant="outline" className="text-xs">{tpl.name}</Badge>}
                     </div>
                     <div className="flex items-center gap-3 text-sm">

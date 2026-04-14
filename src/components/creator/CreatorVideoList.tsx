@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Video, Eye, Heart, MessageCircle, Clock, CheckCircle, ExternalLink } from "lucide-react";
 import { formatViews } from "@/lib/format";
+import { cleanUsername } from "@/lib/utils";
 
 export interface CreatorVideo {
   id: string;
@@ -78,12 +79,12 @@ export default function CreatorVideoList({ videos, monthLabel }: Props) {
               <div key={accId}>
                 <div className="flex items-center gap-2 mb-2">
                   <a
-                    href={`https://www.tiktok.com/@${username}`}
+                    href={`https://www.tiktok.com/@${cleanUsername(username)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm font-medium text-primary hover:underline flex items-center gap-1"
                   >
-                    @{username}
+                    @{cleanUsername(username)}
                     <ExternalLink className="h-3 w-3" />
                   </a>
                   <span className="text-xs text-muted-foreground">

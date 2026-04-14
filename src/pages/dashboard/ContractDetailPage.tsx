@@ -5,6 +5,7 @@ import { FileText, Plus, Trash2, ChevronRight, ChevronLeft, Pencil, AlertTriangl
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatViews } from "@/lib/format";
+import { TikTokLink } from "@/components/TikTokLink";
 import {
   useContractDetail, useContractCampaigns, useContractCreators,
   useActiveCampaignsForSelect, useActiveCreatorsForSelect,
@@ -501,7 +502,7 @@ export default function ContractDetailPage() {
                       <TableBody>
                         {cr.accounts.map((acc) => (
                           <TableRow key={acc.accountId}>
-                            <TableCell className="font-medium">@{acc.username}</TableCell>
+                            <TableCell className="font-medium"><TikTokLink username={acc.username} /></TableCell>
                             <TableCell>
                               <Select
                                 value={acc.campaignId ?? "__none__"}

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, AlertTriangle, Flame } from "lucide-react";
 import { WarmupAccount, useCompleteWarmupDay } from "@/hooks/useCreatorPortal";
 import { toast } from "sonner";
+import { TikTokLink } from "@/components/TikTokLink";
 
 const CHECKLIST = [
   "Ho seguito almeno 40 creator della mia nicchia",
@@ -34,7 +35,7 @@ function WarmupCard({ account }: { account: WarmupAccount }) {
         <CardContent className="p-5 flex items-center gap-3">
           <CheckCircle className="h-6 w-6 text-green-500 shrink-0" />
           <div>
-            <p className="font-semibold">@{account.username}</p>
+            <TikTokLink username={account.username} className="font-semibold" />
             <p className="text-sm text-green-400">Account pronto ✅</p>
             <p className="text-xs text-muted-foreground">{account.campaignName}</p>
           </div>
@@ -49,7 +50,7 @@ function WarmupCard({ account }: { account: WarmupAccount }) {
         <CardContent className="p-5 space-y-2">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
-            <p className="font-semibold">@{account.username}</p>
+            <TikTokLink username={account.username} className="font-semibold" />
           </div>
           <p className="text-xs text-muted-foreground">{account.campaignName}</p>
           <p className="text-sm text-warning">
@@ -85,7 +86,7 @@ function WarmupCard({ account }: { account: WarmupAccount }) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-base">@{account.username}</CardTitle>
+            <CardTitle className="text-base"><TikTokLink username={account.username} /></CardTitle>
             <p className="text-xs text-muted-foreground mt-0.5">{account.campaignName}</p>
           </div>
           <Badge variant="secondary" className="gap-1">
