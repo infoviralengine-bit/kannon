@@ -241,7 +241,9 @@ export function useContractCreators(contractId: string, selectedPeriod?: number)
           id: linkMap.get(cr.id) ?? "",
           creatorId: cr.id,
           name: cr.name,
-          accounts: crAccounts.map((a) => ({
+          accounts: crAccounts
+            .filter((a) => !a.campaign_id || campIdSet.has(a.campaign_id))
+            .map((a) => ({
             accountId: a.id,
             username: a.username,
             campaignId: a.campaign_id,
