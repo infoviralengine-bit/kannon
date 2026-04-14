@@ -4,6 +4,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { Plus, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { formatViews, formatCurrency } from "@/lib/format";
 import { useCampaignTable } from "@/hooks/useDashboardData";
 import { format } from "date-fns";
@@ -198,6 +199,8 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
 export default function CampagnePage() {
   const navigate = useNavigate();
   const { data: campaigns, isLoading } = useCampaignTable();
+  const { role } = useAuth();
+  const isTeam = role === "team";
   const [filter, setFilter] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -244,7 +247,7 @@ export default function CampagnePage() {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Views Totali</TableHead>
-                  <TableHead className="text-right">Revenue Mese</TableHead>
+                  {!isTeam && <TableHead className="text-right">Revenue Mese</TableHead>}
                   <TableHead className="text-right">Creator</TableHead>
                   <TableHead />
                 </TableRow>
@@ -258,7 +261,7 @@ export default function CampagnePage() {
                       <Badge className={statusColor[c.status] ?? ""}>{statusLabel[c.status] ?? c.status}</Badge>
                     </TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(c.revenue)}</TableCell>
+                    {!isTeam && <TableCell className="text-right">{formatCurrency(c.revenue)}</TableCell>}
                     <TableCell className="text-right">{c.creatorCount}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/campaigns/${c.id}`)}>
