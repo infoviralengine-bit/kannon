@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import PipelineCreator from "@/components/dashboard/PipelineCreator";
 import { useNavigate } from "react-router-dom";
 import {
@@ -150,6 +151,8 @@ function KpiPeriodSelector({ value, onChange }: { value: number | undefined; onC
 /* ─── Main Page ─── */
 export default function GeneralePage() {
   const navigate = useNavigate();
+  const { role } = useAuth();
+  const isTeam = role === "team";
   const [chartDays, setChartDays] = useState(30);
   const [kpiPeriod, setKpiPeriod] = useState<number | undefined>(30);
 
@@ -362,15 +365,17 @@ export default function GeneralePage() {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-3 gap-3 pt-2 border-t border-[#1e1e2e]">
+                    <div className={`grid ${isTeam ? 'grid-cols-2' : 'grid-cols-3'} gap-3 pt-2 border-t border-[#1e1e2e]`}>
                       <div>
                         <p className="text-[10px] text-[#64748b] uppercase">Views</p>
                         <p className="text-sm font-semibold text-[#f8fafc]">{formatViews(c.viewsMonth)}</p>
                       </div>
-                      <div>
-                        <p className="text-[10px] text-[#64748b] uppercase">Entrata</p>
-                        <p className="text-sm font-semibold text-emerald-400">{formatCurrency(c.revenueMonth)}</p>
-                      </div>
+                      {!isTeam && (
+                        <div>
+                          <p className="text-[10px] text-[#64748b] uppercase">Entrata</p>
+                          <p className="text-sm font-semibold text-emerald-400">{formatCurrency(c.revenueMonth)}</p>
+                        </div>
+                      )}
                       <div>
                         <p className="text-[10px] text-[#64748b] uppercase">Creator</p>
                         <p className="text-sm font-semibold text-[#f8fafc]">{c.creatorCount}</p>
