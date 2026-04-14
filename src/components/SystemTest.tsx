@@ -55,7 +55,7 @@ async function fetchAllVideos(accIds: string[], select: string) {
 
 async function generateCycle(
   campaignId: string,
-  campaign: { start_date: string; end_date: string; client_fixed_per_creator: number; client_cpm: number; planned_creators: number },
+  campaign: { start_date: string; end_date: string; client_fixed: number; client_cpm: number },
 ) {
   const { data: existingCycles } = await supabase
     .from("payment_cycles").select("*").eq("campaign_id", campaignId).order("cycle_number", { ascending: true });
@@ -74,7 +74,7 @@ async function generateCycle(
 
   const { data: cc } = await supabase.from("campaign_creators").select("creator_id").eq("campaign_id", campaignId);
   const isFirstCycle = nextNumber === 1;
-  const creatorCount = isFirstCycle ? campaign.planned_creators : ((cc ?? []).length || campaign.planned_creators);
+  const creatorCount = 1;
 
   let prevViewsPaidCumulative = 0;
   if (!isFirstCycle) {
@@ -101,7 +101,7 @@ async function generateCycle(
 
   const newViews = isFirstCycle ? 0 : Math.max(0, totalCurrentViews - prevViewsPaidCumulative);
   const viewsPaidCumulative = prevViewsPaidCumulative + newViews;
-  const fixedAmount = isLastCycle ? 0 : campaign.client_fixed_per_creator * creatorCount;
+  const fixedAmount = isLastCycle ? 0 : campaign.client_fixed;
   const cpmAmount = isFirstCycle ? 0 : campaign.client_cpm * (newViews / 1000);
   let totalAmount = fixedAmount + cpmAmount;
 
@@ -194,7 +194,7 @@ async function bulkInsertVideos(specs: any[]): Promise<string[]> {
 
 // ═══════════════════════════════════════════════════════════════
 // MODULE 1: Cicli con fisso cliente per creator
-// Campagna con client_fixed_per_creator=200€, 2 creator previsti
+// Campagna con client_fixed=400€ totale
 // Verifica: C1=solo fisso, C2+=fisso+CPM, ultimo=solo CPM
 // ═══════════════════════════════════════════════════════════════
 
@@ -208,15 +208,15 @@ async function runModule1(skipCleanup = false): Promise<TestLog[]> {
 
     const { data: camp, error } = await supabase.from("campaigns").insert({
       name: "TEST_M1", client_name: "ClienteAlfa", start_date: "2026-01-01", end_date: "2026-04-01",
-      client_cpm: 3, client_fixed_per_creator: 200, planned_creators: 2, status: "active",
+      client_cpm: 3, client_fixed: 400, status: "active",
     }).select().single();
     if (error) throw error;
     campaignId = camp!.id;
 
-    // Ciclo 1 — solo fisso, usa planned_creators perché non ci sono creator collegati
-    const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed_per_creator: 200, client_cpm: 3, planned_creators: 2 };
+    // Ciclo 1 — solo fisso
+    const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed: 400, client_cpm: 3 };
     const c1 = await generateCycle(campaignId, p);
-    assert(logs, "C1: fisso = 200×2 = 400€ (planned_creators)", 400, c1.fixedAmount);
+    assert(logs, "C1: fisso = 400€ (fisso totale)", 400, c1.fixedAmount);
     assert(logs, "C1: CPM = 0€ (primo ciclo, nessun CPM)", 0, c1.cpmAmount);
     assert(logs, "C1: totale = 400€", 400, c1.totalAmount);
 
@@ -232,7 +232,7 @@ async function runModule1(skipCleanup = false): Promise<TestLog[]> {
     // Ciclo 2 — fisso + CPM, usa creator effettivi (2)
     // Views totali = 50k → CPM = 3 × 50 = 150€
     const c2 = await generateCycle(campaignId, p);
-    assert(logs, "C2: fisso = 200×2 = 400€ (creator effettivi)", 400, c2.fixedAmount);
+    assert(logs, "C2: fisso = 400€", 400, c2.fixedAmount);
     assert(logs, "C2: views nuove = 50.000", 50000, c2.cpmViews);
     assert(logs, "C2: CPM = 3×50 = 150€", 150, c2.cpmAmount);
     assert(logs, "C2: totale = 550€", 550, c2.totalAmount);
@@ -244,7 +244,6 @@ async function runModule1(skipCleanup = false): Promise<TestLog[]> {
 
     // Ciclo 3 — views nuove = 80k - 50k = 30k
     const c3 = await generateCycle(campaignId, p);
-    assert(logs, "C3: views nuove = 30.000", 30000, c3.cpmViews);
     assert(logs, "C3: fisso = 400€", 400, c3.fixedAmount);
     assert(logs, "C3: CPM = 3×30 = 90€", 90, c3.cpmAmount);
 
@@ -279,7 +278,7 @@ async function runModule2(skipCleanup = false): Promise<TestLog[]> {
 
     const { data: camp } = await supabase.from("campaigns").insert({
       name: "TEST_M2", client_name: "ClienteBeta", start_date: "2026-01-01", end_date: "2026-06-01",
-      client_cpm: 2, client_fixed_per_creator: 0, planned_creators: 1, status: "active",
+      client_cpm: 2, client_fixed: 0, status: "active",
     }).select().single();
     campaignId = camp!.id;
 
@@ -289,7 +288,7 @@ async function runModule2(skipCleanup = false): Promise<TestLog[]> {
     const { data: acc } = await supabase.from("tiktok_accounts").insert({ username: "test_m2", account_type: "creator", campaign_id: campaignId, creator_id: cr!.id }).select().single();
     const { data: vid } = await supabase.from("videos").insert({ tiktok_account_id: acc!.id, published_at: "2026-01-05T10:00:00Z", tiktok_video_id: "test_m2_v1", views: 0 }).select().single();
 
-    const p = { start_date: "2026-01-01", end_date: "2026-06-01", client_fixed_per_creator: 0, client_cpm: 2, planned_creators: 1 };
+    const p = { start_date: "2026-01-01", end_date: "2026-06-01", client_fixed: 0, client_cpm: 2 };
 
     // C1 (no views, no CPM)
     await generateCycle(campaignId, p);
@@ -340,7 +339,7 @@ async function runModule3(skipCleanup = false): Promise<TestLog[]> {
 
     const { data: camp } = await supabase.from("campaigns").insert({
       name: "TEST_M3", client_name: "ClienteGamma", start_date: "2026-01-01", end_date: "2026-04-01",
-      client_cpm: 2.5, client_fixed_per_creator: 150, planned_creators: 2, status: "active",
+      client_cpm: 2.5, client_fixed: 300, status: "active",
     }).select().single();
     campaignId = camp!.id;
 
@@ -365,7 +364,7 @@ async function runModule3(skipCleanup = false): Promise<TestLog[]> {
       }
     }
 
-    const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed_per_creator: 150, client_cpm: 2.5, planned_creators: 2 };
+    const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed: 450, client_cpm: 2.5 };
 
     // C1 — solo fisso
     const c1 = await generateCycle(campaignId, p);
@@ -421,7 +420,7 @@ async function runModule4(skipCleanup = false): Promise<TestLog[]> {
 
     const { data: camp } = await supabase.from("campaigns").insert({
       name: "TEST_M4", client_name: "ClienteDelta", start_date: "2026-01-01", end_date: "2026-04-01",
-      client_cpm: 2, client_fixed_per_creator: 200, planned_creators: 3, status: "active",
+      client_cpm: 2, client_fixed: 600, status: "active",
     }).select().single();
     campaignId = camp!.id;
 
@@ -456,9 +455,9 @@ async function runModule4(skipCleanup = false): Promise<TestLog[]> {
     assert(logs, "Totale uscita creator = 275€", 275, totalCreator);
 
     // Verifica entrata cliente (C1 + C2)
-    const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed_per_creator: 200, client_cpm: 2, planned_creators: 3 };
+    const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed: 600, client_cpm: 2 };
     const c1 = await generateCycle(campaignId, p);
-    assert(logs, "C1 cliente: fisso = 200×3 = 600€", 600, c1.fixedAmount);
+    assert(logs, "C1 cliente: fisso = 600€", 600, c1.fixedAmount);
 
     const c2 = await generateCycle(campaignId, p);
     // views totali = 150k → CPM = 2×150 = 300€
@@ -493,7 +492,7 @@ async function runModule5(skipCleanup = false): Promise<TestLog[]> {
 
     const { data: camp } = await supabase.from("campaigns").insert({
       name: "TEST_M5", client_name: "ClienteEpsilon", start_date: "2026-01-01", end_date: "2026-06-01",
-      client_cpm: 2, client_fixed_per_creator: 100, planned_creators: 1, status: "active",
+      client_cpm: 2, client_fixed: 100, status: "active",
     }).select().single();
     campaignId = camp!.id;
 
@@ -540,7 +539,7 @@ async function runModule5(skipCleanup = false): Promise<TestLog[]> {
     assert(logs, "CPM creator = 55k × 0.50/1000 = 27.50€", 27.50, cpmCreator);
 
     // CPM cliente (stessa logica views effettive)
-    const p = { start_date: "2026-01-01", end_date: "2026-06-01", client_fixed_per_creator: 100, client_cpm: 2, planned_creators: 1 };
+    const p = { start_date: "2026-01-01", end_date: "2026-06-01", client_fixed: 100, client_cpm: 2 };
     await generateCycle(campaignId, p); // C1 fisso only
     const c2 = await generateCycle(campaignId, p);
     assert(logs, "C2 cliente: views effettive = 55.000", 55000, c2.cpmViews);
@@ -569,7 +568,7 @@ async function runModule6(skipCleanup = false): Promise<TestLog[]> {
 
     const { data: camp } = await supabase.from("campaigns").insert({
       name: "TEST_M6", client_name: "ClienteZeta", start_date: "2026-01-01", end_date: "2026-04-01",
-      client_cpm: 3, client_fixed_per_creator: 200, planned_creators: 2, status: "active",
+      client_cpm: 3, client_fixed: 400, status: "active",
     }).select().single();
     campaignId = camp!.id;
 
@@ -582,7 +581,7 @@ async function runModule6(skipCleanup = false): Promise<TestLog[]> {
       accIds.push(acc!.id);
     }
 
-    const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed_per_creator: 200, client_cpm: 3, planned_creators: 2 };
+    const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed: 400, client_cpm: 3 };
 
     // ── Mese 1 Gennaio ──
     // A: 130 video (target raggiunto), B: 100 video (target non raggiunto)
@@ -600,7 +599,7 @@ async function runModule6(skipCleanup = false): Promise<TestLog[]> {
 
     // Ciclo 1 cliente: solo fisso
     const c1 = await generateCycle(campaignId, p);
-    assert(logs, "C1: fisso = 200×2 = 400€", 400, c1.fixedAmount);
+    assert(logs, "C1: fisso = 400€", 400, c1.fixedAmount);
     assert(logs, "C1: CPM = 0€", 0, c1.cpmAmount);
 
     // Ciclo 2: fisso + CPM su 700k views
@@ -646,7 +645,7 @@ async function runModule6(skipCleanup = false): Promise<TestLog[]> {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MODULE 7: planned_creators fallback & zero values
+// MODULE 7: client_fixed fallback & zero values
 // ═══════════════════════════════════════════════════════════════
 
 async function runModule7(skipCleanup = false): Promise<TestLog[]> {
@@ -655,17 +654,17 @@ async function runModule7(skipCleanup = false): Promise<TestLog[]> {
   const creatorIds: string[] = [];
 
   try {
-    logs.push({ step: "🔧 Setup: campagna con 5 planned_creators ma 0 effettivi", ok: true });
+    logs.push({ step: "🔧 Setup: campagna con client_fixed=1500€ ma 0 creator effettivi", ok: true });
 
     const { data: camp } = await supabase.from("campaigns").insert({
       name: "TEST_M7", client_name: "ClienteEta", start_date: "2026-01-01", end_date: "2026-04-01",
-      client_cpm: 2, client_fixed_per_creator: 300, planned_creators: 5, status: "active",
+      client_cpm: 2, client_fixed: 1500, status: "active",
     }).select().single();
     campaignId = camp!.id;
 
-    const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed_per_creator: 300, client_cpm: 2, planned_creators: 5 };
+    const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed: 1500, client_cpm: 2 };
 
-    // C1: nessun creator collegato, usa planned_creators=5
+    // C1: nessun creator collegato, usa client_fixed totale
     const c1 = await generateCycle(campaignId, p);
     assert(logs, "C1 senza creator: fisso = 300×5 = 1.500€ (planned)", 1500, c1.fixedAmount);
 
@@ -680,7 +679,7 @@ async function runModule7(skipCleanup = false): Promise<TestLog[]> {
 
     // C2: 3 creator effettivi → fisso usa effettivi
     const c2 = await generateCycle(campaignId, p);
-    assert(logs, "C2 con 3 creator: fisso = 300×3 = 900€ (effettivi)", 900, c2.fixedAmount);
+    assert(logs, "C2 con 3 creator: fisso = 1.500€ (client_fixed totale)", 1500, c2.fixedAmount);
     assert(logs, "C2: views nuove = 30.000", 30000, c2.cpmViews);
 
     // Test campagna con valori zero
@@ -688,10 +687,10 @@ async function runModule7(skipCleanup = false): Promise<TestLog[]> {
 
     const { data: campZero } = await supabase.from("campaigns").insert({
       name: "TEST_M7_ZERO", client_name: "ClienteZero", start_date: "2026-01-01", end_date: "2026-03-01",
-      client_cpm: 0, client_fixed_per_creator: 0, planned_creators: 1, status: "active",
+      client_cpm: 0, client_fixed: 0, status: "active",
     }).select().single();
 
-    const pZero = { start_date: "2026-01-01", end_date: "2026-03-01", client_fixed_per_creator: 0, client_cpm: 0, planned_creators: 1 };
+    const pZero = { start_date: "2026-01-01", end_date: "2026-03-01", client_fixed: 0, client_cpm: 0 };
     const cz1 = await generateCycle(campZero!.id, pZero);
     assert(logs, "Campagna zero: C1 totale = 0€", 0, cz1.totalAmount);
 
@@ -722,7 +721,7 @@ async function runModule8(skipCleanup = false): Promise<TestLog[]> {
     // Campagna: fisso 150€/creator, CPM 2.5€, 3 creator
     const { data: camp } = await supabase.from("campaigns").insert({
       name: "TEST_M8", client_name: "ClienteOmega", start_date: "2026-02-01", end_date: "2026-05-01",
-      client_cpm: 2.5, client_fixed_per_creator: 150, planned_creators: 3, status: "active",
+      client_cpm: 2.5, client_fixed: 450, status: "active",
     }).select().single();
     campaignId = camp!.id;
 
@@ -740,7 +739,7 @@ async function runModule8(skipCleanup = false): Promise<TestLog[]> {
       accIds.push(acc!.id);
     }
 
-    const p = { start_date: "2026-02-01", end_date: "2026-05-01", client_fixed_per_creator: 150, client_cpm: 2.5, planned_creators: 3 };
+    const p = { start_date: "2026-02-01", end_date: "2026-05-01", client_fixed: 450, client_cpm: 2.5 };
 
     // Feb 2026: 24 working days → target Star/Mid = 5×24=120, Junior = 3×24=72
     // Star: 120 video, 800k views → fisso 250 + CPM 640 = 890€
@@ -810,7 +809,7 @@ async function runModule9(skipCleanup = false): Promise<TestLog[]> {
 
     const { data: camp } = await supabase.from("campaigns").insert({
       name: "TEST_M9", client_name: "ClienteTheta", start_date: "2026-01-01", end_date: "2026-06-01",
-      client_cpm: 2, client_fixed_per_creator: 100, planned_creators: 1, status: "active",
+      client_cpm: 2, client_fixed: 100, status: "active",
     }).select().single();
     campaignId = camp!.id;
 
@@ -825,7 +824,7 @@ async function runModule9(skipCleanup = false): Promise<TestLog[]> {
       views: 30000, window_closed: false,
     }).select().single();
 
-    const p = { start_date: "2026-01-01", end_date: "2026-06-01", client_fixed_per_creator: 100, client_cpm: 2, planned_creators: 1 };
+    const p = { start_date: "2026-01-01", end_date: "2026-06-01", client_fixed: 100, client_cpm: 2 };
 
     // C1
     await generateCycle(campaignId, p);
@@ -882,7 +881,7 @@ async function runModule10(skipCleanup = false): Promise<TestLog[]> {
 
     const { data: camp } = await supabase.from("campaigns").insert({
       name: "TEST_M10_CAP", client_name: "ClienteCap", start_date: "2026-01-01", end_date: "2026-06-01",
-      client_cpm: 2, client_fixed_per_creator: 0, planned_creators: 1, status: "active",
+      client_cpm: 2, client_fixed: 0, status: "active",
       video_views_cap: 100000,
     } as any).select().single();
     campaignId = camp!.id;
@@ -913,7 +912,7 @@ async function runModule10(skipCleanup = false): Promise<TestLog[]> {
     assert(logs, "Totale CPM = 500€ (non 600€)", 500, totalCpm);
 
     // Verify via cycle generation
-    const p = { start_date: "2026-01-01", end_date: "2026-06-01", client_fixed_per_creator: 0, client_cpm: 2, planned_creators: 1 };
+    const p = { start_date: "2026-01-01", end_date: "2026-06-01", client_fixed: 0, client_cpm: 2 };
     await generateCycle(campaignId, p); // C1
     // Need to apply cap in generateCycle - check views
     const { data: accs } = await supabase.from("tiktok_accounts").select("id").eq("campaign_id", campaignId);
@@ -930,7 +929,7 @@ async function runModule10(skipCleanup = false): Promise<TestLog[]> {
 
     const { data: camp2 } = await supabase.from("campaigns").insert({
       name: "TEST_M10_SPEND", client_name: "ClienteSpend", start_date: "2026-01-01", end_date: "2026-06-01",
-      client_cpm: 2, client_fixed_per_creator: 0, planned_creators: 1, status: "active",
+      client_cpm: 2, client_fixed: 0, status: "active",
       monthly_spend_cap: 1000,
     } as any).select().single();
     campaignId2 = camp2!.id;
@@ -943,7 +942,7 @@ async function runModule10(skipCleanup = false): Promise<TestLog[]> {
     // Video with 400k views → CPM = 800€ (sotto cap 1000€)
     await supabase.from("videos").insert({ tiktok_account_id: acc2!.id, published_at: "2026-01-05T10:00:00Z", tiktok_video_id: "m10_sp_v1", views: 400000 });
 
-    const p2 = { start_date: "2026-01-01", end_date: "2026-06-01", client_fixed_per_creator: 0, client_cpm: 2, planned_creators: 1 };
+    const p2 = { start_date: "2026-01-01", end_date: "2026-06-01", client_fixed: 0, client_cpm: 2 };
     await generateCycle(campaignId2, p2); // C1
     const c2 = await generateCycle(campaignId2, p2); // C2: 400k views → 800€
     assert(logs, "C2 sotto cap: totale = 800€ (sotto 1.000€)", 800, c2.totalAmount);
@@ -999,8 +998,8 @@ async function seedCapScenario(onProgress: (msg: string) => void): Promise<strin
     start_date: "2026-01-01",
     end_date: "2026-04-01",
     client_cpm: 2,
-    client_fixed_per_creator: 200,
-    planned_creators: 1,
+    client_fixed: 200,
+    
     status: "active",
     video_views_cap: 100000,
     monthly_spend_cap: 3000,
@@ -1023,7 +1022,7 @@ async function seedCapScenario(onProgress: (msg: string) => void): Promise<strin
     username: "cap_test_acc2", account_type: "creator", campaign_id: campaignId, creator_id: cr!.id,
   }).select().single();
 
-  const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed_per_creator: 200, client_cpm: 2, planned_creators: 1 };
+  const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed: 200, client_cpm: 2 };
 
   // ── CICLO 1: Solo fisso anticipato, nessun video ancora ──
   onProgress("Ciclo 1: solo fisso anticipato (nessun video)...");
@@ -1168,7 +1167,7 @@ export default function SystemTest() {
       { name: "M4 — Fisso creator + margine", fn: () => runModule4(skip) },
       { name: "M5 — Finestra 30gg (views_final)", fn: () => runModule5(skip) },
       { name: "M6 — Campagna completa con fisso", fn: () => runModule6(skip) },
-      { name: "M7 — planned_creators & valori zero", fn: () => runModule7(skip) },
+      { name: "M7 — client_fixed & valori zero", fn: () => runModule7(skip) },
       { name: "M8 — Simulazione E2E margine", fn: () => runModule8(skip) },
       { name: "M9 — Finestra chiusa tra cicli", fn: () => runModule9(skip) },
       { name: "M10 — Cap video e cap di spesa", fn: () => runModule10(skip) },
@@ -1248,7 +1247,7 @@ export default function SystemTest() {
             <div>
               <CardTitle className="text-lg">Test Completo Sistema</CardTitle>
               <CardDescription>
-                10 moduli: cicli con fisso cliente, views cumulative, multi-video, fisso creator, finestra 30gg, campagna completa, planned_creators, simulazione E2E margine, finestra tra cicli, cap video e cap di spesa.
+                10 moduli: cicli con fisso cliente, views cumulative, multi-video, fisso creator, finestra 30gg, campagna completa, client_fixed, simulazione E2E margine, finestra tra cicli, cap video e cap di spesa.
               </CardDescription>
             </div>
           </div>

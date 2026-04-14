@@ -88,7 +88,7 @@ export interface CampaignRow {
   client_name: string;
   status: string;
   client_cpm: number | null;
-  client_fixed_per_creator: number | null;
+  client_fixed: number | null;
   totalViews: number;
   monthViews: number;
   creatorCount: number;
@@ -170,7 +170,7 @@ export function useCampaignTable() {
           (id) => creatorMap.get(id)?.status === "active"
         );
 
-        const clientFixed = (c.client_fixed_per_creator ?? 0) * activeCreators.length;
+        const clientFixed = c.client_fixed ?? 0;
         const clientCpm = (c.client_cpm ?? 0) * (monthViews / 1000);
         const revenue = clientFixed + clientCpm;
 
@@ -180,7 +180,7 @@ export function useCampaignTable() {
           client_name: c.client_name,
           status: c.status,
           client_cpm: c.client_cpm,
-          client_fixed_per_creator: c.client_fixed_per_creator,
+          client_fixed: c.client_fixed,
           totalViews,
           monthViews,
           creatorCount: activeCreators.length,

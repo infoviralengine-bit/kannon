@@ -80,9 +80,9 @@ function EditCampaignModal({
   onOpenChange: (v: boolean) => void;
   campaign: {
     id: string; name: string; client_name: string;
-    client_cpm: number | null; client_fixed_per_creator: number | null;
+    client_cpm: number | null; client_fixed: number | null;
     start_date: string; end_date: string | null; notes: string | null;
-    planned_creators?: number;
+    min_monthly_videos?: number | null;
     video_views_cap?: number | null;
     monthly_spend_cap?: number | null;
   };
@@ -92,11 +92,11 @@ function EditCampaignModal({
   const [name, setName] = useState(campaign.name);
   const [clientName, setClientName] = useState(campaign.client_name);
   const [clientCpm, setClientCpm] = useState(String(campaign.client_cpm ?? 2));
-  const [clientFixed, setClientFixed] = useState(String(campaign.client_fixed_per_creator ?? 200));
+  const [clientFixed, setClientFixed] = useState(String(campaign.client_fixed ?? 0));
   const [startDate, setStartDate] = useState<Date | undefined>(new Date(campaign.start_date));
   const [endDate, setEndDate] = useState<Date | undefined>(campaign.end_date ? new Date(campaign.end_date) : undefined);
   const [notes, setNotes] = useState(campaign.notes ?? "");
-  const [plannedCreators, setPlannedCreators] = useState(String((campaign as any).planned_creators ?? 1));
+  const [minMonthlyVideos, setMinMonthlyVideos] = useState(String((campaign as any).min_monthly_videos ?? 0));
   const [videoViewsCap, setVideoViewsCap] = useState(campaign.video_views_cap != null ? String(campaign.video_views_cap) : "");
   const [monthlySpendCap, setMonthlySpendCap] = useState(campaign.monthly_spend_cap != null ? String(campaign.monthly_spend_cap) : "");
 
@@ -106,9 +106,9 @@ function EditCampaignModal({
       const parsedCpm = parseFloat(clientCpm);
       const newCpm = isNaN(parsedCpm) ? 2 : parsedCpm;
       const parsedFixed = parseFloat(clientFixed);
-      const newFixed = isNaN(parsedFixed) ? 200 : parsedFixed;
-      const parsedPlanned = parseInt(plannedCreators);
-      const newPlanned = Math.max(1, isNaN(parsedPlanned) ? 1 : parsedPlanned);
+      const newFixed = isNaN(parsedFixed) ? 0 : parsedFixed;
+      const parsedMinVideos = parseInt(minMonthlyVideos);
+      const newMinVideos = isNaN(parsedMinVideos) ? 0 : parsedMinVideos;
       const parsedViewsCap = videoViewsCap.trim() ? parseInt(videoViewsCap) : null;
       const parsedSpendCap = monthlySpendCap.trim() ? parseFloat(monthlySpendCap) : null;
 
@@ -116,11 +116,11 @@ function EditCampaignModal({
         name,
         client_name: clientName,
         client_cpm: newCpm,
-        client_fixed_per_creator: newFixed,
+        client_fixed: newFixed,
         start_date: format(startDate, "yyyy-MM-dd"),
         end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
         notes: notes || null,
-        planned_creators: newPlanned,
+        min_monthly_videos: newMinVideos,
         video_views_cap: parsedViewsCap,
         monthly_spend_cap: parsedSpendCap,
       } as any).eq("id", campaign.id);
@@ -141,11 +141,11 @@ function EditCampaignModal({
           .in("id", cycleIds);
         const cycleMap = new Map((cycles ?? []).map((c) => [c.id, c.is_last_cycle]));
 
-        const creatorCount = newPlanned;
+        const creatorCount = 1; // no longer multiplied
 
         for (const p of unpaidPayments) {
           const isLast = cycleMap.get(p.cycle_id) ?? false;
-          const fixedAmount = isLast ? 0 : newFixed * creatorCount;
+          const fixedAmount = isLast ? 0 : newFixed;
           let cpmAmount = newCpm * (p.cpm_views / 1000);
           
           // Apply spend cap (only to CPM, fixed always added on top)
@@ -194,7 +194,7 @@ function EditCampaignModal({
               <Input type="number" step="0.01" value={clientCpm} onChange={(e) => setClientCpm(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Fisso per Creator (€)</Label>
+              <Label>Fisso mensile (€, totale campagna)</Label>
               <Input type="number" step="0.01" value={clientFixed} onChange={(e) => setClientFixed(e.target.value)} />
             </div>
           </div>
@@ -229,8 +229,8 @@ function EditCampaignModal({
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label>N° creator previsti</Label>
-            <Input type="number" min="1" step="1" value={plannedCreators} onChange={(e) => setPlannedCreators(e.target.value)} />
+            <Label>Video minimi al mese</Label>
+            <Input type="number" min="0" step="1" value={minMonthlyVideos} onChange={(e) => setMinMonthlyVideos(e.target.value)} />
           </div>
           <Separator />
           <p className="text-sm font-medium text-muted-foreground">Cap (opzionali)</p>
@@ -384,7 +384,7 @@ function SpendCapBanner({ campaign, campaignId }: {
 /* ── Cycles Section ── */
 function CyclesSection({ campaignId, campaign, cycles }: {
   campaignId: string;
-  campaign: { start_date: string; end_date: string | null; client_fixed_per_creator: number | null; client_cpm: number | null; video_views_cap?: number | null; monthly_spend_cap?: number | null };
+  campaign: { start_date: string; end_date: string | null; client_fixed: number | null; client_cpm: number | null; video_views_cap?: number | null; monthly_spend_cap?: number | null };
   cycles: ReturnType<typeof useCampaignCycles>;
 }) {
   const { toast } = useToast();
@@ -422,8 +422,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
       if (cycleErr) throw cycleErr;
 
       const { data: cc } = await supabase.from("campaign_creators").select("creator_id").eq("campaign_id", campaignId);
-      const plannedCount = (campaign as any).planned_creators ?? 1;
-      const creatorCount = plannedCount;
+      // No longer need planned_creators multiplication
 
       let prevViewsPaidCumulative = 0;
       if (lastCycle?.payment) {
@@ -451,7 +450,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
       const newViews = Math.max(0, totalCurrentViews - prevViewsPaidCumulative);
       const viewsPaidCumulative = prevViewsPaidCumulative + newViews;
 
-      const fixedAmount = isLastCycle ? 0 : (campaign.client_fixed_per_creator ?? 200) * creatorCount;
+      const fixedAmount = isLastCycle ? 0 : (campaign.client_fixed ?? 0);
       let cpmAmount = (campaign.client_cpm ?? 2) * (newViews / 1000);
 
       // Apply spend cap (only to CPM, fixed is always added on top)
@@ -949,8 +948,8 @@ export default function CampaignDetailPage() {
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                 <StatItem label="CPM Cliente" value={formatCurrency(campaign.client_cpm ?? 0)} sub="per 1.000 views" />
-                <StatItem label="Fisso / Creator" value={formatCurrency(campaign.client_fixed_per_creator ?? 0)} sub="al mese" />
-                <StatItem label="Creator previsti" value={String(campAny.planned_creators ?? 1)} />
+                <StatItem label="Fisso mensile" value={formatCurrency(campaign.client_fixed ?? 0)} sub="totale campagna" />
+                <StatItem label="Video minimi/mese" value={String(campAny.min_monthly_videos ?? 0)} />
                 <StatItem label="Durata" value={`${format(new Date(campaign.start_date), "dd/MM/yy")} → ${campaign.end_date ? format(new Date(campaign.end_date), "dd/MM/yy") : "∞"}`} />
                 <StatItem label="Cap per video" value={videoViewsCap != null ? `${formatViews(videoViewsCap)}` : "—"} sub={videoViewsCap != null ? "views max" : "nessun limite"} />
                 <StatItem label="Cap di spesa" value={monthlySpendCap != null ? formatCurrency(monthlySpendCap) : "—"} sub={monthlySpendCap != null ? "per ciclo" : "nessun limite"} />
@@ -1015,20 +1014,7 @@ export default function CampaignDetailPage() {
               <StatItem label="Video totali" value={String(kpi.data?.totalVideoCount ?? 0)} />
               <StatItem label="Entrata CPM" value={formatCurrency(margin.data?.cpmRevenue ?? 0)} accent />
               <StatItem label="Margine CPM" value={formatCurrency(margin.data?.cpmMargin ?? 0)} sub={`costo: ${formatCurrency(margin.data?.cpmCost ?? 0)}`} />
-              <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Creator attivi</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-lg font-bold">{kpi.data?.creatorCount ?? 0}</p>
-                  <span className="text-xs text-muted-foreground">/ {campAny.planned_creators ?? 1}</span>
-                  {(() => {
-                    const planned = campAny.planned_creators ?? 1;
-                    const actual = kpi.data?.creatorCount ?? 0;
-                    return actual >= planned
-                      ? <Badge className="bg-success/20 text-success border-success/30 text-[10px] px-1.5">✓</Badge>
-                      : <Badge className="bg-warning/20 text-warning border-warning/30 text-[10px] px-1.5">-{planned - actual}</Badge>;
-                  })()}
-                </div>
-              </div>
+              <StatItem label="Creator attivi" value={String(kpi.data?.creatorCount ?? 0)} />
             </div>
           )}
         </CardContent>

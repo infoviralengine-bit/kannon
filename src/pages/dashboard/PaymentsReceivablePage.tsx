@@ -150,9 +150,6 @@ export default function PaymentsReceivablePage() {
                       <TableCell>{new Date(p.dueDate).toLocaleDateString("it-IT")}</TableCell>
                       <TableCell className="text-right">
                         {formatCurrency(p.fixedAmount)}
-                        <span className="block text-xs text-muted-foreground">
-                          {p.creatorCount} × €{p.clientFixedPerCreator}
-                        </span>
                       </TableCell>
                       <TableCell className="text-right">{formatViews(p.cpmViews)}</TableCell>
                       <TableCell className="text-right">{formatCurrency(p.cpmAmount)}</TableCell>
@@ -189,7 +186,7 @@ export default function PaymentsReceivablePage() {
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">Fisso</span>
-                                <span>{p.creatorCount} creator × €{p.clientFixedPerCreator} = {formatCurrency(p.fixedAmount)}</span>
+                                <span>{formatCurrency(p.fixedAmount)}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">Views totali campagna</span>

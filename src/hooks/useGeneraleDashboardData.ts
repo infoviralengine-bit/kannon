@@ -45,7 +45,7 @@ export function useFinancialKpis(periodDays?: number) {
         { data: videos },
         { data: ccRows },
       ] = await Promise.all([
-        supabase.from("campaigns").select("id, client_cpm, client_fixed_per_creator, planned_creators, video_views_cap, status").eq("status", "active"),
+        supabase.from("campaigns").select("id, client_cpm, client_fixed, video_views_cap, status").eq("status", "active"),
         supabase.from("contracts").select("id, creator_cpm, creator_fixed, is_active").eq("is_active", true),
         supabase.from("contract_creators").select("contract_id, creator_id"),
         supabase.from("contract_campaigns").select("contract_id, campaign_id"),
@@ -62,9 +62,9 @@ export function useFinancialKpis(periodDays?: number) {
       const allVideos = videos ?? [];
       const allCC = ccRows ?? [];
 
-      // ── Entrate Fisse: planned_creators × fisso per ogni campagna attiva ──
+      // ── Entrate Fisse: client_fixed per ogni campagna attiva ──
       const fixedIncome = allCampaigns.reduce((s, c) => {
-        return s + ((c.client_fixed_per_creator ?? 0) * (c.planned_creators ?? 1));
+        return s + (c.client_fixed ?? 0);
       }, 0);
 
       // ── Uscite Fisse: fisso di ogni contratto attivo × numero creator nel contratto ──
@@ -253,8 +253,7 @@ export function useActiveCampaignCards() {
         const viewsCap = (c as any).video_views_cap as number | null;
         const spendCap = (c as any).monthly_spend_cap as number | null;
         const clientCpm = c.client_cpm ?? 2;
-        const plannedCreators = c.planned_creators ?? 1;
-        const clientFixed = (c.client_fixed_per_creator ?? 0) * plannedCreators;
+        const clientFixed = c.client_fixed ?? 0;
         const cpmRevenue = clientCpm * (viewsMonth / 1000);
         const revenueMonth = clientFixed + cpmRevenue;
 

@@ -195,7 +195,7 @@ function SpendProgress({ data }: { data: NonNullable<ReturnType<typeof useClient
   const cap = campaign.monthly_spend_cap;
   if (!cap) return null;
 
-  const fixedSpend = (campaign.client_fixed_per_creator ?? 0) * active_creators;
+  const fixedSpend = (campaign as any).client_fixed ?? 0;
   const cpmSpend = (campaign.client_cpm ?? 0) * (views_30d / 1000);
   const totalSpend = fixedSpend + cpmSpend;
   const pct = Math.min((totalSpend / Number(cap)) * 100, 100);
