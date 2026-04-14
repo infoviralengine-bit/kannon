@@ -80,9 +80,9 @@ function EditCampaignModal({
   onOpenChange: (v: boolean) => void;
   campaign: {
     id: string; name: string; client_name: string;
-    client_cpm: number | null; client_fixed_per_creator: number | null;
+    client_cpm: number | null; client_fixed: number | null;
     start_date: string; end_date: string | null; notes: string | null;
-    planned_creators?: number;
+    min_monthly_videos?: number | null;
     video_views_cap?: number | null;
     monthly_spend_cap?: number | null;
   };
@@ -92,11 +92,11 @@ function EditCampaignModal({
   const [name, setName] = useState(campaign.name);
   const [clientName, setClientName] = useState(campaign.client_name);
   const [clientCpm, setClientCpm] = useState(String(campaign.client_cpm ?? 2));
-  const [clientFixed, setClientFixed] = useState(String(campaign.client_fixed_per_creator ?? 200));
+  const [clientFixed, setClientFixed] = useState(String(campaign.client_fixed ?? 0));
   const [startDate, setStartDate] = useState<Date | undefined>(new Date(campaign.start_date));
   const [endDate, setEndDate] = useState<Date | undefined>(campaign.end_date ? new Date(campaign.end_date) : undefined);
   const [notes, setNotes] = useState(campaign.notes ?? "");
-  const [plannedCreators, setPlannedCreators] = useState(String((campaign as any).planned_creators ?? 1));
+  const [minMonthlyVideos, setMinMonthlyVideos] = useState(String((campaign as any).min_monthly_videos ?? 0));
   const [videoViewsCap, setVideoViewsCap] = useState(campaign.video_views_cap != null ? String(campaign.video_views_cap) : "");
   const [monthlySpendCap, setMonthlySpendCap] = useState(campaign.monthly_spend_cap != null ? String(campaign.monthly_spend_cap) : "");
 
@@ -106,9 +106,9 @@ function EditCampaignModal({
       const parsedCpm = parseFloat(clientCpm);
       const newCpm = isNaN(parsedCpm) ? 2 : parsedCpm;
       const parsedFixed = parseFloat(clientFixed);
-      const newFixed = isNaN(parsedFixed) ? 200 : parsedFixed;
-      const parsedPlanned = parseInt(plannedCreators);
-      const newPlanned = Math.max(1, isNaN(parsedPlanned) ? 1 : parsedPlanned);
+      const newFixed = isNaN(parsedFixed) ? 0 : parsedFixed;
+      const parsedMinVideos = parseInt(minMonthlyVideos);
+      const newMinVideos = isNaN(parsedMinVideos) ? 0 : parsedMinVideos;
       const parsedViewsCap = videoViewsCap.trim() ? parseInt(videoViewsCap) : null;
       const parsedSpendCap = monthlySpendCap.trim() ? parseFloat(monthlySpendCap) : null;
 
@@ -116,11 +116,11 @@ function EditCampaignModal({
         name,
         client_name: clientName,
         client_cpm: newCpm,
-        client_fixed_per_creator: newFixed,
+        client_fixed: newFixed,
         start_date: format(startDate, "yyyy-MM-dd"),
         end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,
         notes: notes || null,
-        planned_creators: newPlanned,
+        min_monthly_videos: newMinVideos,
         video_views_cap: parsedViewsCap,
         monthly_spend_cap: parsedSpendCap,
       } as any).eq("id", campaign.id);
@@ -141,11 +141,11 @@ function EditCampaignModal({
           .in("id", cycleIds);
         const cycleMap = new Map((cycles ?? []).map((c) => [c.id, c.is_last_cycle]));
 
-        const creatorCount = newPlanned;
+        const creatorCount = 1; // no longer multiplied
 
         for (const p of unpaidPayments) {
           const isLast = cycleMap.get(p.cycle_id) ?? false;
-          const fixedAmount = isLast ? 0 : newFixed * creatorCount;
+          const fixedAmount = isLast ? 0 : newFixed;
           let cpmAmount = newCpm * (p.cpm_views / 1000);
           
           // Apply spend cap (only to CPM, fixed always added on top)
@@ -194,7 +194,7 @@ function EditCampaignModal({
               <Input type="number" step="0.01" value={clientCpm} onChange={(e) => setClientCpm(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Fisso per Creator (€)</Label>
+              <Label>Fisso mensile (€, totale campagna)</Label>
               <Input type="number" step="0.01" value={clientFixed} onChange={(e) => setClientFixed(e.target.value)} />
             </div>
           </div>
@@ -229,8 +229,9 @@ function EditCampaignModal({
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label>N° creator previsti</Label>
-            <Input type="number" min="1" step="1" value={plannedCreators} onChange={(e) => setPlannedCreators(e.target.value)} />
+            <Label>Video minimi al mese</Label>
+            <Input type="number" min="0" step="1" value={minMonthlyVideos} onChange={(e) => setMinMonthlyVideos(e.target.value)} />
+          </div>
           </div>
           <Separator />
           <p className="text-sm font-medium text-muted-foreground">Cap (opzionali)</p>
