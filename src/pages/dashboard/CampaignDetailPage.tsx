@@ -232,7 +232,6 @@ function EditCampaignModal({
             <Label>Video minimi al mese</Label>
             <Input type="number" min="0" step="1" value={minMonthlyVideos} onChange={(e) => setMinMonthlyVideos(e.target.value)} />
           </div>
-          </div>
           <Separator />
           <p className="text-sm font-medium text-muted-foreground">Cap (opzionali)</p>
           <div className="grid grid-cols-2 gap-4">
