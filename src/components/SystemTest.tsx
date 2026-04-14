@@ -194,7 +194,7 @@ async function bulkInsertVideos(specs: any[]): Promise<string[]> {
 
 // ═══════════════════════════════════════════════════════════════
 // MODULE 1: Cicli con fisso cliente per creator
-// Campagna con client_fixed_per_creator=200€, 2 creator previsti
+// Campagna con client_fixed=400€ totale
 // Verifica: C1=solo fisso, C2+=fisso+CPM, ultimo=solo CPM
 // ═══════════════════════════════════════════════════════════════
 
@@ -213,10 +213,10 @@ async function runModule1(skipCleanup = false): Promise<TestLog[]> {
     if (error) throw error;
     campaignId = camp!.id;
 
-    // Ciclo 1 — solo fisso, usa planned_creators perché non ci sono creator collegati
+    // Ciclo 1 — solo fisso
     const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed: 200, client_cpm: 3 };
     const c1 = await generateCycle(campaignId, p);
-    assert(logs, "C1: fisso = 200×2 = 400€ (planned_creators)", 400, c1.fixedAmount);
+    assert(logs, "C1: fisso = 200×2 = 400€ (fisso totale)", 400, c1.fixedAmount);
     assert(logs, "C1: CPM = 0€ (primo ciclo, nessun CPM)", 0, c1.cpmAmount);
     assert(logs, "C1: totale = 400€", 400, c1.totalAmount);
 
@@ -646,7 +646,7 @@ async function runModule6(skipCleanup = false): Promise<TestLog[]> {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MODULE 7: planned_creators fallback & zero values
+// MODULE 7: client_fixed fallback & zero values
 // ═══════════════════════════════════════════════════════════════
 
 async function runModule7(skipCleanup = false): Promise<TestLog[]> {
@@ -655,7 +655,7 @@ async function runModule7(skipCleanup = false): Promise<TestLog[]> {
   const creatorIds: string[] = [];
 
   try {
-    logs.push({ step: "🔧 Setup: campagna con 5 planned_creators ma 0 effettivi", ok: true });
+    logs.push({ step: "🔧 Setup: campagna con client_fixed=1500€ ma 0 creator effettivi", ok: true });
 
     const { data: camp } = await supabase.from("campaigns").insert({
       name: "TEST_M7", client_name: "ClienteEta", start_date: "2026-01-01", end_date: "2026-04-01",
@@ -665,7 +665,7 @@ async function runModule7(skipCleanup = false): Promise<TestLog[]> {
 
     const p = { start_date: "2026-01-01", end_date: "2026-04-01", client_fixed: 1500, client_cpm: 2 };
 
-    // C1: nessun creator collegato, usa planned_creators=5
+    // C1: nessun creator collegato, usa client_fixed totale
     const c1 = await generateCycle(campaignId, p);
     assert(logs, "C1 senza creator: fisso = 300×5 = 1.500€ (planned)", 1500, c1.fixedAmount);
 
@@ -1000,7 +1000,7 @@ async function seedCapScenario(onProgress: (msg: string) => void): Promise<strin
     end_date: "2026-04-01",
     client_cpm: 2,
     client_fixed: 200,
-    planned_creators: 1,
+    
     status: "active",
     video_views_cap: 100000,
     monthly_spend_cap: 3000,
@@ -1168,7 +1168,7 @@ export default function SystemTest() {
       { name: "M4 — Fisso creator + margine", fn: () => runModule4(skip) },
       { name: "M5 — Finestra 30gg (views_final)", fn: () => runModule5(skip) },
       { name: "M6 — Campagna completa con fisso", fn: () => runModule6(skip) },
-      { name: "M7 — planned_creators & valori zero", fn: () => runModule7(skip) },
+      { name: "M7 — client_fixed & valori zero", fn: () => runModule7(skip) },
       { name: "M8 — Simulazione E2E margine", fn: () => runModule8(skip) },
       { name: "M9 — Finestra chiusa tra cicli", fn: () => runModule9(skip) },
       { name: "M10 — Cap video e cap di spesa", fn: () => runModule10(skip) },
@@ -1248,7 +1248,7 @@ export default function SystemTest() {
             <div>
               <CardTitle className="text-lg">Test Completo Sistema</CardTitle>
               <CardDescription>
-                10 moduli: cicli con fisso cliente, views cumulative, multi-video, fisso creator, finestra 30gg, campagna completa, planned_creators, simulazione E2E margine, finestra tra cicli, cap video e cap di spesa.
+                10 moduli: cicli con fisso cliente, views cumulative, multi-video, fisso creator, finestra 30gg, campagna completa, client_fixed, simulazione E2E margine, finestra tra cicli, cap video e cap di spesa.
               </CardDescription>
             </div>
           </div>
