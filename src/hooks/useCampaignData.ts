@@ -25,6 +25,31 @@ function monthRange() {
   return { start, end };
 }
 
+// Fetch all videos for a list of account ids, paginating to bypass the 1000 row limit.
+async function fetchAllVideosForAccounts(
+  accIds: string[],
+  columns: string = "tiktok_account_id, views, published_at"
+): Promise<any[]> {
+  if (!accIds.length) return [];
+  const PAGE = 1000;
+  const all: any[] = [];
+  let from = 0;
+  // Loop until we get a partial page
+  while (true) {
+    const { data, error } = await supabase
+      .from("videos")
+      .select(columns)
+      .in("tiktok_account_id", accIds)
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    const rows = data ?? [];
+    all.push(...rows);
+    if (rows.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+
 export function useCampaignDetail(campaignId: string) {
   return useQuery({
     queryKey: ["campaign-detail", campaignId],
