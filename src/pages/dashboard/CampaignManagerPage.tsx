@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -10,15 +11,21 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Minus, ArrowUp, ArrowDown, Eye, Users, FileText, DollarSign, ExternalLink } from "lucide-react";
+import {
+  Minus, ArrowUp, ArrowDown, Eye, Users, FileText, ExternalLink,
+  Flame, Zap, Tag, TrendingUp, BarChart3,
+} from "lucide-react";
 import { cleanUsername } from "@/lib/utils";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   Area, AreaChart,
 } from "recharts";
-import { useCampaignManagerData, Period } from "@/hooks/useCampaignManagerData";
-import { formatViews, formatCurrency } from "@/lib/format";
+import { useCampaignManagerData, Period, VideoItem } from "@/hooks/useCampaignManagerData";
+import { formatViews } from "@/lib/format";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const PERIOD_OPTIONS: { value: Period; label: string }[] = [
   { value: "7d", label: "7 giorni" },
@@ -51,13 +58,99 @@ function TrendBadge({ current, prev }: { current: number; prev: number }) {
   return <span className="text-xs text-red-500 flex items-center gap-1"><ArrowDown className="h-3 w-3" /> {pct}%</span>;
 }
 
+function ViralBadge({ velocity }: { velocity: number }) {
+  if (velocity >= 100_000)
+    return <Badge className="bg-red-500 text-white hover:bg-red-500/90">🔥 Virale</Badge>;
+  if (velocity >= 50_000)
+    return <Badge className="bg-orange-500 text-white hover:bg-orange-500/90">🚀 Esplodendo</Badge>;
+  if (velocity >= 10_000)
+    return <Badge className="bg-amber-500 text-white hover:bg-amber-500/90">⚡ In crescita</Badge>;
+  return null;
+}
+
+function DurationBadge({ sec }: { sec: number | null }) {
+  if (sec === null) return <span className="text-xs text-muted-foreground">—</span>;
+  if (sec <= 15) return <Badge variant="outline" className="text-xs">⚡ {sec}s</Badge>;
+  if (sec <= 30) return <Badge variant="outline" className="text-xs">▶ {sec}s</Badge>;
+  return <Badge variant="outline" className="text-xs">🎬 {sec}s</Badge>;
+}
+
+function ContentTagCell({
+  video,
+  onSave,
+}: {
+  video: VideoItem;
+  onSave: (tag: string | null) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(video.contentTag ?? "");
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1">
+        <Input
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          className="h-7 text-xs w-28"
+          placeholder="es. hook diretto"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              onSave(val.trim() || null);
+              setEditing(false);
+            }
+            if (e.key === "Escape") setEditing(false);
+          }}
+          autoFocus
+        />
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-6 w-6"
+          onClick={() => {
+            onSave(val.trim() || null);
+            setEditing(false);
+          }}
+        >
+          ✓
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <button
+      onClick={() => setEditing(true)}
+      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+    >
+      <Tag className="h-3 w-3" />
+      {video.contentTag ?? <span className="italic">Aggiungi tag</span>}
+    </button>
+  );
+}
+
 export default function CampaignManagerPage() {
   const [period, setPeriod] = useState<Period>("30d");
   const [videoCampaignFilter, setVideoCampaignFilter] = useState("all");
   const [videoCreatorFilter, setVideoCreatorFilter] = useState("all");
+  const [videoSort, setVideoSort] = useState<"date" | "views" | "velocity" | "engagement" | "quality">("velocity");
   const [showAllVideos, setShowAllVideos] = useState(false);
+  const qc = useQueryClient();
 
   const { data, isLoading } = useCampaignManagerData(period);
+
+  const saveTag = useMutation({
+    mutationFn: async ({ videoId, tag }: { videoId: string; tag: string | null }) => {
+      const { error } = await supabase
+        .from("videos")
+        .update({ content_tag: tag })
+        .eq("id", videoId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["campaign-manager"] });
+      toast({ title: "Tag salvato" });
+    },
+    onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+  });
 
   const chartCampaignNames = useMemo(() => {
     if (!data) return [];
@@ -68,7 +161,6 @@ export default function CampaignManagerPage() {
     return [...names];
   }, [data]);
 
-  // Unique creators for filter
   const creatorOptions = useMemo(() => {
     if (!data || !data.videos) return [];
     const map = new Map<string, string>();
@@ -78,52 +170,84 @@ export default function CampaignManagerPage() {
     return [...map.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
   }, [data]);
 
-  const filteredVideos = useMemo(() => {
-    if (!data || !data.videos) return [];
-    let list = data.videos;
-    if (videoCampaignFilter !== "all") {
-      list = list.filter((v) => v.campaignId === videoCampaignFilter);
-    }
-    if (videoCreatorFilter !== "all") {
-      list = list.filter((v) => v.creatorId === videoCreatorFilter);
+  const filteredAndSortedVideos = useMemo(() => {
+    if (!data?.videos) return [];
+    let list = [...data.videos];
+    if (videoCampaignFilter !== "all") list = list.filter((v) => v.campaignId === videoCampaignFilter);
+    if (videoCreatorFilter !== "all") list = list.filter((v) => v.creatorId === videoCreatorFilter);
+    switch (videoSort) {
+      case "views":      list.sort((a, b) => b.views - a.views); break;
+      case "velocity":   list.sort((a, b) => b.viralVelocity - a.viralVelocity); break;
+      case "engagement": list.sort((a, b) => b.engagementRate - a.engagementRate); break;
+      case "quality":    list.sort((a, b) => b.qualityScore - a.qualityScore); break;
+      case "date":       list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()); break;
     }
     return showAllVideos ? list : list.slice(0, 30);
-  }, [data, videoCampaignFilter, videoCreatorFilter, showAllVideos]);
+  }, [data, videoCampaignFilter, videoCreatorFilter, videoSort, showAllVideos]);
 
   const totalFilteredVideos = useMemo(() => {
-    if (!data || !data.videos) return 0;
+    if (!data?.videos) return 0;
     let list = data.videos;
     if (videoCampaignFilter !== "all") list = list.filter((v) => v.campaignId === videoCampaignFilter);
     if (videoCreatorFilter !== "all") list = list.filter((v) => v.creatorId === videoCreatorFilter);
     return list.length;
   }, [data, videoCampaignFilter, videoCreatorFilter]);
 
-  // Insights
   const insights = useMemo(() => {
     if (!data) return [];
     const items: { emoji: string; title: string; text: string }[] = [];
 
+    if (data.viralVideos[0]) {
+      const v = data.viralVideos[0];
+      items.push({
+        emoji: "🔥",
+        title: `Video esploso: @${cleanUsername(v.username)}`,
+        text: `${formatViews(Math.round(v.viralVelocity))} views/giorno — ${formatViews(v.views)} views totali`,
+      });
+    }
+
+    const bestEng = [...(data.creatorRankingDetailed ?? [])].sort((a, b) => b.engagementRate - a.engagementRate)[0];
+    if (bestEng && bestEng.engagementRate > 0) {
+      items.push({
+        emoji: "💬",
+        title: `Engagement: ${bestEng.creatorName}`,
+        text: `Tasso di engagement ${bestEng.engagementRate.toFixed(2)}% — il più alto del periodo.`,
+      });
+    }
+
+    const bestQS = [...(data.creatorRankingDetailed ?? [])].sort((a, b) => b.qualityScore - a.qualityScore)[0];
+    if (bestQS && bestQS.qualityScore > 0) {
+      items.push({
+        emoji: "⭐",
+        title: `Qualità: ${bestQS.creatorName}`,
+        text: `Quality score ${bestQS.qualityScore.toFixed(1)} — più saves e shares.`,
+      });
+    }
+
+    if (data.formatStats.length >= 2) {
+      const best = data.formatStats[0];
+      const worst = data.formatStats[data.formatStats.length - 1];
+      items.push({
+        emoji: "📐",
+        title: `Formato top: "${best.tag}"`,
+        text: `Media ${formatViews(best.avgViews)} views vs ${formatViews(worst.avgViews)} di "${worst.tag}".`,
+      });
+    }
+
     const bestCamp = [...data.campaigns].sort((a, b) => b.views - a.views)[0];
     if (bestCamp) {
       const pct = trendPercent(bestCamp.views, bestCamp.prevViews);
-      if (pct > 0) {
+      if (pct > 0)
         items.push({ emoji: "📈", title: `${bestCamp.name} in crescita`, text: `+${pct}% di views rispetto al periodo precedente.` });
-      }
-    }
-
-    const worstCamp = [...data.campaigns].sort((a, b) => trendPercent(a.views, a.prevViews) - trendPercent(b.views, b.prevViews))[0];
-    if (worstCamp && trendPercent(worstCamp.views, worstCamp.prevViews) < -5) {
-      items.push({ emoji: "📉", title: `${worstCamp.name} in calo`, text: `${trendPercent(worstCamp.views, worstCamp.prevViews)}% rispetto al periodo precedente.` });
-    }
-
-    const topCreator = data.creatorRanking[0];
-    if (topCreator) {
-      items.push({ emoji: "🏆", title: `Top creator: ${topCreator.creatorName}`, text: `${formatViews(topCreator.views)} views nel periodo.` });
     }
 
     const inactive = data.creatorRanking.filter((c) => c.dailyViews.every((v) => v === 0));
-    if (inactive.length > 0) {
+    if (inactive.length > 0)
       items.push({ emoji: "⚠️", title: `${inactive.length} creator inattivi`, text: `Nessun contenuto pubblicato negli ultimi 7 giorni.` });
+
+    if (data.publishedContent > 0) {
+      const avg = Math.round(data.totalViews / data.publishedContent);
+      items.push({ emoji: "📊", title: "Media views/video", text: `${formatViews(avg)} views per contenuto nel periodo selezionato.` });
     }
 
     return items;
@@ -133,8 +257,8 @@ export default function CampaignManagerPage() {
     return (
       <div className="p-6 space-y-6">
         <Skeleton className="h-10 w-64" />
-        <div className="grid grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-28" />)}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-28" />)}
         </div>
         <Skeleton className="h-80" />
       </div>
@@ -144,6 +268,7 @@ export default function CampaignManagerPage() {
   if (!data) return null;
 
   const maxCampViews = Math.max(...data.campaigns.map((c) => c.views), 1);
+  const viralCount = data.viralVideos.filter((v) => v.viralVelocity >= 10_000).length;
 
   return (
     <div className="p-6 space-y-6">
@@ -165,47 +290,123 @@ export default function CampaignManagerPage() {
         </div>
       </div>
 
-      {/* ROW 1 — KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ROW 1 — KPI */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <Eye className="h-4 w-4" /> Views Totali
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+              <Eye className="h-4 w-4" /> Views
             </div>
-            <p className="text-3xl font-bold text-foreground">{formatViews(data.totalViews)}</p>
+            <p className="text-2xl font-bold text-foreground">{formatViews(data.totalViews)}</p>
             <TrendBadge current={data.totalViews} prev={data.prevTotalViews} />
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <Users className="h-4 w-4" /> Creator Attivi
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+              <Users className="h-4 w-4" /> Creator attivi
             </div>
-            <p className="text-3xl font-bold text-foreground">{data.activeCreators}</p>
+            <p className="text-2xl font-bold text-foreground">{data.activeCreators}</p>
             <TrendBadge current={data.activeCreators} prev={data.prevActiveCreators} />
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <FileText className="h-4 w-4" /> Contenuti Pubblicati
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+              <FileText className="h-4 w-4" /> Contenuti
             </div>
-            <p className="text-3xl font-bold text-foreground">{data.publishedContent}</p>
+            <p className="text-2xl font-bold text-foreground">{data.publishedContent}</p>
             <TrendBadge current={data.publishedContent} prev={data.prevPublishedContent} />
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
-              <DollarSign className="h-4 w-4" /> CPM Medio
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+              <TrendingUp className="h-4 w-4" /> Eng. Rate
             </div>
-            <p className="text-3xl font-bold text-foreground">{formatCurrency(data.avgCpm)}</p>
-            <TrendBadge current={data.avgCpm} prev={data.prevAvgCpm} />
+            <p className="text-2xl font-bold text-foreground">{data.avgEngagementRate.toFixed(2)}%</p>
+            <p className="text-xs text-muted-foreground">media periodo</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+              <BarChart3 className="h-4 w-4" /> Quality Score
+            </div>
+            <p className="text-2xl font-bold text-foreground">{data.avgQualityScore.toFixed(1)}</p>
+            <p className="text-xs text-muted-foreground">saves+shares peso</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+              <Flame className="h-4 w-4" /> Video virali
+            </div>
+            <p className="text-2xl font-bold text-foreground">{viralCount}</p>
+            <p className="text-xs text-muted-foreground">&gt;10K views/giorno</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* ROW 2 — Chart + Campaign summary */}
+      {/* ROW 2 — Video Esplosi */}
+      {data.viralVideos.length > 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <h2 className="text-lg font-semibold text-foreground mb-1 flex items-center gap-2">
+              <Flame className="h-5 w-5 text-orange-500" /> Video Esplosi
+            </h2>
+            <p className="text-xs text-muted-foreground mb-4">
+              ordinati per views/giorno — tutti i video attivi
+            </p>
+            <div className="space-y-3">
+              {data.viralVideos.map((v, i) => (
+                <div key={v.videoId} className="flex flex-col md:flex-row md:items-center gap-3 p-3 rounded-lg border border-border bg-muted/30">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <span className="text-xl font-bold text-muted-foreground shrink-0">#{i + 1}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <a
+                          href={`https://www.tiktok.com/@${cleanUsername(v.username)}/video/${v.tiktokVideoId}`}
+                          target="_blank" rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline flex items-center gap-1 font-medium"
+                        >
+                          @{cleanUsername(v.username)} <ExternalLink className="h-3 w-3" />
+                        </a>
+                        <ViralBadge velocity={v.viralVelocity} />
+                        <DurationBadge sec={v.durationSec} />
+                        {v.contentTag && <Badge variant="secondary" className="text-xs">{v.contentTag}</Badge>}
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {v.creatorName} • {v.campaignName} • {new Date(v.publishedAt).toLocaleDateString("it-IT")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 gap-3 md:gap-4">
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase">Views/giorno</p>
+                      <p className="text-sm font-bold text-foreground">{formatViews(Math.round(v.viralVelocity))}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase">Views tot</p>
+                      <p className="text-sm font-bold text-foreground">{formatViews(v.views)}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase">Eng. %</p>
+                      <p className="text-sm font-bold text-foreground">{v.engagementRate.toFixed(2)}%</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase">Quality</p>
+                      <p className="text-sm font-bold text-foreground">{v.qualityScore.toFixed(1)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ROW 3 — Chart + Campaign summary */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <Card className="lg:col-span-3">
           <CardContent className="pt-6">
@@ -266,16 +467,77 @@ export default function CampaignManagerPage() {
         </Card>
       </div>
 
-      {/* ROW 3 — Video List */}
+      {/* ROW 4 — Creator Ranking dettagliato */}
+      <Card>
+        <CardContent className="pt-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Users className="h-5 w-5" /> Ranking Creator
+          </h2>
+          <ScrollArea className="w-full">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">#</TableHead>
+                  <TableHead>Creator</TableHead>
+                  <TableHead className="text-right">Views</TableHead>
+                  <TableHead className="text-right">Video</TableHead>
+                  <TableHead className="text-right">Media/video</TableHead>
+                  <TableHead className="text-right">Eng. %</TableHead>
+                  <TableHead className="text-right">Quality Score</TableHead>
+                  <TableHead className="text-right">Top video</TableHead>
+                  <TableHead className="text-right">Trend</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(data.creatorRankingDetailed ?? []).map((cr, i) => (
+                  <TableRow key={cr.creatorId}>
+                    <TableCell className="font-bold text-muted-foreground">{i + 1}</TableCell>
+                    <TableCell className="font-medium">{cr.creatorName}</TableCell>
+                    <TableCell className="text-right font-semibold">{formatViews(cr.views)}</TableCell>
+                    <TableCell className="text-right">{cr.videoCount}</TableCell>
+                    <TableCell className="text-right">{formatViews(cr.avgViewsPerVideo)}</TableCell>
+                    <TableCell className="text-right">{cr.engagementRate.toFixed(2)}%</TableCell>
+                    <TableCell className="text-right">
+                      <span className={cr.qualityScore > 0 ? "text-primary font-semibold" : "text-muted-foreground"}>
+                        {cr.qualityScore.toFixed(1)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">{formatViews(cr.topVideoViews)}</TableCell>
+                    <TableCell className="text-right">
+                      <TrendBadge current={cr.views} prev={cr.prevViews} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!(data.creatorRankingDetailed ?? []).length && (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nessun dato</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </CardContent>
+      </Card>
+
+      {/* ROW 5 — Video List */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
             <h2 className="text-lg font-semibold text-foreground">Video Pubblicati</h2>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Select value={videoSort} onValueChange={(v: any) => { setVideoSort(v); setShowAllVideos(false); }}>
+                <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="velocity">🔥 Views/giorno</SelectItem>
+                  <SelectItem value="views">👁 Views totali</SelectItem>
+                  <SelectItem value="engagement">💬 Engagement %</SelectItem>
+                  <SelectItem value="quality">⭐ Quality Score</SelectItem>
+                  <SelectItem value="date">📅 Data</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={videoCampaignFilter} onValueChange={(v) => { setVideoCampaignFilter(v); setShowAllVideos(false); }}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Tutte le campagne" />
-                </SelectTrigger>
+                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Tutte le campagne" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tutte le campagne</SelectItem>
                   {data.campaigns.map((c) => (
@@ -284,9 +546,7 @@ export default function CampaignManagerPage() {
                 </SelectContent>
               </Select>
               <Select value={videoCreatorFilter} onValueChange={(v) => { setVideoCreatorFilter(v); setShowAllVideos(false); }}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Tutti i creator" />
-                </SelectTrigger>
+                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Tutti i creator" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tutti i creator</SelectItem>
                   {creatorOptions.map((c) => (
@@ -297,53 +557,69 @@ export default function CampaignManagerPage() {
             </div>
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Video</TableHead>
-                <TableHead>Creator</TableHead>
-                <TableHead>Campagna</TableHead>
-                <TableHead className="text-right">Views</TableHead>
-                <TableHead className="text-right">Likes</TableHead>
-                <TableHead className="text-right">Commenti</TableHead>
-                <TableHead>Data</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredVideos.map((v) => (
-                <TableRow key={v.videoId}>
-                  <TableCell>
-                    <a
-                      href={`https://www.tiktok.com/@${cleanUsername(v.username)}/video/${v.tiktokVideoId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 text-sm text-primary hover:underline"
-                    >
-                      @{cleanUsername(v.username)}
-                      <ExternalLink className="h-3 w-3 shrink-0" />
-                    </a>
-                  </TableCell>
-                  <TableCell className="text-sm">{v.creatorName}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="text-xs">{v.campaignName}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-bold">{formatViews(v.views)}</TableCell>
-                  <TableCell className="text-right">{formatViews(v.likes)}</TableCell>
-                  <TableCell className="text-right">{formatViews(v.comments)}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {new Date(v.publishedAt).toLocaleDateString("it-IT")}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredVideos.length === 0 && (
+          <ScrollArea className="w-full">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                    Nessun video trovato
-                  </TableCell>
+                  <TableHead>Video / Account</TableHead>
+                  <TableHead>Creator</TableHead>
+                  <TableHead>Campagna</TableHead>
+                  <TableHead className="text-right">Views/gg</TableHead>
+                  <TableHead className="text-right">Views</TableHead>
+                  <TableHead className="text-right">Eng. %</TableHead>
+                  <TableHead className="text-right">Saves</TableHead>
+                  <TableHead className="text-right">Shares</TableHead>
+                  <TableHead className="text-right">Quality</TableHead>
+                  <TableHead>Durata</TableHead>
+                  <TableHead>Tag formato</TableHead>
+                  <TableHead>Data</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredAndSortedVideos.map((v) => (
+                  <TableRow key={v.videoId}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`https://www.tiktok.com/@${cleanUsername(v.username)}/video/${v.tiktokVideoId}`}
+                          target="_blank" rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline flex items-center gap-1"
+                        >
+                          @{cleanUsername(v.username)} <ExternalLink className="h-3 w-3" />
+                        </a>
+                        <ViralBadge velocity={v.viralVelocity} />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">{v.creatorName}</TableCell>
+                    <TableCell><Badge variant="secondary" className="text-xs">{v.campaignName}</Badge></TableCell>
+                    <TableCell className="text-right font-semibold">{formatViews(Math.round(v.viralVelocity))}</TableCell>
+                    <TableCell className="text-right font-bold">{formatViews(v.views)}</TableCell>
+                    <TableCell className="text-right">{v.engagementRate.toFixed(2)}%</TableCell>
+                    <TableCell className="text-right">{v.saves !== null ? formatViews(v.saves) : "—"}</TableCell>
+                    <TableCell className="text-right">{v.shares !== null ? formatViews(v.shares) : "—"}</TableCell>
+                    <TableCell className="text-right">
+                      <span className={v.qualityScore > 0 ? "font-semibold text-primary" : "text-muted-foreground"}>
+                        {v.qualityScore.toFixed(1)}
+                      </span>
+                    </TableCell>
+                    <TableCell><DurationBadge sec={v.durationSec} /></TableCell>
+                    <TableCell>
+                      <ContentTagCell video={v} onSave={(tag) => saveTag.mutate({ videoId: v.videoId, tag })} />
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                      {new Date(v.publishedAt).toLocaleDateString("it-IT")}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredAndSortedVideos.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={12} className="text-center text-muted-foreground py-8">Nessun video trovato</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
 
           {!showAllVideos && totalFilteredVideos > 30 && (
             <div className="flex justify-center mt-4">
@@ -355,10 +631,48 @@ export default function CampaignManagerPage() {
         </CardContent>
       </Card>
 
-      {/* ROW 4 — Insights */}
+      {/* ROW 6 — Format performance */}
+      {data.formatStats.length > 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" /> Performance per Formato
+            </h2>
+            <ScrollArea className="w-full">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Formato / Tag</TableHead>
+                    <TableHead className="text-right">Video</TableHead>
+                    <TableHead className="text-right">Media Views</TableHead>
+                    <TableHead className="text-right">Media Eng. %</TableHead>
+                    <TableHead className="text-right">Media Quality</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.formatStats.map((f) => (
+                    <TableRow key={f.tag}>
+                      <TableCell className="font-medium">{f.tag}</TableCell>
+                      <TableCell className="text-right">{f.videoCount}</TableCell>
+                      <TableCell className="text-right font-semibold">{formatViews(f.avgViews)}</TableCell>
+                      <TableCell className="text-right">{f.avgEngagement.toFixed(2)}%</TableCell>
+                      <TableCell className="text-right text-primary font-semibold">{f.avgQualityScore.toFixed(1)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ROW 7 — Insights */}
       {insights.length > 0 && (
         <div className="bg-muted/50 rounded-xl p-5">
-          <h2 className="text-lg font-semibold text-foreground mb-3">Insights</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Zap className="h-5 w-5 text-amber-500" /> Insights automatici
+          </h2>
           <ScrollArea className="w-full">
             <div className="flex gap-3 pb-2">
               {insights.map((ins, i) => (
