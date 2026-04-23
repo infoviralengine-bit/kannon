@@ -108,11 +108,14 @@ export default function CampaignManagerPage() {
   const [period, setPeriod] = useState<Period>("30d");
   const [videoCampaignFilter, setVideoCampaignFilter] = useState("all");
   const [videoCreatorFilter, setVideoCreatorFilter] = useState("all");
+  const [videoFormatFilter, setVideoFormatFilter] = useState("all");
   const [videoSort, setVideoSort] = useState<"date" | "views" | "velocity" | "engagement" | "quality">("velocity");
   const [showAllVideos, setShowAllVideos] = useState(false);
+  const [newFormatName, setNewFormatName] = useState("");
   const qc = useQueryClient();
 
   const { data, isLoading } = useCampaignManagerData(period);
+  const { data: formats, refetch: refetchFormats } = useVideoFormats();
 
   const saveTag = useMutation({
     mutationFn: async ({ videoId, tag }: { videoId: string; tag: string | null }) => {
@@ -124,7 +127,31 @@ export default function CampaignManagerPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["campaign-manager"] });
-      toast({ title: "Tag salvato" });
+      toast({ title: "Formato salvato" });
+    },
+    onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+  });
+
+  const addFormat = useMutation({
+    mutationFn: async (name: string) => {
+      const { error } = await supabase.from("video_formats" as any).insert({ name });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchFormats();
+      toast({ title: "Formato aggiunto" });
+    },
+    onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+  });
+
+  const deleteFormat = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("video_formats" as any).delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchFormats();
+      toast({ title: "Formato eliminato" });
     },
     onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
   });
