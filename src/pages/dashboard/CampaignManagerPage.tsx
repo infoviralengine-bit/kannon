@@ -165,6 +165,26 @@ export default function CampaignManagerPage() {
     return [...names];
   }, [data]);
 
+  // Aggregate daily totals across all campaigns for a single, easy-to-read trend line.
+  const dailyTotals = useMemo(() => {
+    if (!data) return [] as { date: string; views: number; label: string }[];
+    return data.dailyViews.map((d) => {
+      const total = Object.entries(d).reduce(
+        (s, [k, v]) => (k === "date" ? s : s + (typeof v === "number" ? v : 0)),
+        0
+      );
+      const dt = new Date(d.date as string);
+      const label = dt.toLocaleDateString("it-IT", { day: "2-digit", month: "short" });
+      return { date: d.date as string, views: total, label };
+    });
+  }, [data]);
+
+  // Total views across the period — denominator for "share of voice" bars.
+  const totalPeriodViews = useMemo(() => {
+    if (!data) return 0;
+    return data.campaigns.reduce((s, c) => s + c.views, 0);
+  }, [data]);
+
   const creatorOptions = useMemo(() => {
     if (!data || !data.videos) return [];
     const map = new Map<string, string>();
@@ -273,7 +293,6 @@ export default function CampaignManagerPage() {
 
   if (!data) return null;
 
-  const maxCampViews = Math.max(...data.campaigns.map((c) => c.views), 1);
   const viralCount = data.viralVideos.filter((v) => v.viralVelocity >= 10_000).length;
 
   return (
@@ -416,55 +435,94 @@ export default function CampaignManagerPage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <Card className="lg:col-span-3">
           <CardContent className="pt-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Views nel tempo</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              {chartCampaignNames.length <= 1 ? (
-                <AreaChart data={data.dailyViews}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                  <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                  <Tooltip />
-                  {chartCampaignNames.map((name, i) => (
-                    <Area key={name} type="monotone" dataKey={name} stroke={CHART_COLORS[i % CHART_COLORS.length]} fill={CHART_COLORS[i % CHART_COLORS.length]} fillOpacity={0.15} strokeWidth={2} />
-                  ))}
-                </AreaChart>
-              ) : (
-                <LineChart data={data.dailyViews}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                  <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                  <Tooltip />
-                  <Legend />
-                  {chartCampaignNames.map((name, i) => (
-                    <Line key={name} type="monotone" dataKey={name} stroke={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={2} dot={false} />
-                  ))}
-                </LineChart>
-              )}
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Views pubblicate per giorno</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Somma views dei video pubblicati ogni giorno · tutte le campagne
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Totale periodo</p>
+                <p className="text-lg font-bold text-foreground">{formatViews(totalPeriodViews)}</p>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={280}>
+              <AreaChart data={dailyTotals} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="viewsGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  tickLine={false}
+                  axisLine={false}
+                  minTickGap={24}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v: number) => formatViews(v)}
+                  width={48}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                  labelStyle={{ color: "hsl(var(--muted-foreground))" }}
+                  formatter={(v: number) => [formatViews(v), "Views"]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="views"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  fill="url(#viewsGradient)"
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         <Card className="lg:col-span-2">
           <CardContent className="pt-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Campagne: riepilogo</h2>
-            <div className="space-y-4">
-              {data.campaigns.map((camp) => (
-                <button
-                  key={camp.id}
-                  onClick={() => { setVideoCampaignFilter(camp.id); setVideoCreatorFilter("all"); setShowAllVideos(false); }}
-                  className="w-full text-left p-3 rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-sm text-foreground">{camp.name}</span>
-                    <TrendBadge current={camp.views} prev={camp.prevViews} />
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                    <span>{formatViews(camp.views)} views</span>
-                    <span>{camp.activeCreators} creator</span>
-                  </div>
-                  <Progress value={(camp.views / maxCampViews) * 100} className="h-1.5" />
-                </button>
-              ))}
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Campagne: riepilogo</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Quota di views sul totale del periodo</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {[...data.campaigns]
+                .sort((a, b) => b.views - a.views)
+                .map((camp) => {
+                  const share = totalPeriodViews > 0 ? (camp.views / totalPeriodViews) * 100 : 0;
+                  return (
+                    <button
+                      key={camp.id}
+                      onClick={() => { setVideoCampaignFilter(camp.id); setVideoCreatorFilter("all"); setShowAllVideos(false); }}
+                      className="w-full text-left p-3 rounded-lg hover:bg-muted/50 transition-colors border border-transparent hover:border-border"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold text-sm text-foreground">{camp.name}</span>
+                        <TrendBadge current={camp.views} prev={camp.prevViews} />
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+                        <span>{formatViews(camp.views)} views · {camp.activeCreators} creator</span>
+                        <span className="font-medium text-foreground">{share.toFixed(1)}%</span>
+                      </div>
+                      <Progress value={share} className="h-1.5" />
+                    </button>
+                  );
+                })}
               {data.campaigns.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-4">Nessuna campagna attiva</p>
               )}
