@@ -151,7 +151,7 @@ export function useCampaignManagerData(period: Period) {
       ] = await Promise.all([
         supabase.from("campaigns").select("id, name, status, client_cpm").eq("status", "active"),
         supabase.from("tiktok_accounts").select("id, campaign_id, creator_id, username"),
-        supabase.from("videos").select("id, tiktok_video_id, tiktok_account_id, views, likes, comments, published_at"),
+        supabase.from("videos").select("id, tiktok_video_id, tiktok_account_id, views, likes, comments, shares, saves, duration_sec, content_tag, published_at"),
         supabase.from("creators").select("id, name, status"),
         supabase.from("campaign_creators").select("campaign_id, creator_id"),
       ]);
