@@ -389,10 +389,7 @@ export function useCampaignAccounts(campaignId: string) {
         .in("id", creatorIds);
 
       const accIds = accounts.map((a) => a.id);
-      const { data: allVideos } = await supabase
-        .from("videos")
-        .select("tiktok_account_id, views, published_at")
-        .in("tiktok_account_id", accIds);
+      const allVideos = await fetchAllVideosForAccounts(accIds);
 
       const creatorMap = new Map((creators ?? []).map((c) => [c.id, c]));
       
