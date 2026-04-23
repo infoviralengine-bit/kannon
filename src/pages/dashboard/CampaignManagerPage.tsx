@@ -686,10 +686,6 @@ export default function CampaignManagerPage() {
         </Card>
       )}
 
-      {/* ROW 7 — Insights */}
-      {insights.length > 0 && (
-        <></>
-      )}
       {/* ROW 7 — Gestione Formati */}
       <Card>
         <CardContent className="pt-6">
