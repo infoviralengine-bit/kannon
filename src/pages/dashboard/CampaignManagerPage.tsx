@@ -179,6 +179,7 @@ export default function CampaignManagerPage() {
     let list = [...data.videos];
     if (videoCampaignFilter !== "all") list = list.filter((v) => v.campaignId === videoCampaignFilter);
     if (videoCreatorFilter !== "all") list = list.filter((v) => v.creatorId === videoCreatorFilter);
+    if (videoFormatFilter !== "all") list = list.filter((v) => v.contentTag === videoFormatFilter);
     switch (videoSort) {
       case "views":      list.sort((a, b) => b.views - a.views); break;
       case "velocity":   list.sort((a, b) => b.viralVelocity - a.viralVelocity); break;
@@ -187,15 +188,16 @@ export default function CampaignManagerPage() {
       case "date":       list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()); break;
     }
     return showAllVideos ? list : list.slice(0, 30);
-  }, [data, videoCampaignFilter, videoCreatorFilter, videoSort, showAllVideos]);
+  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter, videoSort, showAllVideos]);
 
   const totalFilteredVideos = useMemo(() => {
     if (!data?.videos) return 0;
     let list = data.videos;
     if (videoCampaignFilter !== "all") list = list.filter((v) => v.campaignId === videoCampaignFilter);
     if (videoCreatorFilter !== "all") list = list.filter((v) => v.creatorId === videoCreatorFilter);
+    if (videoFormatFilter !== "all") list = list.filter((v) => v.contentTag === videoFormatFilter);
     return list.length;
-  }, [data, videoCampaignFilter, videoCreatorFilter]);
+  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter]);
 
   const insights = useMemo(() => {
     if (!data) return [];
