@@ -560,6 +560,15 @@ export default function CampaignManagerPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={videoFormatFilter} onValueChange={(v) => { setVideoFormatFilter(v); setShowAllVideos(false); }}>
+                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Tutti i formati" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tutti i formati</SelectItem>
+                  {(formats ?? []).map((f) => (
+                    <SelectItem key={f.id} value={f.name}>{f.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
