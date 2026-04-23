@@ -264,6 +264,11 @@ export function useCampaignManagerData(period: Period) {
         const creatorName = creatorNameMap.get(creatorId) ?? "Sconosciuto";
         const campaignId = accountCampaignMap.get(accountId) ?? "";
         const campaignName = campaignNameMap.get(campaignId) ?? "";
+        const views = v.views ?? 0;
+        const likes = v.likes ?? 0;
+        const comments = v.comments ?? 0;
+        const saves = (v as any).saves ?? null;
+        const shares = (v as any).shares ?? null;
         return {
           videoId: v.id,
           tiktokVideoId: v.tiktok_video_id,
@@ -272,10 +277,17 @@ export function useCampaignManagerData(period: Period) {
           creatorName,
           campaignId,
           campaignName,
-          views: v.views ?? 0,
-          likes: v.likes ?? 0,
-          comments: v.comments ?? 0,
+          views,
+          likes,
+          comments,
+          shares,
+          saves,
+          durationSec: (v as any).duration_sec ?? null,
+          contentTag: (v as any).content_tag ?? null,
           publishedAt: v.published_at,
+          viralVelocity: calcViralVelocity(views, v.published_at),
+          engagementRate: calcEngagementRate(likes, comments, views),
+          qualityScore: calcQualityScore(saves, shares, comments, views),
         };
       }).sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
