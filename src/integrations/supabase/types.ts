@@ -1040,6 +1040,24 @@ export type Database = {
         }
         Relationships: []
       }
+      video_formats: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       videos: {
         Row: {
           comments: number | null

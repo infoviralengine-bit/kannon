@@ -13,14 +13,14 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Minus, ArrowUp, ArrowDown, Eye, Users, FileText, ExternalLink,
-  Flame, Zap, Tag, TrendingUp, BarChart3,
+  Flame, Zap, TrendingUp, BarChart3, X, Plus,
 } from "lucide-react";
 import { cleanUsername } from "@/lib/utils";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   Area, AreaChart,
 } from "recharts";
-import { useCampaignManagerData, Period, VideoItem } from "@/hooks/useCampaignManagerData";
+import { useCampaignManagerData, useVideoFormats, Period, VideoItem } from "@/hooks/useCampaignManagerData";
 import { formatViews } from "@/lib/format";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
@@ -77,53 +77,30 @@ function DurationBadge({ sec }: { sec: number | null }) {
 
 function ContentTagCell({
   video,
+  formats,
   onSave,
 }: {
   video: VideoItem;
+  formats: { id: string; name: string }[];
   onSave: (tag: string | null) => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [val, setVal] = useState(video.contentTag ?? "");
-
-  if (editing) {
-    return (
-      <div className="flex items-center gap-1">
-        <Input
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          className="h-7 text-xs w-28"
-          placeholder="es. hook diretto"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              onSave(val.trim() || null);
-              setEditing(false);
-            }
-            if (e.key === "Escape") setEditing(false);
-          }}
-          autoFocus
-        />
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-6 w-6"
-          onClick={() => {
-            onSave(val.trim() || null);
-            setEditing(false);
-          }}
-        >
-          ✓
-        </Button>
-      </div>
-    );
-  }
   return (
-    <button
-      onClick={() => setEditing(true)}
-      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+    <Select
+      value={video.contentTag ?? "__none__"}
+      onValueChange={(v) => onSave(v === "__none__" ? null : v)}
     >
-      <Tag className="h-3 w-3" />
-      {video.contentTag ?? <span className="italic">Aggiungi tag</span>}
-    </button>
+      <SelectTrigger className="h-7 text-xs w-36 border-dashed">
+        <SelectValue placeholder="Formato..." />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="__none__">
+          <span className="text-muted-foreground">Nessuno</span>
+        </SelectItem>
+        {formats.map((f) => (
+          <SelectItem key={f.id} value={f.name}>{f.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -131,11 +108,14 @@ export default function CampaignManagerPage() {
   const [period, setPeriod] = useState<Period>("30d");
   const [videoCampaignFilter, setVideoCampaignFilter] = useState("all");
   const [videoCreatorFilter, setVideoCreatorFilter] = useState("all");
+  const [videoFormatFilter, setVideoFormatFilter] = useState("all");
   const [videoSort, setVideoSort] = useState<"date" | "views" | "velocity" | "engagement" | "quality">("velocity");
   const [showAllVideos, setShowAllVideos] = useState(false);
+  const [newFormatName, setNewFormatName] = useState("");
   const qc = useQueryClient();
 
   const { data, isLoading } = useCampaignManagerData(period);
+  const { data: formats, refetch: refetchFormats } = useVideoFormats();
 
   const saveTag = useMutation({
     mutationFn: async ({ videoId, tag }: { videoId: string; tag: string | null }) => {
@@ -147,7 +127,31 @@ export default function CampaignManagerPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["campaign-manager"] });
-      toast({ title: "Tag salvato" });
+      toast({ title: "Formato salvato" });
+    },
+    onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+  });
+
+  const addFormat = useMutation({
+    mutationFn: async (name: string) => {
+      const { error } = await supabase.from("video_formats" as any).insert({ name });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchFormats();
+      toast({ title: "Formato aggiunto" });
+    },
+    onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+  });
+
+  const deleteFormat = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("video_formats" as any).delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      refetchFormats();
+      toast({ title: "Formato eliminato" });
     },
     onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
   });
@@ -175,6 +179,7 @@ export default function CampaignManagerPage() {
     let list = [...data.videos];
     if (videoCampaignFilter !== "all") list = list.filter((v) => v.campaignId === videoCampaignFilter);
     if (videoCreatorFilter !== "all") list = list.filter((v) => v.creatorId === videoCreatorFilter);
+    if (videoFormatFilter !== "all") list = list.filter((v) => v.contentTag === videoFormatFilter);
     switch (videoSort) {
       case "views":      list.sort((a, b) => b.views - a.views); break;
       case "velocity":   list.sort((a, b) => b.viralVelocity - a.viralVelocity); break;
@@ -183,15 +188,16 @@ export default function CampaignManagerPage() {
       case "date":       list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()); break;
     }
     return showAllVideos ? list : list.slice(0, 30);
-  }, [data, videoCampaignFilter, videoCreatorFilter, videoSort, showAllVideos]);
+  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter, videoSort, showAllVideos]);
 
   const totalFilteredVideos = useMemo(() => {
     if (!data?.videos) return 0;
     let list = data.videos;
     if (videoCampaignFilter !== "all") list = list.filter((v) => v.campaignId === videoCampaignFilter);
     if (videoCreatorFilter !== "all") list = list.filter((v) => v.creatorId === videoCreatorFilter);
+    if (videoFormatFilter !== "all") list = list.filter((v) => v.contentTag === videoFormatFilter);
     return list.length;
-  }, [data, videoCampaignFilter, videoCreatorFilter]);
+  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter]);
 
   const insights = useMemo(() => {
     if (!data) return [];
@@ -554,6 +560,15 @@ export default function CampaignManagerPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={videoFormatFilter} onValueChange={(v) => { setVideoFormatFilter(v); setShowAllVideos(false); }}>
+                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Tutti i formati" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tutti i formati</SelectItem>
+                  {(formats ?? []).map((f) => (
+                    <SelectItem key={f.id} value={f.name}>{f.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -604,7 +619,11 @@ export default function CampaignManagerPage() {
                     </TableCell>
                     <TableCell><DurationBadge sec={v.durationSec} /></TableCell>
                     <TableCell>
-                      <ContentTagCell video={v} onSave={(tag) => saveTag.mutate({ videoId: v.videoId, tag })} />
+                      <ContentTagCell
+                        video={v}
+                        formats={formats ?? []}
+                        onSave={(tag) => saveTag.mutate({ videoId: v.videoId, tag })}
+                      />
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                       {new Date(v.publishedAt).toLocaleDateString("it-IT")}
@@ -667,7 +686,60 @@ export default function CampaignManagerPage() {
         </Card>
       )}
 
-      {/* ROW 7 — Insights */}
+      {/* ROW 7 — Gestione Formati */}
+      <Card>
+        <CardContent className="pt-6">
+          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Plus className="h-5 w-5" /> Gestione Formati
+          </h2>
+          <div className="flex gap-2 mb-4">
+            <Input
+              value={newFormatName}
+              onChange={(e) => setNewFormatName(e.target.value)}
+              placeholder="Nuovo formato (es. Direct Hook)"
+              className="max-w-xs"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newFormatName.trim()) {
+                  addFormat.mutate(newFormatName.trim());
+                  setNewFormatName("");
+                }
+              }}
+            />
+            <Button
+              onClick={() => {
+                if (newFormatName.trim()) {
+                  addFormat.mutate(newFormatName.trim());
+                  setNewFormatName("");
+                }
+              }}
+            >
+              Aggiungi
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(formats ?? []).map((f) => (
+              <div
+                key={f.id}
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-muted/50 text-sm"
+              >
+                <span>{f.name}</span>
+                <button
+                  onClick={() => deleteFormat.mutate(f.id)}
+                  title="Elimina formato"
+                  className="text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            {!(formats ?? []).length && (
+              <p className="text-sm text-muted-foreground">Nessun formato definito.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ROW 8 — Insights */}
       {insights.length > 0 && (
         <div className="bg-muted/50 rounded-xl p-5">
           <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">

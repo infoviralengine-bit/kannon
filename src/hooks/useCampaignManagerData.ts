@@ -3,6 +3,21 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type Period = "7d" | "30d" | "90d";
 
+export function useVideoFormats() {
+  return useQuery({
+    queryKey: ["video-formats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("video_formats" as any)
+        .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return (data ?? []) as unknown as { id: string; name: string }[];
+    },
+    staleTime: 60_000,
+  });
+}
+
 function getPeriodDays(period: Period): number {
   return period === "7d" ? 7 : period === "30d" ? 30 : 90;
 }
