@@ -64,7 +64,65 @@ export interface VideoItem {
   views: number;
   likes: number;
   comments: number;
+  shares: number | null;
+  saves: number | null;
+  durationSec: number | null;
+  contentTag: string | null;
   publishedAt: string;
+  viralVelocity: number;
+  engagementRate: number;
+  qualityScore: number;
+}
+
+export interface CreatorRankingItem {
+  creatorId: string;
+  creatorName: string;
+  views: number;
+  prevViews: number;
+  videoCount: number;
+  avgViewsPerVideo: number;
+  engagementRate: number;
+  qualityScore: number;
+  topVideoViews: number;
+}
+
+export interface FormatStat {
+  tag: string;
+  videoCount: number;
+  avgViews: number;
+  avgEngagement: number;
+  avgQualityScore: number;
+}
+
+function calcViralVelocity(views: number, publishedAt: string): number {
+  const daysSince = Math.max(
+    0.5,
+    (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24)
+  );
+  return views / daysSince;
+}
+
+function calcEngagementRate(likes: number, comments: number, views: number): number {
+  if (views === 0) return 0;
+  return ((likes + comments) / views) * 100;
+}
+
+function calcQualityScore(
+  saves: number | null,
+  shares: number | null,
+  comments: number,
+  views: number
+): number {
+  if (views === 0) return 0;
+  const weighted = (saves ?? 0) * 3 + (shares ?? 0) * 2 + comments;
+  return (weighted / views) * 1000;
+}
+
+function durationCategory(sec: number | null): "short" | "medium" | "long" | null {
+  if (sec === null) return null;
+  if (sec <= 15) return "short";
+  if (sec <= 30) return "medium";
+  return "long";
 }
 
 export function useCampaignManagerData(period: Period) {
