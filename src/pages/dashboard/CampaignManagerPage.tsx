@@ -77,53 +77,30 @@ function DurationBadge({ sec }: { sec: number | null }) {
 
 function ContentTagCell({
   video,
+  formats,
   onSave,
 }: {
   video: VideoItem;
+  formats: { id: string; name: string }[];
   onSave: (tag: string | null) => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [val, setVal] = useState(video.contentTag ?? "");
-
-  if (editing) {
-    return (
-      <div className="flex items-center gap-1">
-        <Input
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          className="h-7 text-xs w-28"
-          placeholder="es. hook diretto"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              onSave(val.trim() || null);
-              setEditing(false);
-            }
-            if (e.key === "Escape") setEditing(false);
-          }}
-          autoFocus
-        />
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-6 w-6"
-          onClick={() => {
-            onSave(val.trim() || null);
-            setEditing(false);
-          }}
-        >
-          ✓
-        </Button>
-      </div>
-    );
-  }
   return (
-    <button
-      onClick={() => setEditing(true)}
-      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+    <Select
+      value={video.contentTag ?? "__none__"}
+      onValueChange={(v) => onSave(v === "__none__" ? null : v)}
     >
-      <Tag className="h-3 w-3" />
-      {video.contentTag ?? <span className="italic">Aggiungi tag</span>}
-    </button>
+      <SelectTrigger className="h-7 text-xs w-36 border-dashed">
+        <SelectValue placeholder="Formato..." />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="__none__">
+          <span className="text-muted-foreground">Nessuno</span>
+        </SelectItem>
+        {formats.map((f) => (
+          <SelectItem key={f.id} value={f.name}>{f.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
