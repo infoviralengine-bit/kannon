@@ -25,6 +25,31 @@ function monthRange() {
   return { start, end };
 }
 
+// Fetch all videos for a list of account ids, paginating to bypass the 1000 row limit.
+async function fetchAllVideosForAccounts(
+  accIds: string[],
+  columns: string = "tiktok_account_id, views, published_at"
+): Promise<any[]> {
+  if (!accIds.length) return [];
+  const PAGE = 1000;
+  const all: any[] = [];
+  let from = 0;
+  // Loop until we get a partial page
+  while (true) {
+    const { data, error } = await supabase
+      .from("videos")
+      .select(columns)
+      .in("tiktok_account_id", accIds)
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    const rows = data ?? [];
+    all.push(...rows);
+    if (rows.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+
 export function useCampaignDetail(campaignId: string) {
   return useQuery({
     queryKey: ["campaign-detail", campaignId],
@@ -299,9 +324,8 @@ export function useCampaignCreators(campaignId: string) {
         .select("id, creator_id, username")
         .eq("campaign_id", campaignId);
 
-      const { data: allVideos } = await supabase
-        .from("videos")
-        .select("tiktok_account_id, views, published_at");
+      const accIdsAll = (accounts ?? []).map((a) => a.id);
+      const allVideos = await fetchAllVideosForAccounts(accIdsAll);
 
       const accountsByCreator = new Map<string, typeof accounts>();
       (accounts ?? []).forEach((a) => {
@@ -365,10 +389,7 @@ export function useCampaignAccounts(campaignId: string) {
         .in("id", creatorIds);
 
       const accIds = accounts.map((a) => a.id);
-      const { data: allVideos } = await supabase
-        .from("videos")
-        .select("tiktok_account_id, views, published_at")
-        .in("tiktok_account_id", accIds);
+      const allVideos = await fetchAllVideosForAccounts(accIds);
 
       const creatorMap = new Map((creators ?? []).map((c) => [c.id, c]));
       
