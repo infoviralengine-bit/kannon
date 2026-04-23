@@ -38,6 +38,13 @@ export interface CampaignManagerData {
 
   // For insights
   creatorRanking: { creatorName: string; views: number; dailyViews: number[] }[];
+
+  // Enriched analytics
+  creatorRankingDetailed: CreatorRankingItem[];
+  formatStats: FormatStat[];
+  viralVideos: VideoItem[];
+  avgEngagementRate: number;
+  avgQualityScore: number;
 }
 
 export interface CampaignSummary {
@@ -64,7 +71,65 @@ export interface VideoItem {
   views: number;
   likes: number;
   comments: number;
+  shares: number | null;
+  saves: number | null;
+  durationSec: number | null;
+  contentTag: string | null;
   publishedAt: string;
+  viralVelocity: number;
+  engagementRate: number;
+  qualityScore: number;
+}
+
+export interface CreatorRankingItem {
+  creatorId: string;
+  creatorName: string;
+  views: number;
+  prevViews: number;
+  videoCount: number;
+  avgViewsPerVideo: number;
+  engagementRate: number;
+  qualityScore: number;
+  topVideoViews: number;
+}
+
+export interface FormatStat {
+  tag: string;
+  videoCount: number;
+  avgViews: number;
+  avgEngagement: number;
+  avgQualityScore: number;
+}
+
+function calcViralVelocity(views: number, publishedAt: string): number {
+  const daysSince = Math.max(
+    0.5,
+    (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24)
+  );
+  return views / daysSince;
+}
+
+function calcEngagementRate(likes: number, comments: number, views: number): number {
+  if (views === 0) return 0;
+  return ((likes + comments) / views) * 100;
+}
+
+function calcQualityScore(
+  saves: number | null,
+  shares: number | null,
+  comments: number,
+  views: number
+): number {
+  if (views === 0) return 0;
+  const weighted = (saves ?? 0) * 3 + (shares ?? 0) * 2 + comments;
+  return (weighted / views) * 1000;
+}
+
+function durationCategory(sec: number | null): "short" | "medium" | "long" | null {
+  if (sec === null) return null;
+  if (sec <= 15) return "short";
+  if (sec <= 30) return "medium";
+  return "long";
 }
 
 export function useCampaignManagerData(period: Period) {
@@ -86,7 +151,7 @@ export function useCampaignManagerData(period: Period) {
       ] = await Promise.all([
         supabase.from("campaigns").select("id, name, status, client_cpm").eq("status", "active"),
         supabase.from("tiktok_accounts").select("id, campaign_id, creator_id, username"),
-        supabase.from("videos").select("id, tiktok_video_id, tiktok_account_id, views, likes, comments, published_at"),
+        supabase.from("videos").select("id, tiktok_video_id, tiktok_account_id, views, likes, comments, shares, saves, duration_sec, content_tag, published_at"),
         supabase.from("creators").select("id, name, status"),
         supabase.from("campaign_creators").select("campaign_id, creator_id"),
       ]);
@@ -199,6 +264,11 @@ export function useCampaignManagerData(period: Period) {
         const creatorName = creatorNameMap.get(creatorId) ?? "Sconosciuto";
         const campaignId = accountCampaignMap.get(accountId) ?? "";
         const campaignName = campaignNameMap.get(campaignId) ?? "";
+        const views = v.views ?? 0;
+        const likes = v.likes ?? 0;
+        const comments = v.comments ?? 0;
+        const saves = (v as any).saves ?? null;
+        const shares = (v as any).shares ?? null;
         return {
           videoId: v.id,
           tiktokVideoId: v.tiktok_video_id,
@@ -207,10 +277,17 @@ export function useCampaignManagerData(period: Period) {
           creatorName,
           campaignId,
           campaignName,
-          views: v.views ?? 0,
-          likes: v.likes ?? 0,
-          comments: v.comments ?? 0,
+          views,
+          likes,
+          comments,
+          shares,
+          saves,
+          durationSec: (v as any).duration_sec ?? null,
+          contentTag: (v as any).content_tag ?? null,
           publishedAt: v.published_at,
+          viralVelocity: calcViralVelocity(views, v.published_at),
+          engagementRate: calcEngagementRate(likes, comments, views),
+          qualityScore: calcQualityScore(saves, shares, comments, views),
         };
       }).sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
@@ -242,6 +319,110 @@ export function useCampaignManagerData(period: Period) {
         return { creatorName: creator.name, views, dailyViews: dailySpark };
       }).filter((c) => c.views > 0).sort((a, b) => b.views - a.views);
 
+      // Detailed creator ranking
+      const creatorVideoMap = new Map<string, VideoItem[]>();
+      videoItems.forEach((v) => {
+        const list = creatorVideoMap.get(v.creatorId) ?? [];
+        list.push(v);
+        creatorVideoMap.set(v.creatorId, list);
+      });
+
+      const prevVideosByCreator = new Map<string, number>();
+      prevVideos.forEach((v) => {
+        const cid = accountCreatorMap.get(v.tiktok_account_id);
+        if (!cid) return;
+        prevVideosByCreator.set(cid, (prevVideosByCreator.get(cid) ?? 0) + (v.views ?? 0));
+      });
+
+      const creatorRankingDetailed: CreatorRankingItem[] = allCreators
+        .map((creator) => {
+          const vids = creatorVideoMap.get(creator.id) ?? [];
+          const views = vids.reduce((s, v) => s + v.views, 0);
+          const videoCount = vids.length;
+          const avgViewsPerVideo = videoCount > 0 ? Math.round(views / videoCount) : 0;
+          const avgEng = vids.length > 0
+            ? vids.reduce((s, v) => s + v.engagementRate, 0) / vids.length
+            : 0;
+          const avgQS = vids.length > 0
+            ? vids.reduce((s, v) => s + v.qualityScore, 0) / vids.length
+            : 0;
+          const topVideoViews = vids.length > 0 ? Math.max(...vids.map((v) => v.views)) : 0;
+          return {
+            creatorId: creator.id,
+            creatorName: creator.name,
+            views,
+            prevViews: prevVideosByCreator.get(creator.id) ?? 0,
+            videoCount,
+            avgViewsPerVideo,
+            engagementRate: avgEng,
+            qualityScore: avgQS,
+            topVideoViews,
+          };
+        })
+        .filter((c) => c.views > 0)
+        .sort((a, b) => b.views - a.views);
+
+      // Format performance
+      const formatMap = new Map<string, VideoItem[]>();
+      videoItems.forEach((v) => {
+        const tag = v.contentTag ?? (v.durationSec !== null ? durationCategory(v.durationSec) : null);
+        if (!tag) return;
+        const list = formatMap.get(tag) ?? [];
+        list.push(v);
+        formatMap.set(tag, list);
+      });
+
+      const formatStats: FormatStat[] = [...formatMap.entries()]
+        .map(([tag, vids]) => ({
+          tag,
+          videoCount: vids.length,
+          avgViews: Math.round(vids.reduce((s, v) => s + v.views, 0) / vids.length),
+          avgEngagement: vids.reduce((s, v) => s + v.engagementRate, 0) / vids.length,
+          avgQualityScore: vids.reduce((s, v) => s + v.qualityScore, 0) / vids.length,
+        }))
+        .sort((a, b) => b.avgViews - a.avgViews);
+
+      // Viral videos — top 10 per velocity over ALL videos
+      const allVideoItems: VideoItem[] = allVideos.map((v) => {
+        const views = v.views ?? 0;
+        const likes = v.likes ?? 0;
+        const comments = v.comments ?? 0;
+        const accountId = v.tiktok_account_id;
+        const saves = (v as any).saves ?? null;
+        const shares = (v as any).shares ?? null;
+        return {
+          videoId: v.id,
+          tiktokVideoId: v.tiktok_video_id,
+          username: accountUsernameMap.get(accountId) ?? "",
+          creatorId: accountCreatorMap.get(accountId) ?? "",
+          creatorName: creatorNameMap.get(accountCreatorMap.get(accountId) ?? "") ?? "—",
+          campaignId: accountCampaignMap.get(accountId) ?? "",
+          campaignName: campaignNameMap.get(accountCampaignMap.get(accountId) ?? "") ?? "—",
+          views,
+          likes,
+          comments,
+          shares,
+          saves,
+          durationSec: (v as any).duration_sec ?? null,
+          contentTag: (v as any).content_tag ?? null,
+          publishedAt: v.published_at,
+          viralVelocity: calcViralVelocity(views, v.published_at),
+          engagementRate: calcEngagementRate(likes, comments, views),
+          qualityScore: calcQualityScore(saves, shares, comments, views),
+        };
+      });
+      const viralVideos = [...allVideoItems]
+        .filter((v) => v.views > 5000)
+        .sort((a, b) => b.viralVelocity - a.viralVelocity)
+        .slice(0, 10);
+
+      const avgEngagementRate = videoItems.length > 0
+        ? videoItems.reduce((s, v) => s + v.engagementRate, 0) / videoItems.length
+        : 0;
+      const avgQualityScore = videoItems.length > 0
+        ? videoItems.reduce((s, v) => s + v.qualityScore, 0) / videoItems.length
+        : 0;
+
       return {
         totalViews,
         prevTotalViews,
@@ -255,6 +436,11 @@ export function useCampaignManagerData(period: Period) {
         dailyViews,
         videos: videoItems,
         creatorRanking,
+        creatorRankingDetailed,
+        formatStats,
+        viralVideos,
+        avgEngagementRate,
+        avgQualityScore,
       };
     },
     staleTime: 60_000,

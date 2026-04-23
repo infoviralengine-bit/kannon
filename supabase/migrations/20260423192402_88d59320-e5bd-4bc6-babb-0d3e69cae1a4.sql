@@ -1,0 +1,5 @@
+ALTER TABLE public.videos
+  ADD COLUMN IF NOT EXISTS shares integer DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS saves integer DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS duration_sec integer DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS content_tag text DEFAULT NULL;
