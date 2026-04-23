@@ -38,6 +38,13 @@ export interface CampaignManagerData {
 
   // For insights
   creatorRanking: { creatorName: string; views: number; dailyViews: number[] }[];
+
+  // Enriched analytics
+  creatorRankingDetailed: CreatorRankingItem[];
+  formatStats: FormatStat[];
+  viralVideos: VideoItem[];
+  avgEngagementRate: number;
+  avgQualityScore: number;
 }
 
 export interface CampaignSummary {
