@@ -610,7 +610,11 @@ export default function CampaignManagerPage() {
                     </TableCell>
                     <TableCell><DurationBadge sec={v.durationSec} /></TableCell>
                     <TableCell>
-                      <ContentTagCell video={v} onSave={(tag) => saveTag.mutate({ videoId: v.videoId, tag })} />
+                      <ContentTagCell
+                        video={v}
+                        formats={formats ?? []}
+                        onSave={(tag) => saveTag.mutate({ videoId: v.videoId, tag })}
+                      />
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                       {new Date(v.publishedAt).toLocaleDateString("it-IT")}
