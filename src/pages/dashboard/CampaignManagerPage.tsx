@@ -165,6 +165,26 @@ export default function CampaignManagerPage() {
     return [...names];
   }, [data]);
 
+  // Aggregate daily totals across all campaigns for a single, easy-to-read trend line.
+  const dailyTotals = useMemo(() => {
+    if (!data) return [] as { date: string; views: number; label: string }[];
+    return data.dailyViews.map((d) => {
+      const total = Object.entries(d).reduce(
+        (s, [k, v]) => (k === "date" ? s : s + (typeof v === "number" ? v : 0)),
+        0
+      );
+      const dt = new Date(d.date as string);
+      const label = dt.toLocaleDateString("it-IT", { day: "2-digit", month: "short" });
+      return { date: d.date as string, views: total, label };
+    });
+  }, [data]);
+
+  // Total views across the period — denominator for "share of voice" bars.
+  const totalPeriodViews = useMemo(() => {
+    if (!data) return 0;
+    return data.campaigns.reduce((s, c) => s + c.views, 0);
+  }, [data]);
+
   const creatorOptions = useMemo(() => {
     if (!data || !data.videos) return [];
     const map = new Map<string, string>();
