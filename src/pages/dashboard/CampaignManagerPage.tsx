@@ -688,6 +688,63 @@ export default function CampaignManagerPage() {
 
       {/* ROW 7 — Insights */}
       {insights.length > 0 && (
+        <></>
+      )}
+      {/* ROW 7 — Gestione Formati */}
+      <Card>
+        <CardContent className="pt-6">
+          <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Plus className="h-5 w-5" /> Gestione Formati
+          </h2>
+          <div className="flex gap-2 mb-4">
+            <Input
+              value={newFormatName}
+              onChange={(e) => setNewFormatName(e.target.value)}
+              placeholder="Nuovo formato (es. Direct Hook)"
+              className="max-w-xs"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newFormatName.trim()) {
+                  addFormat.mutate(newFormatName.trim());
+                  setNewFormatName("");
+                }
+              }}
+            />
+            <Button
+              onClick={() => {
+                if (newFormatName.trim()) {
+                  addFormat.mutate(newFormatName.trim());
+                  setNewFormatName("");
+                }
+              }}
+            >
+              Aggiungi
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(formats ?? []).map((f) => (
+              <div
+                key={f.id}
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-border bg-muted/50 text-sm"
+              >
+                <span>{f.name}</span>
+                <button
+                  onClick={() => deleteFormat.mutate(f.id)}
+                  title="Elimina formato"
+                  className="text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+            {!(formats ?? []).length && (
+              <p className="text-sm text-muted-foreground">Nessun formato definito.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ROW 8 — Insights */}
+      {insights.length > 0 && (
         <div className="bg-muted/50 rounded-xl p-5">
           <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
             <Zap className="h-5 w-5 text-amber-500" /> Insights automatici
