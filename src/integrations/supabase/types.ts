@@ -1043,11 +1043,15 @@ export type Database = {
       videos: {
         Row: {
           comments: number | null
+          content_tag: string | null
           created_at: string
+          duration_sec: number | null
           id: string
           last_scraped_at: string | null
           likes: number | null
           published_at: string
+          saves: number | null
+          shares: number | null
           tiktok_account_id: string
           tiktok_video_id: string
           views: number | null
@@ -1058,11 +1062,15 @@ export type Database = {
         }
         Insert: {
           comments?: number | null
+          content_tag?: string | null
           created_at?: string
+          duration_sec?: number | null
           id?: string
           last_scraped_at?: string | null
           likes?: number | null
           published_at: string
+          saves?: number | null
+          shares?: number | null
           tiktok_account_id: string
           tiktok_video_id: string
           views?: number | null
@@ -1073,11 +1081,15 @@ export type Database = {
         }
         Update: {
           comments?: number | null
+          content_tag?: string | null
           created_at?: string
+          duration_sec?: number | null
           id?: string
           last_scraped_at?: string | null
           likes?: number | null
           published_at?: string
+          saves?: number | null
+          shares?: number | null
           tiktok_account_id?: string
           tiktok_video_id?: string
           views?: number | null
