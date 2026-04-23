@@ -13,7 +13,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Minus, ArrowUp, ArrowDown, Eye, Users, FileText, ExternalLink,
-  Flame, Zap, TrendingUp, BarChart3, X, Plus,
+  Flame, Zap, TrendingUp, BarChart3, X, Plus, Check,
 } from "lucide-react";
 import { cleanUsername } from "@/lib/utils";
 import {
@@ -26,6 +26,8 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const PERIOD_OPTIONS: { value: Period; label: string }[] = [
   { value: "7d", label: "7 giorni" },
