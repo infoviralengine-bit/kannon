@@ -293,7 +293,6 @@ export default function CampaignManagerPage() {
 
   if (!data) return null;
 
-  const maxCampViews = Math.max(...data.campaigns.map((c) => c.views), 1);
   const viralCount = data.viralVideos.filter((v) => v.viralVelocity >= 10_000).length;
 
   return (
