@@ -13,14 +13,14 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Minus, ArrowUp, ArrowDown, Eye, Users, FileText, ExternalLink,
-  Flame, Zap, Tag, TrendingUp, BarChart3,
+  Flame, Zap, TrendingUp, BarChart3, X, Plus,
 } from "lucide-react";
 import { cleanUsername } from "@/lib/utils";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   Area, AreaChart,
 } from "recharts";
-import { useCampaignManagerData, Period, VideoItem } from "@/hooks/useCampaignManagerData";
+import { useCampaignManagerData, useVideoFormats, Period, VideoItem } from "@/hooks/useCampaignManagerData";
 import { formatViews } from "@/lib/format";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
