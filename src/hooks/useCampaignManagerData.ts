@@ -188,7 +188,19 @@ export function useCampaignManagerData(period: Period) {
       });
 
       const creatorNameMap = new Map(allCreators.map((c) => [c.id, c.name]));
-      const campaignNameMap = new Map(allCampaigns.map((c) => [c.id, c.name]));
+      // Include ALL campaigns referenced by accounts so the chart never shows raw UUIDs.
+      // Fetch any missing names (campaigns not in `active` status that still have videos).
+      const campaignNameMap = new Map<string, string>(allCampaigns.map((c) => [c.id, c.name]));
+      const referencedCampaignIds = new Set<string>();
+      allAccounts.forEach((a) => { if (a.campaign_id) referencedCampaignIds.add(a.campaign_id); });
+      const missingCampaignIds = [...referencedCampaignIds].filter((id) => !campaignNameMap.has(id));
+      if (missingCampaignIds.length) {
+        const { data: extraCamps } = await supabase
+          .from("campaigns")
+          .select("id, name")
+          .in("id", missingCampaignIds);
+        (extraCamps ?? []).forEach((c) => campaignNameMap.set(c.id, c.name));
+      }
 
       // Filter videos by period
       const inRange = (v: { published_at: string }, start: string, end: string) =>
