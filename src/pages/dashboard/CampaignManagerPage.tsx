@@ -114,6 +114,8 @@ export default function CampaignManagerPage() {
   const [videoSort, setVideoSort] = useState<"date" | "views" | "velocity" | "engagement" | "quality">("velocity");
   const [showAllVideos, setShowAllVideos] = useState(false);
   const [newFormatName, setNewFormatName] = useState("");
+  // Chart filter: list of campaign names selected. Empty array = all campaigns.
+  const [chartCampaigns, setChartCampaigns] = useState<string[]>([]);
   const qc = useQueryClient();
 
   const { data, isLoading } = useCampaignManagerData(period);
