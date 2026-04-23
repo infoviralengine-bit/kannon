@@ -13,7 +13,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Minus, ArrowUp, ArrowDown, Eye, Users, FileText, ExternalLink,
-  Flame, Zap, TrendingUp, BarChart3, X, Plus,
+  Flame, Zap, TrendingUp, BarChart3, X, Plus, Check,
 } from "lucide-react";
 import { cleanUsername } from "@/lib/utils";
 import {
@@ -26,6 +26,8 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const PERIOD_OPTIONS: { value: Period; label: string }[] = [
   { value: "7d", label: "7 giorni" },
@@ -112,6 +114,8 @@ export default function CampaignManagerPage() {
   const [videoSort, setVideoSort] = useState<"date" | "views" | "velocity" | "engagement" | "quality">("velocity");
   const [showAllVideos, setShowAllVideos] = useState(false);
   const [newFormatName, setNewFormatName] = useState("");
+  // Chart filter: list of campaign names selected. Empty array = all campaigns.
+  const [chartCampaigns, setChartCampaigns] = useState<string[]>([]);
   const qc = useQueryClient();
 
   const { data, isLoading } = useCampaignManagerData(period);
@@ -165,19 +169,26 @@ export default function CampaignManagerPage() {
     return [...names];
   }, [data]);
 
-  // Aggregate daily totals across all campaigns for a single, easy-to-read trend line.
+  // Aggregate daily totals across selected campaigns (empty = all).
   const dailyTotals = useMemo(() => {
     if (!data) return [] as { date: string; views: number; label: string }[];
+    const selected = new Set(chartCampaigns);
     return data.dailyViews.map((d) => {
-      const total = Object.entries(d).reduce(
-        (s, [k, v]) => (k === "date" ? s : s + (typeof v === "number" ? v : 0)),
-        0
-      );
+      const total = Object.entries(d).reduce((s, [k, v]) => {
+        if (k === "date") return s;
+        if (selected.size > 0 && !selected.has(k)) return s;
+        return s + (typeof v === "number" ? v : 0);
+      }, 0);
       const dt = new Date(d.date as string);
       const label = dt.toLocaleDateString("it-IT", { day: "2-digit", month: "short" });
       return { date: d.date as string, views: total, label };
     });
-  }, [data]);
+  }, [data, chartCampaigns]);
+
+  const chartTotalViews = useMemo(
+    () => dailyTotals.reduce((s, d) => s + d.views, 0),
+    [dailyTotals]
+  );
 
   // Total views across the period — denominator for "share of voice" bars.
   const totalPeriodViews = useMemo(() => {
@@ -431,24 +442,75 @@ export default function CampaignManagerPage() {
         </Card>
       )}
 
-      {/* ROW 3 — Chart + Campaign summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <Card className="lg:col-span-3">
-          <CardContent className="pt-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">Views pubblicate per giorno</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Somma views dei video pubblicati ogni giorno · tutte le campagne
-                </p>
-              </div>
+      {/* ROW 3 — Chart full-width */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Views pubblicate per giorno</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Somma views dei video pubblicati ogni giorno
+                {chartCampaigns.length > 0
+                  ? ` · ${chartCampaigns.length} ${chartCampaigns.length === 1 ? "campagna" : "campagne"} selezionate`
+                  : " · tutte le campagne"}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-xs gap-2">
+                    <BarChart3 className="h-3.5 w-3.5" />
+                    {chartCampaigns.length === 0
+                      ? "Tutte le campagne"
+                      : `${chartCampaigns.length} selezionate`}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-2" align="end">
+                  <div className="flex items-center justify-between px-2 py-1.5 mb-1">
+                    <span className="text-xs font-medium text-foreground">Campagne</span>
+                    {chartCampaigns.length > 0 && (
+                      <button
+                        onClick={() => setChartCampaigns([])}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-64 overflow-y-auto space-y-0.5">
+                    {chartCampaignNames.map((name) => {
+                      const checked = chartCampaigns.includes(name);
+                      return (
+                        <label
+                          key={name}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm"
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(v) => {
+                              setChartCampaigns((prev) =>
+                                v ? [...prev, name] : prev.filter((n) => n !== name)
+                              );
+                            }}
+                          />
+                          <span className="text-foreground truncate">{name}</span>
+                        </label>
+                      );
+                    })}
+                    {chartCampaignNames.length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-3">Nessuna campagna</p>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
               <div className="text-right">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider">Totale periodo</p>
-                <p className="text-lg font-bold text-foreground">{formatViews(totalPeriodViews)}</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Totale</p>
+                <p className="text-lg font-bold text-foreground">{formatViews(chartTotalViews)}</p>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={dailyTotals} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+          </div>
+          <ResponsiveContainer width="100%" height={420}>
+            <AreaChart data={dailyTotals} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="viewsGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
@@ -489,10 +551,11 @@ export default function CampaignManagerPage() {
                 />
               </AreaChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        </CardContent>
+      </Card>
 
-        <Card className="lg:col-span-2">
+      {/* ROW 3b — Campaign summary full-width */}
+      <Card>
           <CardContent className="pt-6">
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -500,7 +563,7 @@ export default function CampaignManagerPage() {
                 <p className="text-xs text-muted-foreground mt-0.5">Quota di views sul totale del periodo</p>
               </div>
             </div>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {[...data.campaigns]
                 .sort((a, b) => b.views - a.views)
                 .map((camp) => {
@@ -524,12 +587,11 @@ export default function CampaignManagerPage() {
                   );
                 })}
               {data.campaigns.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">Nessuna campagna attiva</p>
+                <p className="text-sm text-muted-foreground text-center py-4 md:col-span-2">Nessuna campagna attiva</p>
               )}
             </div>
           </CardContent>
         </Card>
-      </div>
 
       {/* ROW 4 — Creator Ranking dettagliato */}
       <Card>
