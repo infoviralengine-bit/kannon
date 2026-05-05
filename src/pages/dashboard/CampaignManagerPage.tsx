@@ -682,6 +682,19 @@ export default function CampaignManagerPage() {
                 </Select>
               </div>
               <div>
+                <label className="text-[11px] uppercase tracking-wide text-muted-foreground block mb-1">Periodo</label>
+                <Select value={videoPeriodFilter} onValueChange={(v: any) => { setVideoPeriodFilter(v); setShowAllVideos(false); }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7d">Ultimi 7 giorni</SelectItem>
+                    <SelectItem value="14d">Ultimi 14 giorni</SelectItem>
+                    <SelectItem value="30d">Ultimi 30 giorni</SelectItem>
+                    <SelectItem value="90d">Ultimi 90 giorni</SelectItem>
+                    <SelectItem value="all">Sempre</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <label className="text-[11px] uppercase tracking-wide text-muted-foreground block mb-1">Campagna</label>
                 <Select value={videoCampaignFilter} onValueChange={(v) => { setVideoCampaignFilter(v); setShowAllVideos(false); }}>
                   <SelectTrigger><SelectValue placeholder="Tutte" /></SelectTrigger>
@@ -717,7 +730,7 @@ export default function CampaignManagerPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
+              <div className="lg:col-span-2">
                 <label className="text-[11px] uppercase tracking-wide text-muted-foreground block mb-1">
                   Soglia min. KPI
                 </label>
