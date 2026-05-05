@@ -50,6 +50,8 @@ export interface CampaignManagerData {
 
   // Video list
   videos: VideoItem[];
+  // All videos (no period filter) — used by the KPI explorer
+  allVideos: VideoItem[];
 
   // For insights
   creatorRanking: { creatorName: string; views: number; dailyViews: number[] }[];
@@ -462,6 +464,7 @@ export function useCampaignManagerData(period: Period) {
         campaigns: campaignSummaries,
         dailyViews,
         videos: videoItems,
+        allVideos: allVideoItems,
         creatorRanking,
         creatorRankingDetailed,
         formatStats,
