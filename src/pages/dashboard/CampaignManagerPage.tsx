@@ -111,7 +111,11 @@ export default function CampaignManagerPage() {
   const [videoCampaignFilter, setVideoCampaignFilter] = useState("all");
   const [videoCreatorFilter, setVideoCreatorFilter] = useState("all");
   const [videoFormatFilter, setVideoFormatFilter] = useState("all");
-  const [videoSort, setVideoSort] = useState<"date" | "views" | "velocity" | "engagement" | "quality">("velocity");
+  const [videoSort, setVideoSort] = useState<
+    "date" | "views" | "velocity" | "engagement" | "quality" | "comments" | "likes" | "saves" | "shares"
+  >("views");
+  const [minKpiValue, setMinKpiValue] = useState<string>("");
+  const [videoSearch, setVideoSearch] = useState<string>("");
   const [showAllVideos, setShowAllVideos] = useState(false);
   const [newFormatName, setNewFormatName] = useState("");
   // Chart filter: list of campaign names selected. Empty array = all campaigns.
@@ -211,15 +215,45 @@ export default function CampaignManagerPage() {
     if (videoCampaignFilter !== "all") list = list.filter((v) => v.campaignId === videoCampaignFilter);
     if (videoCreatorFilter !== "all") list = list.filter((v) => v.creatorId === videoCreatorFilter);
     if (videoFormatFilter !== "all") list = list.filter((v) => v.contentTag === videoFormatFilter);
+    if (videoSearch.trim()) {
+      const q = videoSearch.trim().toLowerCase();
+      list = list.filter(
+        (v) =>
+          v.username.toLowerCase().includes(q) ||
+          v.creatorName.toLowerCase().includes(q) ||
+          v.campaignName.toLowerCase().includes(q),
+      );
+    }
+    const kpiValue = (v: VideoItem) => {
+      switch (videoSort) {
+        case "views": return v.views;
+        case "velocity": return v.viralVelocity;
+        case "engagement": return v.engagementRate;
+        case "quality": return v.qualityScore;
+        case "comments": return v.comments;
+        case "likes": return v.likes;
+        case "saves": return v.saves ?? 0;
+        case "shares": return v.shares ?? 0;
+        case "date": return new Date(v.publishedAt).getTime();
+      }
+    };
+    const min = parseFloat(minKpiValue.replace(",", "."));
+    if (!isNaN(min) && min > 0 && videoSort !== "date") {
+      list = list.filter((v) => kpiValue(v) >= min);
+    }
     switch (videoSort) {
       case "views":      list.sort((a, b) => b.views - a.views); break;
       case "velocity":   list.sort((a, b) => b.viralVelocity - a.viralVelocity); break;
       case "engagement": list.sort((a, b) => b.engagementRate - a.engagementRate); break;
       case "quality":    list.sort((a, b) => b.qualityScore - a.qualityScore); break;
+      case "comments":   list.sort((a, b) => b.comments - a.comments); break;
+      case "likes":      list.sort((a, b) => b.likes - a.likes); break;
+      case "saves":      list.sort((a, b) => (b.saves ?? 0) - (a.saves ?? 0)); break;
+      case "shares":     list.sort((a, b) => (b.shares ?? 0) - (a.shares ?? 0)); break;
       case "date":       list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()); break;
     }
     return showAllVideos ? list : list.slice(0, 30);
-  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter, videoSort, showAllVideos]);
+  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter, videoSort, showAllVideos, minKpiValue, videoSearch]);
 
   const totalFilteredVideos = useMemo(() => {
     if (!data?.videos) return 0;
@@ -227,8 +261,17 @@ export default function CampaignManagerPage() {
     if (videoCampaignFilter !== "all") list = list.filter((v) => v.campaignId === videoCampaignFilter);
     if (videoCreatorFilter !== "all") list = list.filter((v) => v.creatorId === videoCreatorFilter);
     if (videoFormatFilter !== "all") list = list.filter((v) => v.contentTag === videoFormatFilter);
+    if (videoSearch.trim()) {
+      const q = videoSearch.trim().toLowerCase();
+      list = list.filter(
+        (v) =>
+          v.username.toLowerCase().includes(q) ||
+          v.creatorName.toLowerCase().includes(q) ||
+          v.campaignName.toLowerCase().includes(q),
+      );
+    }
     return list.length;
-  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter]);
+  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter, videoSearch]);
 
   const insights = useMemo(() => {
     if (!data) return [];
