@@ -692,46 +692,110 @@ export default function CampaignManagerPage() {
       {/* ROW 5 — Video List */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-            <h2 className="text-lg font-semibold text-foreground">Video Pubblicati</h2>
-            <div className="flex flex-wrap gap-2">
-              <Select value={videoSort} onValueChange={(v: any) => { setVideoSort(v); setShowAllVideos(false); }}>
-                <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="velocity">🔥 Views/giorno</SelectItem>
-                  <SelectItem value="views">👁 Views totali</SelectItem>
-                  <SelectItem value="engagement">💬 Engagement %</SelectItem>
-                  <SelectItem value="quality">⭐ Quality Score</SelectItem>
-                  <SelectItem value="date">📅 Data</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={videoCampaignFilter} onValueChange={(v) => { setVideoCampaignFilter(v); setShowAllVideos(false); }}>
-                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Tutte le campagne" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tutte le campagne</SelectItem>
-                  {data.campaigns.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={videoCreatorFilter} onValueChange={(v) => { setVideoCreatorFilter(v); setShowAllVideos(false); }}>
-                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Tutti i creator" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tutti i creator</SelectItem>
-                  {creatorOptions.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={videoFormatFilter} onValueChange={(v) => { setVideoFormatFilter(v); setShowAllVideos(false); }}>
-                <SelectTrigger className="w-[180px]"><SelectValue placeholder="Tutti i formati" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tutti i formati</SelectItem>
-                  {(formats ?? []).map((f) => (
-                    <SelectItem key={f.id} value={f.name}>{f.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-1">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Esplora Video per KPI</h2>
+                <p className="text-xs text-muted-foreground">
+                  Scegli un KPI e filtra per campagna, creator o formato. Ordinamento automatico in base al KPI selezionato.
+                </p>
+              </div>
+              <Badge variant="secondary" className="self-start sm:self-auto">
+                {totalFilteredVideos} video
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 mt-3">
+              <div className="lg:col-span-2">
+                <label className="text-[11px] uppercase tracking-wide text-muted-foreground block mb-1">KPI</label>
+                <Select value={videoSort} onValueChange={(v: any) => { setVideoSort(v); setShowAllVideos(false); }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="views">👁 Visualizzazioni</SelectItem>
+                    <SelectItem value="comments">💬 Commenti</SelectItem>
+                    <SelectItem value="likes">❤️ Like</SelectItem>
+                    <SelectItem value="saves">🔖 Saves</SelectItem>
+                    <SelectItem value="shares">↗️ Shares</SelectItem>
+                    <SelectItem value="engagement">📊 Engagement %</SelectItem>
+                    <SelectItem value="velocity">🔥 Views / giorno</SelectItem>
+                    <SelectItem value="quality">⭐ Quality Score</SelectItem>
+                    <SelectItem value="date">📅 Data pubblicazione</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-[11px] uppercase tracking-wide text-muted-foreground block mb-1">Campagna</label>
+                <Select value={videoCampaignFilter} onValueChange={(v) => { setVideoCampaignFilter(v); setShowAllVideos(false); }}>
+                  <SelectTrigger><SelectValue placeholder="Tutte" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tutte le campagne</SelectItem>
+                    {data.campaigns.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-[11px] uppercase tracking-wide text-muted-foreground block mb-1">Creator</label>
+                <Select value={videoCreatorFilter} onValueChange={(v) => { setVideoCreatorFilter(v); setShowAllVideos(false); }}>
+                  <SelectTrigger><SelectValue placeholder="Tutti" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tutti i creator</SelectItem>
+                    {creatorOptions.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-[11px] uppercase tracking-wide text-muted-foreground block mb-1">Formato</label>
+                <Select value={videoFormatFilter} onValueChange={(v) => { setVideoFormatFilter(v); setShowAllVideos(false); }}>
+                  <SelectTrigger><SelectValue placeholder="Tutti" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tutti i formati</SelectItem>
+                    {(formats ?? []).map((f) => (
+                      <SelectItem key={f.id} value={f.name}>{f.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-[11px] uppercase tracking-wide text-muted-foreground block mb-1">
+                  Soglia min. KPI
+                </label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  placeholder="es. 1000"
+                  value={minKpiValue}
+                  onChange={(e) => { setMinKpiValue(e.target.value); setShowAllVideos(false); }}
+                  disabled={videoSort === "date"}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 mt-2">
+              <Input
+                placeholder="Cerca per @account, creator o campagna…"
+                value={videoSearch}
+                onChange={(e) => { setVideoSearch(e.target.value); setShowAllVideos(false); }}
+                className="flex-1"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setVideoCampaignFilter("all");
+                  setVideoCreatorFilter("all");
+                  setVideoFormatFilter("all");
+                  setVideoSort("views");
+                  setMinKpiValue("");
+                  setVideoSearch("");
+                  setShowAllVideos(false);
+                }}
+              >
+                <X className="h-4 w-4 mr-1" /> Reset filtri
+              </Button>
             </div>
           </div>
 
