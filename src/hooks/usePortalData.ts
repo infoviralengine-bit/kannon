@@ -263,3 +263,30 @@ export function useClientDailyViews(days: number = 30) {
     enabled: !!user,
   });
 }
+
+export type ClientTopVideo = {
+  id: string;
+  tiktok_video_id: string;
+  published_at: string;
+  likes: number | null;
+  comments: number;
+  username: string;
+  effective_views: number;
+};
+
+export function useClientTopVideos(limit: number = 5) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["client-top-videos", user?.id, limit],
+    queryFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+      const { data, error } = await supabase.rpc("get_client_top_videos" as any, {
+        p_user_id: user.id,
+        p_limit: limit,
+      } as any);
+      if (error) throw error;
+      return (data as { top_views: ClientTopVideo[]; top_comments: ClientTopVideo[] } | null) ?? null;
+    },
+    enabled: !!user,
+  });
+}
