@@ -762,6 +762,7 @@ export default function CampaignManagerPage() {
                   setVideoSort("views");
                   setMinKpiValue("");
                   setVideoSearch("");
+                  setVideoPeriodFilter("all");
                   setShowAllVideos(false);
                 }}
               >
