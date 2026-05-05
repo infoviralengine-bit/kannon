@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useClientAreaData, useClientDailyViews } from "@/hooks/usePortalData";
+import { useClientAreaData, useClientDailyViews, useClientTopVideos, type ClientTopVideo } from "@/hooks/usePortalData";
 import { useCountUp } from "@/hooks/useCountUp";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,8 +10,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   LogOut, Eye, Heart, MessageCircle, Users, Video,
-  CalendarDays, AtSign, ExternalLink, BarChart3, Wallet,
+  CalendarDays, AtSign, ExternalLink, BarChart3, Wallet, TrendingUp, Trophy,
 } from "lucide-react";
+import { cleanUsername } from "@/lib/utils";
 import { formatViews, formatCurrency } from "@/lib/format";
 import { TikTokLink } from "@/components/TikTokLink";
 import {
@@ -319,6 +320,9 @@ export default function ClientArea() {
 
         {/* Spend Progress full width */}
         <SpendProgress data={data} />
+
+        {/* Top videos */}
+        <TopVideosSection />
 
         {/* Campaign info – single line */}
         <Card className="border-border/40">
