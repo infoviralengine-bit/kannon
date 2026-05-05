@@ -779,7 +779,8 @@ export default function CampaignManagerPage() {
                   <TableHead>Creator</TableHead>
                   <TableHead>Campagna</TableHead>
                   <TableHead className="text-right">Views/gg</TableHead>
-                  <TableHead className="text-right">Views</TableHead>
+                  <TableHead className="text-right bg-primary/10 text-primary font-semibold">👁 Views</TableHead>
+                  <TableHead className="text-right bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold">💬 Commenti</TableHead>
                   <TableHead className="text-right">Eng. %</TableHead>
                   <TableHead className="text-right">Saves</TableHead>
                   <TableHead className="text-right">Shares</TableHead>
@@ -807,7 +808,8 @@ export default function CampaignManagerPage() {
                     <TableCell className="text-sm">{v.creatorName}</TableCell>
                     <TableCell><Badge variant="secondary" className="text-xs">{v.campaignName}</Badge></TableCell>
                     <TableCell className="text-right font-semibold">{formatViews(Math.round(v.viralVelocity))}</TableCell>
-                    <TableCell className="text-right font-bold">{formatViews(v.views)}</TableCell>
+                    <TableCell className="text-right font-bold bg-primary/5 text-primary">{formatViews(v.views)}</TableCell>
+                    <TableCell className="text-right font-bold bg-amber-500/5 text-amber-600 dark:text-amber-400">{formatViews(v.comments)}</TableCell>
                     <TableCell className="text-right">{v.engagementRate.toFixed(2)}%</TableCell>
                     <TableCell className="text-right">{v.saves !== null ? formatViews(v.saves) : "—"}</TableCell>
                     <TableCell className="text-right">{v.shares !== null ? formatViews(v.shares) : "—"}</TableCell>
