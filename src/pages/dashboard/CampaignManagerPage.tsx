@@ -111,6 +111,7 @@ export default function CampaignManagerPage() {
   const [videoCampaignFilter, setVideoCampaignFilter] = useState("all");
   const [videoCreatorFilter, setVideoCreatorFilter] = useState("all");
   const [videoFormatFilter, setVideoFormatFilter] = useState("all");
+  const [videoPeriodFilter, setVideoPeriodFilter] = useState<"7d" | "14d" | "30d" | "90d" | "all">("all");
   const [videoSort, setVideoSort] = useState<
     "date" | "views" | "velocity" | "engagement" | "quality" | "comments" | "likes" | "saves" | "shares"
   >("views");
@@ -210,8 +211,13 @@ export default function CampaignManagerPage() {
   }, [data]);
 
   const filteredAndSortedVideos = useMemo(() => {
-    if (!data?.videos) return [];
-    let list = [...data.videos];
+    if (!data?.allVideos) return [];
+    let list = [...data.allVideos];
+    if (videoPeriodFilter !== "all") {
+      const days = videoPeriodFilter === "7d" ? 7 : videoPeriodFilter === "14d" ? 14 : videoPeriodFilter === "30d" ? 30 : 90;
+      const cutoff = Date.now() - days * 86_400_000;
+      list = list.filter((v) => new Date(v.publishedAt).getTime() >= cutoff);
+    }
     if (videoCampaignFilter !== "all") list = list.filter((v) => v.campaignId === videoCampaignFilter);
     if (videoCreatorFilter !== "all") list = list.filter((v) => v.creatorId === videoCreatorFilter);
     if (videoFormatFilter !== "all") list = list.filter((v) => v.contentTag === videoFormatFilter);
@@ -253,11 +259,16 @@ export default function CampaignManagerPage() {
       case "date":       list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()); break;
     }
     return showAllVideos ? list : list.slice(0, 30);
-  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter, videoSort, showAllVideos, minKpiValue, videoSearch]);
+  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter, videoPeriodFilter, videoSort, showAllVideos, minKpiValue, videoSearch]);
 
   const totalFilteredVideos = useMemo(() => {
-    if (!data?.videos) return 0;
-    let list = data.videos;
+    if (!data?.allVideos) return 0;
+    let list = data.allVideos;
+    if (videoPeriodFilter !== "all") {
+      const days = videoPeriodFilter === "7d" ? 7 : videoPeriodFilter === "14d" ? 14 : videoPeriodFilter === "30d" ? 30 : 90;
+      const cutoff = Date.now() - days * 86_400_000;
+      list = list.filter((v) => new Date(v.publishedAt).getTime() >= cutoff);
+    }
     if (videoCampaignFilter !== "all") list = list.filter((v) => v.campaignId === videoCampaignFilter);
     if (videoCreatorFilter !== "all") list = list.filter((v) => v.creatorId === videoCreatorFilter);
     if (videoFormatFilter !== "all") list = list.filter((v) => v.contentTag === videoFormatFilter);
@@ -271,7 +282,7 @@ export default function CampaignManagerPage() {
       );
     }
     return list.length;
-  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter, videoSearch]);
+  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter, videoPeriodFilter, videoSearch]);
 
   const insights = useMemo(() => {
     if (!data) return [];
@@ -636,59 +647,6 @@ export default function CampaignManagerPage() {
           </CardContent>
         </Card>
 
-      {/* ROW 4 — Creator Ranking dettagliato */}
-      <Card>
-        <CardContent className="pt-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Users className="h-5 w-5" /> Ranking Creator
-          </h2>
-          <ScrollArea className="w-full">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">#</TableHead>
-                  <TableHead>Creator</TableHead>
-                  <TableHead className="text-right">Views</TableHead>
-                  <TableHead className="text-right">Video</TableHead>
-                  <TableHead className="text-right">Media/video</TableHead>
-                  <TableHead className="text-right">Eng. %</TableHead>
-                  <TableHead className="text-right">Quality Score</TableHead>
-                  <TableHead className="text-right">Top video</TableHead>
-                  <TableHead className="text-right">Trend</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(data.creatorRankingDetailed ?? []).map((cr, i) => (
-                  <TableRow key={cr.creatorId}>
-                    <TableCell className="font-bold text-muted-foreground">{i + 1}</TableCell>
-                    <TableCell className="font-medium">{cr.creatorName}</TableCell>
-                    <TableCell className="text-right font-semibold">{formatViews(cr.views)}</TableCell>
-                    <TableCell className="text-right">{cr.videoCount}</TableCell>
-                    <TableCell className="text-right">{formatViews(cr.avgViewsPerVideo)}</TableCell>
-                    <TableCell className="text-right">{cr.engagementRate.toFixed(2)}%</TableCell>
-                    <TableCell className="text-right">
-                      <span className={cr.qualityScore > 0 ? "text-primary font-semibold" : "text-muted-foreground"}>
-                        {cr.qualityScore.toFixed(1)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">{formatViews(cr.topVideoViews)}</TableCell>
-                    <TableCell className="text-right">
-                      <TrendBadge current={cr.views} prev={cr.prevViews} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {!(data.creatorRankingDetailed ?? []).length && (
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nessun dato</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </CardContent>
-      </Card>
-
       {/* ROW 5 — Video List */}
       <Card>
         <CardContent className="pt-6">
@@ -720,6 +678,19 @@ export default function CampaignManagerPage() {
                     <SelectItem value="velocity">🔥 Views / giorno</SelectItem>
                     <SelectItem value="quality">⭐ Quality Score</SelectItem>
                     <SelectItem value="date">📅 Data pubblicazione</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-[11px] uppercase tracking-wide text-muted-foreground block mb-1">Periodo</label>
+                <Select value={videoPeriodFilter} onValueChange={(v: any) => { setVideoPeriodFilter(v); setShowAllVideos(false); }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7d">Ultimi 7 giorni</SelectItem>
+                    <SelectItem value="14d">Ultimi 14 giorni</SelectItem>
+                    <SelectItem value="30d">Ultimi 30 giorni</SelectItem>
+                    <SelectItem value="90d">Ultimi 90 giorni</SelectItem>
+                    <SelectItem value="all">Sempre</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -759,7 +730,7 @@ export default function CampaignManagerPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
+              <div className="lg:col-span-2">
                 <label className="text-[11px] uppercase tracking-wide text-muted-foreground block mb-1">
                   Soglia min. KPI
                 </label>
@@ -791,6 +762,7 @@ export default function CampaignManagerPage() {
                   setVideoSort("views");
                   setMinKpiValue("");
                   setVideoSearch("");
+                  setVideoPeriodFilter("all");
                   setShowAllVideos(false);
                 }}
               >
@@ -807,7 +779,8 @@ export default function CampaignManagerPage() {
                   <TableHead>Creator</TableHead>
                   <TableHead>Campagna</TableHead>
                   <TableHead className="text-right">Views/gg</TableHead>
-                  <TableHead className="text-right">Views</TableHead>
+                  <TableHead className="text-right bg-primary/10 text-primary font-semibold">👁 Views</TableHead>
+                  <TableHead className="text-right bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold">💬 Commenti</TableHead>
                   <TableHead className="text-right">Eng. %</TableHead>
                   <TableHead className="text-right">Saves</TableHead>
                   <TableHead className="text-right">Shares</TableHead>
@@ -835,7 +808,8 @@ export default function CampaignManagerPage() {
                     <TableCell className="text-sm">{v.creatorName}</TableCell>
                     <TableCell><Badge variant="secondary" className="text-xs">{v.campaignName}</Badge></TableCell>
                     <TableCell className="text-right font-semibold">{formatViews(Math.round(v.viralVelocity))}</TableCell>
-                    <TableCell className="text-right font-bold">{formatViews(v.views)}</TableCell>
+                    <TableCell className="text-right font-bold bg-primary/5 text-primary">{formatViews(v.views)}</TableCell>
+                    <TableCell className="text-right font-bold bg-amber-500/5 text-amber-600 dark:text-amber-400">{formatViews(v.comments)}</TableCell>
                     <TableCell className="text-right">{v.engagementRate.toFixed(2)}%</TableCell>
                     <TableCell className="text-right">{v.saves !== null ? formatViews(v.saves) : "—"}</TableCell>
                     <TableCell className="text-right">{v.shares !== null ? formatViews(v.shares) : "—"}</TableCell>
@@ -859,7 +833,7 @@ export default function CampaignManagerPage() {
                 ))}
                 {filteredAndSortedVideos.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={12} className="text-center text-muted-foreground py-8">Nessun video trovato</TableCell>
+                    <TableCell colSpan={13} className="text-center text-muted-foreground py-8">Nessun video trovato</TableCell>
                   </TableRow>
                 )}
               </TableBody>
