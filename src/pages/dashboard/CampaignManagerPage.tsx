@@ -833,7 +833,7 @@ export default function CampaignManagerPage() {
                 ))}
                 {filteredAndSortedVideos.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={12} className="text-center text-muted-foreground py-8">Nessun video trovato</TableCell>
+                    <TableCell colSpan={13} className="text-center text-muted-foreground py-8">Nessun video trovato</TableCell>
                   </TableRow>
                 )}
               </TableBody>
