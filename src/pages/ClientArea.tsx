@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useClientAreaData, useClientDailyViews } from "@/hooks/usePortalData";
+import { useClientAreaData, useClientDailyViews, useClientTopVideos, type ClientTopVideo } from "@/hooks/usePortalData";
 import { useCountUp } from "@/hooks/useCountUp";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,8 +10,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   LogOut, Eye, Heart, MessageCircle, Users, Video,
-  CalendarDays, AtSign, ExternalLink, BarChart3, Wallet,
+  CalendarDays, AtSign, ExternalLink, BarChart3, Wallet, TrendingUp, Trophy,
 } from "lucide-react";
+import { cleanUsername } from "@/lib/utils";
 import { formatViews, formatCurrency } from "@/lib/format";
 import { TikTokLink } from "@/components/TikTokLink";
 import {
@@ -238,6 +239,87 @@ function SpendProgress({ data }: { data: NonNullable<ReturnType<typeof useClient
 }
 
 /* ── Main ───────────────────────────────────────── */
+function TopVideosSection() {
+  const { data, isLoading } = useClientTopVideos(5);
+  if (isLoading) return <Skeleton className="h-72 w-full rounded-xl" />;
+  if (!data || ((data.top_views?.length ?? 0) === 0 && (data.top_comments?.length ?? 0) === 0)) return null;
+
+  const renderTable = (videos: ClientTopVideo[], metric: "views" | "comments") => (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-8">#</TableHead>
+          <TableHead>Account</TableHead>
+          <TableHead className="text-right">{metric === "views" ? "Views" : "Commenti"}</TableHead>
+          <TableHead className="text-right hidden sm:table-cell">{metric === "views" ? "Commenti" : "Views"}</TableHead>
+          <TableHead className="text-right"></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {videos.map((v, i) => {
+          const u = cleanUsername(v.username);
+          return (
+            <TableRow key={v.id}>
+              <TableCell className="font-semibold text-muted-foreground">{i + 1}</TableCell>
+              <TableCell>
+                <TikTokLink username={v.username} />
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {new Date(v.published_at).toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "numeric" })}
+                </p>
+              </TableCell>
+              <TableCell className="text-right font-semibold tabular-nums">
+                {formatViews(metric === "views" ? v.effective_views : v.comments)}
+              </TableCell>
+              <TableCell className="text-right tabular-nums hidden sm:table-cell text-muted-foreground">
+                {formatViews(metric === "views" ? v.comments : v.effective_views)}
+              </TableCell>
+              <TableCell className="text-right">
+                <a
+                  href={`https://www.tiktok.com/@${u}/video/${v.tiktok_video_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  Apri <ExternalLink className="h-3 w-3" />
+                </a>
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  );
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Card className="border-border/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" /> Top 5 Video — Views
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {data.top_views.length === 0
+            ? <p className="text-sm text-muted-foreground text-center py-6">Nessun video</p>
+            : renderTable(data.top_views, "views")}
+        </CardContent>
+      </Card>
+      <Card className="border-border/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-sky-500" /> Top 5 Video — Commenti
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {data.top_comments.length === 0
+            ? <p className="text-sm text-muted-foreground text-center py-6">Nessun video con commenti</p>
+            : renderTable(data.top_comments, "comments")}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default function ClientArea() {
   const { data, isLoading } = useClientAreaData();
   const [period, setPeriod] = useState<Period>("30d");
@@ -319,6 +401,9 @@ export default function ClientArea() {
 
         {/* Spend Progress full width */}
         <SpendProgress data={data} />
+
+        {/* Top videos */}
+        <TopVideosSection />
 
         {/* Campaign info – single line */}
         <Card className="border-border/40">

@@ -1147,6 +1147,10 @@ export type Database = {
         Args: { p_days?: number; p_user_id: string }
         Returns: Json
       }
+      get_client_top_videos: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: Json
+      }
       get_creator_contract_campaigns: {
         Args: { _user_id: string }
         Returns: {
