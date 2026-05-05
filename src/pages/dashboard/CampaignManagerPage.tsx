@@ -111,6 +111,7 @@ export default function CampaignManagerPage() {
   const [videoCampaignFilter, setVideoCampaignFilter] = useState("all");
   const [videoCreatorFilter, setVideoCreatorFilter] = useState("all");
   const [videoFormatFilter, setVideoFormatFilter] = useState("all");
+  const [videoPeriodFilter, setVideoPeriodFilter] = useState<"7d" | "14d" | "30d" | "90d" | "all">("all");
   const [videoSort, setVideoSort] = useState<
     "date" | "views" | "velocity" | "engagement" | "quality" | "comments" | "likes" | "saves" | "shares"
   >("views");
@@ -210,8 +211,13 @@ export default function CampaignManagerPage() {
   }, [data]);
 
   const filteredAndSortedVideos = useMemo(() => {
-    if (!data?.videos) return [];
-    let list = [...data.videos];
+    if (!data?.allVideos) return [];
+    let list = [...data.allVideos];
+    if (videoPeriodFilter !== "all") {
+      const days = videoPeriodFilter === "7d" ? 7 : videoPeriodFilter === "14d" ? 14 : videoPeriodFilter === "30d" ? 30 : 90;
+      const cutoff = Date.now() - days * 86_400_000;
+      list = list.filter((v) => new Date(v.publishedAt).getTime() >= cutoff);
+    }
     if (videoCampaignFilter !== "all") list = list.filter((v) => v.campaignId === videoCampaignFilter);
     if (videoCreatorFilter !== "all") list = list.filter((v) => v.creatorId === videoCreatorFilter);
     if (videoFormatFilter !== "all") list = list.filter((v) => v.contentTag === videoFormatFilter);
@@ -253,11 +259,16 @@ export default function CampaignManagerPage() {
       case "date":       list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()); break;
     }
     return showAllVideos ? list : list.slice(0, 30);
-  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter, videoSort, showAllVideos, minKpiValue, videoSearch]);
+  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter, videoPeriodFilter, videoSort, showAllVideos, minKpiValue, videoSearch]);
 
   const totalFilteredVideos = useMemo(() => {
-    if (!data?.videos) return 0;
-    let list = data.videos;
+    if (!data?.allVideos) return 0;
+    let list = data.allVideos;
+    if (videoPeriodFilter !== "all") {
+      const days = videoPeriodFilter === "7d" ? 7 : videoPeriodFilter === "14d" ? 14 : videoPeriodFilter === "30d" ? 30 : 90;
+      const cutoff = Date.now() - days * 86_400_000;
+      list = list.filter((v) => new Date(v.publishedAt).getTime() >= cutoff);
+    }
     if (videoCampaignFilter !== "all") list = list.filter((v) => v.campaignId === videoCampaignFilter);
     if (videoCreatorFilter !== "all") list = list.filter((v) => v.creatorId === videoCreatorFilter);
     if (videoFormatFilter !== "all") list = list.filter((v) => v.contentTag === videoFormatFilter);
@@ -271,7 +282,7 @@ export default function CampaignManagerPage() {
       );
     }
     return list.length;
-  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter, videoSearch]);
+  }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter, videoPeriodFilter, videoSearch]);
 
   const insights = useMemo(() => {
     if (!data) return [];
