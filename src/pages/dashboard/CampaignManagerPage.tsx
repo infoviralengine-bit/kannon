@@ -647,59 +647,6 @@ export default function CampaignManagerPage() {
           </CardContent>
         </Card>
 
-      {/* ROW 4 — Creator Ranking dettagliato */}
-      <Card>
-        <CardContent className="pt-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Users className="h-5 w-5" /> Ranking Creator
-          </h2>
-          <ScrollArea className="w-full">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">#</TableHead>
-                  <TableHead>Creator</TableHead>
-                  <TableHead className="text-right">Views</TableHead>
-                  <TableHead className="text-right">Video</TableHead>
-                  <TableHead className="text-right">Media/video</TableHead>
-                  <TableHead className="text-right">Eng. %</TableHead>
-                  <TableHead className="text-right">Quality Score</TableHead>
-                  <TableHead className="text-right">Top video</TableHead>
-                  <TableHead className="text-right">Trend</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(data.creatorRankingDetailed ?? []).map((cr, i) => (
-                  <TableRow key={cr.creatorId}>
-                    <TableCell className="font-bold text-muted-foreground">{i + 1}</TableCell>
-                    <TableCell className="font-medium">{cr.creatorName}</TableCell>
-                    <TableCell className="text-right font-semibold">{formatViews(cr.views)}</TableCell>
-                    <TableCell className="text-right">{cr.videoCount}</TableCell>
-                    <TableCell className="text-right">{formatViews(cr.avgViewsPerVideo)}</TableCell>
-                    <TableCell className="text-right">{cr.engagementRate.toFixed(2)}%</TableCell>
-                    <TableCell className="text-right">
-                      <span className={cr.qualityScore > 0 ? "text-primary font-semibold" : "text-muted-foreground"}>
-                        {cr.qualityScore.toFixed(1)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">{formatViews(cr.topVideoViews)}</TableCell>
-                    <TableCell className="text-right">
-                      <TrendBadge current={cr.views} prev={cr.prevViews} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {!(data.creatorRankingDetailed ?? []).length && (
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nessun dato</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </CardContent>
-      </Card>
-
       {/* ROW 5 — Video List */}
       <Card>
         <CardContent className="pt-6">
