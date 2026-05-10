@@ -1158,6 +1158,7 @@ export type Database = {
           contract_id: string
         }[]
       }
+      get_onboarding_data: { Args: { p_token: string }; Returns: Json }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
