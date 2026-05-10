@@ -77,9 +77,7 @@ export function AppSidebar() {
   const visibleClientiItems = isTeam
     ? clientiItems.filter((i) => i.url !== "/dashboard/payments-receivable")
     : clientiItems;
-  const visibleCreatorItems = isTeam
-    ? creatorItems.filter((i) => i.url !== "/dashboard/payments-payable")
-    : creatorItems;
+  const visibleCreatorItems = creatorItems;
 
   const allAltroItems = role === "admin"
     ? [...altroItems, { title: "Impostazioni", url: "/dashboard/settings", icon: Settings }]
