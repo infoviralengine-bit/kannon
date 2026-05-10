@@ -41,7 +41,8 @@ interface ConfirmData {
 export default function PaymentsPayablePage() {
   const navigate = useNavigate();
   const { role } = useAuth();
-  const [periodByContract, setPeriodByContract] = useState<Record<string, number>>({});
+  // Global period offset relative to each contract's current period (0 = current, -1 previous, +1 next)
+  const [periodOffset, setPeriodOffset] = useState<number>(0);
 
   useEffect(() => {
     if (role === "team") navigate("/dashboard", { replace: true });
@@ -50,24 +51,15 @@ export default function PaymentsPayablePage() {
   const [confirm, setConfirm] = useState<ConfirmData | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // First fetch with empty map to learn each contract's current period, then map to offset
+  const { data: rawSections } = useContractPayable({});
+  const periodByContract: Record<string, number> = {};
+  (rawSections ?? []).forEach((s) => {
+    periodByContract[s.contractId] = Math.max(1, s.currentPeriod + periodOffset);
+  });
   const { data: sections, isLoading } = useContractPayable(periodByContract);
   const { toast } = useToast();
   const qc = useQueryClient();
-
-  // Initialize periods to current on first load
-  useEffect(() => {
-    if (sections && Object.keys(periodByContract).length === 0) {
-      const initial: Record<string, number> = {};
-      sections.forEach((s) => {
-        initial[s.contractId] = s.currentPeriod;
-      });
-      setPeriodByContract(initial);
-    }
-  }, [sections]);
-
-  function setPeriod(contractId: string, period: number) {
-    setPeriodByContract((prev) => ({ ...prev, [contractId]: Math.max(1, period) }));
-  }
 
   function getPeriodLabel(startDate: string, periodNumber: number, firstPeriodStartStr?: string | null): string {
     const sd = parseContractStartDate(startDate);
