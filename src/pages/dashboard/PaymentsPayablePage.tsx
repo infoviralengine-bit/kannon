@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowUpCircle, Check, ChevronLeft, ChevronRight, FileText,
+  ArrowUpCircle, Check, ChevronLeft, ChevronRight, FileText, Users, ChevronDown,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
@@ -122,6 +123,52 @@ export default function PaymentsPayablePage() {
   const globalPaid = allSections.reduce((s, sec) =>
     s + sec.creators.filter((c) => c.isPaid).reduce((ss, c) => ss + c.subtotal, 0), 0);
 
+  // Aggregate per-creator across all contracts (current selected periods)
+  type CreatorBreakdown = {
+    contractId: string;
+    contractName: string;
+    periodNumber: number;
+    section: ContractPayableSection;
+    creator: CreatorInContract;
+  };
+  type CreatorRollup = {
+    creatorId: string;
+    creatorName: string;
+    totalPending: number;
+    totalPaid: number;
+    total: number;
+    breakdown: CreatorBreakdown[];
+  };
+  const creatorRollupMap = new Map<string, CreatorRollup>();
+  allSections.forEach((sec) => {
+    const pn = periodByContract[sec.contractId] ?? sec.currentPeriod;
+    sec.creators.forEach((cr) => {
+      if (cr.subtotal <= 0 && cr.videoCount === 0) return;
+      const cur = creatorRollupMap.get(cr.creatorId) ?? {
+        creatorId: cr.creatorId,
+        creatorName: cr.creatorName,
+        totalPending: 0,
+        totalPaid: 0,
+        total: 0,
+        breakdown: [],
+      };
+      cur.total += cr.subtotal;
+      if (cr.isPaid) cur.totalPaid += cr.subtotal;
+      else cur.totalPending += cr.subtotal;
+      cur.breakdown.push({
+        contractId: sec.contractId,
+        contractName: sec.contractName,
+        periodNumber: pn,
+        section: sec,
+        creator: cr,
+      });
+      creatorRollupMap.set(cr.creatorId, cur);
+    });
+  });
+  const creatorRollups = Array.from(creatorRollupMap.values())
+    .filter((r) => r.total > 0)
+    .sort((a, b) => b.totalPending - a.totalPending || a.creatorName.localeCompare(b.creatorName));
+
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
       {/* Header */}
@@ -161,8 +208,145 @@ export default function PaymentsPayablePage() {
           </CardContent>
         </Card>
       ) : (
+        <>
+        {/* Unified per-creator rollup */}
+        <Card className="border-[#1e1e2e] bg-[#111118] overflow-hidden">
+          <CardHeader className="border-b border-[#1e1e2e] pb-4">
+            <div className="flex items-center gap-3">
+              <Users className="h-5 w-5 text-primary" />
+              <div>
+                <CardTitle className="text-base text-[#f8fafc]">Totale per Creator</CardTitle>
+                <p className="text-xs text-[#64748b] mt-0.5">
+                  Somma di tutti i contratti nei periodi selezionati. Espandi per vedere il dettaglio.
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          {!creatorRollups.length ? (
+            <CardContent className="py-8 text-center text-[#64748b] text-sm">
+              Nessun creator con attività nei periodi selezionati.
+            </CardContent>
+          ) : (
+            <div className="divide-y divide-[#1e1e2e]">
+              {creatorRollups.map((r) => (
+                <Collapsible key={r.creatorId}>
+                  <CollapsibleTrigger className="w-full group">
+                    <div className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#0d0d14]/50 transition-colors">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <ChevronDown className="h-4 w-4 text-[#64748b] transition-transform group-data-[state=open]:rotate-180 shrink-0" />
+                        <span
+                          className="font-medium text-[#f8fafc] hover:underline truncate"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/dashboard/creators/${r.creatorId}`);
+                          }}
+                        >
+                          {r.creatorName}
+                        </span>
+                        <Badge className="bg-[#1a1a28] text-[#94a3b8] border-[#2a2a3e] text-[10px] shrink-0">
+                          {r.breakdown.length} {r.breakdown.length === 1 ? "contratto" : "contratti"}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 shrink-0">
+                        {r.totalPaid > 0 && (
+                          <div className="text-right hidden sm:block">
+                            <p className="text-[10px] text-[#64748b] uppercase tracking-wider">Pagato</p>
+                            <p className="text-sm font-semibold text-emerald-400">{formatCurrency(r.totalPaid)}</p>
+                          </div>
+                        )}
+                        <div className="text-right">
+                          <p className="text-[10px] text-[#64748b] uppercase tracking-wider">Da pagare</p>
+                          <p className="text-base font-bold text-[#f8fafc]">{formatCurrency(r.totalPending)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="bg-[#0d0d14]/50 px-4 py-2">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-[#1e1e2e] hover:bg-transparent">
+                            <TableHead className="text-[#64748b] text-xs">Contratto</TableHead>
+                            <TableHead className="text-[#64748b] text-xs text-center">Video</TableHead>
+                            <TableHead className="text-[#64748b] text-xs text-center">Fisso</TableHead>
+                            <TableHead className="text-[#64748b] text-xs text-right">CPM</TableHead>
+                            <TableHead className="text-[#64748b] text-xs text-right">Subtotale</TableHead>
+                            <TableHead className="text-[#64748b] text-xs">Stato</TableHead>
+                            <TableHead className="text-[#64748b] text-xs text-right">Azioni</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {r.breakdown.map((b) => (
+                            <TableRow key={b.contractId} className="border-[#1e1e2e] hover:bg-[#0d0d14]/50">
+                              <TableCell>
+                                <span
+                                  className="font-medium text-[#f8fafc] hover:underline cursor-pointer text-sm"
+                                  onClick={() => navigate(`/dashboard/contracts/${b.contractId}`)}
+                                >
+                                  {b.contractName}
+                                </span>
+                                <p className="text-[10px] text-[#64748b]">
+                                  Periodo {b.periodNumber} · {getPeriodLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart)}
+                                </p>
+                              </TableCell>
+                              <TableCell className="text-center text-[#94a3b8] text-sm">
+                                {b.creator.videoCount}/{b.creator.monthlyTarget}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge
+                                  className={`text-[10px] ${
+                                    b.creator.fixedEarned
+                                      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                                      : "bg-red-500/15 text-red-400 border-red-500/30"
+                                  }`}
+                                >
+                                  {formatCurrency(b.creator.fixedEarned ? b.creator.fixedAmount : 0)}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right text-[#94a3b8] text-sm">
+                                {formatCurrency(b.creator.cpmAmount)}
+                              </TableCell>
+                              <TableCell className="text-right font-semibold text-[#f8fafc]">
+                                {formatCurrency(b.creator.subtotal)}
+                              </TableCell>
+                              <TableCell>
+                                {b.creator.isPaid ? (
+                                  <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30 text-[10px]">
+                                    ✅ Pagato
+                                  </Badge>
+                                ) : b.creator.subtotal > 0 ? (
+                                  <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30 text-[10px]">
+                                    ⏳ Da pagare
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-[#1a1a28] text-[#64748b] border-[#2a2a3e] text-[10px]">—</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {!b.creator.isPaid && b.creator.subtotal > 0 && (
+                                  <Button
+                                    size="sm" variant="outline"
+                                    className="border-[#1e1e2e] hover:bg-[#1a1a28]"
+                                    onClick={() => setConfirm({ creator: b.creator, section: b.section, periodNumber: b.periodNumber })}
+                                  >
+                                    <Check className="mr-1 h-3 w-3" /> Pagato
+                                  </Button>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              ))}
+            </div>
+          )}
+        </Card>
+
         /* One section per contract */
-        allSections.map((section) => {
+        {allSections.map((section) => {
           const pn = periodByContract[section.contractId] ?? section.currentPeriod;
           const filteredCreators = section.creators.filter((c) => {
             if (!showOnlyActive) return true;
@@ -297,7 +481,8 @@ export default function PaymentsPayablePage() {
               )}
             </Card>
           );
-        })
+        })}
+        </>
       )}
 
       {/* Confirm Dialog */}
