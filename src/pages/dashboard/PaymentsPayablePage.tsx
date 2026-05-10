@@ -345,7 +345,7 @@ export default function PaymentsPayablePage() {
           )}
         </Card>
 
-        /* One section per contract */
+        {/* One section per contract */}
         {allSections.map((section) => {
           const pn = periodByContract[section.contractId] ?? section.currentPeriod;
           const filteredCreators = section.creators.filter((c) => {
