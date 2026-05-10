@@ -43,10 +43,6 @@ export default function PaymentsPayablePage() {
   const { role } = useAuth();
   // Global period offset relative to each contract's current period (0 = current, -1 previous, +1 next)
   const [periodOffset, setPeriodOffset] = useState<number>(0);
-
-  useEffect(() => {
-    if (role === "team") navigate("/dashboard", { replace: true });
-  }, [role, navigate]);
   const [showOnlyActive, setShowOnlyActive] = useState(true);
   const [confirm, setConfirm] = useState<ConfirmData | null>(null);
   const [saving, setSaving] = useState(false);
