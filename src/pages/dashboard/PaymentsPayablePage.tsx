@@ -41,7 +41,8 @@ interface ConfirmData {
 export default function PaymentsPayablePage() {
   const navigate = useNavigate();
   const { role } = useAuth();
-  const [periodByContract, setPeriodByContract] = useState<Record<string, number>>({});
+  // Global period offset relative to each contract's current period (0 = current, -1 previous, +1 next)
+  const [periodOffset, setPeriodOffset] = useState<number>(0);
 
   useEffect(() => {
     if (role === "team") navigate("/dashboard", { replace: true });
@@ -50,24 +51,15 @@ export default function PaymentsPayablePage() {
   const [confirm, setConfirm] = useState<ConfirmData | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // First fetch with empty map to learn each contract's current period, then map to offset
+  const { data: rawSections } = useContractPayable({});
+  const periodByContract: Record<string, number> = {};
+  (rawSections ?? []).forEach((s) => {
+    periodByContract[s.contractId] = Math.max(1, s.currentPeriod + periodOffset);
+  });
   const { data: sections, isLoading } = useContractPayable(periodByContract);
   const { toast } = useToast();
   const qc = useQueryClient();
-
-  // Initialize periods to current on first load
-  useEffect(() => {
-    if (sections && Object.keys(periodByContract).length === 0) {
-      const initial: Record<string, number> = {};
-      sections.forEach((s) => {
-        initial[s.contractId] = s.currentPeriod;
-      });
-      setPeriodByContract(initial);
-    }
-  }, [sections]);
-
-  function setPeriod(contractId: string, period: number) {
-    setPeriodByContract((prev) => ({ ...prev, [contractId]: Math.max(1, period) }));
-  }
 
   function getPeriodLabel(startDate: string, periodNumber: number, firstPeriodStartStr?: string | null): string {
     const sd = parseContractStartDate(startDate);
@@ -172,9 +164,37 @@ export default function PaymentsPayablePage() {
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <ArrowUpCircle className="h-7 w-7 text-primary" />
-        <h1 className="text-2xl font-bold text-[#f8fafc]">Pagamenti da fare</h1>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <ArrowUpCircle className="h-7 w-7 text-primary" />
+          <h1 className="text-2xl font-bold text-[#f8fafc]">Pagamenti da fare</h1>
+        </div>
+        {/* Global period selector */}
+        <div className="flex items-center gap-1 bg-[#0d0d14] border border-[#1e1e2e] rounded-lg px-2 py-1">
+          <Button
+            variant="ghost" size="icon" className="h-7 w-7"
+            onClick={() => setPeriodOffset((o) => o - 1)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="text-center min-w-[180px] px-2">
+            <p className="text-xs font-medium text-[#f8fafc]">
+              {periodOffset === 0 ? "Periodo corrente" : periodOffset < 0 ? `${Math.abs(periodOffset)} periodo${Math.abs(periodOffset) > 1 ? "i" : ""} fa` : `+${periodOffset} periodo${periodOffset > 1 ? "i" : ""}`}
+            </p>
+            <p className="text-[10px] text-[#64748b]">Applicato a tutti i contratti</p>
+          </div>
+          <Button
+            variant="ghost" size="icon" className="h-7 w-7"
+            onClick={() => setPeriodOffset((o) => o + 1)}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          {periodOffset !== 0 && (
+            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setPeriodOffset(0)}>
+              Oggi
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Global KPI + filter */}
@@ -373,25 +393,10 @@ export default function PaymentsPayablePage() {
                     </div>
                   </div>
 
-                  {/* Period navigator per contract */}
-                  <div className="flex items-center gap-1 bg-[#0d0d14] border border-[#1e1e2e] rounded-lg px-2 py-1">
-                    <Button
-                      variant="ghost" size="icon" className="h-7 w-7"
-                      onClick={() => setPeriod(section.contractId, pn - 1)}
-                      disabled={pn <= 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <div className="text-center min-w-[160px]">
-                      <p className="text-xs font-medium text-[#f8fafc]">Periodo {pn}</p>
-                      <p className="text-[10px] text-[#64748b]">{getPeriodLabel(section.startDate, pn, section.firstPeriodStart)}</p>
-                    </div>
-                    <Button
-                      variant="ghost" size="icon" className="h-7 w-7"
-                      onClick={() => setPeriod(section.contractId, pn + 1)}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+                  {/* Period info (read-only, controlled globally) */}
+                  <div className="text-right">
+                    <p className="text-xs font-medium text-[#f8fafc]">Periodo {pn}</p>
+                    <p className="text-[10px] text-[#64748b]">{getPeriodLabel(section.startDate, pn, section.firstPeriodStart)}</p>
                   </div>
                 </div>
               </CardHeader>
