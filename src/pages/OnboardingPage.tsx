@@ -101,7 +101,7 @@ export default function OnboardingPage() {
           return;
         }
 
-        const payload = rpcData as {
+        const payload = rpcData as unknown as {
           link: OnboardingLink;
           lead: { first_name: string; last_name: string } | null;
           contracts: Contract[];
