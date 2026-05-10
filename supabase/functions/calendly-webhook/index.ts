@@ -26,14 +26,21 @@ Deno.serve(async (req) => {
       .eq("key", "calendly_webhook_secret")
       .single();
 
-    if (secretSetting?.value) {
-      if (!calendlySignature) {
-        console.error("Missing Calendly webhook signature");
-        return new Response(JSON.stringify({ error: "Missing signature" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+    if (!secretSetting?.value) {
+      console.error("Calendly webhook secret not configured");
+      return new Response(JSON.stringify({ error: "Webhook not configured" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!calendlySignature) {
+      console.error("Missing Calendly webhook signature");
+      return new Response(JSON.stringify({ error: "Missing signature" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
       // Parse signature header: t=timestamp,v1=signature
       const parts = calendlySignature.split(",");
@@ -69,7 +76,6 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-    }
 
     const payload = JSON.parse(body);
     const event = payload.event;
