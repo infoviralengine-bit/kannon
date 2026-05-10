@@ -178,10 +178,18 @@ export default function PaymentsPayablePage() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="text-center min-w-[180px] px-2">
-            <p className="text-xs font-medium text-[#f8fafc]">
-              {periodOffset === 0 ? "Periodo corrente" : periodOffset < 0 ? `${Math.abs(periodOffset)} periodo${Math.abs(periodOffset) > 1 ? "i" : ""} fa` : `+${periodOffset} periodo${periodOffset > 1 ? "i" : ""}`}
-            </p>
-            <p className="text-[10px] text-[#64748b]">Applicato a tutti i contratti</p>
+            {(() => {
+              const maxCurrent = (rawSections ?? []).reduce((m, s) => Math.max(m, s.currentPeriod), 0);
+              const refPeriod = Math.max(1, maxCurrent + periodOffset);
+              return (
+                <>
+                  <p className="text-xs font-medium text-[#f8fafc]">Periodo {refPeriod}</p>
+                  <p className="text-[10px] text-[#64748b]">
+                    {periodOffset === 0 ? "Corrente" : "Applicato a tutti i contratti"}
+                  </p>
+                </>
+              );
+            })()}
           </div>
           <Button
             variant="ghost" size="icon" className="h-7 w-7"
@@ -191,7 +199,7 @@ export default function PaymentsPayablePage() {
           </Button>
           {periodOffset !== 0 && (
             <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setPeriodOffset(0)}>
-              Oggi
+              Corrente
             </Button>
           )}
         </div>
