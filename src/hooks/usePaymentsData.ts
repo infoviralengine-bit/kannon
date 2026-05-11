@@ -71,7 +71,8 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       // views across all videos. Unpaid cycles get: total - cumulative_already_paid.
       // (Only the first unpaid cycle gets the residual; later unpaid cycles get 0.)
       const unpaidCampIds = [...new Set((payments ?? []).filter(p => !p.is_paid).map(p => p.campaign_id))];
-      // totalViewsByCampaign: campaign_id -> total effective views across all videos
+      // videos kept per-campaign so we can compute paid-window subtractions
+      const videosByCampaign = new Map<string, Array<{ published_at: string; effective_views: number }>>();
       const totalViewsByCampaign = new Map<string, number>();
 
       if (unpaidCampIds.length) {
@@ -108,6 +109,9 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
             let views = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
             if (cap != null && cap > 0) views = Math.min(views, cap);
             totalViewsByCampaign.set(campId, (totalViewsByCampaign.get(campId) ?? 0) + views);
+            const list = videosByCampaign.get(campId) ?? [];
+            list.push({ published_at: v.published_at, effective_views: views });
+            videosByCampaign.set(campId, list);
           });
         }
       }
@@ -138,6 +142,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
         const clientFixed = camp?.client_fixed ?? 0;
         const spendCap = camp?.monthly_spend_cap ?? null;
         const totalCampaignViews = totalViewsByCampaign.get(campId) ?? 0;
+        const campVideos = videosByCampaign.get(campId) ?? [];
 
         // Cumulative views already accounted (paid cycles + previously-attributed unpaid cycles)
         let cumulative = 0;
@@ -147,8 +152,25 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           const isLast = cycle?.is_last_cycle ?? false;
 
           if (p.is_paid) {
-            // Keep the snapshot; just track cumulative going forward.
-            cumulative = Math.max(cumulative, p.views_paid_cumulative ?? 0);
+            // Live-compute the views that belong to this paid cycle. We count videos
+            // published on or before the EARLIER of (paid_at, cycle_end_date):
+            //  - paid_at  : if the cycle was paid early, later-published videos are NOT
+            //               part of this settled period and should roll to next cycle.
+            //  - end_date : if the cycle ended before payment, videos published after
+            //               its end belong to later cycles, not this one.
+            const endDate = cycle?.cycle_end_date ?? null;
+            const paidAt = p.paid_at ? p.paid_at.slice(0, 10) : null;
+            let cutoff: string | null = null;
+            if (endDate && paidAt) cutoff = endDate < paidAt ? endDate : paidAt;
+            else cutoff = endDate ?? paidAt;
+            let attributed = 0;
+            if (cutoff) {
+              campVideos.forEach((v) => {
+                if (v.published_at.slice(0, 10) <= cutoff!) attributed += v.effective_views;
+              });
+            }
+            // Never go below what's already been stored as paid, and accumulate forward.
+            cumulative = Math.max(cumulative, p.views_paid_cumulative ?? 0, attributed);
             return;
           }
 
