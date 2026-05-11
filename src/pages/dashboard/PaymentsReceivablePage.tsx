@@ -35,6 +35,7 @@ export default function PaymentsReceivablePage() {
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<"all" | "pending" | "paid" | "overdue">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const filtered = (data ?? []).filter((p) => {
     if (filter === "pending") return !p.isPaid && !p.isOverdue;
@@ -68,6 +69,29 @@ export default function PaymentsReceivablePage() {
     } finally {
       setSaving(false);
       setConfirm(null);
+    }
+  }
+
+  async function handleStatusChange(p: ClientPaymentRow, newStatus: "paid" | "pending") {
+    setUpdatingId(p.id);
+    try {
+      const { error } = await supabase
+        .from("client_payments")
+        .update(
+          newStatus === "paid"
+            ? { is_paid: true, paid_at: new Date().toISOString() }
+            : { is_paid: false, paid_at: null },
+        )
+        .eq("id", p.id);
+      if (error) throw error;
+      toast({ title: "Status aggiornato", description: `${p.campaignName} — ${p.monthLabel}` });
+      qc.invalidateQueries({ queryKey: ["client-payments"] });
+      qc.invalidateQueries({ queryKey: ["payment-history-all"] });
+      qc.invalidateQueries({ queryKey: ["payment-summary"] });
+    } catch (e: any) {
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
+    } finally {
+      setUpdatingId(null);
     }
   }
 
@@ -161,13 +185,23 @@ export default function PaymentsReceivablePage() {
                       <TableCell className="text-right">{formatCurrency(p.cpmAmount)}</TableCell>
                       <TableCell className="text-right font-semibold">{formatCurrency(p.totalAmount)}</TableCell>
                       <TableCell>
-                        {p.isPaid ? (
-                          <Badge className="bg-success/20 text-success border-success/30">✅</Badge>
-                        ) : p.isOverdue ? (
-                          <Badge variant="destructive">🔴</Badge>
-                        ) : (
-                          <Badge variant="secondary">⏳</Badge>
-                        )}
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={p.isPaid ? "paid" : "pending"}
+                            disabled={updatingId === p.id}
+                            onValueChange={(v: "paid" | "pending") => handleStatusChange(p, v)}
+                          >
+                            <SelectTrigger className="h-8 w-[140px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">
+                                {p.isOverdue && !p.isPaid ? "🔴 Scaduto" : "⏳ In attesa"}
+                              </SelectItem>
+                              <SelectItem value="paid">✅ Pagato</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         {p.isPaid ? (
