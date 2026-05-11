@@ -67,10 +67,12 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       }
 
       // ── Live recalculation for unpaid payments ──
-      // Fetch videos for campaigns with unpaid payments to attribute views per-cycle
+      // For each campaign with unpaid payments, compute the CURRENT TOTAL effective
+      // views across all videos. Unpaid cycles get: total - cumulative_already_paid.
+      // (Only the first unpaid cycle gets the residual; later unpaid cycles get 0.)
       const unpaidCampIds = [...new Set((payments ?? []).filter(p => !p.is_paid).map(p => p.campaign_id))];
-      // videosByCampaign: campaign_id -> array of videos (with effective_views capped per video)
-      const videosByCampaign = new Map<string, Array<{ published_at: string; effective_views: number }>>();
+      // totalViewsByCampaign: campaign_id -> total effective views across all videos
+      const totalViewsByCampaign = new Map<string, number>();
 
       if (unpaidCampIds.length) {
         // Fetch accounts of these campaigns
@@ -105,9 +107,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
             const cap = camp?.video_views_cap ?? null;
             let views = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
             if (cap != null && cap > 0) views = Math.min(views, cap);
-            const list = videosByCampaign.get(campId) ?? [];
-            list.push({ published_at: v.published_at, effective_views: views });
-            videosByCampaign.set(campId, list);
+            totalViewsByCampaign.set(campId, (totalViewsByCampaign.get(campId) ?? 0) + views);
           });
         }
       }
@@ -137,14 +137,14 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
         const clientCpm = camp?.client_cpm ?? 2;
         const clientFixed = camp?.client_fixed ?? 0;
         const spendCap = camp?.monthly_spend_cap ?? null;
-        const campVideos = videosByCampaign.get(campId) ?? [];
+        const totalCampaignViews = totalViewsByCampaign.get(campId) ?? 0;
 
+        // Cumulative views already accounted (paid cycles + previously-attributed unpaid cycles)
         let cumulative = 0;
+        let residualAssigned = false;
         cycleList.forEach((p) => {
           const cycle = cycleMap.get(p.cycle_id);
           const isLast = cycle?.is_last_cycle ?? false;
-          const cs = cycle?.cycle_start_date;
-          const ce = cycle?.cycle_end_date;
 
           if (p.is_paid) {
             // Keep the snapshot; just track cumulative going forward.
@@ -152,14 +152,12 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
             return;
           }
 
-          // Unpaid: attribute views of videos published WITHIN this cycle's date range
+          // The first unpaid cycle absorbs ALL views accumulated since the last paid
+          // cycle's snapshot. Later unpaid cycles show 0 until this one is paid.
           let cpmViews = 0;
-          if (cs && ce) {
-            // cycle_end_date is inclusive; compare on date strings (YYYY-MM-DD slice)
-            campVideos.forEach((v) => {
-              const d = v.published_at.slice(0, 10);
-              if (d >= cs && d <= ce) cpmViews += v.effective_views;
-            });
+          if (!residualAssigned) {
+            cpmViews = Math.max(0, totalCampaignViews - cumulative);
+            residualAssigned = true;
           }
 
           const fixedAmount = isLast ? 0 : clientFixed;
