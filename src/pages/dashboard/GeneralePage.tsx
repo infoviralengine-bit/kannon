@@ -26,7 +26,7 @@ import {
 
 /* ─── Skeleton ─── */
 function Shimmer({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded-lg bg-[#1a1a28] ${className}`} />;
+  return <div className={`animate-pulse rounded-lg bg-muted ${className}`} />;
 }
 
 /* ─── KPI Card ─── */
@@ -47,13 +47,13 @@ function KpiFinancialCard({
   const isPositive = (diff ?? 0) >= 0;
 
   return (
-    <Card className="relative overflow-hidden border-[#1e1e2e] bg-[#111118] hover:border-[#2a2a3e] transition-all duration-300 group">
+    <Card className="relative overflow-hidden border-border bg-card hover:border-border transition-all duration-300 group">
       <div className={`absolute inset-0 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity ${accentClass}`}
         style={{ background: `radial-gradient(ellipse at top right, currentColor, transparent 70%)` }}
       />
       <CardContent className="p-5">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-medium uppercase tracking-wider text-[#64748b]">{label}</span>
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
           <div className={`p-2 rounded-lg ${accentClass} bg-opacity-10`} style={{ backgroundColor: 'currentColor', opacity: 0.08 }}>
             <Icon className={`h-4 w-4 ${accentClass}`} />
           </div>
@@ -62,7 +62,7 @@ function KpiFinancialCard({
           <Shimmer className="h-9 w-36 mb-2" />
         ) : (
           <>
-            <p className="text-2xl font-bold text-[#f8fafc] tabular-nums tracking-tight">
+            <p className="text-2xl font-bold text-foreground tabular-nums tracking-tight">
               {prefix}{animated.toLocaleString("it-IT", { minimumFractionDigits: prefix === "€" ? 2 : 0, maximumFractionDigits: 2 })}
             </p>
             {diff !== undefined && (
@@ -75,7 +75,7 @@ function KpiFinancialCard({
                 <span className={`text-xs font-medium ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
                   {isPositive ? "+" : ""}{diffPct?.toFixed(1)}%
                 </span>
-                <span className="text-xs text-[#64748b]">vs mese scorso</span>
+                <span className="text-xs text-muted-foreground">vs mese scorso</span>
               </div>
             )}
           </>
@@ -89,9 +89,9 @@ function KpiFinancialCard({
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#16161f] border border-[#2a2a3e] rounded-xl px-4 py-3 shadow-2xl">
-      <p className="text-xs text-[#64748b] mb-1">{label}</p>
-      <p className="text-sm font-semibold text-[#f8fafc]">{formatViews(payload[0].value)} views</p>
+    <div className="bg-popover border border-border rounded-xl px-4 py-3 shadow-2xl">
+      <p className="text-xs text-muted-foreground mb-1">{label}</p>
+      <p className="text-sm font-semibold text-foreground">{formatViews(payload[0].value)} views</p>
     </div>
   );
 }
@@ -104,15 +104,15 @@ function PeriodSelector({ value, onChange }: { value: number; onChange: (v: numb
     { label: "90gg", value: 90 },
   ];
   return (
-    <div className="flex gap-1 bg-[#0d0d14] rounded-lg p-1">
+    <div className="flex gap-1 bg-background rounded-lg p-1">
       {options.map((o) => (
         <button
           key={o.value}
           onClick={() => onChange(o.value)}
           className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
             value === o.value
-              ? "bg-[#7c3aed]/20 text-[#a78bfa]"
-              : "text-[#64748b] hover:text-[#94a3b8]"
+              ? "bg-primary/20 text-primary"
+              : "text-muted-foreground hover:text-muted-foreground"
           }`}
         >
           {o.label}
@@ -130,15 +130,15 @@ function KpiPeriodSelector({ value, onChange }: { value: number | undefined; onC
     { label: "Tutto", value: undefined },
   ];
   return (
-    <div className="flex gap-1 bg-[#0d0d14] rounded-lg p-1">
+    <div className="flex gap-1 bg-background rounded-lg p-1">
       {options.map((o) => (
         <button
           key={o.label}
           onClick={() => onChange(o.value)}
           className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
             value === o.value
-              ? "bg-[#7c3aed]/20 text-[#a78bfa]"
-              : "text-[#64748b] hover:text-[#94a3b8]"
+              ? "bg-primary/20 text-primary"
+              : "text-muted-foreground hover:text-muted-foreground"
           }`}
         >
           {o.label}
@@ -172,10 +172,10 @@ export default function GeneralePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#f8fafc] tracking-tight">Dashboard</h1>
-          <p className="text-sm text-[#64748b] mt-0.5">Panoramica in tempo reale</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Panoramica in tempo reale</p>
         </div>
-        <Badge variant="outline" className="border-[#1e1e2e] text-[#64748b] text-xs gap-1.5">
+        <Badge variant="outline" className="border-border text-muted-foreground text-xs gap-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
           Aggiornamento automatico
         </Badge>
@@ -185,7 +185,7 @@ export default function GeneralePage() {
       {!isTeam && (
         <>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-[#94a3b8]">KPI Finanziari</span>
+            <span className="text-sm font-medium text-muted-foreground">KPI Finanziari</span>
             <KpiPeriodSelector value={kpiPeriod} onChange={setKpiPeriod} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -207,7 +207,7 @@ export default function GeneralePage() {
               label="Margine CPM"
               icon={DollarSign}
               value={kpi?.cpmMargin ?? 0}
-              accentClass="text-[#a78bfa]"
+              accentClass="text-primary"
               loading={kpiLoading}
             />
             <KpiFinancialCard
@@ -222,14 +222,14 @@ export default function GeneralePage() {
           {/* CPM detail bar */}
           {!kpiLoading && kpi && kpi.clientCpmTotal > 0 && (
             <div className="flex items-center gap-3 px-1">
-              <span className="text-xs text-[#64748b]">CPM Margin</span>
-              <div className="flex-1 h-1.5 rounded-full bg-[#1a1a28] overflow-hidden">
+              <span className="text-xs text-muted-foreground">CPM Margin</span>
+              <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#7c3aed] to-[#a78bfa] transition-all duration-700"
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-primary transition-all duration-700"
                   style={{ width: `${Math.max(0, Math.min(100, (kpi.cpmMargin / kpi.clientCpmTotal) * 100))}%` }}
                 />
               </div>
-              <span className="text-xs font-medium text-[#a78bfa]">
+              <span className="text-xs font-medium text-primary">
                 {((kpi.cpmMargin / kpi.clientCpmTotal) * 100).toFixed(1)}%
               </span>
             </div>
@@ -241,13 +241,13 @@ export default function GeneralePage() {
       <PipelineCreator selected={null} onSelect={() => {}} />
 
       {/* ROW 2 — Views Chart */}
-      <Card className="border-[#1e1e2e] bg-[#111118]">
+      <Card className="border-border bg-card">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
-            <CardTitle className="text-base font-semibold text-[#f8fafc]">
+            <CardTitle className="text-base font-semibold text-foreground">
               Performance Views
             </CardTitle>
-            <p className="text-xs text-[#64748b] mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {formatViews(totalChartViews)} views totali nel periodo
             </p>
           </div>
@@ -261,11 +261,11 @@ export default function GeneralePage() {
               <AreaChart data={viewsChart.data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="viewsGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e1e2e" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis
                   dataKey="label"
                   tick={{ fontSize: 11, fill: "#64748b" }}
@@ -283,7 +283,7 @@ export default function GeneralePage() {
                 <Area
                   type="monotone"
                   dataKey="views"
-                  stroke="#7c3aed"
+                  stroke="hsl(var(--primary))"
                   strokeWidth={2}
                   fill="url(#viewsGradient)"
                   dot={false}
@@ -297,8 +297,8 @@ export default function GeneralePage() {
 
       {/* ROW 3 — Active Campaigns */}
       <div>
-        <h2 className="text-lg font-semibold text-[#f8fafc] mb-4 flex items-center gap-2">
-          <Zap className="h-4 w-4 text-[#a78bfa]" />
+        <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Zap className="h-4 w-4 text-primary" />
           Campagne Attive
         </h2>
         {campaignCards.isLoading ? (
@@ -306,10 +306,10 @@ export default function GeneralePage() {
             {[1, 2, 3].map((i) => <Shimmer key={i} className="h-44" />)}
           </div>
         ) : !campaignCards.data?.length ? (
-          <Card className="border-[#1e1e2e] bg-[#111118]">
+          <Card className="border-border bg-card">
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <Zap className="h-10 w-10 text-[#2a2a3e] mb-3" />
-              <p className="text-sm text-[#64748b] mb-4">Nessuna campagna attiva</p>
+              <Zap className="h-10 w-10 text-muted mb-3" />
+              <p className="text-sm text-muted-foreground mb-4">Nessuna campagna attiva</p>
               <Button onClick={() => navigate("/dashboard/campaigns")} size="sm">
                 Crea la tua prima campagna
               </Button>
@@ -324,19 +324,19 @@ export default function GeneralePage() {
                 ? "border-red-500/40"
                 : capWarning
                   ? "border-amber-500/40"
-                  : "border-[#1e1e2e] hover:border-[#2a2a3e]";
+                  : "border-border hover:border-border";
 
               return (
                 <Card
                   key={c.id}
-                  className={`bg-[#111118] cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-[#7c3aed]/5 ${borderClass}`}
+                  className={`bg-card cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 ${borderClass}`}
                   onClick={() => navigate(`/dashboard/campaigns/${c.id}`)}
                 >
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="font-semibold text-[#f8fafc] text-sm">{c.name}</p>
-                        <p className="text-xs text-[#64748b] mt-0.5">{c.clientName}</p>
+                        <p className="font-semibold text-foreground text-sm">{c.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{c.clientName}</p>
                       </div>
                       <div className="flex gap-1.5">
                         {capReached && (
@@ -355,15 +355,15 @@ export default function GeneralePage() {
                     {c.spendCap && (
                       <div className="mb-3">
                         {!isTeam && (
-                          <div className="flex justify-between text-[10px] text-[#64748b] mb-1">
+                          <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
                             <span>Spesa {formatCurrency(c.revenueMonth)}</span>
                             <span>Cap {formatCurrency(c.spendCap)}</span>
                           </div>
                         )}
-                        <div className="h-1.5 rounded-full bg-[#1a1a28] overflow-hidden">
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all ${
-                              capReached ? "bg-red-500" : capWarning ? "bg-amber-400" : "bg-[#7c3aed]"
+                              capReached ? "bg-red-500" : capWarning ? "bg-amber-400" : "bg-primary"
                             }`}
                             style={{ width: `${Math.min(100, c.spendCapPercent ?? 0)}%` }}
                           />
@@ -371,20 +371,20 @@ export default function GeneralePage() {
                       </div>
                     )}
 
-                    <div className={`grid ${isTeam ? 'grid-cols-2' : 'grid-cols-3'} gap-3 pt-2 border-t border-[#1e1e2e]`}>
+                    <div className={`grid ${isTeam ? 'grid-cols-2' : 'grid-cols-3'} gap-3 pt-2 border-t border-border`}>
                       <div>
-                        <p className="text-[10px] text-[#64748b] uppercase">Views</p>
-                        <p className="text-sm font-semibold text-[#f8fafc]">{formatViews(c.viewsMonth)}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase">Views</p>
+                        <p className="text-sm font-semibold text-foreground">{formatViews(c.viewsMonth)}</p>
                       </div>
                       {!isTeam && (
                         <div>
-                          <p className="text-[10px] text-[#64748b] uppercase">Entrata</p>
+                          <p className="text-[10px] text-muted-foreground uppercase">Entrata</p>
                           <p className="text-sm font-semibold text-emerald-400">{formatCurrency(c.revenueMonth)}</p>
                         </div>
                       )}
                       <div>
-                        <p className="text-[10px] text-[#64748b] uppercase">Creator</p>
-                        <p className="text-sm font-semibold text-[#f8fafc]">{c.creatorCount}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase">Creator</p>
+                        <p className="text-sm font-semibold text-foreground">{c.creatorCount}</p>
                       </div>
                     </div>
                   </CardContent>
@@ -399,10 +399,10 @@ export default function GeneralePage() {
       <div className="grid grid-cols-1 gap-4">
 
         {/* System Alerts */}
-        <Card className="border-[#1e1e2e] bg-[#111118]">
+        <Card className="border-border bg-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-[#f8fafc] flex items-center gap-2">
-              <Zap className="h-4 w-4 text-[#64748b]" />
+            <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Zap className="h-4 w-4 text-muted-foreground" />
               Alert Sistema
             </CardTitle>
           </CardHeader>
@@ -424,13 +424,13 @@ export default function GeneralePage() {
                         ? "border-red-500/20 bg-red-500/5"
                         : a.severity === "yellow"
                           ? "border-amber-500/20 bg-amber-500/5"
-                          : "border-[#1e1e2e] bg-[#0d0d14]"
+                          : "border-border bg-background"
                     }`}
                   >
                     <AlertTriangle className={`h-3.5 w-3.5 flex-shrink-0 ${
-                      a.severity === "red" ? "text-red-400" : a.severity === "yellow" ? "text-amber-400" : "text-[#64748b]"
+                      a.severity === "red" ? "text-red-400" : a.severity === "yellow" ? "text-amber-400" : "text-muted-foreground"
                     }`} />
-                    <span className="text-sm text-[#94a3b8]">{a.message}</span>
+                    <span className="text-sm text-muted-foreground">{a.message}</span>
                   </div>
                 ))}
               </div>
@@ -442,9 +442,9 @@ export default function GeneralePage() {
       {/* ROW 5 — Top Performers + Payment Deadlines */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top Performers */}
-        <Card className="border-[#1e1e2e] bg-[#111118]">
+        <Card className="border-border bg-card">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-[#f8fafc] flex items-center gap-2">
+            <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Trophy className="h-4 w-4 text-amber-400" />
               Top Performer del Mese
             </CardTitle>
@@ -455,7 +455,7 @@ export default function GeneralePage() {
                 {[1, 2, 3].map((i) => <Shimmer key={i} className="h-14" />)}
               </div>
             ) : !creatorStatus.data?.topPerformers.length ? (
-              <p className="text-sm text-[#64748b] text-center py-8">Nessun dato disponibile</p>
+              <p className="text-sm text-muted-foreground text-center py-8">Nessun dato disponibile</p>
             ) : (
               <div className="space-y-2">
                 {creatorStatus.data.topPerformers.map((p, i) => {
@@ -464,17 +464,17 @@ export default function GeneralePage() {
                   return (
                     <div
                       key={p.creatorName}
-                      className={`flex items-center gap-3 p-3 rounded-lg border border-[#1e1e2e] ${bgColors[i]}`}
+                      className={`flex items-center gap-3 p-3 rounded-lg border border-border ${bgColors[i]}`}
                     >
                       <span className={`text-lg font-bold ${medalColors[i]} w-7 text-center`}>
                         #{i + 1}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-[#f8fafc] truncate">{p.creatorName}</p>
-                        <p className="text-[10px] text-[#64748b] truncate">{p.contractName}</p>
+                        <p className="text-sm font-medium text-foreground truncate">{p.creatorName}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{p.contractName}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-semibold text-[#f8fafc]">{formatViews(p.viewsMonth)}</p>
+                        <p className="text-sm font-semibold text-foreground">{formatViews(p.viewsMonth)}</p>
                         {!isTeam && <p className="text-[10px] text-emerald-400">{formatCurrency(p.cpmEarned)}</p>}
                       </div>
                     </div>
@@ -487,10 +487,10 @@ export default function GeneralePage() {
 
         {/* Payment Deadlines */}
         {!isTeam && (
-          <Card className="border-[#1e1e2e] bg-[#111118]">
+          <Card className="border-border bg-card">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold text-[#f8fafc] flex items-center gap-2">
-                <Clock className="h-4 w-4 text-[#64748b]" />
+              <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
                 Scadenze Pagamenti
               </CardTitle>
             </CardHeader>
@@ -503,27 +503,27 @@ export default function GeneralePage() {
                     {[1, 2].map((i) => <Shimmer key={i} className="h-10" />)}
                   </div>
                 ) : !deadlines.data?.deadlines.length ? (
-                  <p className="text-[11px] text-[#64748b] py-2">Nessuna scadenza clienti in arrivo</p>
+                  <p className="text-[11px] text-muted-foreground py-2">Nessuna scadenza clienti in arrivo</p>
                 ) : (
                   <div className="space-y-2">
                     {deadlines.data.deadlines.map((d, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between p-3 rounded-lg border border-[#1e1e2e] bg-[#0d0d14]"
+                        className="flex items-center justify-between p-3 rounded-lg border border-border bg-background"
                       >
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-[#f8fafc] truncate">{d.campaignName}</p>
-                          <p className="text-[10px] text-[#64748b]">{d.clientName}</p>
+                          <p className="text-sm font-medium text-foreground truncate">{d.campaignName}</p>
+                          <p className="text-[10px] text-muted-foreground">{d.clientName}</p>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-sm font-semibold text-[#f8fafc]">{formatCurrency(d.amount)}</span>
+                          <span className="text-sm font-semibold text-foreground">{formatCurrency(d.amount)}</span>
                           <Badge
                             className={`text-[10px] ${
                               d.isOverdue
                                 ? "bg-red-500/15 text-red-400 border-red-500/30"
                                 : d.daysUntil <= 3
                                   ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-                                  : "bg-[#1a1a28] text-[#64748b] border-[#2a2a3e]"
+                                  : "bg-muted text-muted-foreground border-border"
                             }`}
                           >
                             {d.isOverdue ? "Scaduto" : `${d.daysUntil}gg`}
@@ -543,19 +543,19 @@ export default function GeneralePage() {
                     {[1, 2].map((i) => <Shimmer key={`cr-${i}`} className="h-10" />)}
                   </div>
                 ) : !deadlines.data?.creatorDeadlines?.filter((d) => !d.isPaid).length ? (
-                  <p className="text-[11px] text-[#64748b] py-2">Nessun pagamento creator in sospeso</p>
+                  <p className="text-[11px] text-muted-foreground py-2">Nessun pagamento creator in sospeso</p>
                 ) : (
                   <div className="space-y-2">
                     {deadlines.data.creatorDeadlines.filter((d) => !d.isPaid).map((d, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between p-3 rounded-lg border border-[#1e1e2e] bg-[#0d0d14]"
+                        className="flex items-center justify-between p-3 rounded-lg border border-border bg-background"
                       >
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-[#f8fafc] truncate">{d.creatorName}</p>
-                          <p className="text-[10px] text-[#64748b]">{d.periodLabel}</p>
+                          <p className="text-sm font-medium text-foreground truncate">{d.creatorName}</p>
+                          <p className="text-[10px] text-muted-foreground">{d.periodLabel}</p>
                         </div>
-                        <span className="text-sm font-semibold text-[#f8fafc]">{formatCurrency(d.amount)}</span>
+                        <span className="text-sm font-semibold text-foreground">{formatCurrency(d.amount)}</span>
                       </div>
                     ))}
                   </div>

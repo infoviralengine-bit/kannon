@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 
 function Shimmer({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded-lg bg-[#1a1a28] ${className}`} />;
+  return <div className={`animate-pulse rounded-lg bg-muted ${className}`} />;
 }
 
 interface ConfirmData {
@@ -163,10 +163,10 @@ export default function PaymentsPayablePage() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <ArrowUpCircle className="h-7 w-7 text-primary" />
-          <h1 className="text-2xl font-bold text-[#f8fafc]">Pagamenti da fare</h1>
+          <h1 className="text-2xl font-bold text-foreground">Pagamenti da fare</h1>
         </div>
         {/* Global period selector */}
-        <div className="flex items-center gap-1 bg-[#0d0d14] border border-[#1e1e2e] rounded-lg px-2 py-1">
+        <div className="flex items-center gap-1 bg-background border border-border rounded-lg px-2 py-1">
           <Button
             variant="ghost" size="icon" className="h-7 w-7"
             onClick={() => setPeriodOffset((o) => o - 1)}
@@ -179,8 +179,8 @@ export default function PaymentsPayablePage() {
               const refPeriod = Math.max(1, maxCurrent + periodOffset);
               return (
                 <>
-                  <p className="text-xs font-medium text-[#f8fafc]">Periodo {refPeriod}</p>
-                  <p className="text-[10px] text-[#64748b]">
+                  <p className="text-xs font-medium text-foreground">Periodo {refPeriod}</p>
+                  <p className="text-[10px] text-muted-foreground">
                     {periodOffset === 0 ? "Corrente" : "Applicato a tutti i contratti"}
                   </p>
                 </>
@@ -205,18 +205,18 @@ export default function PaymentsPayablePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <div>
-            <p className="text-xs text-[#64748b] uppercase tracking-wider">Da pagare</p>
-            <p className="text-xl font-bold text-[#f8fafc]">{formatCurrency(globalPending)}</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Da pagare</p>
+            <p className="text-xl font-bold text-foreground">{formatCurrency(globalPending)}</p>
           </div>
-          <div className="h-8 w-px bg-[#1e1e2e]" />
+          <div className="h-8 w-px bg-border" />
           <div>
-            <p className="text-xs text-[#64748b] uppercase tracking-wider">Già pagato</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Già pagato</p>
             <p className="text-xl font-bold text-emerald-400">{formatCurrency(globalPaid)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Switch id="active-filter" checked={showOnlyActive} onCheckedChange={setShowOnlyActive} />
-          <Label htmlFor="active-filter" className="text-xs text-[#64748b] cursor-pointer">Solo con attività</Label>
+          <Label htmlFor="active-filter" className="text-xs text-muted-foreground cursor-pointer">Solo con attività</Label>
         </div>
       </div>
 
@@ -226,40 +226,40 @@ export default function PaymentsPayablePage() {
           {[1, 2, 3].map((i) => <Shimmer key={i} className="h-32" />)}
         </div>
       ) : !allSections.length ? (
-        <Card className="border-[#1e1e2e] bg-[#111118]">
-          <CardContent className="py-12 text-center text-[#64748b]">
+        <Card className="border-border bg-card">
+          <CardContent className="py-12 text-center text-muted-foreground">
             Nessun contratto attivo.
           </CardContent>
         </Card>
       ) : (
         <>
         {/* Unified per-creator rollup */}
-        <Card className="border-[#1e1e2e] bg-[#111118] overflow-hidden">
-          <CardHeader className="border-b border-[#1e1e2e] pb-4">
+        <Card className="border-border bg-card overflow-hidden">
+          <CardHeader className="border-b border-border pb-4">
             <div className="flex items-center gap-3">
               <Users className="h-5 w-5 text-primary" />
               <div>
-                <CardTitle className="text-base text-[#f8fafc]">Totale per Creator</CardTitle>
-                <p className="text-xs text-[#64748b] mt-0.5">
+                <CardTitle className="text-base text-foreground">Totale per Creator</CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Somma di tutti i contratti nei periodi selezionati. Espandi per vedere il dettaglio.
                 </p>
               </div>
             </div>
           </CardHeader>
           {!creatorRollups.length ? (
-            <CardContent className="py-8 text-center text-[#64748b] text-sm">
+            <CardContent className="py-8 text-center text-muted-foreground text-sm">
               Nessun creator con attività nei periodi selezionati.
             </CardContent>
           ) : (
-            <div className="divide-y divide-[#1e1e2e]">
+            <div className="divide-y divide-border">
               {creatorRollups.map((r) => (
                 <Collapsible key={r.creatorId}>
                   <CollapsibleTrigger className="w-full group">
-                    <div className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#0d0d14]/50 transition-colors">
+                    <div className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-background/50 transition-colors">
                       <div className="flex items-center gap-3 min-w-0">
-                        <ChevronDown className="h-4 w-4 text-[#64748b] transition-transform group-data-[state=open]:rotate-180 shrink-0" />
+                        <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180 shrink-0" />
                         <span
-                          className="font-medium text-[#f8fafc] hover:underline truncate"
+                          className="font-medium text-foreground hover:underline truncate"
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/dashboard/creators/${r.creatorId}`);
@@ -267,53 +267,53 @@ export default function PaymentsPayablePage() {
                         >
                           {r.creatorName}
                         </span>
-                        <Badge className="bg-[#1a1a28] text-[#94a3b8] border-[#2a2a3e] text-[10px] shrink-0">
+                        <Badge className="bg-muted text-muted-foreground border-border text-[10px] shrink-0">
                           {r.breakdown.length} {r.breakdown.length === 1 ? "contratto" : "contratti"}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-4 shrink-0">
                         {r.totalPaid > 0 && (
                           <div className="text-right hidden sm:block">
-                            <p className="text-[10px] text-[#64748b] uppercase tracking-wider">Pagato</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Pagato</p>
                             <p className="text-sm font-semibold text-emerald-400">{formatCurrency(r.totalPaid)}</p>
                           </div>
                         )}
                         <div className="text-right">
-                          <p className="text-[10px] text-[#64748b] uppercase tracking-wider">Da pagare</p>
-                          <p className="text-base font-bold text-[#f8fafc]">{formatCurrency(r.totalPending)}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Da pagare</p>
+                          <p className="text-base font-bold text-foreground">{formatCurrency(r.totalPending)}</p>
                         </div>
                       </div>
                     </div>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className="bg-[#0d0d14]/50 px-4 py-2">
+                    <div className="bg-background/50 px-4 py-2">
                       <Table>
                         <TableHeader>
-                          <TableRow className="border-[#1e1e2e] hover:bg-transparent">
-                            <TableHead className="text-[#64748b] text-xs">Contratto</TableHead>
-                            <TableHead className="text-[#64748b] text-xs text-center">Video</TableHead>
-                            <TableHead className="text-[#64748b] text-xs text-center">Fisso</TableHead>
-                            <TableHead className="text-[#64748b] text-xs text-right">CPM</TableHead>
-                            <TableHead className="text-[#64748b] text-xs text-right">Subtotale</TableHead>
-                            <TableHead className="text-[#64748b] text-xs">Stato</TableHead>
-                            <TableHead className="text-[#64748b] text-xs text-right">Azioni</TableHead>
+                          <TableRow className="border-border hover:bg-transparent">
+                            <TableHead className="text-muted-foreground text-xs">Contratto</TableHead>
+                            <TableHead className="text-muted-foreground text-xs text-center">Video</TableHead>
+                            <TableHead className="text-muted-foreground text-xs text-center">Fisso</TableHead>
+                            <TableHead className="text-muted-foreground text-xs text-right">CPM</TableHead>
+                            <TableHead className="text-muted-foreground text-xs text-right">Subtotale</TableHead>
+                            <TableHead className="text-muted-foreground text-xs">Stato</TableHead>
+                            <TableHead className="text-muted-foreground text-xs text-right">Azioni</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {r.breakdown.map((b) => (
-                            <TableRow key={b.contractId} className="border-[#1e1e2e] hover:bg-[#0d0d14]/50">
+                            <TableRow key={b.contractId} className="border-border hover:bg-background/50">
                               <TableCell>
                                 <span
-                                  className="font-medium text-[#f8fafc] hover:underline cursor-pointer text-sm"
+                                  className="font-medium text-foreground hover:underline cursor-pointer text-sm"
                                   onClick={() => navigate(`/dashboard/contracts/${b.contractId}`)}
                                 >
                                   {b.contractName}
                                 </span>
-                                <p className="text-[10px] text-[#64748b]">
+                                <p className="text-[10px] text-muted-foreground">
                                   Periodo {b.periodNumber} · {getPeriodLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart)}
                                 </p>
                               </TableCell>
-                              <TableCell className="text-center text-[#94a3b8] text-sm">
+                              <TableCell className="text-center text-muted-foreground text-sm">
                                 {b.creator.videoCount}/{b.creator.monthlyTarget}
                               </TableCell>
                               <TableCell className="text-center">
@@ -327,10 +327,10 @@ export default function PaymentsPayablePage() {
                                   {formatCurrency(b.creator.fixedEarned ? b.creator.fixedAmount : 0)}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="text-right text-[#94a3b8] text-sm">
+                              <TableCell className="text-right text-muted-foreground text-sm">
                                 {formatCurrency(b.creator.cpmAmount)}
                               </TableCell>
-                              <TableCell className="text-right font-semibold text-[#f8fafc]">
+                              <TableCell className="text-right font-semibold text-foreground">
                                 {formatCurrency(b.creator.subtotal)}
                               </TableCell>
                               <TableCell>
@@ -343,14 +343,14 @@ export default function PaymentsPayablePage() {
                                     ⏳ Da pagare
                                   </Badge>
                                 ) : (
-                                  <Badge className="bg-[#1a1a28] text-[#64748b] border-[#2a2a3e] text-[10px]">—</Badge>
+                                  <Badge className="bg-muted text-muted-foreground border-border text-[10px]">—</Badge>
                                 )}
                               </TableCell>
                               <TableCell className="text-right">
                                 {!b.creator.isPaid && b.creator.subtotal > 0 && (
                                   <Button
                                     size="sm" variant="outline"
-                                    className="border-[#1e1e2e] hover:bg-[#1a1a28]"
+                                    className="border-border hover:bg-muted"
                                     onClick={() => setConfirm({ creator: b.creator, section: b.section, periodNumber: b.periodNumber })}
                                   >
                                     <Check className="mr-1 h-3 w-3" /> Pagato
@@ -379,19 +379,19 @@ export default function PaymentsPayablePage() {
           const sectionPending = filteredCreators.filter((c) => !c.isPaid).reduce((s, c) => s + c.subtotal, 0);
 
           return (
-            <Card key={section.contractId} className="border-[#1e1e2e] bg-[#111118] overflow-hidden">
-              <CardHeader className="border-b border-[#1e1e2e] pb-4">
+            <Card key={section.contractId} className="border-border bg-card overflow-hidden">
+              <CardHeader className="border-b border-border pb-4">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-primary" />
                     <div>
                       <CardTitle
-                        className="text-base text-[#f8fafc] hover:underline cursor-pointer"
+                        className="text-base text-foreground hover:underline cursor-pointer"
                         onClick={() => navigate(`/dashboard/contracts/${section.contractId}`)}
                       >
                         {section.contractName}
                       </CardTitle>
-                      <p className="text-xs text-[#64748b] mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         Subtotale: {formatCurrency(sectionPending)}
                       </p>
                     </div>
@@ -399,14 +399,14 @@ export default function PaymentsPayablePage() {
 
                   {/* Period info (read-only, controlled globally) */}
                   <div className="text-right">
-                    <p className="text-xs font-medium text-[#f8fafc]">Periodo {pn}</p>
-                    <p className="text-[10px] text-[#64748b]">{getPeriodLabel(section.startDate, pn, section.firstPeriodStart)}</p>
+                    <p className="text-xs font-medium text-foreground">Periodo {pn}</p>
+                    <p className="text-[10px] text-muted-foreground">{getPeriodLabel(section.startDate, pn, section.firstPeriodStart)}</p>
                   </div>
                 </div>
               </CardHeader>
 
               {!filteredCreators.length ? (
-                <CardContent className="py-8 text-center text-[#64748b] text-sm">
+                <CardContent className="py-8 text-center text-muted-foreground text-sm">
                   {showOnlyActive
                     ? "Nessun creator con attività per questo periodo."
                     : "Nessun creator in questo contratto."}
@@ -414,28 +414,28 @@ export default function PaymentsPayablePage() {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-[#1e1e2e] hover:bg-transparent">
-                      <TableHead className="text-[#64748b]">Creator</TableHead>
-                      <TableHead className="text-[#64748b] text-center">Video</TableHead>
-                      <TableHead className="text-[#64748b] text-center">Fisso</TableHead>
-                      <TableHead className="text-[#64748b] text-right">CPM</TableHead>
-                      <TableHead className="text-[#64748b] text-right">Totale</TableHead>
-                      <TableHead className="text-[#64748b]">Status</TableHead>
-                      <TableHead className="text-[#64748b] text-right">Azioni</TableHead>
+                    <TableRow className="border-border hover:bg-transparent">
+                      <TableHead className="text-muted-foreground">Creator</TableHead>
+                      <TableHead className="text-muted-foreground text-center">Video</TableHead>
+                      <TableHead className="text-muted-foreground text-center">Fisso</TableHead>
+                      <TableHead className="text-muted-foreground text-right">CPM</TableHead>
+                      <TableHead className="text-muted-foreground text-right">Totale</TableHead>
+                      <TableHead className="text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-muted-foreground text-right">Azioni</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredCreators.map((cr) => (
-                      <TableRow key={cr.creatorId} className="border-[#1e1e2e] hover:bg-[#0d0d14]/50">
+                      <TableRow key={cr.creatorId} className="border-border hover:bg-background/50">
                         <TableCell>
                           <span
-                            className="font-medium text-[#f8fafc] hover:underline cursor-pointer"
+                            className="font-medium text-foreground hover:underline cursor-pointer"
                             onClick={() => navigate(`/dashboard/creators/${cr.creatorId}`)}
                           >
                             {cr.creatorName}
                           </span>
                         </TableCell>
-                        <TableCell className="text-center text-[#94a3b8]">
+                        <TableCell className="text-center text-muted-foreground">
                           {cr.videoCount}/{cr.monthlyTarget}
                         </TableCell>
                         <TableCell className="text-center">
@@ -449,10 +449,10 @@ export default function PaymentsPayablePage() {
                             {cr.fixedEarned ? "✅" : "❌"} {formatCurrency(cr.fixedEarned ? cr.fixedAmount : 0)}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right text-[#94a3b8] text-sm">
+                        <TableCell className="text-right text-muted-foreground text-sm">
                           {formatCurrency(cr.cpmAmount)}
                         </TableCell>
-                        <TableCell className="text-right font-semibold text-[#f8fafc]">
+                        <TableCell className="text-right font-semibold text-foreground">
                           {formatCurrency(cr.subtotal)}
                         </TableCell>
                         <TableCell>
@@ -465,18 +465,18 @@ export default function PaymentsPayablePage() {
                               ⏳ Da pagare
                             </Badge>
                           ) : (
-                            <Badge className="bg-[#1a1a28] text-[#64748b] border-[#2a2a3e] text-[10px]">—</Badge>
+                            <Badge className="bg-muted text-muted-foreground border-border text-[10px]">—</Badge>
                           )}
                         </TableCell>
                         <TableCell className="text-right">
                           {cr.isPaid ? (
-                            <span className="text-xs text-[#64748b]">
+                            <span className="text-xs text-muted-foreground">
                               {cr.paidAt ? new Date(cr.paidAt).toLocaleDateString("it-IT") : "—"}
                             </span>
                           ) : cr.subtotal > 0 ? (
                             <Button
                               size="sm" variant="outline"
-                              className="border-[#1e1e2e] hover:bg-[#1a1a28]"
+                              className="border-border hover:bg-muted"
                               onClick={() => setConfirm({ creator: cr, section, periodNumber: pn })}
                             >
                               <Check className="mr-1 h-3 w-3" /> Pagato
@@ -496,7 +496,7 @@ export default function PaymentsPayablePage() {
 
       {/* Confirm Dialog */}
       <Dialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
-        <DialogContent className="bg-[#111118] border-[#1e1e2e]">
+        <DialogContent className="bg-card border-border">
           <DialogHeader>
             <DialogTitle>Conferma pagamento</DialogTitle>
             <DialogDescription>
@@ -507,23 +507,23 @@ export default function PaymentsPayablePage() {
           {confirm && (
             <div className="space-y-2 text-sm">
               <div className="flex justify-between py-1">
-                <span className="text-[#64748b]">Fisso</span>
-                <span className="text-[#f8fafc]">
+                <span className="text-muted-foreground">Fisso</span>
+                <span className="text-foreground">
                   {formatCurrency(confirm.creator.fixedEarned ? confirm.creator.fixedAmount : 0)}
                 </span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-[#64748b]">CPM</span>
-                <span className="text-[#f8fafc]">{formatCurrency(confirm.creator.cpmAmount)}</span>
+                <span className="text-muted-foreground">CPM</span>
+                <span className="text-foreground">{formatCurrency(confirm.creator.cpmAmount)}</span>
               </div>
-              <div className="flex justify-between font-semibold pt-2 border-t border-[#2a2a3e]">
+              <div className="flex justify-between font-semibold pt-2 border-t border-border">
                 <span>Totale</span>
-                <span className="text-[#f8fafc]">{formatCurrency(confirm.creator.subtotal)}</span>
+                <span className="text-foreground">{formatCurrency(confirm.creator.subtotal)}</span>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" className="border-[#1e1e2e]" onClick={() => setConfirm(null)}>
+            <Button variant="outline" className="border-border" onClick={() => setConfirm(null)}>
               Annulla
             </Button>
             <Button onClick={() => confirm && handleMarkPaid(confirm)} disabled={saving}>
