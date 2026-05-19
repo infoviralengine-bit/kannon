@@ -268,13 +268,13 @@ export default function GeneralePage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                   axisLine={false}
                   tickLine={false}
                   interval={chartDays <= 7 ? 0 : chartDays <= 30 ? 4 : 13}
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
@@ -287,7 +287,7 @@ export default function GeneralePage() {
                   strokeWidth={2}
                   fill="url(#viewsGradient)"
                   dot={false}
-                  activeDot={{ r: 4, fill: "#a78bfa", stroke: "#111118", strokeWidth: 2 }}
+                  activeDot={{ r: 4, fill: "hsl(var(--primary))", stroke: "hsl(var(--card))", strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>

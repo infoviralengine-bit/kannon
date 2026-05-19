@@ -117,7 +117,7 @@ export default function PipelineCreator({
                 onClick={() => onSelect(isSelected ? null : p.key)}
                 className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all cursor-pointer ${
                   isSelected
-                    ? `border-[#7c3aed] bg-primary/10`
+                    ? `border-primary bg-primary/10`
                     : `border-border hover:border-border bg-background`
                 }`}
               >
