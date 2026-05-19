@@ -6,70 +6,39 @@
 
 @layer base {
   :root {
-    /* Kannon Brand — dark by default (Brand Book exact values) */
-    --background: 0 0% 9%;
-    --foreground: 0 0% 87%;
-    --card: 0 0% 11%;
-    --card-foreground: 0 0% 87%;
-    --popover: 0 0% 11%;
-    --popover-foreground: 0 0% 87%;
+    /* Kannon Brand — Light theme (Soft Grey + Kannon Black + Signal Red) */
+    --background: 0 0% 87%;
+    --foreground: 0 0% 0%;
+    --card: 0 0% 92%;
+    --card-foreground: 0 0% 0%;
+    --popover: 0 0% 92%;
+    --popover-foreground: 0 0% 0%;
     --primary: 0 100% 57%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 87%;
-    --muted: 0 0% 13%;
-    --muted-foreground: 0 0% 55%;
+    --secondary: 0 0% 80%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 0 0% 82%;
+    --muted-foreground: 0 0% 35%;
     --accent: 0 100% 57%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
+    --border: 0 0% 72%;
+    --input: 0 0% 72%;
     --ring: 0 100% 57%;
     --radius: 0.75rem;
-    --sidebar-background: 0 0% 9%;
-    --sidebar-foreground: 0 0% 87%;
-    --sidebar-primary: 0 100% 57%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 11%;
-    --sidebar-accent-foreground: 0 0% 87%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 0 100% 57%;
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 0%;
-  }
-
-  .light {
-    /* Kannon Brand — light variant (Soft Grey + Kannon Black) */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
-    --primary: 0 100% 57%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 87%;
-    --secondary-foreground: 0 0% 0%;
-    --muted: 0 0% 87%;
-    --muted-foreground: 0 0% 30%;
-    --accent: 0 100% 57%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 100% 57%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 87%;
-    --input: 0 0% 87%;
-    --ring: 0 100% 57%;
-    --sidebar-background: 0 0% 100%;
+    --sidebar-background: 0 0% 87%;
     --sidebar-foreground: 0 0% 0%;
     --sidebar-primary: 0 100% 57%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 87%;
+    --sidebar-accent: 0 0% 92%;
     --sidebar-accent-foreground: 0 0% 0%;
-    --sidebar-border: 0 0% 87%;
+    --sidebar-border: 0 0% 72%;
     --sidebar-ring: 0 100% 57%;
+    --success: 142 71% 38%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 45%;
+    --warning-foreground: 0 0% 0%;
   }
 
   * {
