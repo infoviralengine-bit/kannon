@@ -22,7 +22,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import logoFull from "@/assets/kannon-logo-white.svg";
+import logoFull from "@/assets/kannon-logo-red.svg";
 import logoSymbol from "@/assets/kannon-symbol-red.svg";
 
 const dashboardItem = { title: "Dashboard", url: "/dashboard", icon: Globe };
