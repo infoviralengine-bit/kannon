@@ -182,7 +182,7 @@ export default function CreatorTimeline({ creatorId }: { creatorId: string }) {
               ) : m.status === "active" ? (
                 <Loader2 className="h-5 w-5 text-blue-400 animate-spin" />
               ) : (
-                <Circle className="h-5 w-5 text-[#2a2a3e]" />
+                <Circle className="h-5 w-5 text-muted" />
               )}
             </div>
 

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import logoFull from "@/assets/kannon-logo-white.svg";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -38,10 +39,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm animate-fade-in">
         <CardHeader className="text-center pb-2">
-          <div className="mx-auto h-12 w-12 rounded-xl bg-primary flex items-center justify-center font-bold text-xl text-primary-foreground mb-4">
-            K
-          </div>
-          <h1 className="text-2xl font-bold">Kannon</h1>
+          <img src={logoFull} alt="Kannon" className="mx-auto h-10 w-auto mb-4" />
           <p className="text-sm text-muted-foreground mt-1">Accedi alla dashboard</p>
         </CardHeader>
         <CardContent>

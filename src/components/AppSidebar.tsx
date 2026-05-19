@@ -22,6 +22,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import logoFull from "@/assets/kannon-logo-white.svg";
+import logoSymbol from "@/assets/kannon-symbol-red.svg";
 
 const dashboardItem = { title: "Dashboard", url: "/dashboard", icon: Globe };
 
@@ -101,12 +103,11 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center font-bold text-sm text-primary-foreground shrink-0">
-            K
-          </div>
-          {!collapsed && (
-            <span className="text-lg font-bold text-foreground tracking-tight">Kannon</span>
+        <div className="flex items-center justify-center">
+          {collapsed ? (
+            <img src={logoSymbol} alt="Kannon" className="h-7 w-7 shrink-0" />
+          ) : (
+            <img src={logoFull} alt="Kannon" className="h-8 w-auto" />
           )}
         </div>
       </SidebarHeader>

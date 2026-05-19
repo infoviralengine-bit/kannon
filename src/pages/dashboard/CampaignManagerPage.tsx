@@ -37,13 +37,13 @@ const PERIOD_OPTIONS: { value: Period; label: string }[] = [
 
 const CHART_COLORS = [
   "hsl(var(--primary))",
-  "#f59e0b",
-  "#10b981",
-  "#ef4444",
-  "#8b5cf6",
-  "#ec4899",
-  "#06b6d4",
-  "#84cc16",
+  "#DFDFDF",
+  "#FF6B6B",
+  "#8A8A8A",
+  "#FFB3B3",
+  "#4A4A4A",
+  "#B30000",
+  "#C0C0C0",
 ];
 
 function trendPercent(current: number, prev: number): number {
