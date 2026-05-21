@@ -13,6 +13,7 @@ import {
   CalendarDays, AtSign, ExternalLink, BarChart3, Wallet, TrendingUp, Trophy,
 } from "lucide-react";
 import { cleanUsername } from "@/lib/utils";
+import logoFull from "@/assets/kannon-logo-red.svg";
 import { formatViews, formatCurrency } from "@/lib/format";
 import { TikTokLink } from "@/components/TikTokLink";
 import {
