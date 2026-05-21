@@ -9,6 +9,7 @@ import CreatorWarmup from "@/components/creator/CreatorWarmup";
 import CreatorDashboard from "@/components/creator/CreatorDashboard";
 import CreatorEarnings from "@/components/creator/CreatorEarnings";
 import { ComingSoon } from "@/components/ComingSoon";
+import logoFull from "@/assets/kannon-logo-red.svg";
 
 type Section = "dashboard" | "warmup" | "contenuti" | "calendario" | "guadagni";
 
@@ -190,8 +191,7 @@ function Header({ name, onSignOut }: { name: string | null; onSignOut: () => voi
   return (
     <header className="border-b border-border px-6 py-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center font-bold text-primary-foreground text-sm">K</div>
-        <span className="font-semibold text-lg">Kannon</span>
+        <img src={logoFull} alt="Kannon" className="h-8 w-auto" />
       </div>
       <div className="flex items-center gap-3">
         {name && <span className="text-sm text-muted-foreground">{name}</span>}
