@@ -35,10 +35,7 @@ function ClientHeader() {
   return (
     <header className="border-b border-border/50 bg-card/60 backdrop-blur-md px-6 py-4 flex items-center justify-between sticky top-0 z-30">
       <div className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center font-bold text-primary-foreground text-sm shadow-lg shadow-primary/20">
-          K
-        </div>
-        <span className="font-semibold text-lg tracking-tight">Kannon</span>
+        <img src={logoFull} alt="Kannon" className="h-8 w-auto" />
       </div>
       <div className="flex items-center gap-3">
         <span className="text-sm text-muted-foreground hidden sm:inline">{profile?.full_name}</span>
