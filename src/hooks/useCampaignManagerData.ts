@@ -162,20 +162,33 @@ export function useCampaignManagerData(period: Period) {
       const [
         { data: campaigns },
         { data: accounts },
-        { data: videos },
         { data: creators },
         { data: ccRows },
       ] = await Promise.all([
         supabase.from("campaigns").select("id, name, status, client_cpm").eq("status", "active"),
         supabase.from("tiktok_accounts").select("id, campaign_id, creator_id, username"),
-        supabase.from("videos").select("id, tiktok_video_id, tiktok_account_id, views, likes, comments, shares, saves, duration_sec, content_tag, published_at"),
         supabase.from("creators").select("id, name, status"),
         supabase.from("campaign_creators").select("campaign_id, creator_id"),
       ]);
 
+      // Paginate videos (>1k rows in DB — default Supabase cap is 1000).
+      const videos: any[] = [];
+      const PAGE = 1000;
+      for (let from = 0; ; from += PAGE) {
+        const { data: page, error: vErr } = await supabase
+          .from("videos")
+          .select("id, tiktok_video_id, tiktok_account_id, views, likes, comments, shares, saves, duration_sec, content_tag, published_at")
+          .order("published_at", { ascending: false })
+          .range(from, from + PAGE - 1);
+        if (vErr) throw vErr;
+        if (!page || page.length === 0) break;
+        videos.push(...page);
+        if (page.length < PAGE) break;
+      }
+
       const allCampaigns = campaigns ?? [];
       const allAccounts = accounts ?? [];
-      const allVideos = videos ?? [];
+      const allVideos = videos;
       const allCreators = creators ?? [];
       const allCC = ccRows ?? [];
 
