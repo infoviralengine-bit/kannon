@@ -637,7 +637,10 @@ export type Database = {
           created_at: string
           id: string
           is_read: boolean
+          link: string | null
           message: string
+          meta: Json
+          severity: string
           type: string
           user_id: string
         }
@@ -646,7 +649,10 @@ export type Database = {
           created_at?: string
           id?: string
           is_read?: boolean
+          link?: string | null
           message: string
+          meta?: Json
+          severity?: string
           type: string
           user_id: string
         }
@@ -655,7 +661,10 @@ export type Database = {
           created_at?: string
           id?: string
           is_read?: boolean
+          link?: string | null
           message?: string
+          meta?: Json
+          severity?: string
           type?: string
           user_id?: string
         }
@@ -1159,6 +1168,7 @@ export type Database = {
           contract_id: string
         }[]
       }
+      get_last_scrape_at: { Args: never; Returns: string }
       get_onboarding_data: { Args: { p_token: string }; Returns: Json }
       get_user_role: {
         Args: { _user_id: string }

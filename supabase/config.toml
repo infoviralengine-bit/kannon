@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.complete-onboarding]
 verify_jwt = false
+
+[functions.generate-alerts]
+verify_jwt = false
