@@ -1135,6 +1135,7 @@ export type Database = {
         Args: { p_ids: string[]; p_views: number[] }
         Returns: undefined
       }
+      get_campaign_manager_data: { Args: { p_period?: string }; Returns: Json }
       get_campaign_total_views: {
         Args: { p_campaign_ids: string[] }
         Returns: {

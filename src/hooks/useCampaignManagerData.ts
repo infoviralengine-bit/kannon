@@ -18,19 +18,6 @@ export function useVideoFormats() {
   });
 }
 
-function getPeriodDays(period: Period): number {
-  return period === "7d" ? 7 : period === "30d" ? 30 : 90;
-}
-
-function dateRange(days: number, offset = 0) {
-  const now = new Date();
-  const end = new Date(now);
-  end.setDate(end.getDate() - offset);
-  const start = new Date(end);
-  start.setDate(start.getDate() - days);
-  return { start: start.toISOString(), end: end.toISOString() };
-}
-
 export interface CampaignManagerData {
   // KPI
   totalViews: number;
@@ -118,372 +105,36 @@ export interface FormatStat {
   avgQualityScore: number;
 }
 
-function calcViralVelocity(views: number, publishedAt: string): number {
-  const daysSince = Math.max(
-    0.5,
-    (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24)
-  );
-  return views / daysSince;
-}
-
-function calcEngagementRate(likes: number, comments: number, views: number): number {
-  if (views === 0) return 0;
-  return ((likes + comments) / views) * 100;
-}
-
-function calcQualityScore(
-  saves: number | null,
-  shares: number | null,
-  comments: number,
-  views: number
-): number {
-  if (views === 0) return 0;
-  const weighted = (saves ?? 0) * 3 + (shares ?? 0) * 2 + comments;
-  return (weighted / views) * 1000;
-}
-
-function durationCategory(sec: number | null): "short" | "medium" | "long" | null {
-  if (sec === null) return null;
-  if (sec <= 15) return "short";
-  if (sec <= 30) return "medium";
-  return "long";
-}
-
 export function useCampaignManagerData(period: Period) {
-  const days = getPeriodDays(period);
-
   return useQuery({
     queryKey: ["campaign-manager", period],
     queryFn: async (): Promise<CampaignManagerData> => {
-      const current = dateRange(days);
-      const prev = dateRange(days, days);
-
-      // Fetch all needed data in parallel
-      const [
-        { data: campaigns },
-        { data: accounts },
-        { data: creators },
-        { data: ccRows },
-      ] = await Promise.all([
-        supabase.from("campaigns").select("id, name, status, client_cpm").eq("status", "active"),
-        supabase.from("tiktok_accounts").select("id, campaign_id, creator_id, username"),
-        supabase.from("creators").select("id, name, status"),
-        supabase.from("campaign_creators").select("campaign_id, creator_id"),
-      ]);
-
-      // Paginate videos (>1k rows in DB — default Supabase cap is 1000).
-      const videos: any[] = [];
-      const PAGE = 1000;
-      for (let from = 0; ; from += PAGE) {
-        const { data: page, error: vErr } = await supabase
-          .from("videos")
-          .select("id, tiktok_video_id, tiktok_account_id, views, likes, comments, shares, saves, duration_sec, content_tag, published_at")
-          .order("published_at", { ascending: false })
-          .range(from, from + PAGE - 1);
-        if (vErr) throw vErr;
-        if (!page || page.length === 0) break;
-        videos.push(...page);
-        if (page.length < PAGE) break;
-      }
-
-      const allCampaigns = campaigns ?? [];
-      const allAccounts = accounts ?? [];
-      const allVideos = videos;
-      const allCreators = creators ?? [];
-      const allCC = ccRows ?? [];
-
-      // Maps
-      const accountCampaignMap = new Map<string, string>();
-      const accountCreatorMap = new Map<string, string>();
-      const accountUsernameMap = new Map<string, string>();
-      allAccounts.forEach((a) => {
-        if (a.campaign_id) accountCampaignMap.set(a.id, a.campaign_id);
-        if (a.creator_id) accountCreatorMap.set(a.id, a.creator_id);
-        accountUsernameMap.set(a.id, a.username);
+      // Server-side aggregation via SECURITY DEFINER RPC.
+      const { data, error } = await supabase.rpc("get_campaign_manager_data", {
+        p_period: period,
       });
-
-      const creatorNameMap = new Map(allCreators.map((c) => [c.id, c.name]));
-      // Include ALL campaigns referenced by accounts so the chart never shows raw UUIDs.
-      // Fetch any missing names (campaigns not in `active` status that still have videos).
-      const campaignNameMap = new Map<string, string>(allCampaigns.map((c) => [c.id, c.name]));
-      const referencedCampaignIds = new Set<string>();
-      allAccounts.forEach((a) => { if (a.campaign_id) referencedCampaignIds.add(a.campaign_id); });
-      const missingCampaignIds = [...referencedCampaignIds].filter((id) => !campaignNameMap.has(id));
-      if (missingCampaignIds.length) {
-        const { data: extraCamps } = await supabase
-          .from("campaigns")
-          .select("id, name")
-          .in("id", missingCampaignIds);
-        (extraCamps ?? []).forEach((c) => campaignNameMap.set(c.id, c.name));
-      }
-
-      // Filter videos by period
-      const inRange = (v: { published_at: string }, start: string, end: string) =>
-        v.published_at >= start && v.published_at < end;
-
-      const currentVideos = allVideos.filter((v) => inRange(v, current.start, current.end));
-      const prevVideos = allVideos.filter((v) => inRange(v, prev.start, prev.end));
-
-      // KPI - Total Views
-      const totalViews = currentVideos.reduce((s, v) => s + (v.views ?? 0), 0);
-      const prevTotalViews = prevVideos.reduce((s, v) => s + (v.views ?? 0), 0);
-
-      // KPI - Active Creators (with published video in period)
-      const activeCreatorIds = new Set<string>();
-      currentVideos.forEach((v) => {
-        const cid = accountCreatorMap.get(v.tiktok_account_id);
-        if (cid) activeCreatorIds.add(cid);
-      });
-      const prevActiveCreatorIds = new Set<string>();
-      prevVideos.forEach((v) => {
-        const cid = accountCreatorMap.get(v.tiktok_account_id);
-        if (cid) prevActiveCreatorIds.add(cid);
-      });
-
-      // KPI - Published Content
-      const publishedContent = currentVideos.length;
-      const prevPublishedContent = prevVideos.length;
-
-      // KPI - Avg CPM
-      const cpmValues = allCampaigns.map((c) => c.client_cpm ?? 0).filter((v) => v > 0);
-      const avgCpm = cpmValues.length ? cpmValues.reduce((s, v) => s + v, 0) / cpmValues.length : 0;
-      const prevAvgCpm = avgCpm; // CPM doesn't change per period
-
-      // Campaign summaries
-      const campaignSummaries: CampaignSummary[] = allCampaigns.map((camp) => {
-        const campAccountIds = new Set(
-          allAccounts.filter((a) => a.campaign_id === camp.id).map((a) => a.id)
-        );
-        const views = currentVideos
-          .filter((v) => campAccountIds.has(v.tiktok_account_id))
-          .reduce((s, v) => s + (v.views ?? 0), 0);
-        const prevV = prevVideos
-          .filter((v) => campAccountIds.has(v.tiktok_account_id))
-          .reduce((s, v) => s + (v.views ?? 0), 0);
-
-        const campCreatorIds = new Set(
-          allCC.filter((r) => r.campaign_id === camp.id).map((r) => r.creator_id)
-        );
-        const activeC = [...campCreatorIds].filter((cid) => {
-          const cr = allCreators.find((c) => c.id === cid);
-          return cr?.status === "active";
-        }).length;
-
-        return { id: camp.id, name: camp.name, views, prevViews: prevV, activeCreators: activeC };
-      });
-
-      // Daily views per campaign
-      const dailyMap = new Map<string, Map<string, number>>();
-      for (let i = 0; i < days; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() - (days - 1 - i));
-        const key = d.toISOString().slice(0, 10);
-        dailyMap.set(key, new Map());
-      }
-
-      currentVideos.forEach((v) => {
-        const day = v.published_at.slice(0, 10);
-        const campId = accountCampaignMap.get(v.tiktok_account_id);
-        if (!campId || !dailyMap.has(day)) return;
-        const dayData = dailyMap.get(day)!;
-        const campName = campaignNameMap.get(campId) ?? campId;
-        dayData.set(campName, (dayData.get(campName) ?? 0) + (v.views ?? 0));
-      });
-
-      const dailyViews: DailyViewPoint[] = [...dailyMap.entries()].map(([date, data]) => {
-        const point: DailyViewPoint = { date };
-        data.forEach((views, name) => {
-          point[name] = views;
-        });
-        return point;
-      });
-
-      // Video list from current period
-      const videoItems: VideoItem[] = currentVideos.map((v) => {
-        const accountId = v.tiktok_account_id;
-        const username = accountUsernameMap.get(accountId) ?? "";
-        const creatorId = accountCreatorMap.get(accountId) ?? "";
-        const creatorName = creatorNameMap.get(creatorId) ?? "Sconosciuto";
-        const campaignId = accountCampaignMap.get(accountId) ?? "";
-        const campaignName = campaignNameMap.get(campaignId) ?? "";
-        const views = v.views ?? 0;
-        const likes = v.likes ?? 0;
-        const comments = v.comments ?? 0;
-        const saves = (v as any).saves ?? null;
-        const shares = (v as any).shares ?? null;
-        return {
-          videoId: v.id,
-          tiktokVideoId: v.tiktok_video_id,
-          username,
-          creatorId,
-          creatorName,
-          campaignId,
-          campaignName,
-          views,
-          likes,
-          comments,
-          shares,
-          saves,
-          durationSec: (v as any).duration_sec ?? null,
-          contentTag: (v as any).content_tag ?? null,
-          publishedAt: v.published_at,
-          viralVelocity: calcViralVelocity(views, v.published_at),
-          engagementRate: calcEngagementRate(likes, comments, views),
-          qualityScore: calcQualityScore(saves, shares, comments, views),
-        };
-      }).sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-
-      // Simplified creator ranking for insights
-      const accountsByCreator = new Map<string, string[]>();
-      allAccounts.forEach((a) => {
-        if (!a.creator_id) return;
-        const list = accountsByCreator.get(a.creator_id) ?? [];
-        list.push(a.id);
-        accountsByCreator.set(a.creator_id, list);
-      });
-
-      const spark7 = dateRange(7);
-      const creatorRanking = allCreators.map((creator) => {
-        const accIds = new Set(accountsByCreator.get(creator.id) ?? []);
-        const views = currentVideos
-          .filter((v) => accIds.has(v.tiktok_account_id))
-          .reduce((s, v) => s + (v.views ?? 0), 0);
-        const sparkVideos = allVideos.filter(
-          (v) => accIds.has(v.tiktok_account_id) && v.published_at >= spark7.start && v.published_at < spark7.end
-        );
-        const dailySpark: number[] = [];
-        for (let i = 0; i < 7; i++) {
-          const d = new Date();
-          d.setDate(d.getDate() - (6 - i));
-          const key = d.toISOString().slice(0, 10);
-          dailySpark.push(sparkVideos.filter((v) => v.published_at.slice(0, 10) === key).reduce((s, v) => s + (v.views ?? 0), 0));
-        }
-        return { creatorName: creator.name, views, dailyViews: dailySpark };
-      }).filter((c) => c.views > 0).sort((a, b) => b.views - a.views);
-
-      // Detailed creator ranking
-      const creatorVideoMap = new Map<string, VideoItem[]>();
-      videoItems.forEach((v) => {
-        const list = creatorVideoMap.get(v.creatorId) ?? [];
-        list.push(v);
-        creatorVideoMap.set(v.creatorId, list);
-      });
-
-      const prevVideosByCreator = new Map<string, number>();
-      prevVideos.forEach((v) => {
-        const cid = accountCreatorMap.get(v.tiktok_account_id);
-        if (!cid) return;
-        prevVideosByCreator.set(cid, (prevVideosByCreator.get(cid) ?? 0) + (v.views ?? 0));
-      });
-
-      const creatorRankingDetailed: CreatorRankingItem[] = allCreators
-        .map((creator) => {
-          const vids = creatorVideoMap.get(creator.id) ?? [];
-          const views = vids.reduce((s, v) => s + v.views, 0);
-          const videoCount = vids.length;
-          const avgViewsPerVideo = videoCount > 0 ? Math.round(views / videoCount) : 0;
-          const avgEng = vids.length > 0
-            ? vids.reduce((s, v) => s + v.engagementRate, 0) / vids.length
-            : 0;
-          const avgQS = vids.length > 0
-            ? vids.reduce((s, v) => s + v.qualityScore, 0) / vids.length
-            : 0;
-          const topVideoViews = vids.length > 0 ? Math.max(...vids.map((v) => v.views)) : 0;
-          return {
-            creatorId: creator.id,
-            creatorName: creator.name,
-            views,
-            prevViews: prevVideosByCreator.get(creator.id) ?? 0,
-            videoCount,
-            avgViewsPerVideo,
-            engagementRate: avgEng,
-            qualityScore: avgQS,
-            topVideoViews,
-          };
-        })
-        .filter((c) => c.views > 0)
-        .sort((a, b) => b.views - a.views);
-
-      // Format performance
-      const formatMap = new Map<string, VideoItem[]>();
-      videoItems.forEach((v) => {
-        const tag = v.contentTag ?? (v.durationSec !== null ? durationCategory(v.durationSec) : null);
-        if (!tag) return;
-        const list = formatMap.get(tag) ?? [];
-        list.push(v);
-        formatMap.set(tag, list);
-      });
-
-      const formatStats: FormatStat[] = [...formatMap.entries()]
-        .map(([tag, vids]) => ({
-          tag,
-          videoCount: vids.length,
-          avgViews: Math.round(vids.reduce((s, v) => s + v.views, 0) / vids.length),
-          avgEngagement: vids.reduce((s, v) => s + v.engagementRate, 0) / vids.length,
-          avgQualityScore: vids.reduce((s, v) => s + v.qualityScore, 0) / vids.length,
-        }))
-        .sort((a, b) => b.avgViews - a.avgViews);
-
-      // Viral videos — top 10 per velocity over ALL videos
-      const allVideoItems: VideoItem[] = allVideos.map((v) => {
-        const views = v.views ?? 0;
-        const likes = v.likes ?? 0;
-        const comments = v.comments ?? 0;
-        const accountId = v.tiktok_account_id;
-        const saves = (v as any).saves ?? null;
-        const shares = (v as any).shares ?? null;
-        return {
-          videoId: v.id,
-          tiktokVideoId: v.tiktok_video_id,
-          username: accountUsernameMap.get(accountId) ?? "",
-          creatorId: accountCreatorMap.get(accountId) ?? "",
-          creatorName: creatorNameMap.get(accountCreatorMap.get(accountId) ?? "") ?? "—",
-          campaignId: accountCampaignMap.get(accountId) ?? "",
-          campaignName: campaignNameMap.get(accountCampaignMap.get(accountId) ?? "") ?? "—",
-          views,
-          likes,
-          comments,
-          shares,
-          saves,
-          durationSec: (v as any).duration_sec ?? null,
-          contentTag: (v as any).content_tag ?? null,
-          publishedAt: v.published_at,
-          viralVelocity: calcViralVelocity(views, v.published_at),
-          engagementRate: calcEngagementRate(likes, comments, views),
-          qualityScore: calcQualityScore(saves, shares, comments, views),
-        };
-      });
-      const viralVideos = [...allVideoItems]
-        .filter((v) => v.views > 5000)
-        .sort((a, b) => b.viralVelocity - a.viralVelocity)
-        .slice(0, 10);
-
-      const avgEngagementRate = videoItems.length > 0
-        ? videoItems.reduce((s, v) => s + v.engagementRate, 0) / videoItems.length
-        : 0;
-      const avgQualityScore = videoItems.length > 0
-        ? videoItems.reduce((s, v) => s + v.qualityScore, 0) / videoItems.length
-        : 0;
-
+      if (error) throw error;
+      const d = (data ?? {}) as Partial<CampaignManagerData>;
+      // Coerce numeric defaults so downstream UI never sees undefined.
       return {
-        totalViews,
-        prevTotalViews,
-        activeCreators: activeCreatorIds.size,
-        prevActiveCreators: prevActiveCreatorIds.size,
-        publishedContent,
-        prevPublishedContent,
-        avgCpm,
-        prevAvgCpm,
-        campaigns: campaignSummaries,
-        dailyViews,
-        videos: videoItems,
-        allVideos: allVideoItems,
-        creatorRanking,
-        creatorRankingDetailed,
-        formatStats,
-        viralVideos,
-        avgEngagementRate,
-        avgQualityScore,
+        totalViews: Number(d.totalViews ?? 0),
+        prevTotalViews: Number(d.prevTotalViews ?? 0),
+        activeCreators: Number(d.activeCreators ?? 0),
+        prevActiveCreators: Number(d.prevActiveCreators ?? 0),
+        publishedContent: Number(d.publishedContent ?? 0),
+        prevPublishedContent: Number(d.prevPublishedContent ?? 0),
+        avgCpm: Number(d.avgCpm ?? 0),
+        prevAvgCpm: Number(d.prevAvgCpm ?? d.avgCpm ?? 0),
+        campaigns: (d.campaigns ?? []) as CampaignSummary[],
+        dailyViews: (d.dailyViews ?? []) as DailyViewPoint[],
+        videos: (d.videos ?? []) as VideoItem[],
+        allVideos: (d.allVideos ?? []) as VideoItem[],
+        creatorRanking: (d.creatorRanking ?? []) as CampaignManagerData["creatorRanking"],
+        creatorRankingDetailed: (d.creatorRankingDetailed ?? []) as CreatorRankingItem[],
+        formatStats: (d.formatStats ?? []) as FormatStat[],
+        viralVideos: (d.viralVideos ?? []) as VideoItem[],
+        avgEngagementRate: Number(d.avgEngagementRate ?? 0),
+        avgQualityScore: Number(d.avgQualityScore ?? 0),
       };
     },
     staleTime: 60_000,
