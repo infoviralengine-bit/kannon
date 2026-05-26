@@ -252,23 +252,35 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, exist
     }
 
     // Step 7: Get results
-    log(`Step 7: Recupero risultati dal dataset: ${datasetId}`);
-    
-    const itemsRes = await fetch(
-      `https://api.apify.com/v2/datasets/${datasetId}/items?format=json&token=${apiToken}`
-    );
-    if (!itemsRes.ok) {
-      const errText = await itemsRes.text();
-      throw new Error(`Apify dataset fetch failed (status ${itemsRes.status}): ${errText}`);
+    log(`Step 7: Recupero risultati dal dataset: ${datasetId} (paginato)`);
+
+    const items: any[] = [];
+    const PAGE = 1000;
+    let offset = 0;
+    while (true) {
+      const pageRes = await fetch(
+        `https://api.apify.com/v2/datasets/${datasetId}/items?format=json&clean=true&limit=${PAGE}&offset=${offset}&token=${apiToken}`
+      );
+      if (!pageRes.ok) {
+        const errText = await pageRes.text();
+        throw new Error(`Apify dataset fetch failed (status ${pageRes.status}, offset ${offset}): ${errText}`);
+      }
+      const pageData = await pageRes.json();
+      if (!Array.isArray(pageData)) {
+        throw new Error(`Apify items page non è un array. Tipo: ${typeof pageData}. Dump: ${JSON.stringify(pageData).substring(0, 500)}`);
+      }
+      items.push(...pageData);
+      log(`  Pagina offset=${offset}: ${pageData.length} item (totale finora: ${items.length})`);
+      if (pageData.length < PAGE) break;
+      offset += PAGE;
+      if (offset > 50000) {
+        log(`  Safety break: raggiunto limite paginazione (50k)`);
+        break;
+      }
     }
-    const items = await itemsRes.json();
     const now = new Date().toISOString();
 
-    log(`Step 7: Apify ha restituito ${Array.isArray(items) ? items.length : 0} items`);
-
-    if (!Array.isArray(items)) {
-      throw new Error(`Apify items non è un array. Tipo: ${typeof items}. Contenuto: ${JSON.stringify(items).substring(0, 500)}`);
-    }
+    log(`Step 7: Apify ha restituito ${items.length} items totali`);
 
     if (items.length > 0 && items.every((item) => item?.noResults === true)) {
       throw new Error("Apify ha restituito solo record { noResults: true }. Questo indica che l'actor non sta realmente eseguendo lo scraping via API (tipicamente DEMO/API-disabled mode lato vendor) oppure che il run API non equivale al run manuale in console.");
@@ -281,137 +293,175 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, exist
       log(`Step 7: Primo item DUMP: ${JSON.stringify(sample).substring(0, 1000)}`);
     }
 
+    // Step 8: Normalize items into per-(account, tiktok_video_id) records
+    type PendingRow = {
+      tiktok_account_id: string;
+      tiktok_video_id: string;
+      views: number;
+      likes: number;
+      comments: number;
+      published_at: string;
+      account_username: string;
+      views_cap: number | null;
+    };
+    const pending: PendingRow[] = [];
     const processedAccounts = new Set<string>();
+    let skipped = 0;
+    let detailLogBudget = 200;
 
-    // Step 8: Process each item
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      try {
-        const tiktokVideoId = item.id;
-        if (!tiktokVideoId) {
-          log(`  Item #${i}: SKIP - nessun id trovato`);
-          continue;
-        }
+      const tiktokVideoId = item?.id;
+      if (!tiktokVideoId) { skipped++; continue; }
 
-        const authorUsername = (
-          item.authorMeta?.name || item.authorMeta?.nickName || ""
-        ).toLowerCase().replace(/^@/, "");
-        if (!authorUsername) {
-          log(`  Item #${i}: SKIP - nessun authorUsername (id: ${tiktokVideoId})`);
-          continue;
-        }
+      const authorUsername = (item.authorMeta?.name || item.authorMeta?.nickName || "")
+        .toLowerCase().replace(/^@/, "");
+      if (!authorUsername) { skipped++; continue; }
 
-        const matchedAccounts = usernameToAccounts.get(authorUsername);
-        if (!matchedAccounts || matchedAccounts.length === 0) {
-          log(`  Item #${i}: SKIP - username "${authorUsername}" non matchato con nessun account`);
-          continue;
-        }
+      const matchedAccounts = usernameToAccounts.get(authorUsername);
+      if (!matchedAccounts || matchedAccounts.length === 0) { skipped++; continue; }
 
-        const playCount = item.playCount ?? 0;
-        const diggCount = item.diggCount ?? 0;
-        const commentCount = item.commentCount ?? 0;
-        const createTime = item.createTime
-          ? new Date(item.createTime * 1000).toISOString()
-          : now;
+      const playCount = item.playCount ?? 0;
+      const diggCount = item.diggCount ?? 0;
+      const commentCount = item.commentCount ?? 0;
+      const createTime = item.createTime ? new Date(item.createTime * 1000).toISOString() : now;
+      const videoDate = new Date(createTime);
 
-        for (const account of matchedAccounts) {
-          const campaign = campaignMap.get(account.campaign_id!);
-          if (!campaign) {
-            log(`  Item #${i}: SKIP - campagna non trovata per account ${account.id}`);
-            continue;
-          }
-
-          const videoDate = new Date(createTime);
-          const campaignStartDate = new Date(campaign.start_date);
-          if (videoDate < campaignStartDate) {
-            log(`  Item #${i}: SKIP - video (${createTime}) prima di start_date campagna (${campaign.start_date}) per @${account.username}`);
-            continue;
-          }
-
-          const viewsCap = campaign.video_views_cap;
-
-          const { data: existing, error: existErr } = await supabaseAdmin
-            .from("videos")
-            .select("id, window_expires_at, window_closed")
-            .eq("tiktok_video_id", tiktokVideoId)
-            .eq("tiktok_account_id", account.id)
-            .maybeSingle();
-
-          if (existErr) {
-            logError(`  Item #${i}: Errore query existing video: ${existErr.message}`);
-            continue;
-          }
-
-          if (!existing) {
-            const publishedAt = new Date(createTime);
-            const windowExpires = new Date(
-              publishedAt.getTime() + 30 * 24 * 60 * 60 * 1000
-            ).toISOString();
-
-            const { error: insertErr } = await supabaseAdmin.from("videos").insert({
-              tiktok_account_id: account.id,
-              tiktok_video_id: tiktokVideoId,
-              views: playCount,
-              likes: diggCount,
-              comments: commentCount,
-              published_at: createTime,
-              window_expires_at: windowExpires,
-              window_closed: false,
-              views_final: null,
-              last_scraped_at: now,
-            });
-            
-            if (insertErr) {
-              logError(`  Item #${i}: ERRORE INSERT video ${tiktokVideoId} per @${account.username}: ${insertErr.message}`);
-            } else {
-              totalCreated++;
-              log(`  Item #${i}: INSERITO video ${tiktokVideoId} per @${account.username} (views: ${playCount}, likes: ${diggCount})`);
-            }
-          } else {
-            const updateData: Record<string, unknown> = {
-              views: playCount,
-              likes: diggCount,
-              comments: commentCount,
-              last_scraped_at: now,
-            };
-
-            if (
-              existing.window_expires_at &&
-              new Date(existing.window_expires_at) <= new Date() &&
-              !existing.window_closed
-            ) {
-              updateData.window_closed = true;
-              updateData.views_final =
-                viewsCap && playCount > viewsCap ? viewsCap : playCount;
-              log(`  Item #${i}: Window chiusa per video ${tiktokVideoId}, views_final: ${updateData.views_final}`);
-            }
-
-            const { error: updateErr } = await supabaseAdmin
-              .from("videos")
-              .update(updateData)
-              .eq("id", existing.id);
-            
-            if (updateErr) {
-              logError(`  Item #${i}: ERRORE UPDATE video ${tiktokVideoId} per @${account.username}: ${updateErr.message}`);
-            } else {
-              totalUpdated++;
-              log(`  Item #${i}: AGGIORNATO video ${tiktokVideoId} per @${account.username} (views: ${playCount})`);
-            }
-          }
-
-          processedAccounts.add(account.id);
-        }
-      } catch (itemErr: any) {
-        logError(`  Item #${i}: Eccezione non gestita: ${itemErr.message}`);
+      for (const account of matchedAccounts) {
+        const campaign = campaignMap.get(account.campaign_id!);
+        if (!campaign) { skipped++; continue; }
+        if (videoDate < new Date(campaign.start_date)) { skipped++; continue; }
+        pending.push({
+          tiktok_account_id: account.id,
+          tiktok_video_id: String(tiktokVideoId),
+          views: playCount,
+          likes: diggCount,
+          comments: commentCount,
+          published_at: createTime,
+          account_username: account.username,
+          views_cap: campaign.video_views_cap ?? null,
+        });
       }
     }
 
-    // Update last_scraped_at for processed accounts
-    for (const accountId of processedAccounts) {
-      await supabaseAdmin
-        .from("tiktok_accounts")
-        .update({ last_scraped_at: now })
-        .eq("id", accountId);
+    log(`Step 8: ${pending.length} record da processare (${skipped} skip)`);
+
+    // Step 9: Bulk lookup esistenti (chunk da 500 sui tiktok_video_id)
+    const existingMap = new Map<string, { id: string; window_expires_at: string | null; window_closed: boolean }>();
+    const allVideoIds = [...new Set(pending.map((p) => p.tiktok_video_id))];
+    const CHUNK = 500;
+    for (let i = 0; i < allVideoIds.length; i += CHUNK) {
+      const chunk = allVideoIds.slice(i, i + CHUNK);
+      const { data: rows, error: selErr } = await supabaseAdmin
+        .from("videos")
+        .select("id, tiktok_account_id, tiktok_video_id, window_expires_at, window_closed")
+        .in("tiktok_video_id", chunk);
+      if (selErr) throw new Error(`Errore SELECT esistenti: ${selErr.message}`);
+      for (const r of rows || []) {
+        existingMap.set(`${r.tiktok_account_id}::${r.tiktok_video_id}`, {
+          id: r.id,
+          window_expires_at: r.window_expires_at,
+          window_closed: r.window_closed,
+        });
+      }
+    }
+    log(`Step 9: ${existingMap.size} video esistenti trovati in DB`);
+
+    // Step 10: split inserts vs updates
+    const nowDate = new Date();
+    const toInsert: any[] = [];
+    type Upd = { id: string; payload: Record<string, unknown>; row: PendingRow };
+    const toUpdate: Upd[] = [];
+
+    for (const p of pending) {
+      const key = `${p.tiktok_account_id}::${p.tiktok_video_id}`;
+      const existing = existingMap.get(key);
+      if (!existing) {
+        const windowExpires = new Date(
+          new Date(p.published_at).getTime() + 30 * 24 * 60 * 60 * 1000
+        ).toISOString();
+        toInsert.push({
+          tiktok_account_id: p.tiktok_account_id,
+          tiktok_video_id: p.tiktok_video_id,
+          views: p.views,
+          likes: p.likes,
+          comments: p.comments,
+          published_at: p.published_at,
+          window_expires_at: windowExpires,
+          window_closed: false,
+          views_final: null,
+          last_scraped_at: now,
+        });
+      } else {
+        const payload: Record<string, unknown> = {
+          views: p.views,
+          likes: p.likes,
+          comments: p.comments,
+          last_scraped_at: now,
+        };
+        if (
+          existing.window_expires_at &&
+          new Date(existing.window_expires_at) <= nowDate &&
+          !existing.window_closed
+        ) {
+          payload.window_closed = true;
+          payload.views_final = p.views_cap && p.views > p.views_cap ? p.views_cap : p.views;
+        }
+        toUpdate.push({ id: existing.id, payload, row: p });
+      }
+      processedAccounts.add(p.tiktok_account_id);
+    }
+
+    log(`Step 10: ${toInsert.length} INSERT, ${toUpdate.length} UPDATE`);
+
+    // Step 11: Bulk INSERT in batch da 200
+    const INSERT_BATCH = 200;
+    for (let i = 0; i < toInsert.length; i += INSERT_BATCH) {
+      const batch = toInsert.slice(i, i + INSERT_BATCH);
+      const { error: insErr } = await supabaseAdmin.from("videos").insert(batch);
+      if (insErr) {
+        logError(`Batch INSERT [${i}-${i + batch.length}]: ${insErr.message}`);
+      } else {
+        totalCreated += batch.length;
+        if (detailLogBudget > 0) {
+          log(`  Insert batch ${i}-${i + batch.length}: OK`);
+          detailLogBudget--;
+        }
+      }
+    }
+
+    // Step 12: UPDATE paralleli (chunk da 50) — Supabase non supporta bulk update con valori diversi
+    const UPDATE_CONCURRENCY = 50;
+    for (let i = 0; i < toUpdate.length; i += UPDATE_CONCURRENCY) {
+      const chunk = toUpdate.slice(i, i + UPDATE_CONCURRENCY);
+      const results = await Promise.allSettled(
+        chunk.map((u) =>
+          supabaseAdmin.from("videos").update(u.payload).eq("id", u.id)
+        )
+      );
+      for (let j = 0; j < results.length; j++) {
+        const r = results[j];
+        if (r.status === "rejected") {
+          logError(`UPDATE id=${chunk[j].id}: ${String(r.reason)}`);
+        } else if ((r.value as any).error) {
+          logError(`UPDATE id=${chunk[j].id}: ${(r.value as any).error.message}`);
+        } else {
+          totalUpdated++;
+        }
+      }
+    }
+
+    // Step 13: Bulk update last_scraped_at sui tiktok_accounts processati
+    if (processedAccounts.size > 0) {
+      const accIds = [...processedAccounts];
+      for (let i = 0; i < accIds.length; i += 500) {
+        const chunk = accIds.slice(i, i + 500);
+        const { error: accErr } = await supabaseAdmin
+          .from("tiktok_accounts")
+          .update({ last_scraped_at: now })
+          .in("id", chunk);
+        if (accErr) logError(`UPDATE tiktok_accounts.last_scraped_at: ${accErr.message}`);
+      }
     }
     accountsProcessed = processedAccounts.size;
 
