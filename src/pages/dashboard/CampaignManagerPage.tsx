@@ -258,7 +258,10 @@ export default function CampaignManagerPage() {
       case "shares":     list.sort((a, b) => (b.shares ?? 0) - (a.shares ?? 0)); break;
       case "date":       list.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()); break;
     }
-    return showAllVideos ? list : list.slice(0, 30);
+    // Show all filtered rows up to 300 by default (period+filters already bound the set).
+    // Beyond 300, require explicit "Mostra tutti" to avoid jank.
+    if (showAllVideos) return list;
+    return list.length <= 300 ? list : list.slice(0, 100);
   }, [data, videoCampaignFilter, videoCreatorFilter, videoFormatFilter, videoPeriodFilter, videoSort, showAllVideos, minKpiValue, videoSearch]);
 
   const totalFilteredVideos = useMemo(() => {
@@ -841,7 +844,7 @@ export default function CampaignManagerPage() {
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
 
-          {!showAllVideos && totalFilteredVideos > 30 && (
+          {!showAllVideos && totalFilteredVideos > 300 && (
             <div className="flex justify-center mt-4">
               <Button variant="outline" size="sm" onClick={() => setShowAllVideos(true)}>
                 Mostra tutti ({totalFilteredVideos})
