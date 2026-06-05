@@ -159,22 +159,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, exist
 
   try {
     // Step 1: Get API token
-    let apiToken: string | null = null;
-    const { data: settingsRow } = await supabaseAdmin
-      .from("settings")
-      .select("value")
-      .eq("key", "apify_api_key")
-      .maybeSingle();
-    if (settingsRow?.value) {
-      apiToken = settingsRow.value;
-      log("API token caricato da settings");
-    } else {
-      apiToken = Deno.env.get("APIFY_API_KEY") || null;
-      if (apiToken) log("API token caricato da secret");
-    }
-    if (!apiToken) {
-      throw new Error("APIFY_API_KEY non configurata né in settings né come secret.");
-    }
+    const apiToken = await getApifyApiToken(supabaseAdmin, log);
 
     // Step 2: Get active creator accounts
     const { data: accounts, error: accErr } = await supabaseAdmin
@@ -222,7 +207,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, exist
     let earliestStartDate: string | null = null;
 
     for (const account of accounts) {
-      const cleanUsername = account.username.replace(/^@/, "").toLowerCase();
+      const cleanUsername = normalizeTikTokUsername(account.username);
       if (!usernameToAccounts.has(cleanUsername)) {
         usernameToAccounts.set(cleanUsername, []);
       }
