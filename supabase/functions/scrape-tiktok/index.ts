@@ -100,13 +100,32 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Parse optional datasetId from request body
+  // Parse optional datasetId from request body, or Apify webhook payload
+  let body: any = {};
   let datasetId: string | null = null;
   try {
-    const body = await req.json();
+    body = await req.json();
     datasetId = body?.datasetId || null;
   } catch {
     // No body or invalid JSON — that's fine, run normally
+  }
+
+  if (body?.source === "apify-webhook" || body?.eventType === "ACTOR.RUN.SUCCEEDED") {
+    try {
+      const apiToken = await getApifyApiToken(supabaseAdmin);
+      datasetId = await resolveDatasetIdFromWebhook(body, apiToken);
+    } catch (err: any) {
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!datasetId) {
+      return new Response(JSON.stringify({ error: "Dataset Apify non trovato nel webhook" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
   }
 
   // Return immediately, process in background
