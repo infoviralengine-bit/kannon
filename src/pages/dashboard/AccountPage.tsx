@@ -58,6 +58,9 @@ export default function AccountPage() {
           clearInterval(pollInterval);
           setScraping(false);
           queryClient.invalidateQueries({ queryKey: ["tiktok_accounts"] });
+          queryClient.invalidateQueries({ queryKey: ["videos_for_accounts"] });
+          queryClient.invalidateQueries({ queryKey: ["campaign-manager"] });
+          queryClient.invalidateQueries({ queryKey: ["last-scrape-at"] });
           if (logs.status === "success") {
             toast({
               title: "Completato",

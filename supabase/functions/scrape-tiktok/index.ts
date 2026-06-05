@@ -7,7 +7,6 @@ const corsHeaders = {
 };
 
 const APIFY_ACTOR = "clockworks~free-tiktok-scraper";
-const APIFY_ACTOR_ID = "OtzYfK1ndEGdwWFKQ";
 
 function normalizeTikTokUsername(value: unknown) {
   return String(value ?? "").trim().replace(/^@+/, "").toLowerCase();
@@ -53,16 +52,6 @@ async function resolveDatasetIdFromWebhook(body: any, apiToken: string) {
   if (!statusRes.ok) return null;
   const statusData = await statusRes.json();
   return statusData.data?.defaultDatasetId || statusData.data?.storageIds?.datasets?.default || null;
-}
-
-async function getApifyRun(runId: string, apiToken: string) {
-  const statusRes = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${apiToken}`);
-  if (!statusRes.ok) {
-    const errText = await statusRes.text();
-    throw new Error(`Apify status check failed (status ${statusRes.status}): ${errText}`);
-  }
-  const statusData = await statusRes.json();
-  return statusData.data;
 }
 
 async function startApifyScrapeRun(supabaseAdmin: ReturnType<typeof createClient>) {
