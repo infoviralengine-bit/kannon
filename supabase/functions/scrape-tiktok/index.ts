@@ -139,6 +139,38 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
+  // Parse optional datasetId from request body, or Apify webhook payload
+  let body: any = {};
+  let datasetId: string | null = null;
+  try {
+    body = await req.json();
+    datasetId = body?.datasetId || null;
+  } catch {
+    // No body or invalid JSON — that's fine, run normally
+  }
+
+  const isApifyWebhook = body?.source === "apify-webhook" || body?.eventType === "ACTOR.RUN.SUCCEEDED";
+  if (isApifyWebhook) {
+    const apiToken = await getApifyApiToken(supabaseAdmin);
+    if (body?.webhookToken !== apiToken.slice(-16)) {
+      return new Response(JSON.stringify({ error: "Unauthorized webhook" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    datasetId = await resolveDatasetIdFromWebhook(body, apiToken);
+    if (!datasetId) {
+      return new Response(JSON.stringify({ error: "Dataset Apify non trovato nel webhook" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    EdgeRuntime.waitUntil(runScraping(supabaseAdmin, datasetId));
+    return new Response(JSON.stringify({ success: true, message: `Import automatico dataset ${datasetId} avviato.` }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   // Verify caller is admin or service role (cron)
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
@@ -175,35 +207,21 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Parse optional datasetId from request body, or Apify webhook payload
-  let body: any = {};
-  let datasetId: string | null = null;
-  try {
-    body = await req.json();
-    datasetId = body?.datasetId || null;
-  } catch {
-    // No body or invalid JSON — that's fine, run normally
+  if (!datasetId) {
+    const started = await startApifyScrapeRun(supabaseAdmin);
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: `Run Apify ${started.runId} avviata: l'import partirà automaticamente a run completata.`,
+        runId: started.runId,
+        datasetId: started.datasetId,
+        profilesCount: started.profilesCount,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 
-  if (body?.source === "apify-webhook" || body?.eventType === "ACTOR.RUN.SUCCEEDED") {
-    try {
-      const apiToken = await getApifyApiToken(supabaseAdmin);
-      datasetId = await resolveDatasetIdFromWebhook(body, apiToken);
-    } catch (err: any) {
-      return new Response(JSON.stringify({ error: err.message }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (!datasetId) {
-      return new Response(JSON.stringify({ error: "Dataset Apify non trovato nel webhook" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-  }
-
-  // Return immediately, process in background
+  // Dataset import: return immediately, process in background
   EdgeRuntime.waitUntil(runScraping(supabaseAdmin, datasetId));
 
   const message = datasetId
