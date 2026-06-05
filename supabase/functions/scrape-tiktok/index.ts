@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const APIFY_ACTOR = "clockworks~free-tiktok-scraper";
+const APIFY_ACTOR_ID = "OtzYfK1ndEGdwWFKQ";
 
 function normalizeTikTokUsername(value: unknown) {
   return String(value ?? "").trim().replace(/^@+/, "").toLowerCase();
@@ -52,6 +53,79 @@ async function resolveDatasetIdFromWebhook(body: any, apiToken: string) {
   if (!statusRes.ok) return null;
   const statusData = await statusRes.json();
   return statusData.data?.defaultDatasetId || statusData.data?.storageIds?.datasets?.default || null;
+}
+
+async function getApifyRun(runId: string, apiToken: string) {
+  const statusRes = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${apiToken}`);
+  if (!statusRes.ok) {
+    const errText = await statusRes.text();
+    throw new Error(`Apify status check failed (status ${statusRes.status}): ${errText}`);
+  }
+  const statusData = await statusRes.json();
+  return statusData.data;
+}
+
+async function startApifyScrapeRun(supabaseAdmin: ReturnType<typeof createClient>) {
+  const apiToken = await getApifyApiToken(supabaseAdmin);
+  const { data: accounts, error: accErr } = await supabaseAdmin
+    .from("tiktok_accounts")
+    .select("username, campaign_id")
+    .eq("account_type", "creator")
+    .not("campaign_id", "is", null)
+    .eq("is_active", true);
+
+  if (accErr) throw new Error(`Errore query account: ${accErr.message}`);
+
+  const profiles = [...new Set((accounts || []).map((a) => normalizeTikTokUsername(a.username)).filter(Boolean))];
+  if (profiles.length === 0) throw new Error("Nessun username valido trovato");
+
+  const apifyInput = {
+    profiles,
+    resultsPerPage: 100,
+    profileScrapeSections: ["videos"],
+    profileSorting: "latest",
+    excludePinnedPosts: false,
+    shouldDownloadVideos: false,
+    shouldDownloadCovers: false,
+    shouldDownloadSubtitles: false,
+  };
+
+  const requestUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/scrape-tiktok`;
+  const webhooks = btoa(JSON.stringify([{ 
+    eventTypes: ["ACTOR.RUN.SUCCEEDED"],
+    requestUrl,
+    payloadTemplate: JSON.stringify({
+      source: "apify-webhook",
+      eventType: "{{eventType}}",
+      runId: "{{resource.id}}",
+      defaultDatasetId: "{{resource.defaultDatasetId}}",
+      actorId: "{{resource.actId}}",
+    }),
+  }]));
+
+  const runRes = await fetch(
+    `https://api.apify.com/v2/acts/${APIFY_ACTOR}/runs?webhooks=${encodeURIComponent(webhooks)}&token=${apiToken}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(apifyInput),
+    }
+  );
+
+  if (!runRes.ok) {
+    const errText = await runRes.text();
+    throw new Error(`Apify run failed (status ${runRes.status}): ${errText}`);
+  }
+
+  const runData = await runRes.json();
+  const runId = runData.data?.id;
+  if (!runId) throw new Error(`No run ID returned from Apify. Response: ${JSON.stringify(runData)}`);
+
+  return {
+    runId,
+    datasetId: runData.data?.defaultDatasetId || null,
+    profilesCount: profiles.length,
+  };
 }
 
 Deno.serve(async (req) => {
