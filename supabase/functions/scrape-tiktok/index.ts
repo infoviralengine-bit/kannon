@@ -100,6 +100,7 @@ async function startApifyScrapeRun(supabaseAdmin: ReturnType<typeof createClient
       runId: "{{resource.id}}",
       defaultDatasetId: "{{resource.defaultDatasetId}}",
       actorId: "{{resource.actId}}",
+      webhookToken: apiToken.slice(-16),
     }),
   }]));
 
