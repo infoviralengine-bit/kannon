@@ -6,6 +6,54 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const APIFY_ACTOR = "clockworks~free-tiktok-scraper";
+
+function normalizeTikTokUsername(value: unknown) {
+  return String(value ?? "").trim().replace(/^@+/, "").toLowerCase();
+}
+
+async function getApifyApiToken(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  log: (msg: string) => void = () => {}
+) {
+  let apiToken: string | null = null;
+  const { data: settingsRow } = await supabaseAdmin
+    .from("settings")
+    .select("value")
+    .eq("key", "apify_api_key")
+    .maybeSingle();
+
+  if (settingsRow?.value) {
+    apiToken = settingsRow.value;
+    log("API token caricato da settings");
+  } else {
+    apiToken = Deno.env.get("APIFY_API_KEY") || null;
+    if (apiToken) log("API token caricato da secret");
+  }
+
+  if (!apiToken) {
+    throw new Error("APIFY_API_KEY non configurata né in settings né come secret.");
+  }
+
+  return apiToken;
+}
+
+async function resolveDatasetIdFromWebhook(body: any, apiToken: string) {
+  const directDatasetId =
+    body?.defaultDatasetId ||
+    body?.resource?.defaultDatasetId ||
+    body?.resource?.storageIds?.datasets?.default;
+  if (directDatasetId) return String(directDatasetId);
+
+  const runId = body?.runId || body?.eventData?.actorRunId || body?.resource?.id;
+  if (!runId) return null;
+
+  const statusRes = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${apiToken}`);
+  if (!statusRes.ok) return null;
+  const statusData = await statusRes.json();
+  return statusData.data?.defaultDatasetId || statusData.data?.storageIds?.datasets?.default || null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
