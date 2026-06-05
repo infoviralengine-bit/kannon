@@ -6,6 +6,118 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const APIFY_ACTOR = "clockworks~free-tiktok-scraper";
+
+function normalizeTikTokUsername(value: unknown) {
+  return String(value ?? "").trim().replace(/^@+/, "").toLowerCase();
+}
+
+async function getApifyApiToken(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  log: (msg: string) => void = () => {}
+) {
+  let apiToken: string | null = null;
+  const { data: settingsRow } = await supabaseAdmin
+    .from("settings")
+    .select("value")
+    .eq("key", "apify_api_key")
+    .maybeSingle();
+
+  if (settingsRow?.value) {
+    apiToken = settingsRow.value;
+    log("API token caricato da settings");
+  } else {
+    apiToken = Deno.env.get("APIFY_API_KEY") || null;
+    if (apiToken) log("API token caricato da secret");
+  }
+
+  if (!apiToken) {
+    throw new Error("APIFY_API_KEY non configurata né in settings né come secret.");
+  }
+
+  return apiToken;
+}
+
+async function resolveDatasetIdFromWebhook(body: any, apiToken: string) {
+  const directDatasetId =
+    body?.defaultDatasetId ||
+    body?.resource?.defaultDatasetId ||
+    body?.resource?.storageIds?.datasets?.default;
+  if (directDatasetId) return String(directDatasetId);
+
+  const runId = body?.runId || body?.eventData?.actorRunId || body?.resource?.id;
+  if (!runId) return null;
+
+  const statusRes = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${apiToken}`);
+  if (!statusRes.ok) return null;
+  const statusData = await statusRes.json();
+  return statusData.data?.defaultDatasetId || statusData.data?.storageIds?.datasets?.default || null;
+}
+
+async function startApifyScrapeRun(supabaseAdmin: ReturnType<typeof createClient>) {
+  const apiToken = await getApifyApiToken(supabaseAdmin);
+  const { data: accounts, error: accErr } = await supabaseAdmin
+    .from("tiktok_accounts")
+    .select("username, campaign_id")
+    .eq("account_type", "creator")
+    .not("campaign_id", "is", null)
+    .eq("is_active", true);
+
+  if (accErr) throw new Error(`Errore query account: ${accErr.message}`);
+
+  const profiles = [...new Set((accounts || []).map((a) => normalizeTikTokUsername(a.username)).filter(Boolean))];
+  if (profiles.length === 0) throw new Error("Nessun username valido trovato");
+
+  const apifyInput = {
+    profiles,
+    resultsPerPage: 100,
+    profileScrapeSections: ["videos"],
+    profileSorting: "latest",
+    excludePinnedPosts: false,
+    shouldDownloadVideos: false,
+    shouldDownloadCovers: false,
+    shouldDownloadSubtitles: false,
+  };
+
+  const requestUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/scrape-tiktok`;
+  const webhooks = btoa(JSON.stringify([{ 
+    eventTypes: ["ACTOR.RUN.SUCCEEDED"],
+    requestUrl,
+    payloadTemplate: JSON.stringify({
+      source: "apify-webhook",
+      eventType: "{{eventType}}",
+      runId: "{{resource.id}}",
+      defaultDatasetId: "{{resource.defaultDatasetId}}",
+      actorId: "{{resource.actId}}",
+      webhookToken: apiToken.slice(-16),
+    }),
+  }]));
+
+  const runRes = await fetch(
+    `https://api.apify.com/v2/acts/${APIFY_ACTOR}/runs?webhooks=${encodeURIComponent(webhooks)}&token=${apiToken}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(apifyInput),
+    }
+  );
+
+  if (!runRes.ok) {
+    const errText = await runRes.text();
+    throw new Error(`Apify run failed (status ${runRes.status}): ${errText}`);
+  }
+
+  const runData = await runRes.json();
+  const runId = runData.data?.id;
+  if (!runId) throw new Error(`No run ID returned from Apify. Response: ${JSON.stringify(runData)}`);
+
+  return {
+    runId,
+    datasetId: runData.data?.defaultDatasetId || null,
+    profilesCount: profiles.length,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -15,6 +127,38 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
+
+  // Parse optional datasetId from request body, or Apify webhook payload
+  let body: any = {};
+  let datasetId: string | null = null;
+  try {
+    body = await req.json();
+    datasetId = body?.datasetId || null;
+  } catch {
+    // No body or invalid JSON — that's fine, run normally
+  }
+
+  const isApifyWebhook = body?.source === "apify-webhook" || body?.eventType === "ACTOR.RUN.SUCCEEDED";
+  if (isApifyWebhook) {
+    const apiToken = await getApifyApiToken(supabaseAdmin);
+    if (body?.webhookToken !== apiToken.slice(-16)) {
+      return new Response(JSON.stringify({ error: "Unauthorized webhook" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    datasetId = await resolveDatasetIdFromWebhook(body, apiToken);
+    if (!datasetId) {
+      return new Response(JSON.stringify({ error: "Dataset Apify non trovato nel webhook" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    EdgeRuntime.waitUntil(runScraping(supabaseAdmin, datasetId));
+    return new Response(JSON.stringify({ success: true, message: `Import automatico dataset ${datasetId} avviato.` }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   // Verify caller is admin or service role (cron)
   const authHeader = req.headers.get("Authorization");
@@ -52,16 +196,21 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Parse optional datasetId from request body
-  let datasetId: string | null = null;
-  try {
-    const body = await req.json();
-    datasetId = body?.datasetId || null;
-  } catch {
-    // No body or invalid JSON — that's fine, run normally
+  if (!datasetId) {
+    const started = await startApifyScrapeRun(supabaseAdmin);
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: `Run Apify ${started.runId} avviata: l'import partirà automaticamente a run completata.`,
+        runId: started.runId,
+        datasetId: started.datasetId,
+        profilesCount: started.profilesCount,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 
-  // Return immediately, process in background
+  // Dataset import: return immediately, process in background
   EdgeRuntime.waitUntil(runScraping(supabaseAdmin, datasetId));
 
   const message = datasetId
@@ -92,22 +241,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, exist
 
   try {
     // Step 1: Get API token
-    let apiToken: string | null = null;
-    const { data: settingsRow } = await supabaseAdmin
-      .from("settings")
-      .select("value")
-      .eq("key", "apify_api_key")
-      .maybeSingle();
-    if (settingsRow?.value) {
-      apiToken = settingsRow.value;
-      log("API token caricato da settings");
-    } else {
-      apiToken = Deno.env.get("APIFY_API_KEY") || null;
-      if (apiToken) log("API token caricato da secret");
-    }
-    if (!apiToken) {
-      throw new Error("APIFY_API_KEY non configurata né in settings né come secret.");
-    }
+    const apiToken = await getApifyApiToken(supabaseAdmin, log);
 
     // Step 2: Get active creator accounts
     const { data: accounts, error: accErr } = await supabaseAdmin
@@ -155,7 +289,7 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, exist
     let earliestStartDate: string | null = null;
 
     for (const account of accounts) {
-      const cleanUsername = account.username.replace(/^@/, "").toLowerCase();
+      const cleanUsername = normalizeTikTokUsername(account.username);
       if (!usernameToAccounts.has(cleanUsername)) {
         usernameToAccounts.set(cleanUsername, []);
       }
