@@ -33,6 +33,7 @@ export function useRealtimeInvalidation() {
           throttle("videos", () => {
             qc.invalidateQueries({ queryKey: ["campaign-manager"] });
             qc.invalidateQueries({ queryKey: ["videos"] });
+            qc.invalidateQueries({ queryKey: ["videos_for_accounts"] });
             qc.invalidateQueries({ queryKey: ["dashboard"] });
           });
         })
