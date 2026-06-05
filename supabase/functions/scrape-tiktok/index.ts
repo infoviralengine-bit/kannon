@@ -481,18 +481,30 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, exist
     log(`Step 8: ${pending.length} record da processare (${skipped} skip)`);
 
     // Step 9: Bulk lookup esistenti (chunk da 500 sui tiktok_video_id)
+    // NOTE: the UNIQUE constraint on videos is on tiktok_video_id alone,
+    // so a single video can only exist once globally. Dedupe pending by video_id
+    // before lookup/insert to avoid batch failures.
+    const dedupedPending: PendingRow[] = [];
+    const seenVideoIds = new Set<string>();
+    for (const p of pending) {
+      if (seenVideoIds.has(p.tiktok_video_id)) continue;
+      seenVideoIds.add(p.tiktok_video_id);
+      dedupedPending.push(p);
+    }
+    log(`Step 9a: deduped pending ${pending.length} -> ${dedupedPending.length} (per UNIQUE tiktok_video_id)`);
+
     const existingMap = new Map<string, { id: string; window_expires_at: string | null; window_closed: boolean }>();
-    const allVideoIds = [...new Set(pending.map((p) => p.tiktok_video_id))];
+    const allVideoIds = [...seenVideoIds];
     const CHUNK = 500;
     for (let i = 0; i < allVideoIds.length; i += CHUNK) {
       const chunk = allVideoIds.slice(i, i + CHUNK);
       const { data: rows, error: selErr } = await supabaseAdmin
         .from("videos")
-        .select("id, tiktok_account_id, tiktok_video_id, window_expires_at, window_closed")
+        .select("id, tiktok_video_id, window_expires_at, window_closed")
         .in("tiktok_video_id", chunk);
       if (selErr) throw new Error(`Errore SELECT esistenti: ${selErr.message}`);
       for (const r of rows || []) {
-        existingMap.set(`${r.tiktok_account_id}::${r.tiktok_video_id}`, {
+        existingMap.set(r.tiktok_video_id, {
           id: r.id,
           window_expires_at: r.window_expires_at,
           window_closed: r.window_closed,
@@ -507,9 +519,8 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, exist
     type Upd = { id: string; payload: Record<string, unknown>; row: PendingRow };
     const toUpdate: Upd[] = [];
 
-    for (const p of pending) {
-      const key = `${p.tiktok_account_id}::${p.tiktok_video_id}`;
-      const existing = existingMap.get(key);
+    for (const p of dedupedPending) {
+      const existing = existingMap.get(p.tiktok_video_id);
       if (!existing) {
         const windowExpires = new Date(
           new Date(p.published_at).getTime() + 30 * 24 * 60 * 60 * 1000
@@ -548,17 +559,19 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, exist
 
     log(`Step 10: ${toInsert.length} INSERT, ${toUpdate.length} UPDATE`);
 
-    // Step 11: Bulk INSERT in batch da 200
+    // Step 11: Bulk UPSERT in batch da 200 (onConflict tiktok_video_id, ignora duplicati)
     const INSERT_BATCH = 200;
     for (let i = 0; i < toInsert.length; i += INSERT_BATCH) {
       const batch = toInsert.slice(i, i + INSERT_BATCH);
-      const { error: insErr } = await supabaseAdmin.from("videos").insert(batch);
+      const { error: insErr } = await supabaseAdmin
+        .from("videos")
+        .upsert(batch, { onConflict: "tiktok_video_id", ignoreDuplicates: true });
       if (insErr) {
-        logError(`Batch INSERT [${i}-${i + batch.length}]: ${insErr.message}`);
+        logError(`Batch UPSERT [${i}-${i + batch.length}]: ${insErr.message}`);
       } else {
         totalCreated += batch.length;
         if (detailLogBudget > 0) {
-          log(`  Insert batch ${i}-${i + batch.length}: OK`);
+          log(`  Upsert batch ${i}-${i + batch.length}: OK`);
           detailLogBudget--;
         }
       }
