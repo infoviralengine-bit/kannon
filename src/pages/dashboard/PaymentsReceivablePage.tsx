@@ -383,6 +383,76 @@ export default function PaymentsReceivablePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit payment dialog */}
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifica pagamento</DialogTitle>
+            <DialogDescription>
+              {editing?.campaignName} — {editing?.monthLabel}
+              <br />
+              <span className="text-xs">Modifiche manuali bypassano il ricalcolo automatico dei CPM.</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5">
+                <Label>Fisso (€)</Label>
+                <Input type="number" step="0.01" value={editForm.fixed}
+                  onChange={(e) => setEditForm({ ...editForm, fixed: Number(e.target.value) })} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>CPM (€)</Label>
+                <Input type="number" step="0.01" value={editForm.cpm}
+                  onChange={(e) => setEditForm({ ...editForm, cpm: Number(e.target.value) })} />
+              </div>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Scadenza</Label>
+              <Input type="date" value={editForm.dueDate}
+                onChange={(e) => setEditForm({ ...editForm, dueDate: e.target.value })} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Note (opzionali)</Label>
+              <Textarea value={editForm.notes}
+                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                placeholder="Es: pagamento anticipato, sconto su CPM..." />
+            </div>
+            <div className="rounded-md bg-muted p-2 text-sm flex justify-between">
+              <span>Totale</span>
+              <span className="font-semibold">
+                {formatCurrency((Number(editForm.fixed) || 0) + (Number(editForm.cpm) || 0))}
+              </span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Annulla</Button>
+            <Button onClick={handleSaveEdit} disabled={actionSaving}>
+              {actionSaving ? "Salvando..." : "Salva modifiche"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminare questo pagamento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleting?.campaignName} — {deleting?.monthLabel} — {deleting ? formatCurrency(deleting.totalAmount) : ""}.
+              L'azione non è reversibile. Se la riga è stata generata automaticamente, verrà ricreata alla prossima rigenerazione.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={actionSaving}>
+              {actionSaving ? "Eliminando..." : "Elimina"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
