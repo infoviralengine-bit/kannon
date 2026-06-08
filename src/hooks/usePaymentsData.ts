@@ -47,12 +47,12 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
         .order("due_date", { ascending: true });
       if (error) throw error;
 
-      const campIds = [...new Set((payments ?? []).map((p) => p.campaign_id))];
+      const allCampIds = [...new Set((payments ?? []).map((p) => p.campaign_id))];
       let campMap = new Map<string, { name: string; client_name: string; client_fixed: number; client_cpm: number; video_views_cap: number | null; monthly_spend_cap: number | null }>();
 
-      if (campIds.length) {
+      if (allCampIds.length) {
         const [{ data: camps }] = await Promise.all([
-          supabase.from("campaigns").select("id, name, client_name, client_fixed, client_cpm, video_views_cap, monthly_spend_cap").in("id", campIds),
+          supabase.from("campaigns").select("id, name, client_name, client_fixed, client_cpm, video_views_cap, monthly_spend_cap, status").in("id", allCampIds).eq("status", "active"),
         ]);
         (camps ?? []).forEach((c) => campMap.set(c.id, {
           name: c.name, client_name: c.client_name,
@@ -62,6 +62,9 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           monthly_spend_cap: (c as any).monthly_spend_cap as number | null,
         }));
       }
+      // Filter out payments from non-active campaigns
+      const activePayments = (payments ?? []).filter((p) => campMap.has(p.campaign_id));
+      const campIds = [...campMap.keys()];
 
       // Fetch all cycles for these campaigns
       let cycleMap = new Map<string, { cycle_start_date: string; cycle_end_date: string; is_last_cycle: boolean }>();
@@ -74,7 +77,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       // For each campaign with unpaid payments, compute the CURRENT TOTAL effective
       // views across all videos. Unpaid cycles get: total - cumulative_already_paid.
       // (Only the first unpaid cycle gets the residual; later unpaid cycles get 0.)
-      const unpaidCampIds = [...new Set((payments ?? []).filter(p => !p.is_paid).map(p => p.campaign_id))];
+      const unpaidCampIds = [...new Set(activePayments.filter(p => !p.is_paid).map(p => p.campaign_id))];
       // videos kept per-campaign so we can compute paid-window subtractions
       const videosByCampaign = new Map<string, Array<{ published_at: string; effective_views: number }>>();
       const totalViewsByCampaign = new Map<string, number>();
@@ -121,7 +124,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       }
 
       // Sort payments by campaign + cycle_number to compute cumulative views correctly
-      const sortedPayments = [...(payments ?? [])].sort((a, b) => {
+      const sortedPayments = [...activePayments].sort((a, b) => {
         if (a.campaign_id !== b.campaign_id) return a.campaign_id.localeCompare(b.campaign_id);
         return a.cycle_number - b.cycle_number;
       });
@@ -219,7 +222,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       const monthNamesFull = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
       const monthNamesShort = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
 
-      return (payments ?? []).map((p): ClientPaymentRow => {
+      return activePayments.map((p): ClientPaymentRow => {
         const camp = campMap.get(p.campaign_id);
         const dueDate = p.due_date;
         const dd = new Date(dueDate);
