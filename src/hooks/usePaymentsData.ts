@@ -715,6 +715,9 @@ export function useCampaignCycles(campaignId: string) {
             isFirstCycle: p.cycle_number === 1,
             clientFixed: Number(camp?.client_fixed ?? 0),
             clientCpm: Number(camp?.client_cpm ?? 2),
+            paymentKind: ((p as any).payment_kind ?? "standard") as ClientPaymentRow["paymentKind"],
+            amountOverridden: (p as any).amount_overridden ?? false,
+            notes: (p as any).notes ?? null,
           };
         }
 
