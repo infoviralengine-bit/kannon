@@ -31,6 +31,9 @@ export interface ClientPaymentRow {
   isFirstCycle: boolean;
   clientFixed: number;
   clientCpm: number;
+  paymentKind: "standard" | "tot_fixed_first" | "tot_fixed_second" | "tot_final_cpm";
+  amountOverridden: boolean;
+  notes: string | null;
 }
 
 export function useClientPayments(filterMonth?: number, filterYear?: number) {
@@ -148,6 +151,35 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
         let cumulative = 0;
         let residualAssigned = false;
         cycleList.forEach((p) => {
+          const kind = (p as any).payment_kind ?? "standard";
+          const overridden = (p as any).amount_overridden ?? false;
+
+          // Manual override: never recalc; use stored values
+          if (overridden) return;
+
+          // ToT half-fixed rows: static amounts, no recalc
+          if (kind === "tot_fixed_first" || kind === "tot_fixed_second") return;
+
+          // ToT final CPM: recalc on TOTAL campaign views
+          if (kind === "tot_final_cpm") {
+            if (p.is_paid) {
+              cumulative = Math.max(cumulative, p.views_paid_cumulative ?? 0);
+              return;
+            }
+            const cpmViews = totalCampaignViews;
+            let cpmAmount = clientCpm * (cpmViews / 1000);
+            if (spendCap != null && cpmAmount > spendCap) cpmAmount = spendCap;
+            recalculated.set(p.id, {
+              cpmViews,
+              cpmAmount,
+              fixedAmount: 0,
+              totalAmount: cpmAmount,
+              viewsPaidCumulative: cpmViews,
+            });
+            return;
+          }
+
+          // Standard kind: existing logic unchanged below
           const cycle = cycleMap.get(p.cycle_id);
           const isLast = cycle?.is_last_cycle ?? false;
 
@@ -243,6 +275,9 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           isFirstCycle: p.cycle_number === 1 && cpmViews === 0,
             clientFixed: camp?.client_fixed ?? 0,
             clientCpm: camp?.client_cpm ?? 2,
+            paymentKind: ((p as any).payment_kind ?? "standard") as ClientPaymentRow["paymentKind"],
+            amountOverridden: (p as any).amount_overridden ?? false,
+            notes: (p as any).notes ?? null,
           };
       });
     },
@@ -680,6 +715,9 @@ export function useCampaignCycles(campaignId: string) {
             isFirstCycle: p.cycle_number === 1,
             clientFixed: Number(camp?.client_fixed ?? 0),
             clientCpm: Number(camp?.client_cpm ?? 2),
+            paymentKind: ((p as any).payment_kind ?? "standard") as ClientPaymentRow["paymentKind"],
+            amountOverridden: (p as any).amount_overridden ?? false,
+            notes: (p as any).notes ?? null,
           };
         }
 

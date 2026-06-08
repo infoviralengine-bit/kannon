@@ -20,6 +20,11 @@ import {
   useAllCreatorsForSelect,
 } from "@/hooks/useCampaignData";
 import { useCampaignCycles, type ClientPaymentRow } from "@/hooks/usePaymentsData";
+import {
+  type PaymentTerms,
+  DEFAULT_STANDARD, DEFAULT_TOT_SPLIT,
+  paymentTermsLabel, parsePaymentTerms,
+} from "@/lib/paymentTerms";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +55,11 @@ import {
   BreadcrumbPage, BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useEffect } from "react";
 
 const statusColor: Record<string, string> = {
   active: "bg-success/20 text-success border-success/30",
@@ -587,6 +597,159 @@ function CyclesSection({ campaignId, campaign, cycles }: {
   );
 }
 
+/* ── Payment Terms Section ── */
+function PaymentTermsSection({ campaignId, campaign }: {
+  campaignId: string;
+  campaign: any;
+}) {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const [terms, setTerms] = useState<PaymentTerms>(parsePaymentTerms(campaign?.payment_terms));
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (campaign?.payment_terms) setTerms(parsePaymentTerms(campaign.payment_terms));
+  }, [campaign?.payment_terms]);
+
+  async function handleSaveAndRegenerate() {
+    setSaving(true);
+    try {
+      const { error: upErr } = await supabase
+        .from("campaigns")
+        .update({ payment_terms: terms } as any)
+        .eq("id", campaignId);
+      if (upErr) throw upErr;
+
+      const { data, error } = await supabase.functions.invoke("regenerate-client-payments", {
+        body: { campaign_id: campaignId },
+      });
+      if (error) throw error;
+      if (data && data.ok === false) throw new Error(data.error || "Errore rigenerazione");
+
+      toast({
+        title: "Scadenzario rigenerato",
+        description: `${data?.generated ?? 0} pagamenti generati. Quelli già pagati sono stati preservati.`,
+      });
+      qc.invalidateQueries({ queryKey: ["client-payments"] });
+      qc.invalidateQueries({ queryKey: ["campaign-cycles", campaignId] });
+      qc.invalidateQueries({ queryKey: ["campaign-detail", campaignId] });
+    } catch (e: any) {
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Termini di pagamento</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-1.5">
+          <Label>Tipo di regola</Label>
+          <Select
+            value={terms.type}
+            onValueChange={(v) =>
+              setTerms(v === "tot_split" ? { ...DEFAULT_TOT_SPLIT } : { ...DEFAULT_STANDARD })
+            }
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="standard_lagged">Standard mensile (fisso + CPM laggato)</SelectItem>
+              <SelectItem value="tot_split">ToT split (fisso 50/50 + CPM finale)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {terms.type === "standard_lagged" && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid gap-1.5">
+              <Label>Giorno scadenza fisso</Label>
+              <Input
+                type="number" min={1} max={28} value={terms.fixedDueDay}
+                onChange={(e) => setTerms({ ...terms, fixedDueDay: Number(e.target.value) })}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Lag CPM (mesi)</Label>
+              <Input
+                type="number" min={0} max={3} value={terms.cpmLagMonths}
+                onChange={(e) => setTerms({ ...terms, cpmLagMonths: Number(e.target.value) })}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Ritardo CPM finale (giorni)</Label>
+              <Input
+                type="number" min={0} value={terms.finalCpmDelayDays}
+                onChange={(e) => setTerms({ ...terms, finalCpmDelayDays: Number(e.target.value) })}
+              />
+            </div>
+          </div>
+        )}
+
+        {terms.type === "tot_split" && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid gap-1.5">
+                <Label>Giorno 1ª metà (del cycle)</Label>
+                <Input
+                  type="number" min={1} max={28} value={terms.firstHalfDay}
+                  onChange={(e) => setTerms({ ...terms, firstHalfDay: Number(e.target.value) })}
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Giorno 2ª metà (del cycle)</Label>
+                <Input
+                  type="number" min={2} max={28} value={terms.secondHalfDay}
+                  onChange={(e) => setTerms({ ...terms, secondHalfDay: Number(e.target.value) })}
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Ritardo CPM finale (giorni dopo end_date)</Label>
+                <Input
+                  type="number" min={0} value={terms.cpmPayoutDelayDays}
+                  onChange={(e) => setTerms({ ...terms, cpmPayoutDelayDays: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Nota: i cycle ToT sono ancorati alla data di start della campagna (mese 1 = start → start+30 giorni). Il "giorno 1" della 1ª metà = primo giorno del cycle.
+            </p>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between pt-2 border-t">
+          <p className="text-sm text-muted-foreground">
+            Anteprima: <span className="font-medium text-foreground">{paymentTermsLabel(terms)}</span>
+          </p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button disabled={saving}>
+                {saving ? "Salvando..." : "Salva e rigenera scadenzario"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confermi rigenerazione?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Vengono cancellati i pagamenti non ancora ricevuti e ricreati secondo la nuova regola. I pagamenti già marcati come "Pagato" restano intoccati.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annulla</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSaveAndRegenerate}>
+                  Sì, rigenera
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 /* ── Delete Campaign Modal ── */
 function DeleteCampaignModal({ open, onOpenChange, campaign }: {
   open: boolean; onOpenChange: (v: boolean) => void;
@@ -1083,6 +1246,11 @@ export default function CampaignDetailPage() {
       </Card>
       {/* Payment Cycles */}
       <CyclesSection campaignId={campaignId} campaign={campaign as any} cycles={cycles} />
+
+      {/* Payment Terms (admin/non-team) */}
+      {!isTeam && (
+        <PaymentTermsSection campaignId={campaignId} campaign={campaign} />
+      )}
 
       {/* Delete Campaign (admin only) */}
       {role === "admin" && (

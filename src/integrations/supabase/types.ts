@@ -63,6 +63,7 @@ export type Database = {
           monthly_spend_cap: number | null
           name: string
           notes: string | null
+          payment_terms: Json | null
           start_date: string
           status: string
           video_views_cap: number | null
@@ -79,6 +80,7 @@ export type Database = {
           monthly_spend_cap?: number | null
           name: string
           notes?: string | null
+          payment_terms?: Json | null
           start_date: string
           status?: string
           video_views_cap?: number | null
@@ -95,6 +97,7 @@ export type Database = {
           monthly_spend_cap?: number | null
           name?: string
           notes?: string | null
+          payment_terms?: Json | null
           start_date?: string
           status?: string
           video_views_cap?: number | null
@@ -111,11 +114,12 @@ export type Database = {
       }
       client_payments: {
         Row: {
+          amount_overridden: boolean
           campaign_id: string
           cpm_amount: number
           cpm_views: number
           created_at: string
-          cycle_id: string
+          cycle_id: string | null
           cycle_number: number
           due_date: string
           fixed_amount: number
@@ -123,16 +127,18 @@ export type Database = {
           is_paid: boolean
           notes: string | null
           paid_at: string | null
+          payment_kind: string
           total_amount: number
           views_paid_cumulative: number
           views_snapshot_at: string | null
         }
         Insert: {
+          amount_overridden?: boolean
           campaign_id: string
           cpm_amount?: number
           cpm_views?: number
           created_at?: string
-          cycle_id: string
+          cycle_id?: string | null
           cycle_number: number
           due_date: string
           fixed_amount?: number
@@ -140,16 +146,18 @@ export type Database = {
           is_paid?: boolean
           notes?: string | null
           paid_at?: string | null
+          payment_kind?: string
           total_amount?: number
           views_paid_cumulative?: number
           views_snapshot_at?: string | null
         }
         Update: {
+          amount_overridden?: boolean
           campaign_id?: string
           cpm_amount?: number
           cpm_views?: number
           created_at?: string
-          cycle_id?: string
+          cycle_id?: string | null
           cycle_number?: number
           due_date?: string
           fixed_amount?: number
@@ -157,6 +165,7 @@ export type Database = {
           is_paid?: boolean
           notes?: string | null
           paid_at?: string | null
+          payment_kind?: string
           total_amount?: number
           views_paid_cumulative?: number
           views_snapshot_at?: string | null
