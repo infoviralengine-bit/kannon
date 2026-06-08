@@ -20,6 +20,11 @@ import {
   useAllCreatorsForSelect,
 } from "@/hooks/useCampaignData";
 import { useCampaignCycles, type ClientPaymentRow } from "@/hooks/usePaymentsData";
+import {
+  type PaymentTerms,
+  DEFAULT_STANDARD, DEFAULT_TOT_SPLIT,
+  paymentTermsLabel, parsePaymentTerms,
+} from "@/lib/paymentTerms";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +55,11 @@ import {
   BreadcrumbPage, BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useEffect } from "react";
 
 const statusColor: Record<string, string> = {
   active: "bg-success/20 text-success border-success/30",
