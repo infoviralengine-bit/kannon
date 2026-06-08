@@ -140,33 +140,42 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       });
 
       paymentsByCampaign.forEach((cycleList, campId) => {
-        if (!unpaidCampIds.includes(campId)) return; // skip campaigns with no unpaid cycles
+        if (!unpaidCampIds.includes(campId)) return;
         const camp = campMap.get(campId);
         const clientCpm = camp?.client_cpm ?? 2;
         const clientFixed = camp?.client_fixed ?? 0;
         const spendCap = camp?.monthly_spend_cap ?? null;
         const totalCampaignViews = totalViewsByCampaign.get(campId) ?? 0;
-        const campVideos = videosByCampaign.get(campId) ?? [];
 
-        // Cumulative views already accounted (paid cycles + previously-attributed unpaid cycles)
-        let cumulative = 0;
+        // ── SIMPLER LOGIC ──
+        // Cumulative paid = MAX di views_paid_cumulative tra tutte le righe paid.
+        // No live attribution. Trust dei valori storati nelle righe paid.
+        // Manual overrides (amount_overridden=true) sono già rispettati: il loro
+        // views_paid_cumulative è autoritativo.
+        const cumulativePaid = cycleList
+          .filter((p) => p.is_paid)
+          .reduce((max, p) => Math.max(max, Number(p.views_paid_cumulative ?? 0)), 0);
+
+        // Handle ToT special kinds first (static fixed halves, final CPM on total)
         let residualAssigned = false;
-        cycleList.forEach((p) => {
+        const sorted = [...cycleList].sort((a, b) => a.cycle_number - b.cycle_number);
+        sorted.forEach((p) => {
           const kind = (p as any).payment_kind ?? "standard";
-          const overridden = (p as any).amount_overridden ?? false;
 
-          // Manual override: never recalc; use stored values
-          if (overridden) return;
+          // Paid rows: do not recalc
+          if (p.is_paid) return;
 
-          // ToT half-fixed rows: static amounts, no recalc
+          // Manual override unpaid: keep stored, mark residual as taken
+          if ((p as any).amount_overridden) {
+            residualAssigned = true;
+            return;
+          }
+
+          // ToT half-fixed: static, leave stored values
           if (kind === "tot_fixed_first" || kind === "tot_fixed_second") return;
 
-          // ToT final CPM: recalc on TOTAL campaign views
+          // ToT final CPM: recalc on TOTAL campaign views, ignore cumulative residual logic
           if (kind === "tot_final_cpm") {
-            if (p.is_paid) {
-              cumulative = Math.max(cumulative, p.views_paid_cumulative ?? 0);
-              return;
-            }
             const cpmViews = totalCampaignViews;
             let cpmAmount = clientCpm * (cpmViews / 1000);
             if (spendCap != null && cpmAmount > spendCap) cpmAmount = spendCap;
@@ -180,38 +189,13 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
             return;
           }
 
-          // Standard kind: existing logic unchanged below
+          // Standard unpaid: first one absorbs (total - cumulativePaid), others get 0
           const cycle = cycleMap.get(p.cycle_id);
           const isLast = cycle?.is_last_cycle ?? false;
 
-          if (p.is_paid) {
-            // Live-compute the views that belong to this paid cycle. We count videos
-            // published on or before the EARLIER of (paid_at, cycle_end_date):
-            //  - paid_at  : if the cycle was paid early, later-published videos are NOT
-            //               part of this settled period and should roll to next cycle.
-            //  - end_date : if the cycle ended before payment, videos published after
-            //               its end belong to later cycles, not this one.
-            const endDate = cycle?.cycle_end_date ?? null;
-            const paidAt = p.paid_at ? p.paid_at.slice(0, 10) : null;
-            let cutoff: string | null = null;
-            if (endDate && paidAt) cutoff = endDate < paidAt ? endDate : paidAt;
-            else cutoff = endDate ?? paidAt;
-            let attributed = 0;
-            if (cutoff) {
-              campVideos.forEach((v) => {
-                if (v.published_at.slice(0, 10) <= cutoff!) attributed += v.effective_views;
-              });
-            }
-            // Never go below what's already been stored as paid, and accumulate forward.
-            cumulative = Math.max(cumulative, p.views_paid_cumulative ?? 0, attributed);
-            return;
-          }
-
-          // The first unpaid cycle absorbs ALL views accumulated since the last paid
-          // cycle's snapshot. Later unpaid cycles show 0 until this one is paid.
           let cpmViews = 0;
           if (!residualAssigned) {
-            cpmViews = Math.max(0, totalCampaignViews - cumulative);
+            cpmViews = Math.max(0, totalCampaignViews - cumulativePaid);
             residualAssigned = true;
           }
 
@@ -220,14 +204,12 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           if (spendCap != null && cpmAmount > spendCap) cpmAmount = spendCap;
           const totalAmount = fixedAmount + cpmAmount;
 
-          cumulative += cpmViews;
-
           recalculated.set(p.id, {
             cpmViews,
             cpmAmount,
             fixedAmount,
             totalAmount,
-            viewsPaidCumulative: cumulative,
+            viewsPaidCumulative: cumulativePaid + cpmViews,
           });
         });
       });
