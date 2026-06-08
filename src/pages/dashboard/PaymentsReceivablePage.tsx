@@ -129,8 +129,9 @@ export default function PaymentsReceivablePage() {
   function campaignSummary(rows: ClientPaymentRow[]) {
     const paid = rows.filter((r) => r.isPaid).reduce((s, r) => s + r.totalAmount, 0);
     const overdue = rows.filter((r) => r.isOverdue && !r.isPaid).reduce((s, r) => s + r.totalAmount, 0);
-    const pending = rows.filter((r) => !r.isPaid && !r.isOverdue).reduce((s, r) => s + r.totalAmount, 0);
-    return { paid, overdue, pending, count: rows.length };
+    const invoiced = rows.filter((r) => !r.isPaid && r.invoiceSent && !r.isOverdue).reduce((s, r) => s + r.totalAmount, 0);
+    const pending = rows.filter((r) => !r.isPaid && !r.invoiceSent && !r.isOverdue).reduce((s, r) => s + r.totalAmount, 0);
+    return { paid, overdue, invoiced, pending, count: rows.length };
   }
 
   const defaultExpanded = groupKeys.filter((k) => grouped[k].some((p) => !p.isPaid));
@@ -163,16 +164,20 @@ export default function PaymentsReceivablePage() {
     }
   }
 
-  async function handleStatusChange(p: ClientPaymentRow, newStatus: "paid" | "pending") {
+  async function handleStatusChange(p: ClientPaymentRow, newStatus: "paid" | "invoiced" | "pending") {
     setUpdatingId(p.id);
     try {
+      let update: any;
+      if (newStatus === "paid") {
+        update = { is_paid: true, paid_at: new Date().toISOString(), invoice_sent: true };
+      } else if (newStatus === "invoiced") {
+        update = { is_paid: false, paid_at: null, invoice_sent: true };
+      } else {
+        update = { is_paid: false, paid_at: null, invoice_sent: false };
+      }
       const { error } = await supabase
         .from("client_payments")
-        .update(
-          newStatus === "paid"
-            ? { is_paid: true, paid_at: new Date().toISOString() }
-            : { is_paid: false, paid_at: null },
-        )
+        .update(update)
         .eq("id", p.id);
       if (error) throw error;
       toast({ title: "Status aggiornato", description: `${p.campaignName} — ${p.monthLabel}` });
