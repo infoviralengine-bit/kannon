@@ -720,6 +720,7 @@ export function useCampaignCycles(campaignId: string) {
             paymentKind: ((p as any).payment_kind ?? "standard") as ClientPaymentRow["paymentKind"],
             amountOverridden: (p as any).amount_overridden ?? false,
             notes: (p as any).notes ?? null,
+            invoiceSent: (p as any).invoice_sent ?? false,
           };
         }
 
