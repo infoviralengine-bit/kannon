@@ -77,7 +77,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       // For each campaign with unpaid payments, compute the CURRENT TOTAL effective
       // views across all videos. Unpaid cycles get: total - cumulative_already_paid.
       // (Only the first unpaid cycle gets the residual; later unpaid cycles get 0.)
-      const unpaidCampIds = [...new Set((payments ?? []).filter(p => !p.is_paid).map(p => p.campaign_id))];
+      const unpaidCampIds = [...new Set(activePayments.filter(p => !p.is_paid).map(p => p.campaign_id))];
       // videos kept per-campaign so we can compute paid-window subtractions
       const videosByCampaign = new Map<string, Array<{ published_at: string; effective_views: number }>>();
       const totalViewsByCampaign = new Map<string, number>();
@@ -124,7 +124,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       }
 
       // Sort payments by campaign + cycle_number to compute cumulative views correctly
-      const sortedPayments = [...(payments ?? [])].sort((a, b) => {
+      const sortedPayments = [...activePayments].sort((a, b) => {
         if (a.campaign_id !== b.campaign_id) return a.campaign_id.localeCompare(b.campaign_id);
         return a.cycle_number - b.cycle_number;
       });
@@ -222,7 +222,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       const monthNamesFull = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
       const monthNamesShort = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
 
-      return (payments ?? []).map((p): ClientPaymentRow => {
+      return activePayments.map((p): ClientPaymentRow => {
         const camp = campMap.get(p.campaign_id);
         const dueDate = p.due_date;
         const dd = new Date(dueDate);
