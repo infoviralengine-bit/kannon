@@ -34,6 +34,7 @@ export interface ClientPaymentRow {
   paymentKind: "standard" | "tot_fixed_first" | "tot_fixed_second" | "tot_final_cpm";
   amountOverridden: boolean;
   notes: string | null;
+  invoiceSent: boolean;
 }
 
 export function useClientPayments(filterMonth?: number, filterYear?: number) {
@@ -278,6 +279,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
             paymentKind: ((p as any).payment_kind ?? "standard") as ClientPaymentRow["paymentKind"],
             amountOverridden: (p as any).amount_overridden ?? false,
             notes: (p as any).notes ?? null,
+            invoiceSent: (p as any).invoice_sent ?? false,
           };
       });
     },
@@ -718,6 +720,7 @@ export function useCampaignCycles(campaignId: string) {
             paymentKind: ((p as any).payment_kind ?? "standard") as ClientPaymentRow["paymentKind"],
             amountOverridden: (p as any).amount_overridden ?? false,
             notes: (p as any).notes ?? null,
+            invoiceSent: (p as any).invoice_sent ?? false,
           };
         }
 
