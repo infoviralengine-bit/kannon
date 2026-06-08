@@ -47,12 +47,12 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
         .order("due_date", { ascending: true });
       if (error) throw error;
 
-      const campIds = [...new Set((payments ?? []).map((p) => p.campaign_id))];
+      const allCampIds = [...new Set((payments ?? []).map((p) => p.campaign_id))];
       let campMap = new Map<string, { name: string; client_name: string; client_fixed: number; client_cpm: number; video_views_cap: number | null; monthly_spend_cap: number | null }>();
 
-      if (campIds.length) {
+      if (allCampIds.length) {
         const [{ data: camps }] = await Promise.all([
-          supabase.from("campaigns").select("id, name, client_name, client_fixed, client_cpm, video_views_cap, monthly_spend_cap").in("id", campIds),
+          supabase.from("campaigns").select("id, name, client_name, client_fixed, client_cpm, video_views_cap, monthly_spend_cap, status").in("id", allCampIds).eq("status", "active"),
         ]);
         (camps ?? []).forEach((c) => campMap.set(c.id, {
           name: c.name, client_name: c.client_name,
@@ -62,6 +62,9 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           monthly_spend_cap: (c as any).monthly_spend_cap as number | null,
         }));
       }
+      // Filter out payments from non-active campaigns
+      const activePayments = (payments ?? []).filter((p) => campMap.has(p.campaign_id));
+      const campIds = [...campMap.keys()];
 
       // Fetch all cycles for these campaigns
       let cycleMap = new Map<string, { cycle_start_date: string; cycle_end_date: string; is_last_cycle: boolean }>();
