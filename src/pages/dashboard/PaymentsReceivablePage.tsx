@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowDownCircle, Check, ChevronDown, ChevronRight, Info,
+  ArrowDownCircle, Check, ChevronDown, ChevronRight, Info, Pencil, Trash2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +20,14 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { paymentKindLabel } from "@/lib/paymentTerms";
 
 export default function PaymentsReceivablePage() {
   const navigate = useNavigate();
@@ -36,6 +44,64 @@ export default function PaymentsReceivablePage() {
   const [filter, setFilter] = useState<"all" | "pending" | "paid" | "overdue">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<ClientPaymentRow | null>(null);
+  const [editForm, setEditForm] = useState({ fixed: 0, cpm: 0, dueDate: "", notes: "" });
+  const [deleting, setDeleting] = useState<ClientPaymentRow | null>(null);
+  const [actionSaving, setActionSaving] = useState(false);
+
+  function openEdit(p: ClientPaymentRow) {
+    setEditing(p);
+    setEditForm({
+      fixed: p.fixedAmount,
+      cpm: p.cpmAmount,
+      dueDate: p.dueDate,
+      notes: p.notes ?? "",
+    });
+  }
+
+  async function handleSaveEdit() {
+    if (!editing) return;
+    setActionSaving(true);
+    try {
+      const total = Number(editForm.fixed) + Number(editForm.cpm);
+      const { error } = await supabase
+        .from("client_payments")
+        .update({
+          fixed_amount: Number(editForm.fixed),
+          cpm_amount: Number(editForm.cpm),
+          total_amount: total,
+          due_date: editForm.dueDate,
+          notes: editForm.notes || null,
+          amount_overridden: true,
+        } as any)
+        .eq("id", editing.id);
+      if (error) throw error;
+      toast({ title: "Pagamento modificato", description: `${editing.campaignName} — ${editing.monthLabel}` });
+      qc.invalidateQueries({ queryKey: ["client-payments"] });
+      qc.invalidateQueries({ queryKey: ["payment-history-all"] });
+      setEditing(null);
+    } catch (e: any) {
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
+    } finally {
+      setActionSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleting) return;
+    setActionSaving(true);
+    try {
+      const { error } = await supabase.from("client_payments").delete().eq("id", deleting.id);
+      if (error) throw error;
+      toast({ title: "Pagamento eliminato", description: `${deleting.campaignName} — ${deleting.monthLabel}` });
+      qc.invalidateQueries({ queryKey: ["client-payments"] });
+      setDeleting(null);
+    } catch (e: any) {
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
+    } finally {
+      setActionSaving(false);
+    }
+  }
 
   const filtered = (data ?? []).filter((p) => {
     if (filter === "pending") return !p.isPaid && !p.isOverdue;
@@ -174,6 +240,9 @@ export default function PaymentsReceivablePage() {
                         >
                           {p.campaignName}
                         </span>
+                        {p.paymentKind === "tot_fixed_first" && <Badge variant="secondary" className="ml-2">1ª metà</Badge>}
+                        {p.paymentKind === "tot_fixed_second" && <Badge variant="secondary" className="ml-2">2ª metà</Badge>}
+                        {p.paymentKind === "tot_final_cpm" && <Badge className="ml-2">CPM finale</Badge>}
                       </TableCell>
                       <TableCell>{p.clientName}</TableCell>
                       <TableCell>{p.monthLabel}</TableCell>
@@ -183,7 +252,12 @@ export default function PaymentsReceivablePage() {
                       </TableCell>
                       <TableCell className="text-right">{formatViews(p.cpmViews)}</TableCell>
                       <TableCell className="text-right">{formatCurrency(p.cpmAmount)}</TableCell>
-                      <TableCell className="text-right font-semibold">{formatCurrency(p.totalAmount)}</TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {formatCurrency(p.totalAmount)}
+                        {p.amountOverridden && (
+                          <Badge variant="outline" className="ml-2 text-[10px]">manuale</Badge>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <div onClick={(e) => e.stopPropagation()}>
                           <Select
@@ -204,15 +278,26 @@ export default function PaymentsReceivablePage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                        {p.isPaid ? (
-                          <span className="text-xs text-muted-foreground">
-                            {p.paidAt ? new Date(p.paidAt).toLocaleDateString("it-IT") : "—"}
-                          </span>
-                        ) : (
-                          <Button size="sm" variant="outline" onClick={() => setConfirm(p)}>
-                            <Check className="mr-1 h-3 w-3" /> Segna Ricevuto
+                        <div className="flex items-center justify-end gap-1">
+                          {p.isPaid ? (
+                            <span className="text-xs text-muted-foreground mr-1">
+                              {p.paidAt ? new Date(p.paidAt).toLocaleDateString("it-IT") : "—"}
+                            </span>
+                          ) : (
+                            <Button size="sm" variant="outline" onClick={() => setConfirm(p)}>
+                              <Check className="mr-1 h-3 w-3" /> Segna Ricevuto
+                            </Button>
+                          )}
+                          <Button size="icon" variant="ghost" className="h-8 w-8"
+                            onClick={() => openEdit(p)} title="Modifica">
+                            <Pencil className="h-3.5 w-3.5" />
                           </Button>
-                        )}
+                          <Button size="icon" variant="ghost"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setDeleting(p)} title="Elimina">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                     {isExpanded && (
