@@ -255,6 +255,9 @@ export default function PaymentsReceivablePage() {
                         {sum.overdue > 0 && (
                           <Badge variant="destructive">🔴 Scaduto: {formatCurrency(sum.overdue)}</Badge>
                         )}
+                        {sum.invoiced > 0 && (
+                          <Badge className="bg-orange-500/15 text-orange-600 border-orange-500/30 hover:bg-orange-500/20">📨 Fatturato: {formatCurrency(sum.invoiced)}</Badge>
+                        )}
                         {sum.pending > 0 && (
                           <Badge variant="secondary">⏳ In attesa: {formatCurrency(sum.pending)}</Badge>
                         )}
@@ -321,17 +324,16 @@ export default function PaymentsReceivablePage() {
                                 <TableCell>
                                   <div onClick={(e) => e.stopPropagation()}>
                                     <Select
-                                      value={p.isPaid ? "paid" : "pending"}
+                                      value={p.isPaid ? "paid" : p.invoiceSent ? "invoiced" : "pending"}
                                       disabled={updatingId === p.id}
-                                      onValueChange={(v: "paid" | "pending") => handleStatusChange(p, v)}
+                                      onValueChange={(v: "paid" | "invoiced" | "pending") => handleStatusChange(p, v)}
                                     >
-                                      <SelectTrigger className="h-8 w-[140px]">
+                                      <SelectTrigger className="h-8 w-[170px]">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        <SelectItem value="pending">
-                                          {p.isOverdue && !p.isPaid ? "🔴 Scaduto" : "⏳ In attesa"}
-                                        </SelectItem>
+                                        <SelectItem value="pending">⏳ In attesa</SelectItem>
+                                        <SelectItem value="invoiced">📨 Fattura inviata</SelectItem>
                                         <SelectItem value="paid">✅ Pagato</SelectItem>
                                       </SelectContent>
                                     </Select>
