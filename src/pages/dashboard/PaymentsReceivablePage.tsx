@@ -28,6 +28,12 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { paymentKindLabel } from "@/lib/paymentTerms";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export default function PaymentsReceivablePage() {
   const navigate = useNavigate();
@@ -109,6 +115,25 @@ export default function PaymentsReceivablePage() {
     if (filter === "overdue") return p.isOverdue;
     return true;
   });
+
+  // Group filtered payments by campaign
+  const grouped = filtered.reduce<Record<string, ClientPaymentRow[]>>((acc, p) => {
+    (acc[p.campaignId] = acc[p.campaignId] ?? []).push(p);
+    return acc;
+  }, {});
+  const groupKeys = Object.keys(grouped).sort((a, b) =>
+    grouped[a][0].campaignName.localeCompare(grouped[b][0].campaignName),
+  );
+  groupKeys.forEach((k) => grouped[k].sort((a, b) => a.dueDate.localeCompare(b.dueDate)));
+
+  function campaignSummary(rows: ClientPaymentRow[]) {
+    const paid = rows.filter((r) => r.isPaid).reduce((s, r) => s + r.totalAmount, 0);
+    const overdue = rows.filter((r) => r.isOverdue && !r.isPaid).reduce((s, r) => s + r.totalAmount, 0);
+    const pending = rows.filter((r) => !r.isPaid && !r.isOverdue).reduce((s, r) => s + r.totalAmount, 0);
+    return { paid, overdue, pending, count: rows.length };
+  }
+
+  const defaultExpanded = groupKeys.filter((k) => grouped[k].some((p) => !p.isPaid));
 
   const now = new Date();
   const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -204,160 +229,195 @@ export default function PaymentsReceivablePage() {
       ) : !filtered.length ? (
         <Card><CardContent className="py-8 text-center text-muted-foreground">Nessun pagamento cliente trovato</CardContent></Card>
       ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-8"></TableHead>
-                <TableHead>Campagna</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Mese</TableHead>
-                <TableHead>Scadenza</TableHead>
-                <TableHead className="text-right">Fisso (€)</TableHead>
-                <TableHead className="text-right">Views nuove <CappedBadge /></TableHead>
-                <TableHead className="text-right">CPM (€)</TableHead>
-                <TableHead className="text-right">Totale (€)</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Azione</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((p) => {
-                const isExpanded = expandedId === p.id;
-                return (
-                  <React.Fragment key={p.id}>
-                    <TableRow
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setExpandedId(isExpanded ? null : p.id)}
-                    >
-                      <TableCell className="px-2">
-                        {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <span
-                          className="hover:underline"
-                          onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/campaigns/${p.campaignId}`); }}
-                        >
-                          {p.campaignName}
-                        </span>
-                        {p.paymentKind === "tot_fixed_first" && <Badge variant="secondary" className="ml-2">1ª metà</Badge>}
-                        {p.paymentKind === "tot_fixed_second" && <Badge variant="secondary" className="ml-2">2ª metà</Badge>}
-                        {p.paymentKind === "tot_final_cpm" && <Badge className="ml-2">CPM finale</Badge>}
-                      </TableCell>
-                      <TableCell>{p.clientName}</TableCell>
-                      <TableCell>{p.monthLabel}</TableCell>
-                      <TableCell>{new Date(p.dueDate).toLocaleDateString("it-IT")}</TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(p.fixedAmount)}
-                      </TableCell>
-                      <TableCell className="text-right">{formatViews(p.cpmViews)}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(p.cpmAmount)}</TableCell>
-                      <TableCell className="text-right font-semibold">
-                        {formatCurrency(p.totalAmount)}
-                        {p.amountOverridden && (
-                          <Badge variant="outline" className="ml-2 text-[10px]">manuale</Badge>
+        <Accordion type="multiple" defaultValue={defaultExpanded} className="space-y-3">
+          {groupKeys.map((campaignId) => {
+            const rows = grouped[campaignId];
+            const camp = rows[0];
+            const sum = campaignSummary(rows);
+
+            return (
+              <AccordionItem key={campaignId} value={campaignId} className="border-0">
+                <Card>
+                  <AccordionTrigger className="px-6 py-4 hover:no-underline [&[data-state=open]>svg]:rotate-180">
+                    <div className="flex flex-1 items-center justify-between gap-4 pr-3">
+                      <div className="text-left">
+                        <div className="font-semibold text-base">{camp.campaignName}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {camp.clientName} · {sum.count} {sum.count === 1 ? "pagamento" : "pagamenti"}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap justify-end">
+                        {sum.overdue > 0 && (
+                          <Badge variant="destructive">🔴 Scaduto: {formatCurrency(sum.overdue)}</Badge>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <Select
-                            value={p.isPaid ? "paid" : "pending"}
-                            disabled={updatingId === p.id}
-                            onValueChange={(v: "paid" | "pending") => handleStatusChange(p, v)}
-                          >
-                            <SelectTrigger className="h-8 w-[140px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">
-                                {p.isOverdue && !p.isPaid ? "🔴 Scaduto" : "⏳ In attesa"}
-                              </SelectItem>
-                              <SelectItem value="paid">✅ Pagato</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1">
-                          {p.isPaid ? (
-                            <span className="text-xs text-muted-foreground mr-1">
-                              {p.paidAt ? new Date(p.paidAt).toLocaleDateString("it-IT") : "—"}
-                            </span>
-                          ) : (
-                            <Button size="sm" variant="outline" onClick={() => setConfirm(p)}>
-                              <Check className="mr-1 h-3 w-3" /> Segna Ricevuto
-                            </Button>
-                          )}
-                          <Button size="icon" variant="ghost" className="h-8 w-8"
-                            onClick={() => openEdit(p)} title="Modifica">
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button size="icon" variant="ghost"
-                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => setDeleting(p)} title="Elimina">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    {isExpanded && (
-                      <TableRow key={`${p.id}-detail`}>
-                        <TableCell colSpan={11} className="bg-muted/30 px-6 py-4">
-                          <div className="grid gap-3 md:grid-cols-2 text-sm">
-                            <div className="space-y-2">
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">Periodo</span>
-                                <span>{new Date(p.cycleStartDate).toLocaleDateString("it-IT")} — {new Date(p.cycleEndDate).toLocaleDateString("it-IT")}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">Fisso</span>
-                                <span>{formatCurrency(p.fixedAmount)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">Views totali campagna</span>
-                                <span>{formatViews(p.viewsPaidCumulative)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">Views già pagate cicli precedenti</span>
-                                <span>{formatViews(Math.max(0, p.viewsPaidCumulative - p.cpmViews))}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">Views nuove questo ciclo <CappedBadge /></span>
-                                <span>{formatViews(p.cpmViews)}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-muted-foreground">CPM</span>
-                                <span>{formatViews(p.cpmViews)} × €{p.clientCpm} / 1.000 = {formatCurrency(p.cpmAmount)}</span>
-                              </div>
-                              <div className="flex justify-between font-semibold border-t border-border pt-2">
-                                <span>Totale da ricevere</span>
-                                <span>{formatCurrency(p.totalAmount)}</span>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              {p.isFirstCycle && (
-                                <div className="flex items-start gap-2 rounded-md bg-primary/10 p-3 text-xs">
-                                  <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                                  <span>Nessun CPM — le views verranno conteggiate dal prossimo ciclo</span>
-                                </div>
+                        {sum.pending > 0 && (
+                          <Badge variant="secondary">⏳ In attesa: {formatCurrency(sum.pending)}</Badge>
+                        )}
+                        {sum.paid > 0 && (
+                          <Badge variant="outline">✅ Pagato: {formatCurrency(sum.paid)}</Badge>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/dashboard/campaigns/${campaignId}`);
+                          }}
+                        >
+                          Apri →
+                        </Button>
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-8"></TableHead>
+                          <TableHead>Mese</TableHead>
+                          <TableHead>Scadenza</TableHead>
+                          <TableHead className="text-right">Fisso (€)</TableHead>
+                          <TableHead className="text-right">Views nuove <CappedBadge /></TableHead>
+                          <TableHead className="text-right">CPM (€)</TableHead>
+                          <TableHead className="text-right">Totale (€)</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Azione</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {rows.map((p) => {
+                          const isExpanded = expandedId === p.id;
+                          return (
+                            <React.Fragment key={p.id}>
+                              <TableRow
+                                className="cursor-pointer hover:bg-muted/50"
+                                onClick={() => setExpandedId(isExpanded ? null : p.id)}
+                              >
+                                <TableCell className="px-2">
+                                  {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                                </TableCell>
+                                <TableCell>
+                                  {p.monthLabel}
+                                  {p.paymentKind === "tot_fixed_first" && <Badge variant="secondary" className="ml-2">1ª metà</Badge>}
+                                  {p.paymentKind === "tot_fixed_second" && <Badge variant="secondary" className="ml-2">2ª metà</Badge>}
+                                  {p.paymentKind === "tot_final_cpm" && <Badge className="ml-2">CPM finale</Badge>}
+                                </TableCell>
+                                <TableCell>{new Date(p.dueDate).toLocaleDateString("it-IT")}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(p.fixedAmount)}</TableCell>
+                                <TableCell className="text-right">{formatViews(p.cpmViews)}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(p.cpmAmount)}</TableCell>
+                                <TableCell className="text-right font-semibold">
+                                  {formatCurrency(p.totalAmount)}
+                                  {p.amountOverridden && (
+                                    <Badge variant="outline" className="ml-2 text-[10px]">manuale</Badge>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <Select
+                                      value={p.isPaid ? "paid" : "pending"}
+                                      disabled={updatingId === p.id}
+                                      onValueChange={(v: "paid" | "pending") => handleStatusChange(p, v)}
+                                    >
+                                      <SelectTrigger className="h-8 w-[140px]">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="pending">
+                                          {p.isOverdue && !p.isPaid ? "🔴 Scaduto" : "⏳ In attesa"}
+                                        </SelectItem>
+                                        <SelectItem value="paid">✅ Pagato</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                                  <div className="flex items-center justify-end gap-1">
+                                    {p.isPaid ? (
+                                      <span className="text-xs text-muted-foreground mr-1">
+                                        {p.paidAt ? new Date(p.paidAt).toLocaleDateString("it-IT") : "—"}
+                                      </span>
+                                    ) : (
+                                      <Button size="sm" variant="outline" onClick={() => setConfirm(p)}>
+                                        <Check className="mr-1 h-3 w-3" /> Segna Ricevuto
+                                      </Button>
+                                    )}
+                                    <Button size="icon" variant="ghost" className="h-8 w-8"
+                                      onClick={() => openEdit(p)} title="Modifica">
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button size="icon" variant="ghost"
+                                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      onClick={() => setDeleting(p)} title="Elimina">
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                              {isExpanded && (
+                                <TableRow key={`${p.id}-detail`}>
+                                  <TableCell colSpan={9} className="bg-muted/30 px-6 py-4">
+                                    <div className="grid gap-3 md:grid-cols-2 text-sm">
+                                      <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                          <span className="text-muted-foreground">Periodo</span>
+                                          <span>{new Date(p.cycleStartDate).toLocaleDateString("it-IT")} — {new Date(p.cycleEndDate).toLocaleDateString("it-IT")}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-muted-foreground">Fisso</span>
+                                          <span>{formatCurrency(p.fixedAmount)}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-muted-foreground">Views totali campagna</span>
+                                          <span>{formatViews(p.viewsPaidCumulative)}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-muted-foreground">Views già pagate cicli precedenti</span>
+                                          <span>{formatViews(Math.max(0, p.viewsPaidCumulative - p.cpmViews))}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-muted-foreground">Views nuove questo ciclo <CappedBadge /></span>
+                                          <span>{formatViews(p.cpmViews)}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-muted-foreground">CPM</span>
+                                          <span>{formatViews(p.cpmViews)} × €{p.clientCpm} / 1.000 = {formatCurrency(p.cpmAmount)}</span>
+                                        </div>
+                                        <div className="flex justify-between font-semibold border-t border-border pt-2">
+                                          <span>Totale da ricevere</span>
+                                          <span>{formatCurrency(p.totalAmount)}</span>
+                                        </div>
+                                      </div>
+                                      <div className="space-y-2">
+                                        {p.isFirstCycle && (
+                                          <div className="flex items-start gap-2 rounded-md bg-primary/10 p-3 text-xs">
+                                            <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                                            <span>Nessun CPM — le views verranno conteggiate dal prossimo ciclo</span>
+                                          </div>
+                                        )}
+                                        {p.isLastCycle && (
+                                          <div className="flex items-start gap-2 rounded-md bg-warning/10 p-3 text-xs">
+                                            <Info className="h-4 w-4 text-warning mt-0.5 shrink-0" />
+                                            <span>Campagna conclusa — nessun fisso, solo CPM residuo</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
                               )}
-                              {p.isLastCycle && (
-                                <div className="flex items-start gap-2 rounded-md bg-warning/10 p-3 text-xs">
-                                  <Info className="h-4 w-4 text-warning mt-0.5 shrink-0" />
-                                  <span>Campagna conclusa — nessun fisso, solo CPM residuo</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+                            </React.Fragment>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </AccordionContent>
+                </Card>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
       )}
 
       <Dialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
