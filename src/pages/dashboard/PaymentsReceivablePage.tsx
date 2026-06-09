@@ -252,18 +252,6 @@ export default function PaymentsReceivablePage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap justify-end">
-                        {sum.overdue > 0 && (
-                          <Badge variant="destructive">🔴 Scaduto: {formatCurrency(sum.overdue)}</Badge>
-                        )}
-                        {sum.invoiced > 0 && (
-                          <Badge className="bg-orange-500/15 text-orange-600 border-orange-500/30 hover:bg-orange-500/20">📨 Fatturato: {formatCurrency(sum.invoiced)}</Badge>
-                        )}
-                        {sum.pending > 0 && (
-                          <Badge variant="secondary">⏳ In attesa: {formatCurrency(sum.pending)}</Badge>
-                        )}
-                        {sum.paid > 0 && (
-                          <Badge variant="outline">✅ Pagato: {formatCurrency(sum.paid)}</Badge>
-                        )}
                         <Button
                           size="sm"
                           variant="ghost"
