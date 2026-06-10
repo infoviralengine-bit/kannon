@@ -222,8 +222,9 @@ export function useCreatorPortal(selectedPeriod?: number) {
         const fps = contract.first_period_start
           ? parseContractStartDate(contract.first_period_start)
           : null;
-        const activePeriod = selectedPeriod ?? getCurrentPeriodNumber(contractStart, fps);
-        const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod, fps);
+        const ov = (contract as any).period_overrides ?? null;
+        const activePeriod = selectedPeriod ?? getCurrentPeriodNumber(contractStart, fps, ov);
+        const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod, fps, ov);
         const pStartISO = periodStart.toISOString();
         const pEndDate = new Date(periodEnd);
         pEndDate.setUTCDate(pEndDate.getUTCDate() + 1);
@@ -292,8 +293,9 @@ export function useCreatorPortal(selectedPeriod?: number) {
         const fps = contract.first_period_start
           ? parseContractStartDate(contract.first_period_start)
           : null;
-        const activePeriod = selectedPeriod ?? getCurrentPeriodNumber(contractStart, fps);
-        const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod, fps);
+        const ov = (contract as any).period_overrides ?? null;
+        const activePeriod = selectedPeriod ?? getCurrentPeriodNumber(contractStart, fps, ov);
+        const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod, fps, ov);
         const pStartISO = periodStart.toISOString();
         const pEndDate = new Date(periodEnd);
         pEndDate.setUTCDate(pEndDate.getUTCDate() + 1);
@@ -319,8 +321,9 @@ export function useCreatorPortal(selectedPeriod?: number) {
           const fps = contract.first_period_start
             ? parseContractStartDate(contract.first_period_start)
             : null;
-          const activePeriod = selectedPeriod ?? getCurrentPeriodNumber(contractStart, fps);
-          const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod, fps);
+          const ov = (contract as any).period_overrides ?? null;
+          const activePeriod = selectedPeriod ?? getCurrentPeriodNumber(contractStart, fps, ov);
+          const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod, fps, ov);
           const pStartISO = periodStart.toISOString();
           const pEndDate = new Date(periodEnd);
           pEndDate.setUTCDate(pEndDate.getUTCDate() + 1);
@@ -395,7 +398,7 @@ export function useCreatorPortal(selectedPeriod?: number) {
         ? Math.max(...allContracts.map((c: any) => {
             const sd = c.start_date ? parseContractStartDate(c.start_date) : new Date();
             const fps = c.first_period_start ? parseContractStartDate(c.first_period_start) : null;
-            return getCurrentPeriodNumber(sd, fps);
+            return getCurrentPeriodNumber(sd, fps, c.period_overrides ?? null);
           }))
         : 1;
 
