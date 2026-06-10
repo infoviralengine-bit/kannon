@@ -169,9 +169,10 @@ export function useContractCreators(contractId: string, selectedPeriod?: number)
       const fps = (contract as any).first_period_start
         ? parseContractStartDate((contract as any).first_period_start)
         : null;
-      const currentPeriod = getCurrentPeriodNumber(contractStart, fps);
+      const ov = (contract as any).period_overrides ?? null;
+      const currentPeriod = getCurrentPeriodNumber(contractStart, fps, ov);
       const activePeriod = selectedPeriod ?? currentPeriod;
-      const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod, fps);
+      const { periodStart, periodEnd } = getContractPeriod(contractStart, activePeriod, fps, ov);
       const periodLabel = formatPeriodRange(periodStart, periodEnd);
 
       const pStartISO = periodStart.toISOString();

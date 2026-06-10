@@ -57,10 +57,15 @@ export default function PaymentsPayablePage() {
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  function getPeriodLabel(startDate: string, periodNumber: number, firstPeriodStartStr?: string | null): string {
+  function getPeriodLabel(
+    startDate: string,
+    periodNumber: number,
+    firstPeriodStartStr?: string | null,
+    periodOverrides?: Record<string, { end?: string; start?: string }> | null,
+  ): string {
     const sd = parseContractStartDate(startDate);
     const fps = firstPeriodStartStr ? parseContractStartDate(firstPeriodStartStr) : null;
-    const { periodStart, periodEnd } = getContractPeriod(sd, periodNumber, fps);
+    const { periodStart, periodEnd } = getContractPeriod(sd, periodNumber, fps, periodOverrides ?? null);
     return formatPeriodRange(periodStart, periodEnd);
   }
 
@@ -70,7 +75,7 @@ export default function PaymentsPayablePage() {
       const { creator, section, periodNumber } = data;
       const sd = parseContractStartDate(section.startDate);
       const fps = section.firstPeriodStart ? parseContractStartDate(section.firstPeriodStart) : null;
-      const { periodStart, periodEnd } = getContractPeriod(sd, periodNumber, fps);
+      const { periodStart, periodEnd } = getContractPeriod(sd, periodNumber, fps, section.periodOverrides);
 
       const payload: any = {
         creator_id: creator.creatorId,
@@ -310,7 +315,7 @@ export default function PaymentsPayablePage() {
                                   {b.contractName}
                                 </span>
                                 <p className="text-[10px] text-muted-foreground">
-                                  Periodo {b.periodNumber} · {getPeriodLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart)}
+                                  Periodo {b.periodNumber} · {getPeriodLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart, b.section.periodOverrides)}
                                 </p>
                               </TableCell>
                               <TableCell className="text-center text-muted-foreground text-sm">
@@ -400,7 +405,7 @@ export default function PaymentsPayablePage() {
                   {/* Period info (read-only, controlled globally) */}
                   <div className="text-right">
                     <p className="text-xs font-medium text-foreground">Periodo {pn}</p>
-                    <p className="text-[10px] text-muted-foreground">{getPeriodLabel(section.startDate, pn, section.firstPeriodStart)}</p>
+                    <p className="text-[10px] text-muted-foreground">{getPeriodLabel(section.startDate, pn, section.firstPeriodStart, section.periodOverrides)}</p>
                   </div>
                 </div>
               </CardHeader>
