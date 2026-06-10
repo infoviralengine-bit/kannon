@@ -39,22 +39,42 @@ export function useAccountList() {
   const videosQuery = useQuery({
     queryKey: ["videos_for_accounts"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("videos")
-        .select("tiktok_account_id, views, published_at");
-      if (error) throw error;
-      return data;
+      const all: { tiktok_account_id: string; views: number | null; published_at: string | null }[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("videos")
+          .select("tiktok_account_id, views, published_at")
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        const rows = data ?? [];
+        all.push(...rows);
+        if (rows.length < pageSize) break;
+        from += pageSize;
+      }
+      return all;
     },
   });
 
   const outreachQuery = useQuery({
     queryKey: ["outreach_for_accounts"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("outreach_stats")
-        .select("*");
-      if (error) throw error;
-      return data;
+      const all: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("outreach_stats")
+          .select("*")
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        const rows = data ?? [];
+        all.push(...rows);
+        if (rows.length < pageSize) break;
+        from += pageSize;
+      }
+      return all;
     },
   });
 
