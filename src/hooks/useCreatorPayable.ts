@@ -34,6 +34,7 @@ export interface ContractPayableSection {
   contractName: string;
   startDate: string;
   firstPeriodStart: string | null;
+  periodOverrides: Record<string, { end?: string; start?: string }> | null;
   currentPeriod: number;
   creators: CreatorInContract[];
   totalAmount: number;
