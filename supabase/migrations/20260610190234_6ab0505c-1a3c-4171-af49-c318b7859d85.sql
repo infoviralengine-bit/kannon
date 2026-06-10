@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Campaign manager can view creators" ON public.creators;
