@@ -8,7 +8,30 @@
  * When `firstPeriodStart` is NOT provided (standard):
  *   Period 1: startDate → startDate + 29 days (30 days inclusive)
  *   Period N: startDate + (N-1)*30 → startDate + (N-1)*30 + 29
+ *
+ * `periodOverrides` allows ad-hoc end-date overrides per period number.
+ * Shape: { "<periodNumber>": { end: "YYYY-MM-DD" } }
+ * When period N is overridden, subsequent periods (N+1, N+2, ...) anchor
+ * to the overridden end (start = overriddenEnd + 1 day) and resume the
+ * standard 30-day cadence from there.
  */
+
+export type PeriodOverrides = Record<string, { end?: string; start?: string }> | null | undefined;
+
+function toUtcDay(d: Date): Date {
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+}
+
+function addDaysUtc(d: Date, days: number): Date {
+  const r = new Date(d);
+  r.setUTCDate(r.getUTCDate() + days);
+  return r;
+}
+
+function parseOverrideDate(s: string): Date {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+}
 
 /**
  * Get the start and end dates for a given period number (1-indexed).
@@ -18,39 +41,42 @@ export function getContractPeriod(
   startDate: Date,
   periodNumber: number,
   firstPeriodStart?: Date | null,
+  periodOverrides?: PeriodOverrides,
 ): { periodStart: Date; periodEnd: Date } {
-  const base = new Date(Date.UTC(
-    startDate.getUTCFullYear(),
-    startDate.getUTCMonth(),
-    startDate.getUTCDate(),
-  ));
+  const base = toUtcDay(startDate);
+  const fps = firstPeriodStart ? toUtcDay(firstPeriodStart) : null;
+  const overrides = periodOverrides ?? {};
+  const hasOverrides = Object.keys(overrides).length > 0;
 
-  if (firstPeriodStart && periodNumber === 1) {
-    const fps = new Date(Date.UTC(
-      firstPeriodStart.getUTCFullYear(),
-      firstPeriodStart.getUTCMonth(),
-      firstPeriodStart.getUTCDate(),
-    ));
-    const periodEnd = new Date(base);
-    periodEnd.setUTCDate(periodEnd.getUTCDate() - 1);
-    return { periodStart: fps, periodEnd };
+  // Fast path: no overrides → original formula (preserves exact prior behavior).
+  if (!hasOverrides) {
+    if (fps && periodNumber === 1) {
+      return { periodStart: fps, periodEnd: addDaysUtc(base, -1) };
+    }
+    if (fps) {
+      const periodStart = addDaysUtc(base, (periodNumber - 2) * 30);
+      return { periodStart, periodEnd: addDaysUtc(periodStart, 29) };
+    }
+    const periodStart = addDaysUtc(base, (periodNumber - 1) * 30);
+    return { periodStart, periodEnd: addDaysUtc(periodStart, 29) };
   }
 
-  if (firstPeriodStart) {
-    // Period N >= 2: offset from startDate by (N-2)*30
-    const periodStart = new Date(base);
-    periodStart.setUTCDate(periodStart.getUTCDate() + (periodNumber - 2) * 30);
-    const periodEnd = new Date(periodStart);
-    periodEnd.setUTCDate(periodEnd.getUTCDate() + 29);
-    return { periodStart, periodEnd };
+  // Iterative walk: applies overrides and re-anchors subsequent periods.
+  let curStart: Date;
+  let curEnd: Date;
+  for (let n = 1; n <= periodNumber; n++) {
+    if (n === 1) {
+      curStart = fps ?? base;
+      curEnd = fps ? addDaysUtc(base, -1) : addDaysUtc(curStart, 29);
+    } else {
+      curStart = addDaysUtc(curEnd!, 1);
+      curEnd = addDaysUtc(curStart, 29);
+    }
+    const ov = overrides[String(n)];
+    if (ov?.start) curStart = parseOverrideDate(ov.start);
+    if (ov?.end) curEnd = parseOverrideDate(ov.end);
   }
-
-  // Standard: no firstPeriodStart
-  const periodStart = new Date(base);
-  periodStart.setUTCDate(periodStart.getUTCDate() + (periodNumber - 1) * 30);
-  const periodEnd = new Date(periodStart);
-  periodEnd.setUTCDate(periodEnd.getUTCDate() + 29);
-  return { periodStart, periodEnd };
+  return { periodStart: curStart!, periodEnd: curEnd! };
 }
 
 /**
@@ -61,34 +87,22 @@ export function getPeriodNumberForDate(
   startDate: Date,
   date: Date,
   firstPeriodStart?: Date | null,
+  periodOverrides?: PeriodOverrides,
 ): number {
-  const baseMs = Date.UTC(
-    startDate.getUTCFullYear(),
-    startDate.getUTCMonth(),
-    startDate.getUTCDate(),
-  );
-  const dateMs = Date.UTC(
-    date.getUTCFullYear(),
-    date.getUTCMonth(),
-    date.getUTCDate(),
-  );
-
-  if (firstPeriodStart) {
-    const fpsMs = Date.UTC(
-      firstPeriodStart.getUTCFullYear(),
-      firstPeriodStart.getUTCMonth(),
-      firstPeriodStart.getUTCDate(),
+  const target = toUtcDay(date).getTime();
+  // Walk forward period-by-period until target falls within [start, end].
+  // Cap at a safe upper bound (10 years of 30-day periods).
+  for (let n = 1; n <= 130; n++) {
+    const { periodStart, periodEnd } = getContractPeriod(
+      startDate,
+      n,
+      firstPeriodStart,
+      periodOverrides,
     );
-    if (dateMs < fpsMs) return 1;
-    if (dateMs < baseMs) return 1; // still in the exceptional period 1
-    // From startDate onwards: period = floor(diff/30) + 2
-    const diffDays = Math.floor((dateMs - baseMs) / (1000 * 60 * 60 * 24));
-    return Math.floor(diffDays / 30) + 2;
+    if (target < periodStart.getTime()) return Math.max(1, n - 1 || 1);
+    if (target <= periodEnd.getTime()) return n;
   }
-
-  const diffDays = Math.floor((dateMs - baseMs) / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return 1;
-  return Math.floor(diffDays / 30) + 1;
+  return 130;
 }
 
 /**
@@ -97,8 +111,9 @@ export function getPeriodNumberForDate(
 export function getCurrentPeriodNumber(
   startDate: Date,
   firstPeriodStart?: Date | null,
+  periodOverrides?: PeriodOverrides,
 ): number {
-  return getPeriodNumberForDate(startDate, new Date(), firstPeriodStart);
+  return getPeriodNumberForDate(startDate, new Date(), firstPeriodStart, periodOverrides);
 }
 
 /**
