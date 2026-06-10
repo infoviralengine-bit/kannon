@@ -373,6 +373,7 @@ export type Database = {
           is_active: boolean
           min_videos_per_day: number
           name: string
+          period_overrides: Json
           start_date: string
           type: string
         }
@@ -386,6 +387,7 @@ export type Database = {
           is_active?: boolean
           min_videos_per_day?: number
           name: string
+          period_overrides?: Json
           start_date?: string
           type?: string
         }
@@ -399,6 +401,7 @@ export type Database = {
           is_active?: boolean
           min_videos_per_day?: number
           name?: string
+          period_overrides?: Json
           start_date?: string
           type?: string
         }
