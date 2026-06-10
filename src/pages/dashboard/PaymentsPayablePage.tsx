@@ -315,7 +315,7 @@ export default function PaymentsPayablePage() {
                                   {b.contractName}
                                 </span>
                                 <p className="text-[10px] text-muted-foreground">
-                                  Periodo {b.periodNumber} · {getPeriodLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart)}
+                                  Periodo {b.periodNumber} · {getPeriodLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart, b.section.periodOverrides)}
                                 </p>
                               </TableCell>
                               <TableCell className="text-center text-muted-foreground text-sm">
@@ -405,7 +405,7 @@ export default function PaymentsPayablePage() {
                   {/* Period info (read-only, controlled globally) */}
                   <div className="text-right">
                     <p className="text-xs font-medium text-foreground">Periodo {pn}</p>
-                    <p className="text-[10px] text-muted-foreground">{getPeriodLabel(section.startDate, pn, section.firstPeriodStart)}</p>
+                    <p className="text-[10px] text-muted-foreground">{getPeriodLabel(section.startDate, pn, section.firstPeriodStart, section.periodOverrides)}</p>
                   </div>
                 </div>
               </CardHeader>
