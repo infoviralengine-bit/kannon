@@ -137,7 +137,9 @@ export function useCampaignTable() {
       // For month views we still need video data, but scoped to this month
       // Fetch month videos with pagination to avoid 1000-row limit
       const accIds = (accounts ?? []).map((a) => a.id);
-      let monthVideos: { tiktok_account_id: string; views: number }[] = [];
+      // views can legitimately be null when a video hasn't been scraped yet —
+      // we treat it as 0 contribution in the reduce below.
+      let monthVideos: { tiktok_account_id: string; views: number | null }[] = [];
       if (accIds.length) {
         let page = 0;
         const pageSize = 1000;

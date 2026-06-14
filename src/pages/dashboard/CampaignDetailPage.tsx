@@ -145,7 +145,10 @@ function EditCampaignModal({
         .eq("is_paid", false);
 
       if (unpaidPayments && unpaidPayments.length > 0) {
-        const cycleIds = unpaidPayments.map((p) => p.cycle_id);
+        // Skip orphaned payments without a cycle reference (data integrity guard).
+        const cycleIds = unpaidPayments
+          .map((p) => p.cycle_id)
+          .filter((id): id is string => id !== null);
         const { data: cycles } = await supabase
           .from("payment_cycles")
           .select("id, is_last_cycle")
@@ -155,7 +158,8 @@ function EditCampaignModal({
         const creatorCount = 1; // no longer multiplied
 
         for (const p of unpaidPayments) {
-          const isLast = cycleMap.get(p.cycle_id) ?? false;
+          // Orphaned payments (cycle_id=null) are treated as non-last-cycle.
+          const isLast = (p.cycle_id ? cycleMap.get(p.cycle_id) : undefined) ?? false;
           const fixedAmount = isLast ? 0 : newFixed;
           let cpmAmount = newCpm * (p.cpm_views / 1000);
           
@@ -489,7 +493,9 @@ function CyclesSection({ campaignId, campaign, cycles }: {
       } as any);
 
       // If spend cap reached, pause campaign and create notifications
-      if (capReached) {
+      // capReached can only be true when spendCap is non-null (see line above),
+      // but TS can't narrow across the assignment — re-check inline.
+      if (capReached && spendCap != null) {
         await supabase.from("campaigns").update({ status: "paused" } as any).eq("id", campaignId);
 
         // Create notifications for admin/team
