@@ -64,9 +64,6 @@ export default function FinancePage() {
   const [period, setPeriod] = useState<FinancePeriod>("month");
   const { data, isLoading, error } = useFinanceData(period);
   const deleteEntry = useDeleteEntry();
-
-  if (role && role !== "admin") return <Navigate to="/dashboard" replace />;
-
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get("tab") || "cash";
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -81,6 +78,8 @@ export default function FinancePage() {
     setActiveTab(v);
     setSearchParams({ tab: v }, { replace: true });
   };
+
+  if (role && role !== "admin") return <Navigate to="/dashboard" replace />;
 
   return (
     <div className="p-6 space-y-6">
