@@ -13,6 +13,11 @@ export type AuthResult = { ok: true } | { ok: false; response: Response };
  * APP_ORIGIN is a comma-separated list of allowed origins.
  * If the request's Origin header matches one of them, that origin is echoed back.
  * If APP_ORIGIN is unset, falls back to "*" (dev/legacy behaviour) — set it in prod.
+ *
+ * Security note: the allow-list for *.lovable.app / *.lovableproject.com /
+ * *.lovable.dev is meant for development inside the Lovable preview/editor.
+ * Before final production go-live this block can be removed to restrict CORS
+ * to APP_ORIGIN only.
  */
 export function buildCorsHeaders(req: Request): Record<string, string> {
   const baseHeaders: Record<string, string> = {
@@ -34,10 +39,24 @@ export function buildCorsHeaders(req: Request): Record<string, string> {
     return { ...baseHeaders, "Access-Control-Allow-Origin": reqOrigin };
   }
 
-  // Origin not allowed: still answer with the first configured one so that
-  // server-to-server / curl calls (no Origin header) keep working, but
-  // browsers from other origins will be blocked by the browser itself.
-  return { ...baseHeaders, "Access-Control-Allow-Origin": allowed[0] };
+  // Allow Lovable preview/editor origins for development
+  const LOVABLE_SUFFIXES = [".lovable.app", ".lovableproject.com", ".lovable.dev"];
+  if (reqOrigin) {
+    try {
+      const { hostname } = new URL(reqOrigin);
+      const isLovable = LOVABLE_SUFFIXES.some(
+        (suffix) => hostname === suffix.slice(1) || hostname.endsWith(suffix),
+      );
+      if (isLovable) {
+        return { ...baseHeaders, "Access-Control-Allow-Origin": reqOrigin };
+      }
+    } catch {
+      // Invalid origin URL → treat as not allowed
+    }
+  }
+
+  // Not authorized: do not echo the origin.
+  return baseHeaders;
 }
 
 export async function assertAuthorized(
