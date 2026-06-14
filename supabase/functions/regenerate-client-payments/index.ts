@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { assertAuthorized } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,13 +18,16 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { campaign_id } = await req.json();
-    if (!campaign_id) throw new Error("campaign_id required");
-
     const supa = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    const auth = await assertAuthorized(req, supa, corsHeaders);
+    if (!auth.ok) return auth.response;
+
+    const { campaign_id } = await req.json();
+    if (!campaign_id) throw new Error("campaign_id required");
 
     const { data: camp, error: campErr } = await supa
       .from("campaigns")

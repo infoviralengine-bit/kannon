@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { assertAuthorized } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,6 +27,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+
+  const auth = await assertAuthorized(req, admin, corsHeaders);
+  if (!auth.ok) return auth.response;
+
   const alerts: AlertSpec[] = [];
   const nowIso = new Date().toISOString();
 
