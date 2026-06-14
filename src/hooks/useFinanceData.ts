@@ -71,3 +71,178 @@ export function useDeleteEntry() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["finance-dashboard"] }),
   });
 }
+
+/* ═══════════════════════════════════════════════
+   Recurring Expenses
+   ═══════════════════════════════════════════════ */
+
+export type RecurringExpenseCategory =
+  | "creator_pay" | "operator_pay" | "tool" | "software" | "rent" | "salary_fixed" | "other";
+
+export interface RecurringExpense {
+  id: string;
+  name: string;
+  amount: number;
+  category: RecurringExpenseCategory;
+  due_day: number;
+  start_date: string;
+  end_date: string | null;
+  is_active: boolean;
+  vendor: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RecurringExpenseInput {
+  name: string;
+  amount: number;
+  category: RecurringExpenseCategory;
+  due_day: number;
+  start_date: string;
+  end_date?: string | null;
+  is_active?: boolean;
+  vendor?: string | null;
+  notes?: string | null;
+}
+
+export function useRecurringExpenses() {
+  return useQuery({
+    queryKey: ["recurring-expenses"],
+    queryFn: async (): Promise<RecurringExpense[]> => {
+      const { data, error } = await (supabase.from as any)("recurring_expenses")
+        .select("*").order("name", { ascending: true });
+      if (error) throw error;
+      return data as RecurringExpense[];
+    },
+  });
+}
+
+export function useCreateRecurringExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: RecurringExpenseInput) => {
+      const { error } = await (supabase.from as any)("recurring_expenses").insert(input);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["recurring-expenses"] });
+      qc.invalidateQueries({ queryKey: ["finance-dashboard"] });
+      qc.invalidateQueries({ queryKey: ["financial-movements"] });
+    },
+  });
+}
+
+export function useUpdateRecurringExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<RecurringExpenseInput> }) => {
+      const { error } = await (supabase.from as any)("recurring_expenses").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["recurring-expenses"] });
+      qc.invalidateQueries({ queryKey: ["finance-dashboard"] });
+      qc.invalidateQueries({ queryKey: ["financial-movements"] });
+    },
+  });
+}
+
+export function useDeleteRecurringExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase.from as any)("recurring_expenses").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["recurring-expenses"] });
+      qc.invalidateQueries({ queryKey: ["finance-dashboard"] });
+      qc.invalidateQueries({ queryKey: ["financial-movements"] });
+    },
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   Override manuale su pagamenti auto
+   ═══════════════════════════════════════════════ */
+
+export function useOverrideClientPayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, amount_override, notes_override }: { id: string; amount_override: number | null; notes_override?: string | null }) => {
+      const { error } = await (supabase.from as any)("client_payments")
+        .update({ amount_override, notes_override: notes_override ?? null })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["client-payments"] });
+      qc.invalidateQueries({ queryKey: ["finance-dashboard"] });
+      qc.invalidateQueries({ queryKey: ["financial-movements"] });
+    },
+  });
+}
+
+export function useOverrideCreatorPayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, amount_override, notes_override }: { id: string; amount_override: number | null; notes_override?: string | null }) => {
+      const { error } = await (supabase.from as any)("creator_payments")
+        .update({ amount_override, notes_override: notes_override ?? null })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["creator-payments"] });
+      qc.invalidateQueries({ queryKey: ["finance-dashboard"] });
+      qc.invalidateQueries({ queryKey: ["financial-movements"] });
+    },
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   Vista unificata movimenti
+   ═══════════════════════════════════════════════ */
+
+export interface FinancialMovement {
+  id: string;
+  source: "client_payment" | "creator_payment" | "recurring_expense" | "manual_entry";
+  type: "revenue" | "cost";
+  category: string;
+  description: string;
+  amount: number;
+  date: string;
+  due_date: string | null;
+  status: "expected" | "paid" | "overdue";
+  campaign_id: string | null;
+  creator_id: string | null;
+  brand_name: string | null;
+  invoice_number: string | null;
+  notes: string | null;
+  recurring_expense_id: string | null;
+  has_override: boolean;
+  created_at: string;
+}
+
+export function useFinancialMovements(filters?: {
+  from?: string; to?: string;
+  type?: "revenue" | "cost";
+  source?: FinancialMovement["source"];
+  status?: "expected" | "paid" | "overdue";
+}) {
+  return useQuery({
+    queryKey: ["financial-movements", filters],
+    queryFn: async (): Promise<FinancialMovement[]> => {
+      let q = (supabase.from as any)("v_financial_movements").select("*").order("date", { ascending: false }).limit(500);
+      if (filters?.from)   q = q.gte("date", filters.from);
+      if (filters?.to)     q = q.lte("date", filters.to);
+      if (filters?.type)   q = q.eq("type", filters.type);
+      if (filters?.source) q = q.eq("source", filters.source);
+      if (filters?.status) q = q.eq("status", filters.status);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data as FinancialMovement[];
+    },
+  });
+}
