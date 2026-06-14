@@ -350,7 +350,9 @@ export function useCreatorStatus() {
         performers.push({
           name: c.name,
           views: viewsMonth,
-          cpm: (c.creator_cpm ?? 0.5) * (viewsMonth / 1000),
+          // Display-only KPI; tariffe accurate vivono in hook contract-based.
+          // Niente fallback hardcoded: 0 se contratto non noto in questo scope.
+          cpm: 0,
           contract: creatorContract.get(c.id) ?? "—",
         });
       });
