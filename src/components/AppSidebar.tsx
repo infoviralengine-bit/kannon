@@ -1,6 +1,6 @@
 import {
   Home, Megaphone, BarChart3, TrendingUp, GitMerge, Users, AtSign,
-  FileText, UserPlus, Briefcase, Wallet, ArrowUpCircle, FileBarChart,
+  FileText, UserPlus, Briefcase, Wallet, FileBarChart,
   Settings, LogOut,
   type LucideIcon,
 } from "lucide-react";
@@ -75,7 +75,6 @@ const sidebarSections: SidebarSection[] = [
     label: "Finance",
     items: [
       { label: "Finance", icon: Wallet, path: "/dashboard/finance", roles: [ROLES.ADMIN] },
-      { label: "Pagamenti Creator", icon: ArrowUpCircle, path: "/dashboard/payments-payable", roles: ROLE_GROUPS.STAFF },
     ],
   },
   {

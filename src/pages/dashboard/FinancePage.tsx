@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFinanceData, FinancePeriod, useDeleteEntry } from "@/hooks/useFinanceData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, Pencil, Trash2, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, Pencil, Trash2, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import { AddEntryDialog } from "@/components/finance/AddEntryDialog";
 import { CashEditDialog } from "@/components/finance/CashEditDialog";
 import { MovementsTable } from "@/components/finance/MovementsTable";
 import { RecurringExpensesCard } from "@/components/finance/RecurringExpensesCard";
+import { ReceivableTab } from "@/components/finance/ReceivableTab";
+import { PayableTab } from "@/components/finance/PayableTab";
 import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
 } from "recharts";
@@ -62,6 +64,20 @@ export default function FinancePage() {
   const [period, setPeriod] = useState<FinancePeriod>("month");
   const { data, isLoading, error } = useFinanceData(period);
   const deleteEntry = useDeleteEntry();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") || "cash";
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t && t !== activeTab) setActiveTab(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const handleTabChange = (v: string) => {
+    setActiveTab(v);
+    setSearchParams({ tab: v }, { replace: true });
+  };
 
   if (role && role !== "admin") return <Navigate to="/dashboard" replace />;
 
@@ -103,15 +119,44 @@ export default function FinancePage() {
           ))}
         </div>
       ) : (
-        <Tabs defaultValue="cash" className="space-y-4">
-          <TabsList>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <button
+              onClick={() => handleTabChange("receivable")}
+              className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-1.5 hover:bg-muted"
+            >
+              <ArrowDownCircle className="h-3.5 w-3.5 text-emerald-400" />
+              Pagamenti da ricevere
+            </button>
+            <button
+              onClick={() => handleTabChange("payable")}
+              className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-1.5 hover:bg-muted"
+            >
+              <ArrowUpCircle className="h-3.5 w-3.5 text-amber-400" />
+              Pagamenti da fare
+            </button>
+          </div>
+
+          <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="cash">Cash</TabsTrigger>
+            <TabsTrigger value="receivable">Da Ricevere</TabsTrigger>
+            <TabsTrigger value="payable">Da Pagare</TabsTrigger>
             <TabsTrigger value="movements">Movimenti</TabsTrigger>
             <TabsTrigger value="revenue">Ricavi</TabsTrigger>
             <TabsTrigger value="costs">Costi</TabsTrigger>
             <TabsTrigger value="margins">Margini</TabsTrigger>
             <TabsTrigger value="forecast">Forecast</TabsTrigger>
           </TabsList>
+
+          {/* RECEIVABLE */}
+          <TabsContent value="receivable" className="space-y-6">
+            <ReceivableTab />
+          </TabsContent>
+
+          {/* PAYABLE */}
+          <TabsContent value="payable" className="space-y-6">
+            <PayableTab />
+          </TabsContent>
 
           {/* MOVEMENTS */}
           <TabsContent value="movements" className="space-y-6">
