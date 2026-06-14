@@ -12,6 +12,8 @@ import { AlertTriangle, Pencil, Trash2, TrendingDown, TrendingUp, Wallet } from 
 import { formatCurrency } from "@/lib/format";
 import { AddEntryDialog } from "@/components/finance/AddEntryDialog";
 import { CashEditDialog } from "@/components/finance/CashEditDialog";
+import { MovementsTable } from "@/components/finance/MovementsTable";
+import { RecurringExpensesCard } from "@/components/finance/RecurringExpensesCard";
 import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
 } from "recharts";
@@ -104,11 +106,17 @@ export default function FinancePage() {
         <Tabs defaultValue="cash" className="space-y-4">
           <TabsList>
             <TabsTrigger value="cash">Cash</TabsTrigger>
+            <TabsTrigger value="movements">Movimenti</TabsTrigger>
             <TabsTrigger value="revenue">Ricavi</TabsTrigger>
             <TabsTrigger value="costs">Costi</TabsTrigger>
             <TabsTrigger value="margins">Margini</TabsTrigger>
             <TabsTrigger value="forecast">Forecast</TabsTrigger>
           </TabsList>
+
+          {/* MOVEMENTS */}
+          <TabsContent value="movements" className="space-y-6">
+            <MovementsTable />
+          </TabsContent>
 
           {/* CASH */}
           <TabsContent value="cash" className="space-y-6">
@@ -247,6 +255,7 @@ export default function FinancePage() {
 
           {/* COSTS */}
           <TabsContent value="costs" className="space-y-6">
+            <RecurringExpensesCard />
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
               {["creator_pay", "operator_pay", "tool", "software", "other"].map((cat) => {
                 const found = data.costs.by_category.find((c) => c.category === cat);
