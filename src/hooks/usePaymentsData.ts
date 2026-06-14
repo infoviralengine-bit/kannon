@@ -193,7 +193,8 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           }
 
           // Standard unpaid: first one absorbs (total - cumulativePaid), others get 0
-          const cycle = cycleMap.get(p.cycle_id);
+          // cycle_id can be null for orphaned/legacy rows → treat as non-last-cycle.
+          const cycle = p.cycle_id ? cycleMap.get(p.cycle_id) : undefined;
           const isLast = cycle?.is_last_cycle ?? false;
 
           let cpmViews = 0;
@@ -228,7 +229,8 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
         const dd = new Date(dueDate);
         const monthIdx = dd.getMonth();
         const yr = dd.getFullYear();
-        const cycle = cycleMap.get(p.cycle_id);
+        // cycle_id can be null for orphaned/legacy rows; downstream uses cycle?.* safely.
+        const cycle = p.cycle_id ? cycleMap.get(p.cycle_id) : undefined;
 
         // Use recalculated values for unpaid payments, stored values for paid ones
         const recalc = recalculated.get(p.id);

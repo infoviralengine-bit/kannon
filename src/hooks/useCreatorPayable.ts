@@ -118,8 +118,12 @@ export function useContractPayable(periodByContract: Record<string, number>) {
         return [];
       }
 
-      const fetchStart = globalStart.toISOString();
-      const fetchEndDate = new Date(globalEnd);
+      // Local aliases so TS keeps the narrowed Date type across the closure boundary
+      // (control-flow narrowing doesn't survive forEach assignments above).
+      const gStart: Date = globalStart;
+      const gEnd: Date = globalEnd;
+      const fetchStart = gStart.toISOString();
+      const fetchEndDate = new Date(gEnd);
       fetchEndDate.setUTCDate(fetchEndDate.getUTCDate() + 1);
       const fetchEnd = fetchEndDate.toISOString();
 
