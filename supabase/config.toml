@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.regenerate-client-payments]
 verify_jwt = false
+
+[functions.run-finance-jobs]
+verify_jwt = false
