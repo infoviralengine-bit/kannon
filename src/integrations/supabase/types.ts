@@ -115,6 +115,7 @@ export type Database = {
       client_payments: {
         Row: {
           amount_overridden: boolean
+          amount_override: number | null
           campaign_id: string
           cpm_amount: number
           cpm_views: number
@@ -124,17 +125,22 @@ export type Database = {
           due_date: string
           fixed_amount: number
           id: string
+          invoice_number: string | null
           invoice_sent: boolean
+          invoice_sent_at: string | null
           is_paid: boolean
           notes: string | null
+          notes_override: string | null
           paid_at: string | null
           payment_kind: string
+          received_at: string | null
           total_amount: number
           views_paid_cumulative: number
           views_snapshot_at: string | null
         }
         Insert: {
           amount_overridden?: boolean
+          amount_override?: number | null
           campaign_id: string
           cpm_amount?: number
           cpm_views?: number
@@ -144,17 +150,22 @@ export type Database = {
           due_date: string
           fixed_amount?: number
           id?: string
+          invoice_number?: string | null
           invoice_sent?: boolean
+          invoice_sent_at?: string | null
           is_paid?: boolean
           notes?: string | null
+          notes_override?: string | null
           paid_at?: string | null
           payment_kind?: string
+          received_at?: string | null
           total_amount?: number
           views_paid_cumulative?: number
           views_snapshot_at?: string | null
         }
         Update: {
           amount_overridden?: boolean
+          amount_override?: number | null
           campaign_id?: string
           cpm_amount?: number
           cpm_views?: number
@@ -164,11 +175,15 @@ export type Database = {
           due_date?: string
           fixed_amount?: number
           id?: string
+          invoice_number?: string | null
           invoice_sent?: boolean
+          invoice_sent_at?: string | null
           is_paid?: boolean
           notes?: string | null
+          notes_override?: string | null
           paid_at?: string | null
           payment_kind?: string
+          received_at?: string | null
           total_amount?: number
           views_paid_cumulative?: number
           views_snapshot_at?: string | null
@@ -515,6 +530,7 @@ export type Database = {
       }
       creator_payments: {
         Row: {
+          amount_override: number | null
           cpm_amount: number
           created_at: string
           creator_id: string
@@ -523,7 +539,9 @@ export type Database = {
           id: string
           is_paid: boolean
           notes: string | null
+          notes_override: string | null
           paid_at: string | null
+          paid_via: string | null
           period_end: string | null
           period_month: number
           period_start: string | null
@@ -531,6 +549,7 @@ export type Database = {
           total_amount: number
         }
         Insert: {
+          amount_override?: number | null
           cpm_amount?: number
           created_at?: string
           creator_id: string
@@ -539,7 +558,9 @@ export type Database = {
           id?: string
           is_paid?: boolean
           notes?: string | null
+          notes_override?: string | null
           paid_at?: string | null
+          paid_via?: string | null
           period_end?: string | null
           period_month: number
           period_start?: string | null
@@ -547,6 +568,7 @@ export type Database = {
           total_amount?: number
         }
         Update: {
+          amount_override?: number | null
           cpm_amount?: number
           created_at?: string
           creator_id?: string
@@ -555,7 +577,9 @@ export type Database = {
           id?: string
           is_paid?: boolean
           notes?: string | null
+          notes_override?: string | null
           paid_at?: string | null
+          paid_via?: string | null
           period_end?: string | null
           period_month?: number
           period_start?: string | null
@@ -661,6 +685,7 @@ export type Database = {
           id: string
           invoice_number: string | null
           notes: string | null
+          recurring_expense_id: string | null
           status: string
           type: string
           updated_at: string
@@ -679,6 +704,7 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           notes?: string | null
+          recurring_expense_id?: string | null
           status?: string
           type: string
           updated_at?: string
@@ -697,6 +723,7 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           notes?: string | null
+          recurring_expense_id?: string | null
           status?: string
           type?: string
           updated_at?: string
@@ -714,6 +741,13 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_entries_recurring_expense_id_fkey"
+            columns: ["recurring_expense_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_expenses"
             referencedColumns: ["id"]
           },
         ]
@@ -997,6 +1031,54 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string | null
+          due_day: number
+          end_date: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          start_date: string
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          created_by?: string | null
+          due_day: number
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          start_date?: string
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          due_day?: number
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          start_date?: string
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: []
+      }
       scraping_logs: {
         Row: {
           accounts_processed: number
@@ -1224,12 +1306,37 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_financial_movements: {
+        Row: {
+          amount: number | null
+          brand_name: string | null
+          campaign_id: string | null
+          category: string | null
+          created_at: string | null
+          creator_id: string | null
+          date: string | null
+          description: string | null
+          due_date: string | null
+          has_override: boolean | null
+          id: string | null
+          invoice_number: string | null
+          notes: string | null
+          recurring_expense_id: string | null
+          source: string | null
+          status: string | null
+          type: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       bulk_update_video_views: {
         Args: { p_ids: string[]; p_views: number[] }
         Returns: undefined
+      }
+      generate_recurring_expense_entries: {
+        Args: { p_months_ahead?: number }
+        Returns: number
       }
       get_campaign_manager_data: { Args: { p_period?: string }; Returns: Json }
       get_campaign_total_views: {
