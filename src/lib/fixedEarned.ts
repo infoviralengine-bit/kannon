@@ -38,16 +38,26 @@ export function getWorkingDaysElapsed(year: number, month: number): number {
 
 /**
  * Count remaining working days (from today to end of month, inclusive).
+ * Working days are Mon-Sat (Sundays excluded).
+ * If the month is in the past, returns 0; if in the future, returns total working days.
  */
 export function getWorkingDaysRemaining(year: number, month: number): number {
-  const total = getWorkingDaysInMonth(year, month);
-  const elapsed = getWorkingDaysElapsed(year, month);
-  // Include today as remaining
   const now = new Date();
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
-  const todayIsWorkDay = isCurrentMonth && now.getDay() !== 0;
-  return total - elapsed - (todayIsWorkDay ? 0 : 0);
-  // Actually: remaining = total - elapsed (today not counted in elapsed since elapsed is up to yesterday)
+  const isPastMonth =
+    year < now.getFullYear() ||
+    (year === now.getFullYear() && month < now.getMonth());
+  if (isPastMonth) return 0;
+  if (!isCurrentMonth) return getWorkingDaysInMonth(year, month);
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startDay = now.getDate(); // today inclusive
+  let count = 0;
+  for (let d = startDay; d <= daysInMonth; d++) {
+    const dow = new Date(year, month, d).getDay();
+    if (dow !== 0) count++; // exclude Sunday
+  }
+  return count;
 }
 
 /**
