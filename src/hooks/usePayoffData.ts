@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViews, sumEffectiveViewsCapped } from "@/lib/videoWindow";
+import { computeCreatorPayableMonth, type ContractInput } from "@/lib/creatorPayable";
 import {
   getContractPeriod,
   getPeriodTarget,
@@ -70,6 +71,9 @@ export function usePayoffData(year: number, month: number, periodNumber?: number
         { data: accounts },
         { data: videos },
         { data: payments },
+        { data: contracts },
+        { data: contractCampaigns },
+        { data: contractCreators },
       ] = await Promise.all([
         supabase.from("creators").select("*").eq("status", "active"),
         supabase.from("campaigns").select("*").eq("status", "active"),
@@ -77,6 +81,9 @@ export function usePayoffData(year: number, month: number, periodNumber?: number
         supabase.from("tiktok_accounts").select("*"),
         supabase.from("videos").select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at").gte("published_at", mStart).lt("published_at", mEnd),
         supabase.from("creator_payments").select("*").eq("period_month", month + 1).eq("period_year", year),
+        supabase.from("contracts" as any).select("id, name, creator_cpm, creator_fixed, min_videos_per_day").eq("is_active", true),
+        supabase.from("contract_campaigns" as any).select("contract_id, campaign_id"),
+        supabase.from("contract_creators" as any).select("contract_id, creator_id"),
       ]);
 
       const allCreators = creators ?? [];
@@ -85,6 +92,25 @@ export function usePayoffData(year: number, month: number, periodNumber?: number
       const allAccounts = accounts ?? [];
       const allVideos = videos ?? [];
       const allPayments = payments ?? [];
+      const allContracts = ((contracts ?? []) as any[]) as ContractInput[];
+      const allCt = (contractCampaigns ?? []) as any[];
+      const allCtCr = (contractCreators ?? []) as any[];
+      const contractById = new Map(allContracts.map((c) => [c.id, c]));
+      const ctCampMap = new Map<string, string[]>();
+      allCt.forEach((r: any) => {
+        const l = ctCampMap.get(r.contract_id) ?? [];
+        l.push(r.campaign_id);
+        ctCampMap.set(r.contract_id, l);
+      });
+      const ctsByCreator = new Map<string, string[]>();
+      allCtCr.forEach((r: any) => {
+        const l = ctsByCreator.get(r.creator_id) ?? [];
+        l.push(r.contract_id);
+        ctsByCreator.set(r.creator_id, l);
+      });
+      // campaignId → contractId (no overlap)
+      const contractByCampaign = new Map<string, string>();
+      allCt.forEach((r: any) => contractByCampaign.set(r.campaign_id, r.contract_id));
 
       // Map: accountId -> campaignId (for cap lookup)
       const campaignByAccount = new Map<string, string>();
@@ -159,16 +185,23 @@ export function usePayoffData(year: number, month: number, periodNumber?: number
 
         let creatorCost = 0;
         creatorIds.forEach((cid) => {
-          const cr = allCreators.find((c) => c.id === cid);
-          if (!cr) return;
+          // Tariff for THIS campaign comes from the contract that covers it,
+          // and only if the creator is attached to that contract.
+          const ctId = contractByCampaign.get(camp.id);
+          if (!ctId) return;
+          const ct = contractById.get(ctId);
+          if (!ct) return;
+          if (!(ctsByCreator.get(cid) ?? []).includes(ctId)) return;
+          const cpmRate = ct.creator_cpm == null ? 0 : Number(ct.creator_cpm);
+          const fixedRate = ct.creator_fixed == null ? 0 : Number(ct.creator_fixed);
+          const minVpd = ct.min_videos_per_day ?? 5;
           const crAccIds = allAccounts.filter((a) => a.creator_id === cid && a.campaign_id === camp.id).map((a) => a.id);
           const crViews = crAccIds.reduce((s, id) => s + (viewsByAccount.get(id) ?? 0), 0);
-          const min = cr.min_videos_per_day ?? 5;
           const videoCount = monthVideoCountByCreator.get(cid) ?? 0;
           const pStart = new Date(Date.UTC(year, month, 1));
           const pEnd = new Date(Date.UTC(year, month + 1, 0));
-          const earned = isFixedEarnedInPeriod(videoCount, min, pStart, pEnd);
-          creatorCost += (earned ? (cr.creator_fixed ?? 200) : 0) + (cr.creator_cpm ?? 0.5) * (crViews / 1000);
+          const earned = isFixedEarnedInPeriod(videoCount, minVpd, pStart, pEnd);
+          creatorCost += (earned ? fixedRate : 0) + cpmRate * (crViews / 1000);
         });
 
         return {
@@ -184,17 +217,37 @@ export function usePayoffData(year: number, month: number, periodNumber?: number
       });
 
       // ── Creator Payoff ──
-      const pStartRef = new Date(Date.UTC(year, month, 1));
-      const pEndRef = new Date(Date.UTC(year, month + 1, 0));
-      const workingDays = getWorkingDaysInRange(pStartRef, pEndRef);
       const creatorRows: CreatorPayoffRow[] = allCreators.map((cr) => {
-        const views = creatorMonthViews(cr.id);
-        const min = cr.min_videos_per_day ?? 5;
+        // Pure SOT composition: sum per-contract portions for the month.
+        const creatorContracts = (ctsByCreator.get(cr.id) ?? [])
+          .map((cid) => contractById.get(cid))
+          .filter((c): c is ContractInput => !!c);
+        const ctCampForCreator = new Map<string, string[]>();
+        creatorContracts.forEach((c) => ctCampForCreator.set(c.id, ctCampMap.get(c.id) ?? []));
+        const crAccIdsAll = (accountsByCreator.get(cr.id) ?? []);
+        const crVideos = allVideos.filter((v) => crAccIdsAll.includes(v.tiktok_account_id));
+        const composite = computeCreatorPayableMonth({
+          creatorId: cr.id,
+          contracts: creatorContracts,
+          contractCampaignIds: ctCampForCreator,
+          videos: crVideos as any,
+          accounts: allAccounts as any,
+          campaigns: allCampaigns as any,
+          year,
+          month,
+        });
+        const min = composite.portions[0]?.minVideosPerDay ?? 5;
+        const cpmRate = composite.portions[0]?.cpmRate ?? 0;
+        const fixedAmt = composite.portions.reduce((s, p) => s + p.fixedRate, 0);
+        const cpmAmt = composite.totalCpm;
+        const earned = composite.portions.some((p) => p.fixedEarned);
+        const total = composite.total;
+        const views = composite.totalViewsAttributed;
+        const workingDays = getWorkingDaysInRange(
+          new Date(Date.UTC(year, month, 1)),
+          new Date(Date.UTC(year, month + 1, 0)),
+        );
         const videoCount = monthVideoCountByCreator.get(cr.id) ?? 0;
-        const earned = isFixedEarnedInPeriod(videoCount, min, pStartRef, pEndRef);
-        const fixedAmt = cr.creator_fixed ?? 200;
-        const cpmAmt = (cr.creator_cpm ?? 0.5) * (views / 1000);
-        const total = (earned ? fixedAmt : 0) + cpmAmt;
 
         const payment = allPayments.find((p) => p.creator_id === cr.id);
 
@@ -202,7 +255,7 @@ export function usePayoffData(year: number, month: number, periodNumber?: number
           creatorId: cr.id,
           name: cr.name,
           creatorFixed: fixedAmt,
-          creatorCpm: cr.creator_cpm ?? 0.5,
+          creatorCpm: cpmRate,
           minVideosPerDay: min,
           viewsMonth: views,
           fixedEarned: earned,
