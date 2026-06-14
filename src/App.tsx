@@ -25,8 +25,9 @@ import PaymentsPayablePage from "@/pages/dashboard/PaymentsPayablePage";
 import CampaignDetailPage from "@/pages/dashboard/CampaignDetailPage";
 import {
   PipelinePage, MediaPage, ReportsPage,
-  CalendarPage, FinancePage
+  CalendarPage
 } from "@/pages/dashboard/ComingSoonPages";
+import FinancePage from "@/pages/dashboard/FinancePage";
 import RecruitingPage from "@/pages/dashboard/RecruitingPage";
 import OutreachManagementPage from "@/pages/dashboard/OutreachManagementPage";
 import ContractsPage from "@/pages/dashboard/ContractsPage";
