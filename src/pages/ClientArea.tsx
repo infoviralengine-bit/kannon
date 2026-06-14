@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   LogOut, Eye, Heart, MessageCircle, Users, Video,
@@ -16,6 +16,7 @@ import { cleanUsername } from "@/lib/utils";
 import logoFull from "@/assets/kannon-logo-red.svg";
 import { formatViews, formatCurrency } from "@/lib/format";
 import { TikTokLink } from "@/components/TikTokLink";
+import { ClientBriefsList } from "@/components/client/ClientBriefsList";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip,
   ResponsiveContainer, CartesianGrid,
@@ -321,6 +322,7 @@ function TopVideosSection() {
 export default function ClientArea() {
   const { data, isLoading } = useClientAreaData();
   const [period, setPeriod] = useState<Period>("30d");
+  const [topTab, setTopTab] = useState<"performance" | "calendario">("performance");
 
   if (isLoading) {
     return (
@@ -370,6 +372,15 @@ export default function ClientArea() {
             {data.campaign.status === "active" ? "● Attiva" : data.campaign.status}
           </span>
         </div>
+
+        {/* Top-level sections */}
+        <Tabs value={topTab} onValueChange={(v) => setTopTab(v as "performance" | "calendario")}>
+          <TabsList>
+            <TabsTrigger value="performance">Performance</TabsTrigger>
+            <TabsTrigger value="calendario">Calendario Contenuti</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="performance" className="space-y-8 mt-6">
 
         {/* Period selector */}
         <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
@@ -466,6 +477,12 @@ export default function ClientArea() {
         )}
 
         <p className="text-xs text-muted-foreground text-center pb-4">Dati aggiornati ogni 2 ore</p>
+          </TabsContent>
+
+          <TabsContent value="calendario" className="mt-6">
+            <ClientBriefsList />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <footer className="border-t border-border/40 py-4 text-center">

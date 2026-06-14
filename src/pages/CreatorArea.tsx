@@ -8,7 +8,8 @@ import CreatorWelcome from "@/components/creator/CreatorWelcome";
 import CreatorWarmup from "@/components/creator/CreatorWarmup";
 import CreatorDashboard from "@/components/creator/CreatorDashboard";
 import CreatorEarnings from "@/components/creator/CreatorEarnings";
-import { ComingSoon } from "@/components/ComingSoon";
+import { CreatorBriefsList } from "@/components/creator/CreatorBriefsList";
+import { CreatorBriefCalendar } from "@/components/creator/CreatorBriefCalendar";
 import logoFull from "@/assets/kannon-logo-red.svg";
 
 type Section = "dashboard" | "warmup" | "contenuti" | "calendario" | "guadagni";
@@ -173,12 +174,8 @@ export default function CreatorArea() {
             periodVideos={data.periodVideos}
           />
         )}
-        {section === "contenuti" && (
-          <ComingSoon icon={FileText} title="Contenuti" />
-        )}
-        {section === "calendario" && (
-          <ComingSoon icon={CalendarDays} title="Calendario" />
-        )}
+        {section === "contenuti" && <CreatorBriefsList />}
+        {section === "calendario" && <CreatorBriefCalendar />}
         {section === "guadagni" && (
           <CreatorEarnings earnings={data.earnings} locked={!unlocked} />
         )}

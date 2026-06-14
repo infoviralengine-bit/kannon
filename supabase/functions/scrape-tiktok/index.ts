@@ -442,6 +442,10 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, exist
       published_at: string;
       account_username: string;
       views_cap: number | null;
+      audio_id: string | null;
+      audio_name: string | null;
+      caption: string | null;
+      hashtags: string[] | null;
     };
     const pending: PendingRow[] = [];
     const processedAccounts = new Set<string>();
@@ -466,6 +470,16 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, exist
       const createTime = item.createTime ? new Date(item.createTime * 1000).toISOString() : now;
       const videoDate = new Date(createTime);
 
+      // Matching identifiers (audio + caption + hashtags) for video <-> brief matching
+      const audioId = item.musicMeta?.musicId ? String(item.musicMeta.musicId) : null;
+      const audioName = item.musicMeta?.musicName ? String(item.musicMeta.musicName) : null;
+      const caption = typeof item.text === "string" ? item.text : null;
+      const hashtags = Array.isArray(item.hashtags)
+        ? item.hashtags
+            .map((h: any) => (typeof h?.name === "string" ? h.name : null))
+            .filter((h: string | null): h is string => !!h)
+        : null;
+
       for (const account of matchedAccounts) {
         const campaign = campaignMap.get(account.campaign_id!);
         if (!campaign) { skipped++; continue; }
@@ -479,6 +493,10 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, exist
           published_at: createTime,
           account_username: account.username,
           views_cap: campaign.video_views_cap ?? null,
+          audio_id: audioId,
+          audio_name: audioName,
+          caption,
+          hashtags: hashtags && hashtags.length > 0 ? hashtags : null,
         });
       }
     }
@@ -541,6 +559,10 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, exist
           window_closed: false,
           views_final: null,
           last_scraped_at: now,
+          audio_id: p.audio_id,
+          audio_name: p.audio_name,
+          caption: p.caption,
+          hashtags: p.hashtags,
         });
       } else {
         const payload: Record<string, unknown> = {
@@ -549,6 +571,12 @@ async function runScraping(supabaseAdmin: ReturnType<typeof createClient>, exist
           comments: p.comments,
           last_scraped_at: now,
         };
+        // Backfill matching identifiers on existing rows when available.
+        // Only set when present so a sparse scrape doesn't wipe good data.
+        if (p.audio_id !== null) payload.audio_id = p.audio_id;
+        if (p.audio_name !== null) payload.audio_name = p.audio_name;
+        if (p.caption !== null) payload.caption = p.caption;
+        if (p.hashtags !== null) payload.hashtags = p.hashtags;
         if (
           existing.window_expires_at &&
           new Date(existing.window_expires_at) <= nowDate &&

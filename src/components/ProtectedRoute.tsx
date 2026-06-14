@@ -43,10 +43,12 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   }
   if (
     role === ROLES.CAMPAIGN_MANAGER &&
+    !window.location.pathname.startsWith("/dashboard/content-calendar") &&
     !window.location.pathname.startsWith("/dashboard/campaign-manager") &&
-    !window.location.pathname.startsWith("/dashboard/campaigns")
+    !window.location.pathname.startsWith("/dashboard/campaigns") &&
+    !window.location.pathname.startsWith("/dashboard/videos")
   ) {
-    return <Navigate to="/dashboard/campaign-manager" replace />;
+    return <Navigate to="/dashboard/content-calendar" replace />;
   }
   if ((role === ROLES.ADMIN || role === ROLES.TEAM) && (window.location.pathname === "/" || window.location.pathname === "/login")) {
     return <Navigate to="/dashboard" replace />;
