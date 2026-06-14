@@ -237,8 +237,8 @@ export function useCreatorPortal(selectedPeriod?: number) {
         );
         const videoCount = contractPeriodVideos.length;
 
-        const cpmRate = Number(contract.creator_cpm ?? 0.5);
-        const fixedAmt = Number(contract.creator_fixed ?? 0);
+        const cpmRate = contract.creator_cpm == null ? 0 : Number(contract.creator_cpm);
+        const fixedAmt = contract.creator_fixed == null ? 0 : Number(contract.creator_fixed);
         const minVpd = contract.min_videos_per_day ?? 5;
         const target = getPeriodTarget(minVpd, periodStart, periodEnd);
 
