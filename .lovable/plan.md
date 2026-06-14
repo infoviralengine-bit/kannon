@@ -1,76 +1,55 @@
-## Obiettivo
+# Plan: Pagina Finance
 
-Sostituire il PDF report Finanz Maggio 2026 con una versione **rigorosamente on-brand Kannon** secondo il Brandbook ufficiale: light editorial, palette 60/30/10 Black/Grey/Red, logo SVG fornito, Inter + Arkhip, layout magazine elegante.
+## 1. Database
 
-## Specifiche brand (da Brandbook Kannon)
+### Nuova tabella `financial_entries`
+Campi: `type` (revenue/cost/invoice_in/invoice_out), `category`, `description`, `amount`, `currency` (default EUR), `date`, `due_date`, `status` (expected/confirmed/received/paid/overdue), `campaign_id` → campaigns, `creator_id` → creators, `brand_name` (testo libero, derivato da `campaigns.client_name` quando collegato), `invoice_number`, `notes`, timestamps.
 
-| Token | Valore |
-|---|---|
-| `--ink` | `#000000` (Kannon Black) |
-| `--bg` | `#DFDFDF` (Soft Grey) |
-| `--paper` | `#FFFFFF` |
-| `--accent` | `#FF2727` (Signal Red) |
-| Proporzione | 60% black · 30% grey · 10% red |
-| Display | **Arkhip** (Google Fonts; fallback: Space Grotesk 700 uppercase tracking 0.04em) |
-| Body | **Inter** Regular/Bold |
-| Logo | `Black logo - no background.svg` (header chiaro) e `White logo - no background.svg` (header dark) — usati come SVG, non rasterizzati |
-| Clear space | x = metà altezza simbolo |
+GRANT: solo `authenticated` + `service_role`. RLS: solo admin (`has_role(auth.uid(),'admin')`) ALL.
 
-## Struttura del PDF (3 pagine A4 portrait)
+### Settings
+Riuso tabella `settings` esistente per:
+- `finance_cash_in_bank` (numero) — valore corrente
+- `finance_cash_updated_at` (timestamp)
 
-### Pagina 1 — Cover editoriale
-- Fondo `#FFFFFF` con striscia top `#DFDFDF` h≈8mm
-- Logo Kannon nero (SVG) in alto a sinistra, clear space rispettato
-- Riga mono Inter Bold uppercase, tracking 0.18em, 9pt: `MONTHLY REPORT · MAGGIO 2026 · FINANZ`
-- Headline gigante Arkhip uppercase, 72pt, line-height 0.95: `MAGGIO IN NUMERI`
-- Sottotitolo Inter Regular 14pt grigio scuro: nome cliente "Finanz · Fintech app · iOS + Android"
-- Blocco rosso `#FF2727` h≈4mm a tutta larghezza come accent rule
-- 4 KPI sintetici in linea: Views totali · Video pubblicati · Creator attivi · CPM Spend (numeri Arkhip 32pt, label Inter mono 8pt uppercase)
-- Footer: data emissione + periodo coperto + pagina, Inter 8pt uppercase tracking
+### RPC `get_finance_dashboard(p_period text)`
+SECURITY DEFINER, admin-only. Restituisce JSON aggregato con:
+- KPI cash (cash_in_bank, burn_mensile, runway, cash_atteso)
+- Ricavi: MTD, MoM%, top brand, pipeline weighted, serie mensile 6 mesi, dettaglio per campagna (unione `client_payments` + `financial_entries`)
+- Costi: per categoria (creator dai `creator_payments` + manuali), trend mensile
+- Margini: per campagna e per creator (revenue − costo)
+- Forecast: 90 giorni, 3 scenari (pessimistico/base/ottimistico) basati su entries confermate + pipeline weighted
+- Liste: flussi previsti, fatture, scadute
 
-### Pagina 2 — Performance
-- Header compatto con logo piccolo + breadcrumb sezione: `02 · PERFORMANCE`
-- Mini sparkline views/giorno su tutto Maggio (linea nera 1pt, riempimento `#FF2727` 8% opacity, asse minimal)
-- Tabella "Top creator del mese" full-width Inter:
-  - Header Inter Bold 9pt uppercase tracking 0.12em colore `#555`
-  - Righe alternate `#FFFFFF` / `#FAFAFA` (soft grey più leggero per ariosità)
-  - Colonne: @username, Video, Views, Δ vs aprile, Top video
-  - Numeri tabulari, allineamento dx, accent rosso solo sulla colonna Δ positivi
-- Striscia rossa h=2mm come separatore di sezione
+Burn = media costi confermati ultimi 3 mesi. Runway = cash / burn.
 
-### Pagina 3 — Top video, Insights, Billing
-- `03 · HIGHLIGHTS`
-- Lista Top 5 video: numero serif gigante Arkhip 40pt a sx, @username Inter Bold 13pt, views Inter Regular 11pt, link mono 8pt
-- Sezione `04 · INSIGHTS` con 2-3 bullet generati automaticamente (top performer, trend settimanale, viral spike) — Inter 11pt, occhiello mono uppercase
-- Sezione finale `05 · BILLING SUMMARY`:
-  - Totale spend in Arkhip 56pt nero
-  - Sotto, in rosso `#FF2727` Inter Bold 11pt uppercase: `PROSSIMA EMISSIONE · 9 GIUGNO 2026`
-  - Breakdown su 2 colonne (Views totali · CPM rate · Subtotale · IVA · Totale) in Inter 10pt
-- Footer con logo mini + `kannon.lovable.app · info@kannon.io`
+## 2. Routing & Sidebar
+- Sostituire `FinancePage` da ComingSoon a nuova `FinancePage` reale in `src/pages/dashboard/FinancePage.tsx`.
+- `ProtectedRoute` wrapper specifico per `/dashboard/finance` con `allowedRoles=['admin']`, oppure check interno alla pagina.
+- Sidebar: mostrare la voce Finance solo per admin (filtro su `AppSidebar`).
 
-## Implementazione tecnica
+## 3. Componenti UI (`src/components/finance/`)
+- `FinanceHeader.tsx` — titolo + period toggle (mese/3m/6m/anno)
+- `AddEntryDialog.tsx` — form unificato (entrata/uscita/fattura) con zod validation
+- `CashTab.tsx` — 4 KPI card + tabelle flussi previsti + fatture; dialog per aggiornare cash in bank
+- `RevenueTab.tsx` — 4 KPI + tabella per campagna + bar chart 6 mesi
+- `CostsTab.tsx` — 5 KPI + tabella categorie + line chart trend
+- `MarginsTab.tsx` — 3 KPI + tabelle margine campagna/creator con highlight rosso su negativi
+- `ForecastTab.tsx` — line chart 3 scenari 90gg + alert runway <3 mesi
 
-- Script Python in `/tmp/gen_kannon_report.py` usando **ReportLab** + **svglib** (per renderizzare il logo SVG vettoriale nel PDF)
-- Font: download Inter da Google Fonts API + Arkhip da `https://fonts.cdnfonts.com/css/arkhip` (o fallback Space Grotesk 700 se Arkhip non scaricabile)
-- Dati Finanz Maggio 2026 letti via `psql` dalle tabelle `videos` + `campaigns` + `creators` (stessa query del PDF v1)
-- Numeri in formato italiano (`1.234,56 €`)
-- Output: `/mnt/documents/report-finanz-maggio-2026-v2.pdf`
+## 4. Data layer
+- `src/hooks/useFinanceData.ts` — React Query, chiama RPC `get_finance_dashboard` con period selezionato
+- `src/hooks/useFinancialEntries.ts` — CRUD su `financial_entries` con invalidation
+- `src/lib/finance.ts` — helper calcoli locali (formatCurrency già esiste)
 
-## QA (obbligatorio prima di consegna)
+## 5. Edge cases gestiti
+- Cash non impostato → card mostra "Non impostato" + CTA
+- Storico insufficiente → forecast mostra solo mese corrente con nota
+- Margine negativo → testo rosso + icona warning
+- Runway <3 mesi nello scenario pessimistico → alert rosso in cima al tab Forecast
 
-1. `pdftoppm -r 150` di tutte e 3 le pagine
-2. Inspect con `code--view` di ogni JPG:
-   - Logo nitido e non distorto, clear space rispettato
-   - Nessun overflow testo
-   - Margini omogenei (24mm)
-   - Allineamento tabella perfetto
-   - Contrasto testo/sfondo > AA
-   - Niente glyph mancanti (Inter copre tutto, Arkhip è solo all-caps latin → check)
-   - Proporzione colore 60/30/10 rispettata visivamente
-3. Lista issue trovati + fix + re-render finché pulito
-4. Riepilogo QA esplicito nel messaggio finale con artifact
-
-## Note
-
-- Niente modifiche al codice dell'app (questo è solo il test del template PDF, su richiesta dell'utente — la funzione "Genera & invia report mensili" + cron del 9 verrà costruita solo dopo l'approvazione visiva)
-- Salvo il brand Kannon in `mem://style/kannon-brand` per future esportazioni PDF/email/asset client-facing
+## 6. Dettagli tecnici
+- Recharts (già usato) per grafici
+- Italian locale per importi/date (`formatCurrency`, `it-IT`)
+- Realtime invalidation su `financial_entries` via hook esistente
+- Memoria: aggiungere `mem://features/finance-page` riassuntiva
