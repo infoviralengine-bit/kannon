@@ -102,7 +102,7 @@ function EditCampaignModal({
   const qc = useQueryClient();
   const [name, setName] = useState(campaign.name);
   const [clientName, setClientName] = useState(campaign.client_name);
-  const [clientCpm, setClientCpm] = useState(String(campaign.client_cpm ?? 2));
+  const [clientCpm, setClientCpm] = useState(String(campaign.client_cpm ?? 0));
   const [clientFixed, setClientFixed] = useState(String(campaign.client_fixed ?? 0));
   const [startDate, setStartDate] = useState<Date | undefined>(new Date(campaign.start_date));
   const [endDate, setEndDate] = useState<Date | undefined>(campaign.end_date ? new Date(campaign.end_date) : undefined);
@@ -115,7 +115,7 @@ function EditCampaignModal({
     mutationFn: async () => {
       if (!name || !clientName || !startDate) throw new Error("Compila i campi obbligatori");
       const parsedCpm = parseFloat(clientCpm);
-      const newCpm = isNaN(parsedCpm) ? 2 : parsedCpm;
+      const newCpm = isNaN(parsedCpm) ? 0 : parsedCpm;
       const parsedFixed = parseFloat(clientFixed);
       const newFixed = isNaN(parsedFixed) ? 0 : parsedFixed;
       const parsedMinVideos = parseInt(minMonthlyVideos);
@@ -468,7 +468,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
       const viewsPaidCumulative = prevViewsPaidCumulative + newViews;
 
       const fixedAmount = isLastCycle ? 0 : (campaign.client_fixed ?? 0);
-      let cpmAmount = (campaign.client_cpm ?? 2) * (newViews / 1000);
+      let cpmAmount = (campaign.client_cpm ?? 0) * (newViews / 1000);
 
       // Apply spend cap (only to CPM, fixed is always added on top)
       const spendCap = (campaign as any).monthly_spend_cap as number | null;

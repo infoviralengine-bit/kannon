@@ -183,13 +183,14 @@ export function useCampaignMargin(campaignId: string) {
 
       const { data: creators } = await supabase
         .from("creators")
-        .select("id, creator_cpm, creator_fixed, min_videos_per_day, status")
+        .select("id, status")
         .in("id", creatorIds)
         .eq("status", "active");
 
       const activeCreators = creators ?? [];
 
-      // Fetch contract terms for this campaign (prioritized over creator defaults)
+      // Fetch contract terms for this campaign. Creator rates come ONLY from the
+      // contract covering the campaign — never from the creators table.
       const { data: contractCampaigns } = await supabase
         .from("contract_campaigns")
         .select("contract_id")
@@ -215,9 +216,10 @@ export function useCampaignMargin(campaignId: string) {
           const contract = (contracts ?? []).find((c) => c.id === link.contract_id);
           if (contract) {
             contractTermsMap.set(link.creator_id, {
-              cpm: contract.creator_cpm,
-              fixed: contract.creator_fixed,
-              minVideos: contract.min_videos_per_day,
+              // Missing contract rate (null) → 0 sentinel, never assume a default.
+              cpm: contract.creator_cpm == null ? 0 : Number(contract.creator_cpm),
+              fixed: contract.creator_fixed == null ? 0 : Number(contract.creator_fixed),
+              minVideos: contract.min_videos_per_day ?? 5,
             });
           }
         });
@@ -271,7 +273,8 @@ export function useCampaignMargin(campaignId: string) {
       let cpmCost = 0;
       activeCreators.forEach((cr) => {
         const contractTerms = contractTermsMap.get(cr.id);
-        const creatorCpm = contractTerms?.cpm ?? cr.creator_cpm ?? 0;
+        // Rate from the covering contract only; no creators-table fallback.
+        const creatorCpm = contractTerms?.cpm ?? 0;
 
         const crCampAccIds = (allAccounts ?? [])
           .filter((a) => a.creator_id === cr.id && a.campaign_id === campaignId)

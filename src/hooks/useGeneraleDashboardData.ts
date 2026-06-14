@@ -252,7 +252,7 @@ export function useActiveCampaignCards() {
 
         const viewsCap = (c as any).video_views_cap as number | null;
         const spendCap = (c as any).monthly_spend_cap as number | null;
-        const clientCpm = c.client_cpm ?? 2;
+        const clientCpm = c.client_cpm ?? 0;
         const clientFixed = c.client_fixed ?? 0;
         const cpmRevenue = clientCpm * (viewsMonth / 1000);
         const revenueMonth = clientFixed + cpmRevenue;
