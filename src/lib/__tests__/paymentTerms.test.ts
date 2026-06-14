@@ -45,7 +45,7 @@ describe("parsePaymentTerms", () => {
     const out = parsePaymentTerms({ type: "mystery", fixedDueDay: 7 });
     // Non-tot_split inputs are merged on top of DEFAULT_STANDARD.
     expect((out as any).fixedDueDay).toBe(7);
-    expect((out as any).cpmLagMonths).toBe(DEFAULT_STANDARD.cpmLagMonths);
-    expect((out as any).finalCpmDelayDays).toBe(DEFAULT_STANDARD.finalCpmDelayDays);
+    expect((out as any).cpmLagMonths).toBe((DEFAULT_STANDARD as any).cpmLagMonths);
+    expect((out as any).finalCpmDelayDays).toBe((DEFAULT_STANDARD as any).finalCpmDelayDays);
   });
 });
