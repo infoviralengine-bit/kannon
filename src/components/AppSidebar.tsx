@@ -51,7 +51,7 @@ const sidebarSections: SidebarSection[] = [
     label: "Operations",
     items: [
       { label: "Campagne", icon: Megaphone, path: "/dashboard/campaigns", roles: [...ROLE_GROUPS.STAFF, ROLES.CAMPAIGN_MANAGER] },
-      { label: "Video Analytics", icon: BarChart3, path: "/dashboard/videos", roles: ROLE_GROUPS.STAFF, isNew: true },
+      { label: "Video Analytics", icon: BarChart3, path: "/dashboard/videos", roles: ROLE_GROUPS.STAFF },
       { label: "Trend TikTok", icon: TrendingUp, path: "/dashboard/trends", roles: ROLE_GROUPS.STAFF, isNew: true },
     ],
   },
