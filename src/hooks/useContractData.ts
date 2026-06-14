@@ -211,8 +211,9 @@ export function useContractCreators(contractId: string, selectedPeriod?: number)
       const campMap = new Map(((campaigns ?? []) as any[]).map((c) => [c.id, c]));
       const campIdSet = new Set(campIds);
       const linkMap = new Map(((links ?? []) as any[]).map((l: any) => [l.creator_id, l.id]));
-      const cpmRate = Number((contract as any)?.creator_cpm ?? 0.5);
-      const fixedAmt = Number((contract as any)?.creator_fixed ?? 0);
+      // From CONTRACT only. Missing → 0 (never assume 0.5/200).
+      const cpmRate = (contract as any)?.creator_cpm == null ? 0 : Number((contract as any).creator_cpm);
+      const fixedAmt = (contract as any)?.creator_fixed == null ? 0 : Number((contract as any).creator_fixed);
       const minVpd = (contract as any)?.min_videos_per_day ?? 5;
       const target = getPeriodTarget(minVpd, periodStart, periodEnd);
 
@@ -344,8 +345,8 @@ export function useContractPayments(year: number, month: number) {
         const contractCreatorIds = allCCr.filter((r) => r.contract_id === contract.id).map((r) => r.creator_id);
         const contractCampSet = new Set(contractCampIds);
 
-        const cpmRate = Number(contract.creator_cpm ?? 0.5);
-        const fixedAmt = Number(contract.creator_fixed ?? 0);
+        const cpmRate = contract.creator_cpm == null ? 0 : Number(contract.creator_cpm);
+        const fixedAmt = contract.creator_fixed == null ? 0 : Number(contract.creator_fixed);
         const minVpd = contract.min_videos_per_day ?? 5;
         const target = getMonthlyTarget(minVpd, year, month);
 
