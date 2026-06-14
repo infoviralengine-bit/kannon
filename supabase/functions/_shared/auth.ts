@@ -8,6 +8,38 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 
 export type AuthResult = { ok: true } | { ok: false; response: Response };
 
+/**
+ * Build CORS headers restricted to APP_ORIGIN.
+ * APP_ORIGIN is a comma-separated list of allowed origins.
+ * If the request's Origin header matches one of them, that origin is echoed back.
+ * If APP_ORIGIN is unset, falls back to "*" (dev/legacy behaviour) — set it in prod.
+ */
+export function buildCorsHeaders(req: Request): Record<string, string> {
+  const baseHeaders: Record<string, string> = {
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-cron-secret",
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Vary": "Origin",
+  };
+
+  const appOrigin = Deno.env.get("APP_ORIGIN");
+  const reqOrigin = req.headers.get("Origin") ?? "";
+
+  if (!appOrigin) {
+    return { ...baseHeaders, "Access-Control-Allow-Origin": "*" };
+  }
+
+  const allowed = appOrigin.split(",").map((o) => o.trim()).filter(Boolean);
+  if (reqOrigin && allowed.includes(reqOrigin)) {
+    return { ...baseHeaders, "Access-Control-Allow-Origin": reqOrigin };
+  }
+
+  // Origin not allowed: still answer with the first configured one so that
+  // server-to-server / curl calls (no Origin header) keep working, but
+  // browsers from other origins will be blocked by the browser itself.
+  return { ...baseHeaders, "Access-Control-Allow-Origin": allowed[0] };
+}
+
 export async function assertAuthorized(
   req: Request,
   supabaseAdmin: SupabaseClient,
