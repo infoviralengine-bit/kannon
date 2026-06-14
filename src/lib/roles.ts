@@ -31,11 +31,11 @@ export const ROLE_GROUPS = {
     ROLES.CAMPAIGN_MANAGER,
   ] as AppRole[],
 
-  /** Single-purpose operators (each sees only their dedicated page) */
+  /** Single-purpose operators (each sees only their dedicated page).
+   *  NB: campaign_manager removed after SP#4 (now has a normal multi-page sidebar). */
   SINGLE_PURPOSE: [
     ROLES.OUTREACH,
     ROLES.CLOSER,
-    ROLES.CAMPAIGN_MANAGER,
   ] as AppRole[],
 
   /** External roles routed to dedicated portals */
@@ -65,7 +65,7 @@ export const ROLE_DEFAULT_ROUTE: Record<AppRole, string> = {
   [ROLES.TEAM]: "/dashboard",
   [ROLES.OUTREACH]: "/dashboard/recruiting",
   [ROLES.CLOSER]: "/dashboard/closer",
-  [ROLES.CAMPAIGN_MANAGER]: "/dashboard/campaign-manager",
+  [ROLES.CAMPAIGN_MANAGER]: "/dashboard/content-calendar",
   [ROLES.CREATOR]: "/creator",
   [ROLES.CLIENT]: "/client",
 };

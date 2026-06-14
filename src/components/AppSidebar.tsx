@@ -1,7 +1,7 @@
 import {
-  Home, Megaphone, BarChart3, TrendingUp, GitMerge, Users, AtSign,
+  Home, Megaphone, BarChart3, CalendarDays, GitMerge, Users, AtSign,
   FileText, UserPlus, Briefcase, Wallet, FileBarChart,
-  Settings, LogOut, Search, PhoneCall, BarChart2,
+  Settings, LogOut, Search, PhoneCall,
   type LucideIcon,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -47,15 +47,14 @@ const sidebarSections: SidebarSection[] = [
       { label: "Home", icon: Home, path: "/dashboard", roles: ROLE_GROUPS.STAFF },
       { label: "Recruiting", icon: Search, path: "/dashboard/recruiting", roles: [ROLES.OUTREACH] },
       { label: "Closer", icon: PhoneCall, path: "/dashboard/closer", roles: [ROLES.CLOSER] },
-      { label: "Campaign Manager", icon: BarChart2, path: "/dashboard/campaign-manager", roles: [ROLES.CAMPAIGN_MANAGER] },
     ],
   },
   {
     label: "Operations",
     items: [
       { label: "Campagne", icon: Megaphone, path: "/dashboard/campaigns", roles: [...ROLE_GROUPS.STAFF, ROLES.CAMPAIGN_MANAGER] },
-      { label: "Video Analytics", icon: BarChart3, path: "/dashboard/videos", roles: ROLE_GROUPS.STAFF },
-      { label: "Trend TikTok", icon: TrendingUp, path: "/dashboard/trends", roles: ROLE_GROUPS.STAFF, isNew: true },
+      { label: "Video Analytics", icon: BarChart3, path: "/dashboard/videos", roles: [...ROLE_GROUPS.STAFF, ROLES.CAMPAIGN_MANAGER] },
+      { label: "Calendario Contenuti", icon: CalendarDays, path: "/dashboard/content-calendar", roles: [...ROLE_GROUPS.STAFF, ROLES.CAMPAIGN_MANAGER] },
     ],
   },
   {

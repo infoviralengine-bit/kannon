@@ -35,9 +35,8 @@ import ContractDetailPage from "@/pages/dashboard/ContractDetailPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
 import CloserPage from "@/pages/dashboard/CloserPage";
 import OnboardingMonitorPage from "@/pages/dashboard/OnboardingMonitorPage";
-import CampaignManagerPage from "@/pages/dashboard/CampaignManagerPage";
 import VideoAnalyticsPage from "@/pages/dashboard/VideoAnalyticsPage";
-import TrendTiktokPage from "@/pages/dashboard/TrendTiktokPage";
+import ContentCalendarPage from "@/pages/dashboard/ContentCalendarPage";
 import CreatorPipelinePage from "@/pages/dashboard/CreatorPipelinePage";
 import PipelineB2BPage from "@/pages/dashboard/PipelineB2BPage";
 import HiringPage from "@/pages/dashboard/HiringPage";
@@ -82,9 +81,12 @@ const App = () => (
               <Route path="finance" element={<FinancePage />} />
               <Route path="closer" element={<CloserPage />} />
               <Route path="onboarding" element={<OnboardingMonitorPage />} />
-              <Route path="campaign-manager" element={<CampaignManagerPage />} />
+              <Route path="content-calendar" element={<ContentCalendarPage />} />
               <Route path="videos" element={<VideoAnalyticsPage />} />
-              <Route path="trends" element={<TrendTiktokPage />} />
+              {/* Backward-compat redirects (SP#4) */}
+              <Route path="campaign-manager" element={<Navigate to="/dashboard/content-calendar?tab=analytics" replace />} />
+              <Route path="trends" element={<Navigate to="/dashboard/content-calendar" replace />} />
+              <Route path="trend-tiktok" element={<Navigate to="/dashboard/content-calendar" replace />} />
               <Route path="creator-pipeline" element={<CreatorPipelinePage />} />
               <Route path="pipeline-b2b" element={<PipelineB2BPage />} />
               <Route path="hiring" element={<HiringPage />} />
