@@ -24,7 +24,7 @@ import PaymentsReceivablePage from "@/pages/dashboard/PaymentsReceivablePage";
 import PaymentsPayablePage from "@/pages/dashboard/PaymentsPayablePage";
 import CampaignDetailPage from "@/pages/dashboard/CampaignDetailPage";
 import {
-  PipelinePage, MediaPage, ReportsPage,
+  PipelinePage,
   CalendarPage
 } from "@/pages/dashboard/ComingSoonPages";
 import FinancePage from "@/pages/dashboard/FinancePage";
@@ -36,6 +36,11 @@ import SettingsPage from "@/pages/dashboard/SettingsPage";
 import CloserPage from "@/pages/dashboard/CloserPage";
 import OnboardingMonitorPage from "@/pages/dashboard/OnboardingMonitorPage";
 import CampaignManagerPage from "@/pages/dashboard/CampaignManagerPage";
+import VideoAnalyticsPage from "@/pages/dashboard/VideoAnalyticsPage";
+import TrendTiktokPage from "@/pages/dashboard/TrendTiktokPage";
+import CreatorPipelinePage from "@/pages/dashboard/CreatorPipelinePage";
+import PipelineB2BPage from "@/pages/dashboard/PipelineB2BPage";
+import HiringPage from "@/pages/dashboard/HiringPage";
 
 const queryClient = new QueryClient();
 
@@ -69,8 +74,6 @@ const App = () => (
               <Route path="payments-receivable" element={<PaymentsReceivablePage />} />
               <Route path="payments-payable" element={<PaymentsPayablePage />} />
               <Route path="pipeline" element={<PipelinePage />} />
-              <Route path="media" element={<MediaPage />} />
-              <Route path="reports" element={<ReportsPage />} />
               <Route path="recruiting" element={<RecruitingPage />} />
               <Route path="outreach" element={<OutreachManagementPage />} />
               <Route path="contracts" element={<ContractsPage />} />
@@ -80,6 +83,11 @@ const App = () => (
               <Route path="closer" element={<CloserPage />} />
               <Route path="onboarding" element={<OnboardingMonitorPage />} />
               <Route path="campaign-manager" element={<CampaignManagerPage />} />
+              <Route path="videos" element={<VideoAnalyticsPage />} />
+              <Route path="trends" element={<TrendTiktokPage />} />
+              <Route path="creator-pipeline" element={<CreatorPipelinePage />} />
+              <Route path="pipeline-b2b" element={<PipelineB2BPage />} />
+              <Route path="hiring" element={<HiringPage />} />
               <Route path="settings" element={<SettingsPage />} />
               {/* Redirect old payments route */}
               <Route path="payments" element={<Navigate to="/dashboard/payments-receivable" replace />} />

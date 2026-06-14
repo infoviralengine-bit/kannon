@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { ROLES } from "@/lib/roles";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -20,22 +21,34 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   if (!user) return <Navigate to="/login" replace />;
 
   // Role-based redirect
-  if (role === "creator" && !window.location.pathname.startsWith("/creator")) {
+  if (role === ROLES.CREATOR && !window.location.pathname.startsWith("/creator")) {
     return <Navigate to="/creator" replace />;
   }
-  if (role === "client" && !window.location.pathname.startsWith("/client")) {
+  if (role === ROLES.CLIENT && !window.location.pathname.startsWith("/client")) {
     return <Navigate to="/client" replace />;
   }
-  if (role === "outreach" && !window.location.pathname.startsWith("/dashboard/recruiting")) {
+  if (
+    role === ROLES.OUTREACH &&
+    !window.location.pathname.startsWith("/dashboard/recruiting") &&
+    !window.location.pathname.startsWith("/dashboard/hiring")
+  ) {
     return <Navigate to="/dashboard/recruiting" replace />;
   }
-  if (role === "closer" && !window.location.pathname.startsWith("/dashboard/closer")) {
+  if (
+    role === ROLES.CLOSER &&
+    !window.location.pathname.startsWith("/dashboard/closer") &&
+    !window.location.pathname.startsWith("/dashboard/creator-pipeline")
+  ) {
     return <Navigate to="/dashboard/closer" replace />;
   }
-  if (role === "campaign_manager" && !window.location.pathname.startsWith("/dashboard/campaign-manager")) {
+  if (
+    role === ROLES.CAMPAIGN_MANAGER &&
+    !window.location.pathname.startsWith("/dashboard/campaign-manager") &&
+    !window.location.pathname.startsWith("/dashboard/campaigns")
+  ) {
     return <Navigate to="/dashboard/campaign-manager" replace />;
   }
-  if ((role === "admin" || role === "team") && (window.location.pathname === "/" || window.location.pathname === "/login")) {
+  if ((role === ROLES.ADMIN || role === ROLES.TEAM) && (window.location.pathname === "/" || window.location.pathname === "/login")) {
     return <Navigate to="/dashboard" replace />;
   }
 
