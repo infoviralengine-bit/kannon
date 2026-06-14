@@ -646,6 +646,78 @@ export type Database = {
           },
         ]
       }
+      financial_entries: {
+        Row: {
+          amount: number
+          brand_name: string | null
+          campaign_id: string | null
+          category: string | null
+          created_at: string
+          creator_id: string | null
+          currency: string
+          date: string
+          description: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string | null
+          notes: string | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          brand_name?: string | null
+          campaign_id?: string | null
+          category?: string | null
+          created_at?: string
+          creator_id?: string | null
+          currency?: string
+          date?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          brand_name?: string | null
+          campaign_id?: string | null
+          category?: string | null
+          created_at?: string
+          creator_id?: string | null
+          currency?: string
+          date?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          notes?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_entries_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_entries_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           campaign_id: string | null
@@ -1183,6 +1255,7 @@ export type Database = {
           contract_id: string
         }[]
       }
+      get_finance_dashboard: { Args: { p_period?: string }; Returns: Json }
       get_last_scrape_at: { Args: never; Returns: string }
       get_onboarding_data: { Args: { p_token: string }; Returns: Json }
       get_user_role: {
@@ -1200,6 +1273,7 @@ export type Database = {
         Args: { _account_id: string; _user_id: string }
         Returns: boolean
       }
+      update_finance_cash: { Args: { p_amount: number }; Returns: undefined }
     }
     Enums: {
       app_role:
