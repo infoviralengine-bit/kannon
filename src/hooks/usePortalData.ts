@@ -118,8 +118,8 @@ export function useCreatorAreaData() {
         const contractMonthVideos = monthVideosList.filter((v) => contractAccIds.has(v.tiktok_account_id));
         const videoCount = contractMonthVideos.length;
 
-        const cpmRate = Number(contract.creator_cpm ?? 0.5);
-        const fixedAmt = Number(contract.creator_fixed ?? 0);
+        const cpmRate = contract.creator_cpm == null ? 0 : Number(contract.creator_cpm);
+        const fixedAmt = contract.creator_fixed == null ? 0 : Number(contract.creator_fixed);
         const minVpd = contract.min_videos_per_day ?? 5;
         const target = getMonthlyTarget(minVpd, year, month);
 
