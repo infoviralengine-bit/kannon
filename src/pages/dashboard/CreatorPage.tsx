@@ -215,7 +215,16 @@ export default function CreatorPage() {
               <TableBody>
                 {filtered.map(c => (
                   <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <span>{c.name}</span>
+                        {!c.hasActiveContract && (
+                          <Badge className="bg-destructive/15 text-destructive border-destructive/30 text-[10px]">
+                            Senza contratto
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">{c.activeCampaigns}</TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
                     <TableCell>

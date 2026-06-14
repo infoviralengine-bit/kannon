@@ -209,9 +209,18 @@ export default function CreatorDetailPage() {
                   <>
                     {payoff.contracts.map((pc) => (
                       <div key={pc.contractId} className="space-y-3 border-b border-border pb-4 last:border-b-0">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-semibold">{pc.contractName}</span>
-                          <Badge className="bg-success/20 text-success border-success/30">✅ Fisso maturato</Badge>
+                          <div className="flex items-center gap-2">
+                            {pc.rateMissing && (
+                              <Badge className="bg-destructive/20 text-destructive border-destructive/30">⚠️ Tariffa mancante</Badge>
+                            )}
+                            {pc.fixedEarned ? (
+                              <Badge className="bg-success/20 text-success border-success/30">✅ Fisso maturato</Badge>
+                            ) : (
+                              <Badge className="bg-muted text-muted-foreground border-border">Fisso non maturato</Badge>
+                            )}
+                          </div>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-xs">Fisso</span>

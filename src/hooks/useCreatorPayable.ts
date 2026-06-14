@@ -1,13 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { sumEffectiveViewsCapped } from "@/lib/videoWindow";
+import { computeContractPortion, type ContractInput } from "@/lib/creatorPayable";
 import {
   getContractPeriod,
   getPeriodTarget,
-  isFixedEarnedInPeriod,
   parseContractStartDate,
   getCurrentPeriodNumber,
-  formatPeriodRange,
 } from "@/lib/contractPeriods";
 
 /* ══════════════════════════════════════
@@ -74,9 +72,6 @@ export function useContractPayable(periodByContract: Record<string, number>) {
       const allCCr = (contractCreators ?? []) as any[];
       const allAccounts = (accounts ?? []) as any[];
       const allCampaigns = (campaigns ?? []) as any[];
-
-      const capByCampaign = new Map<string, number | null>();
-      allCampaigns.forEach((c) => capByCampaign.set(c.id, c.video_views_cap));
 
       const creatorMap = new Map(allCreators.map((c) => [c.id, c.name]));
 
@@ -170,16 +165,25 @@ export function useContractPayable(periodByContract: Record<string, number>) {
         const pEndISO = pEndDate.toISOString();
 
         const campIds = contractCampMap.get(contract.id) ?? [];
-        const campIdSet = new Set(campIds);
         const creatorIds = contractCreatorMap.get(contract.id) ?? [];
 
-        // Tariff: from CONTRACT only. Missing → 0 (sentinel for missing data,
-        // never assume 0.5/200). 0 is a legitimate contractual value (e.g. FZ fixed=0).
-        const cpmRate = contract.creator_cpm == null ? 0 : Number(contract.creator_cpm);
-        const fixedAmt = contract.creator_fixed == null ? 0 : Number(contract.creator_fixed);
         // min_videos_per_day: contract value, fallback 5 (Premium obligation).
         const minVpd = contract.min_videos_per_day ?? 5;
         const target = getPeriodTarget(minVpd, periodStart, periodEnd);
+
+        // Single source of truth (creatorPayable.ts). Each contract has its own
+        // rolling period, so we compute the portion per (contract, creator) with
+        // this period's date range — exactly the case the SOT documents.
+        const contractInput: ContractInput = {
+          id: contract.id,
+          name: contract.name,
+          creator_cpm: contract.creator_cpm,
+          creator_fixed: contract.creator_fixed,
+          min_videos_per_day: contract.min_videos_per_day,
+        };
+        const periodVideos = allVideos.filter(
+          (v) => v.published_at >= pStartISO && v.published_at < pEndISO,
+        );
 
         let sectionTotal = 0;
         let sectionVideos = 0;
@@ -187,35 +191,19 @@ export function useContractPayable(periodByContract: Record<string, number>) {
         const creatorsInContract: CreatorInContract[] = creatorIds
           .map((creatorId) => {
             const name = creatorMap.get(creatorId) ?? "—";
-            const crAccounts = allAccounts.filter(
-              (a) => a.creator_id === creatorId && a.campaign_id && campIdSet.has(a.campaign_id)
-            );
-            const crAccIds = new Set(crAccounts.map((a) => a.id));
-
-            // Videos in this contract's period
-            const crVideos = allVideos.filter((v) =>
-              crAccIds.has(v.tiktok_account_id) &&
-              v.published_at >= pStartISO &&
-              v.published_at < pEndISO
-            );
-            const videoCount = crVideos.length;
-
-            // CPM with per-campaign cap
-            let totalViews = 0;
-            campIds.forEach((campId) => {
-              const cap = capByCampaign.get(campId) ?? null;
-              const campAccs = crAccounts.filter((a) => a.campaign_id === campId);
-              const campAccSet = new Set(campAccs.map((a) => a.id));
-              const campVideos = crVideos.filter((v) => campAccSet.has(v.tiktok_account_id));
-              totalViews += sumEffectiveViewsCapped(campVideos, cap);
+            const portion = computeContractPortion({
+              creatorId,
+              contract: contractInput,
+              contractCampaignIds: campIds,
+              videos: periodVideos as any,
+              accounts: allAccounts as any,
+              campaigns: allCampaigns as any,
+              periodStart,
+              periodEnd,
             });
 
-            const fixedEarned = isFixedEarnedInPeriod(videoCount, minVpd, periodStart, periodEnd);
-            const cpmAmount = cpmRate * (totalViews / 1000);
-            const subtotal = (fixedEarned ? fixedAmt : 0) + cpmAmount;
-
-            sectionTotal += subtotal;
-            sectionVideos += videoCount;
+            sectionTotal += portion.subtotal;
+            sectionVideos += portion.videoCount;
 
             // Find payment for this creator + period
             const pStartStr = periodStart.toISOString().split("T")[0];
@@ -229,12 +217,12 @@ export function useContractPayable(periodByContract: Record<string, number>) {
             return {
               creatorId,
               creatorName: name,
-              videoCount,
+              videoCount: portion.videoCount,
               monthlyTarget: target,
-              fixedAmount: fixedAmt,
-              fixedEarned,
-              cpmAmount,
-              subtotal,
+              fixedAmount: portion.fixedRate,
+              fixedEarned: portion.fixedEarned,
+              cpmAmount: portion.cpmAmount,
+              subtotal: portion.subtotal,
               isPaid: payment?.is_paid ?? false,
               paidAt: payment?.paid_at ?? null,
               paymentId: payment?.id ?? null,

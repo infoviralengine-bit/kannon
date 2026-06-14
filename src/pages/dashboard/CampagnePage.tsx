@@ -63,7 +63,7 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
       const { data: newCamp, error } = await supabase.from("campaigns").insert({
         name,
         client_name: clientName,
-        client_cpm: isNaN(parseFloat(clientCpm)) ? 2 : parseFloat(clientCpm),
+        client_cpm: isNaN(parseFloat(clientCpm)) ? 0 : parseFloat(clientCpm),
         client_fixed: fixedVal,
         start_date: startStr,
         end_date: endDate ? format(endDate, "yyyy-MM-dd") : null,

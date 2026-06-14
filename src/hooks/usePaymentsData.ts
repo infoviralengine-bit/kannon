@@ -58,7 +58,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
         (camps ?? []).forEach((c) => campMap.set(c.id, {
           name: c.name, client_name: c.client_name,
           client_fixed: Number(c.client_fixed ?? 0),
-          client_cpm: Number(c.client_cpm ?? 2),
+          client_cpm: Number(c.client_cpm ?? 0),
           video_views_cap: (c as any).video_views_cap as number | null,
           monthly_spend_cap: (c as any).monthly_spend_cap as number | null,
         }));
@@ -146,7 +146,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       paymentsByCampaign.forEach((cycleList, campId) => {
         if (!unpaidCampIds.includes(campId)) return;
         const camp = campMap.get(campId);
-        const clientCpm = camp?.client_cpm ?? 2;
+        const clientCpm = camp?.client_cpm ?? 0;
         const clientFixed = camp?.client_fixed ?? 0;
         const spendCap = camp?.monthly_spend_cap ?? null;
         const totalCampaignViews = totalViewsByCampaign.get(campId) ?? 0;
@@ -263,7 +263,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           isLastCycle: cycle?.is_last_cycle ?? false,
           isFirstCycle: p.cycle_number === 1 && cpmViews === 0,
             clientFixed: camp?.client_fixed ?? 0,
-            clientCpm: camp?.client_cpm ?? 2,
+            clientCpm: camp?.client_cpm ?? 0,
             paymentKind: ((p as any).payment_kind ?? "standard") as ClientPaymentRow["paymentKind"],
             amountOverridden: (p as any).amount_overridden ?? false,
             notes: (p as any).notes ?? null,
@@ -664,7 +664,7 @@ export function useCampaignCycles(campaignId: string) {
       const recalculated = new Map<string, { cpmViews: number; cpmAmount: number; fixedAmount: number; totalAmount: number; viewsPaidCumulative: number }>();
 
       if (hasUnpaid) {
-        const clientCpm = Number(camp?.client_cpm ?? 2);
+        const clientCpm = Number(camp?.client_cpm ?? 0);
         const clientFixed = Number(camp?.client_fixed ?? 0);
         const spendCap = (camp as any)?.monthly_spend_cap as number | null;
         const totalNewViews = Math.max(0, liveViewsTotal - lastPaidCumulative);
@@ -728,7 +728,7 @@ export function useCampaignCycles(campaignId: string) {
             isLastCycle: c.is_last_cycle,
             isFirstCycle: p.cycle_number === 1,
             clientFixed: Number(camp?.client_fixed ?? 0),
-            clientCpm: Number(camp?.client_cpm ?? 2),
+            clientCpm: Number(camp?.client_cpm ?? 0),
             paymentKind: ((p as any).payment_kind ?? "standard") as ClientPaymentRow["paymentKind"],
             amountOverridden: (p as any).amount_overridden ?? false,
             notes: (p as any).notes ?? null,

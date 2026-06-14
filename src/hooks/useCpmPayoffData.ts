@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViewsCapped, countByWindowStatus, type VideoWithWindow } from "@/lib/videoWindow";
-import { computeContractPortion, type ContractInput } from "@/lib/creatorPayable";
+import { type ContractInput } from "@/lib/creatorPayable";
 
 function monthRange(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString();
@@ -155,7 +155,10 @@ export function useCpmPayoffData(year: number, month: number) {
         const clientCpmRate = camp.client_cpm ?? 0; // client rates: separate refactor
         const clientCpmAmount = clientCpmRate * (viewsPeriod / 1000);
 
-        // Creator CPM for this campaign — read from the contract that covers it
+        // Creator CPM for this campaign — read from the contract that covers it.
+        // CPM-only analytical breakdown (per campaign/creator/week): the rate
+        // follows the same SOT rule as creatorPayable.ts (contract only, missing → 0),
+        // but fixed/flags are out of scope here.
         const contractId = contractByCampaign.get(camp.id);
         const contract = contractId ? contractById.get(contractId) : undefined;
         const cpmRate = contract ? Number(contract.creator_cpm ?? 0) : 0;

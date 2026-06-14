@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { sumEffectiveViews, countByWindowStatus } from "@/lib/videoWindow";
+import { countByWindowStatus } from "@/lib/videoWindow";
+import { computeMonthlyContractPortion, type ContractInput } from "@/lib/creatorPayable";
 
 function todayRange() {
   const now = new Date();
@@ -36,6 +37,8 @@ export interface CreatorTableRow {
   status: string;
   activeCampaigns: number;
   totalViews: number;
+  /** True if the creator is linked to at least one active contract. */
+  hasActiveContract: boolean;
 }
 
 export function useCreatorTable(selectedYear?: number, selectedMonth?: number) {
@@ -54,6 +57,14 @@ export function useCreatorTable(selectedYear?: number, selectedMonth?: number) {
       const { data: campaigns } = await supabase.from("campaigns").select("id, status");
       const { data: accounts } = await supabase.from("tiktok_accounts").select("id, creator_id");
       const { data: allVideos } = await supabase.from("videos").select("tiktok_account_id, views, published_at");
+      const { data: activeContracts } = await supabase.from("contracts" as any).select("id").eq("is_active", true);
+      const activeContractIds = new Set(((activeContracts ?? []) as any[]).map((c) => c.id));
+      const { data: contractCreators } = await supabase.from("contract_creators" as any).select("contract_id, creator_id");
+      const creatorsWithActiveContract = new Set(
+        ((contractCreators ?? []) as any[])
+          .filter((r) => activeContractIds.has(r.contract_id))
+          .map((r) => r.creator_id),
+      );
 
       const activeCampaignIds = new Set((campaigns ?? []).filter(c => c.status === "active").map(c => c.id));
 
@@ -78,6 +89,7 @@ export function useCreatorTable(selectedYear?: number, selectedMonth?: number) {
           status: c.status,
           activeCampaigns,
           totalViews,
+          hasActiveContract: creatorsWithActiveContract.has(c.id),
         };
       });
     },
@@ -150,11 +162,17 @@ export interface CreatorPayoffContract {
   total: number;
   windowOpen: number;
   windowClosed: number;
+  /** True if the contract's CPM/fixed rate is missing (null), not a real 0. */
+  rateMissing: boolean;
 }
 
 export interface CreatorPayoffResult {
   contracts: CreatorPayoffContract[];
   grandTotal: number;
+  /** True if the creator belongs to no contract. */
+  hasNoActiveContract: boolean;
+  /** True if any covering contract has a missing (null) rate. */
+  hasMissingRate: boolean;
 }
 
 export function useCreatorPayoff(creatorId: string, year: number, month: number) {
@@ -173,7 +191,7 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
 
       if (!contractIds.length) {
         // Fallback: creator not in any contract
-        return { contracts: [] as CreatorPayoffContract[], grandTotal: 0 } as CreatorPayoffResult;
+        return { contracts: [] as CreatorPayoffContract[], grandTotal: 0, hasNoActiveContract: true, hasMissingRate: false } as CreatorPayoffResult;
       }
 
       const [
@@ -183,8 +201,19 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
       ] = await Promise.all([
         supabase.from("contracts" as any).select("*").in("id", contractIds),
         supabase.from("contract_campaigns" as any).select("contract_id, campaign_id").in("contract_id", contractIds),
-        supabase.from("tiktok_accounts").select("id, campaign_id").eq("creator_id", creatorId),
+        supabase.from("tiktok_accounts").select("id, creator_id, campaign_id").eq("creator_id", creatorId),
       ]);
+
+      // Per-campaign view caps for the contracts' campaigns
+      const allCampIdsForCaps = [...new Set(((contractCampaigns ?? []) as any[]).map((cc) => cc.campaign_id))];
+      let campaignsLite: { id: string; video_views_cap: number | null }[] = [];
+      if (allCampIdsForCaps.length) {
+        const { data: camps } = await supabase
+          .from("campaigns")
+          .select("id, video_views_cap")
+          .in("id", allCampIdsForCaps);
+        campaignsLite = (camps ?? []).map((c) => ({ id: c.id, video_views_cap: (c as any).video_views_cap ?? null }));
+      }
 
       const allAccounts = accounts ?? [];
       const accIds = allAccounts.map((a) => a.id);
@@ -207,38 +236,57 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
         const campIds = allCC.filter((cc) => cc.contract_id === contract.id).map((cc) => cc.campaign_id);
         const campIdSet = new Set(campIds);
 
-        // Accounts assigned to this contract's campaigns
-        const contractAccounts = allAccounts.filter((a) => a.campaign_id && campIdSet.has(a.campaign_id));
-        const contractAccIds = new Set(contractAccounts.map((a) => a.id));
-
+        // Accounts assigned to this contract's campaigns (for window-status stats)
+        const contractAccIds = new Set(
+          allAccounts.filter((a) => a.campaign_id && campIdSet.has(a.campaign_id)).map((a) => a.id),
+        );
         const contractVideos = allVideos.filter((v) => contractAccIds.has(v.tiktok_account_id));
-        const monthVideoCount = contractVideos.length;
-        const monthViews = sumEffectiveViews(contractVideos);
         const windowStats = countByWindowStatus(contractVideos);
 
-        const creatorFixed = contract.creator_fixed == null ? 0 : Number(contract.creator_fixed);
-        const creatorCpm = contract.creator_cpm == null ? 0 : Number(contract.creator_cpm);
-
-        const cpmAmount = creatorCpm * (monthViews / 1000);
+        // Single source of truth: rates from the CONTRACT, per-campaign cap,
+        // fixed earned only if the video target is met in the month.
+        const contractInput: ContractInput = {
+          id: contract.id,
+          name: contract.name,
+          creator_cpm: contract.creator_cpm,
+          creator_fixed: contract.creator_fixed,
+          min_videos_per_day: contract.min_videos_per_day,
+        };
+        const portion = computeMonthlyContractPortion({
+          creatorId,
+          contract: contractInput,
+          contractCampaignIds: campIds,
+          videos: allVideos as any,
+          accounts: allAccounts as any,
+          campaigns: campaignsLite,
+          year,
+          month,
+        });
 
         return {
           contractId: contract.id,
           contractName: contract.name,
-          creatorFixed,
-          creatorCpm,
-          monthVideoCount,
-          monthViews,
-          cpmAmount,
-          fixedEarned: true, // Always earned for now (no video target mechanism)
-          total: creatorFixed + cpmAmount,
+          creatorFixed: portion.fixedRate,
+          creatorCpm: portion.cpmRate,
+          monthVideoCount: portion.videoCount,
+          monthViews: portion.totalViews,
+          cpmAmount: portion.cpmAmount,
+          fixedEarned: portion.fixedEarned,
+          total: portion.subtotal,
           windowOpen: windowStats.open,
           windowClosed: windowStats.closed,
+          rateMissing: portion.cpmRateMissing || portion.fixedRateMissing,
         };
       });
 
       const grandTotal = payoffContracts.reduce((s, c) => s + c.total, 0);
 
-      return { contracts: payoffContracts, grandTotal } as CreatorPayoffResult;
+      return {
+        contracts: payoffContracts,
+        grandTotal,
+        hasNoActiveContract: false,
+        hasMissingRate: payoffContracts.some((c) => c.rateMissing),
+      } as CreatorPayoffResult;
     },
     enabled: !!creatorId,
   });
