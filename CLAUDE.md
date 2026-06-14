@@ -290,7 +290,7 @@ Ogni Super Prompt = una PR grossa che applica un modulo completo. File spec in `
   - AlertDialog conferma su Refresh dati TikTok
   - Sync App.tsx route + AppSidebar (rimuovere badge NEW)
 
-- **SP #4 · Calendario Contenuti** ✅ applicato
+- **SP #4 · Calendario Contenuti** ✅ applicato + migration deployed on DB il 15 giugno 2026
   - `video_briefs` come entità centrale (sostituisce concetto "trend")
   - Format come FK 1:1 (riusa `video_formats`, + colonna `is_active`), Topic N:N (`content_topics` + `brief_topics`)
   - Pagina `/dashboard/content-calendar` con 4 tab (Calendario, Analytics, Insights, Catalog), tab via `?tab=`, selettore campagna persistito in localStorage
