@@ -7,6 +7,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   useVideoAnalytics,
   useRefreshTikTokScraping,
   useLastScrapeLog,
@@ -62,14 +67,33 @@ export default function VideoAnalyticsPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <VideoAnalyticsFilters value={filters} onChange={setFilters} />
-          <Button onClick={handleRefresh} disabled={refreshMutation.isPending} className="gap-2">
-            {refreshMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            Refresh dati
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button disabled={refreshMutation.isPending} className="gap-2">
+                {refreshMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                Refresh dati
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Avviare il refresh dei dati TikTok?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Lo scraping completo di tutti gli account creator attivi può richiedere alcuni minuti
+                  e consuma quota Apify. Procedere solo se è davvero necessario aggiornare ora.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annulla</AlertDialogCancel>
+                <AlertDialogAction onClick={handleRefresh}>
+                  Sì, avvia refresh
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
