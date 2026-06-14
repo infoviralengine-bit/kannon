@@ -56,6 +56,10 @@ async function resolveDatasetIdFromWebhook(body: any, apiToken: string) {
 
 async function startApifyScrapeRun(supabaseAdmin: ReturnType<typeof createClient>) {
   const apiToken = await getApifyApiToken(supabaseAdmin);
+  const webhookSecret = Deno.env.get("APIFY_WEBHOOK_SECRET");
+  if (!webhookSecret) {
+    throw new Error("APIFY_WEBHOOK_SECRET non configurato: impossibile lanciare run con webhook sicuro.");
+  }
   const { data: accounts, error: accErr } = await supabaseAdmin
     .from("tiktok_accounts")
     .select("username, campaign_id")
@@ -89,7 +93,7 @@ async function startApifyScrapeRun(supabaseAdmin: ReturnType<typeof createClient
       runId: "{{resource.id}}",
       defaultDatasetId: "{{resource.defaultDatasetId}}",
       actorId: "{{resource.actId}}",
-      webhookToken: apiToken.slice(-16),
+      webhookToken: webhookSecret,
     }),
   }]));
 
@@ -140,13 +144,14 @@ Deno.serve(async (req) => {
 
   const isApifyWebhook = body?.source === "apify-webhook" || body?.eventType === "ACTOR.RUN.SUCCEEDED";
   if (isApifyWebhook) {
-    const apiToken = await getApifyApiToken(supabaseAdmin);
-    if (body?.webhookToken !== apiToken.slice(-16)) {
+    const webhookSecret = Deno.env.get("APIFY_WEBHOOK_SECRET");
+    if (!webhookSecret || body?.webhookToken !== webhookSecret) {
       return new Response(JSON.stringify({ error: "Unauthorized webhook" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const apiToken = await getApifyApiToken(supabaseAdmin);
     datasetId = await resolveDatasetIdFromWebhook(body, apiToken);
     if (!datasetId) {
       return new Response(JSON.stringify({ error: "Dataset Apify non trovato nel webhook" }), {
