@@ -1,7 +1,8 @@
 import {
-  Globe, Megaphone, Users, Smartphone, Wallet, CreditCard,
-  BarChart3, BarChart2, Film, TrendingUp, Search, FileText, MessageCircle,
-  CalendarDays, Landmark, Settings, LogOut, ArrowDownCircle, ArrowUpCircle, PhoneCall, ClipboardList
+  Home, Megaphone, BarChart3, TrendingUp, GitMerge, Users, AtSign,
+  FileText, UserPlus, Briefcase, Wallet, ArrowUpCircle, FileBarChart,
+  Settings, LogOut,
+  type LucideIcon,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -24,39 +25,85 @@ import {
 import { Separator } from "@/components/ui/separator";
 import logoFull from "@/assets/kannon-logo-red.svg";
 import logoSymbol from "@/assets/kannon-symbol-red.svg";
+import { ROLES, ROLE_GROUPS, canAccess, type AppRole } from "@/lib/roles";
 
-const dashboardItem = { title: "Dashboard", url: "/dashboard", icon: Globe };
+type SidebarItem = {
+  label: string;
+  icon: LucideIcon;
+  path: string;
+  roles: readonly AppRole[];
+  isNew?: boolean;
+};
 
-const clientiItems = [
-  { title: "Campagne", url: "/dashboard/campaigns", icon: Megaphone },
-  { title: "Pagamenti Da Ricevere", url: "/dashboard/payments-receivable", icon: ArrowDownCircle },
+type SidebarSection = {
+  label: string;
+  items: SidebarItem[];
+};
+
+const sidebarSections: SidebarSection[] = [
+  {
+    label: "Command Center",
+    items: [
+      { label: "Home", icon: Home, path: "/dashboard", roles: ROLE_GROUPS.STAFF },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { label: "Campagne", icon: Megaphone, path: "/dashboard/campaigns", roles: [...ROLE_GROUPS.STAFF, ROLES.CAMPAIGN_MANAGER] },
+      { label: "Video Analytics", icon: BarChart3, path: "/dashboard/videos", roles: ROLE_GROUPS.STAFF, isNew: true },
+      { label: "Trend TikTok", icon: TrendingUp, path: "/dashboard/trends", roles: ROLE_GROUPS.STAFF, isNew: true },
+    ],
+  },
+  {
+    label: "Creator",
+    items: [
+      { label: "Creator Pipeline", icon: GitMerge, path: "/dashboard/creator-pipeline", roles: [...ROLE_GROUPS.STAFF, ROLES.CLOSER], isNew: true },
+      { label: "Creator", icon: Users, path: "/dashboard/creators", roles: ROLE_GROUPS.STAFF },
+      { label: "Account", icon: AtSign, path: "/dashboard/accounts", roles: ROLE_GROUPS.STAFF },
+      { label: "Contratti", icon: FileText, path: "/dashboard/contracts", roles: ROLE_GROUPS.STAFF },
+      { label: "Hiring Creator", icon: UserPlus, path: "/dashboard/hiring", roles: [...ROLE_GROUPS.STAFF, ROLES.OUTREACH], isNew: true },
+    ],
+  },
+  {
+    label: "Sales",
+    items: [
+      { label: "Pipeline B2B", icon: Briefcase, path: "/dashboard/pipeline-b2b", roles: ROLE_GROUPS.STAFF, isNew: true },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      { label: "Finance", icon: Wallet, path: "/dashboard/finance", roles: [ROLES.ADMIN] },
+      { label: "Pagamenti Creator", icon: ArrowUpCircle, path: "/dashboard/payments-payable", roles: ROLE_GROUPS.STAFF },
+    ],
+  },
+  {
+    label: "Analytics",
+    items: [
+      { label: "Report", icon: FileBarChart, path: "/dashboard/reports", roles: ROLE_GROUPS.STAFF, isNew: true },
+    ],
+  },
 ];
 
-const creatorItems = [
-  { title: "Contratti", url: "/dashboard/contracts", icon: FileText },
-  { title: "Creator", url: "/dashboard/creators", icon: Users },
-  { title: "Account", url: "/dashboard/accounts", icon: Smartphone },
-  { title: "Pagamenti da fare", url: "/dashboard/payments-payable", icon: ArrowUpCircle },
-];
+const settingsItem: SidebarItem = {
+  label: "Settings", icon: Settings, path: "/dashboard/settings", roles: [ROLES.ADMIN],
+};
 
-const altroItemsBase = [
-  { title: "Campaign Manager", url: "/dashboard/campaign-manager", icon: BarChart2 },
-  { title: "Outreach", url: "/dashboard/outreach", icon: MessageCircle },
-  { title: "Closer", url: "/dashboard/closer", icon: PhoneCall },
-  { title: "Onboarding", url: "/dashboard/onboarding", icon: ClipboardList },
-  { title: "Pipeline CRM", url: "/dashboard/pipeline", icon: BarChart3 },
-  { title: "Media Library", url: "/dashboard/media", icon: Film },
-  { title: "Report", url: "/dashboard/reports", icon: TrendingUp },
-  { title: "Recruiting", url: "/dashboard/recruiting", icon: Search },
-  { title: "Calendario", url: "/dashboard/calendar", icon: CalendarDays },
-];
-const financeItem = { title: "Finanza", url: "/dashboard/finance", icon: Landmark };
+function NewBadge() {
+  return (
+    <span className="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+      New
+    </span>
+  );
+}
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { profile, role, signOut } = useAuth();
+  const appRole = (role as AppRole | null);
 
   const isActive = (path: string) =>
     path === "/dashboard"
@@ -70,34 +117,25 @@ export function AppSidebar() {
     .toUpperCase()
     .slice(0, 2) || "?";
 
-  // Outreach role: only show Recruiting
-  const isOutreach = role === "outreach";
-  const isCloser = role === "closer";
-  const isCampaignManager = role === "campaign_manager";
-  const isTeam = role === "team";
+  const visibleSections = sidebarSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => canAccess(appRole, item.roles)),
+    }))
+    .filter((section) => section.items.length > 0);
 
-  const visibleClientiItems = isTeam
-    ? clientiItems.filter((i) => i.url !== "/dashboard/payments-receivable")
-    : clientiItems;
-  const visibleCreatorItems = creatorItems;
+  const showSettings = canAccess(appRole, settingsItem.roles);
 
-  const allAltroItems = role === "admin"
-    ? [...altroItemsBase, financeItem, { title: "Impostazioni", url: "/dashboard/settings", icon: Settings }]
-    : altroItemsBase;
-
-  const renderMenuItems = (items: typeof clientiItems) => (
-    <SidebarMenu>
-      {items.map((item) => (
-        <SidebarMenuItem key={item.title}>
-          <SidebarMenuButton asChild isActive={isActive(item.url)}>
-            <NavLink to={item.url} end={item.url === "/dashboard"}>
-              <item.icon className="h-4 w-4" />
-              {!collapsed && <span>{item.title}</span>}
-            </NavLink>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      ))}
-    </SidebarMenu>
+  const renderItem = (item: SidebarItem) => (
+    <SidebarMenuItem key={item.path}>
+      <SidebarMenuButton asChild isActive={isActive(item.path)}>
+        <NavLink to={item.path} end={item.path === "/dashboard"} className="flex items-center gap-2">
+          <item.icon className="h-4 w-4" />
+          {!collapsed && <span>{item.label}</span>}
+          {!collapsed && item.isNew && <NewBadge />}
+        </NavLink>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 
   return (
@@ -113,54 +151,27 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {isOutreach ? (
-          /* Outreach sees only Recruiting */
-          <SidebarGroup>
+        {visibleSections.map((section) => (
+          <SidebarGroup key={section.label}>
+            {!collapsed && (
+              <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                {section.label}
+              </SidebarGroupLabel>
+            )}
             <SidebarGroupContent>
-              {renderMenuItems([{ title: "Recruiting", url: "/dashboard/recruiting", icon: Search }])}
+              <SidebarMenu>{section.items.map(renderItem)}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        ) : isCampaignManager ? (
-          /* Campaign manager sees only Campaign Manager page */
-          <SidebarGroup>
-            <SidebarGroupContent>
-              {renderMenuItems([{ title: "Campaign Manager", url: "/dashboard/campaign-manager", icon: BarChart2 }])}
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ) : isCloser ? (
-          /* Closer sees only Closer page */
-          <SidebarGroup>
-            <SidebarGroupContent>
-              {renderMenuItems([{ title: "Closer", url: "/dashboard/closer", icon: PhoneCall }])}
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ) : (
+        ))}
+
+        {showSettings && (
           <>
-            {/* Dashboard - no section label */}
+            <div className="px-3 py-2">
+              <Separator />
+            </div>
             <SidebarGroup>
               <SidebarGroupContent>
-                {renderMenuItems([dashboardItem])}
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            <SidebarGroup>
-              <SidebarGroupLabel>Clienti</SidebarGroupLabel>
-              <SidebarGroupContent>
-                {renderMenuItems(visibleClientiItems)}
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            <SidebarGroup>
-              <SidebarGroupLabel>Creator</SidebarGroupLabel>
-              <SidebarGroupContent>
-                {renderMenuItems(visibleCreatorItems)}
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            <SidebarGroup>
-              <SidebarGroupLabel>Altro</SidebarGroupLabel>
-              <SidebarGroupContent>
-                {renderMenuItems(allAltroItems)}
+                <SidebarMenu>{renderItem(settingsItem)}</SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           </>
