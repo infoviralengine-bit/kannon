@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViewsCapped, countByWindowStatus, type VideoWithWindow } from "@/lib/videoWindow";
+import { computeContractPortion, type ContractInput } from "@/lib/creatorPayable";
 
 function monthRange(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString();
@@ -80,6 +81,9 @@ export function useCpmPayoffData(year: number, month: number) {
         { data: ccRows },
         { data: accounts },
         { data: videos },
+        { data: contracts },
+        { data: contractCampaigns },
+        { data: contractCreators },
       ] = await Promise.all([
         supabase.from("campaigns").select("*").eq("status", "active"),
         supabase.from("creators").select("*").eq("status", "active"),
@@ -90,6 +94,9 @@ export function useCpmPayoffData(year: number, month: number) {
           .select("tiktok_account_id, views, views_final, window_closed, window_expires_at, published_at")
           .gte("published_at", mStart)
           .lt("published_at", mEnd),
+        supabase.from("contracts" as any).select("id, name, creator_cpm, creator_fixed, min_videos_per_day").eq("is_active", true),
+        supabase.from("contract_campaigns" as any).select("contract_id, campaign_id"),
+        supabase.from("contract_creators" as any).select("contract_id, creator_id"),
       ]);
 
       const allCampaigns = campaigns ?? [];
@@ -97,6 +104,28 @@ export function useCpmPayoffData(year: number, month: number) {
       const allCC = ccRows ?? [];
       const allAccounts = accounts ?? [];
       const allVideos = (videos ?? []) as VideoWithWindow[];
+      const allContracts = ((contracts ?? []) as any[]) as ContractInput[];
+      const allContractCamp = (contractCampaigns ?? []) as any[];
+      const allContractCr = (contractCreators ?? []) as any[];
+
+      // contractId → campaignIds
+      const contractCampMap = new Map<string, string[]>();
+      allContractCamp.forEach((r: any) => {
+        const l = contractCampMap.get(r.contract_id) ?? [];
+        l.push(r.campaign_id);
+        contractCampMap.set(r.contract_id, l);
+      });
+      // campaignId → contractId (campagne non si sovrappongono)
+      const contractByCampaign = new Map<string, string>();
+      allContractCamp.forEach((r: any) => contractByCampaign.set(r.campaign_id, r.contract_id));
+      // creatorId → contractIds (only contracts the creator belongs to)
+      const contractsByCreator = new Map<string, string[]>();
+      allContractCr.forEach((r: any) => {
+        const l = contractsByCreator.get(r.creator_id) ?? [];
+        l.push(r.contract_id);
+        contractsByCreator.set(r.creator_id, l);
+      });
+      const contractById = new Map(allContracts.map((c) => [c.id, c]));
 
       // Maps
       const accountsByCampaign = new Map<string, string[]>();
@@ -123,21 +152,27 @@ export function useCpmPayoffData(year: number, month: number) {
         const viewsPeriod = sumEffectiveViewsCapped(campVideos, cap);
         const windowStats = countByWindowStatus(campVideos);
 
-        const clientCpmRate = camp.client_cpm ?? 2;
+        const clientCpmRate = camp.client_cpm ?? 0; // client rates: separate refactor
         const clientCpmAmount = clientCpmRate * (viewsPeriod / 1000);
 
-        // Creator CPM for this campaign
+        // Creator CPM for this campaign — read from the contract that covers it
+        const contractId = contractByCampaign.get(camp.id);
+        const contract = contractId ? contractById.get(contractId) : undefined;
+        const cpmRate = contract ? Number(contract.creator_cpm ?? 0) : 0;
         const creatorIds = allCC.filter((r) => r.campaign_id === camp.id).map((r) => r.creator_id);
         let creatorCpmAmount = 0;
         creatorIds.forEach((cid) => {
-          const cr = allCreators.find((c) => c.id === cid);
-          if (!cr) return;
+          // Only count creators actually attached to the covering contract
+          if (contractId) {
+            const crContracts = contractsByCreator.get(cid) ?? [];
+            if (!crContracts.includes(contractId)) return;
+          }
           const crAccIds = allAccounts
             .filter((a) => a.creator_id === cid && a.campaign_id === camp.id)
             .map((a) => a.id);
           const crAccSet = new Set(crAccIds);
           const crViews = sumEffectiveViewsCapped(campVideos.filter((v) => crAccSet.has(v.tiktok_account_id)), cap);
-          creatorCpmAmount += (cr.creator_cpm ?? 0.5) * (crViews / 1000);
+          creatorCpmAmount += cpmRate * (crViews / 1000);
         });
 
         // Weekly views breakdown
@@ -172,6 +207,12 @@ export function useCpmPayoffData(year: number, month: number) {
         crCampaignIds.forEach((campId) => {
           const camp = allCampaigns.find((c) => c.id === campId);
           if (!camp) return;
+          // tariff from contract covering THIS campaign
+          const ctId = contractByCampaign.get(campId);
+          const ctr = ctId ? contractById.get(ctId) : undefined;
+          // Only if creator actually belongs to that contract
+          if (!ctId || !(contractsByCreator.get(cr.id) ?? []).includes(ctId)) return;
+          const cpmRate = ctr ? Number(ctr.creator_cpm ?? 0) : 0;
 
           const cap = (camp as any).video_views_cap as number | null;
           const crAccIds = allAccounts
@@ -181,7 +222,6 @@ export function useCpmPayoffData(year: number, month: number) {
           const crVideos = allVideos.filter((v) => crAccSet.has(v.tiktok_account_id));
           const viewsPeriod = sumEffectiveViewsCapped(crVideos, cap);
           const windowStats = countByWindowStatus(crVideos);
-          const cpmRate = cr.creator_cpm ?? 0.5;
 
           creatorRows.push({
             creatorId: cr.id,

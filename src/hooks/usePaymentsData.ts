@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViews, sumEffectiveViewsCapped, countByWindowStatus } from "@/lib/videoWindow";
 import { isFixedEarnedMonthly, getMonthlyTarget } from "@/lib/fixedEarned";
+import { computeCreatorPayableMonth, type ContractInput } from "@/lib/creatorPayable";
 
 /* ═══════════════════════════════════════════════
    Client Payments (Da Ricevere)
@@ -309,6 +310,9 @@ export function useCreatorPayments(year: number, month: number) {
         { data: existingPayments },
         { data: campaigns },
         { data: ccRows },
+        { data: contracts },
+        { data: contractCampaigns },
+        { data: contractCreators },
       ] = await Promise.all([
         supabase.from("creators").select("*").eq("status", "active"),
         supabase.from("tiktok_accounts").select("id, creator_id, campaign_id"),
@@ -324,6 +328,9 @@ export function useCreatorPayments(year: number, month: number) {
           .eq("period_year", year),
         supabase.from("campaigns").select("id, video_views_cap"),
         supabase.from("campaign_creators").select("campaign_id, creator_id"),
+        supabase.from("contracts" as any).select("id, name, creator_cpm, creator_fixed, min_videos_per_day").eq("is_active", true),
+        supabase.from("contract_campaigns" as any).select("contract_id, campaign_id"),
+        supabase.from("contract_creators" as any).select("contract_id, creator_id"),
       ]);
 
       const allCreators = creators ?? [];
@@ -332,6 +339,23 @@ export function useCreatorPayments(year: number, month: number) {
       const allPayments = existingPayments ?? [];
       const allCampaigns = campaigns ?? [];
       const allCC = ccRows ?? [];
+      const allContracts = ((contracts ?? []) as any[]) as ContractInput[];
+      const allCt = (contractCampaigns ?? []) as any[];
+      const allCtCr = (contractCreators ?? []) as any[];
+
+      const contractById = new Map(allContracts.map((c) => [c.id, c]));
+      const ctCampMap = new Map<string, string[]>();
+      allCt.forEach((r: any) => {
+        const l = ctCampMap.get(r.contract_id) ?? [];
+        l.push(r.campaign_id);
+        ctCampMap.set(r.contract_id, l);
+      });
+      const ctsByCreator = new Map<string, string[]>();
+      allCtCr.forEach((r: any) => {
+        const l = ctsByCreator.get(r.creator_id) ?? [];
+        l.push(r.contract_id);
+        ctsByCreator.set(r.creator_id, l);
+      });
 
       // Build cap map: campaignId -> video_views_cap
       const capByCampaign = new Map<string, number | null>();
@@ -358,35 +382,36 @@ export function useCreatorPayments(year: number, month: number) {
         const accIds = new Set(accountsByCreator.get(cr.id) ?? []);
         const crVideos = allVideos.filter((v) => accIds.has(v.tiktok_account_id));
         const monthVideoCount = crVideos.length;
-        const min = cr.min_videos_per_day ?? 5;
-        const fixedEarned = isFixedEarnedMonthly(monthVideoCount, min, year, month);
-        const monthlyTarget = getMonthlyTarget(min, year, month);
         const windowStats = countByWindowStatus(crVideos);
 
-        // Apply video cap: group videos by campaign account and apply per-campaign cap
-        let monthViews = 0;
-        const crCampaigns = campaignsByCreator.get(cr.id) ?? [];
-        if (crCampaigns.length > 0) {
-          crCampaigns.forEach((campId) => {
-            const cap = capByCampaign.get(campId) ?? null;
-            const campAccIds = allAccounts
-              .filter((a) => a.creator_id === cr.id && a.campaign_id === campId)
-              .map((a) => a.id);
-            const campAccSet = new Set(campAccIds);
-            const campVideos = crVideos.filter((v) => campAccSet.has(v.tiktok_account_id));
-            monthViews += sumEffectiveViewsCapped(campVideos, cap);
-          });
-          // Add views from accounts without campaign
-          const campAccIds = new Set(allAccounts.filter((a) => a.creator_id === cr.id && a.campaign_id).map((a) => a.id));
-          const noCampVideos = crVideos.filter((v) => !campAccIds.has(v.tiktok_account_id));
-          monthViews += sumEffectiveViews(noCampVideos);
-        } else {
-          monthViews = sumEffectiveViews(crVideos);
-        }
-
-        const fixedAmt = cr.creator_fixed ?? 200;
-        const cpmAmt = (cr.creator_cpm ?? 0.5) * (monthViews / 1000);
-        const total = (fixedEarned ? fixedAmt : 0) + cpmAmt;
+        // Sum across the creator's active contracts (single SOT in creatorPayable).
+        const creatorContracts = (ctsByCreator.get(cr.id) ?? [])
+          .map((cid) => contractById.get(cid))
+          .filter((c): c is ContractInput => !!c);
+        const ctCampForCreator = new Map<string, string[]>();
+        creatorContracts.forEach((c) => {
+          ctCampForCreator.set(c.id, ctCampMap.get(c.id) ?? []);
+        });
+        const composite = computeCreatorPayableMonth({
+          creatorId: cr.id,
+          contracts: creatorContracts,
+          contractCampaignIds: ctCampForCreator,
+          videos: crVideos as any,
+          accounts: allAccounts as any,
+          campaigns: allCampaigns as any,
+          year,
+          month,
+        });
+        // Reporting fields (back-compat): use min_videos_per_day from the
+        // first contract if any, fallback 5. Used only for the displayed
+        // "monthlyTarget" badge.
+        const repMin = composite.portions[0]?.minVideosPerDay ?? 5;
+        const fixedEarned = composite.totalFixed > 0
+          || composite.portions.some((p) => p.fixedEarned && p.fixedRate === 0);
+        const monthlyTarget = getMonthlyTarget(repMin, year, month);
+        const fixedAmt = composite.portions.reduce((s, p) => s + p.fixedRate, 0); // theoretical max
+        const cpmAmt = composite.totalCpm;
+        const total = composite.total;
 
         const payment = allPayments.find((p) => p.creator_id === cr.id);
 

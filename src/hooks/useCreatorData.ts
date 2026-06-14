@@ -216,8 +216,8 @@ export function useCreatorPayoff(creatorId: string, year: number, month: number)
         const monthViews = sumEffectiveViews(contractVideos);
         const windowStats = countByWindowStatus(contractVideos);
 
-        const creatorFixed = Number(contract.creator_fixed ?? 0);
-        const creatorCpm = Number(contract.creator_cpm ?? 0.5);
+        const creatorFixed = contract.creator_fixed == null ? 0 : Number(contract.creator_fixed);
+        const creatorCpm = contract.creator_cpm == null ? 0 : Number(contract.creator_cpm);
 
         const cpmAmount = creatorCpm * (monthViews / 1000);
 

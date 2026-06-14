@@ -173,8 +173,11 @@ export function useContractPayable(periodByContract: Record<string, number>) {
         const campIdSet = new Set(campIds);
         const creatorIds = contractCreatorMap.get(contract.id) ?? [];
 
-        const cpmRate = Number(contract.creator_cpm ?? 0.5);
-        const fixedAmt = Number(contract.creator_fixed ?? 0);
+        // Tariff: from CONTRACT only. Missing → 0 (sentinel for missing data,
+        // never assume 0.5/200). 0 is a legitimate contractual value (e.g. FZ fixed=0).
+        const cpmRate = contract.creator_cpm == null ? 0 : Number(contract.creator_cpm);
+        const fixedAmt = contract.creator_fixed == null ? 0 : Number(contract.creator_fixed);
+        // min_videos_per_day: contract value, fallback 5 (Premium obligation).
         const minVpd = contract.min_videos_per_day ?? 5;
         const target = getPeriodTarget(minVpd, periodStart, periodEnd);
 
