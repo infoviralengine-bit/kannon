@@ -41,9 +41,11 @@ describe("parsePaymentTerms", () => {
       cpmLagMonths: 2,
     });
   });
-  it("defaults to standard for unknown type", () => {
+  it("falls back to standard defaults for unknown type, preserving extra fields", () => {
     const out = parsePaymentTerms({ type: "mystery", fixedDueDay: 7 });
-    expect(out.type).toBe("standard_lagged");
+    // Non-tot_split inputs are merged on top of DEFAULT_STANDARD.
     expect((out as any).fixedDueDay).toBe(7);
+    expect((out as any).cpmLagMonths).toBe(DEFAULT_STANDARD.cpmLagMonths);
+    expect((out as any).finalCpmDelayDays).toBe(DEFAULT_STANDARD.finalCpmDelayDays);
   });
 });
