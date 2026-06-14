@@ -39,7 +39,7 @@ const creatorItems = [
   { title: "Pagamenti da fare", url: "/dashboard/payments-payable", icon: ArrowUpCircle },
 ];
 
-const altroItems = [
+const altroItemsBase = [
   { title: "Campaign Manager", url: "/dashboard/campaign-manager", icon: BarChart2 },
   { title: "Outreach", url: "/dashboard/outreach", icon: MessageCircle },
   { title: "Closer", url: "/dashboard/closer", icon: PhoneCall },
@@ -49,8 +49,8 @@ const altroItems = [
   { title: "Report", url: "/dashboard/reports", icon: TrendingUp },
   { title: "Recruiting", url: "/dashboard/recruiting", icon: Search },
   { title: "Calendario", url: "/dashboard/calendar", icon: CalendarDays },
-  { title: "Finanza", url: "/dashboard/finance", icon: Landmark },
 ];
+const financeItem = { title: "Finanza", url: "/dashboard/finance", icon: Landmark };
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -82,8 +82,8 @@ export function AppSidebar() {
   const visibleCreatorItems = creatorItems;
 
   const allAltroItems = role === "admin"
-    ? [...altroItems, { title: "Impostazioni", url: "/dashboard/settings", icon: Settings }]
-    : altroItems;
+    ? [...altroItemsBase, financeItem, { title: "Impostazioni", url: "/dashboard/settings", icon: Settings }]
+    : altroItemsBase;
 
   const renderMenuItems = (items: typeof clientiItems) => (
     <SidebarMenu>
