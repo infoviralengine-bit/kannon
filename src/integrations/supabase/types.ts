@@ -1328,6 +1328,65 @@ export type Database = {
         }
         Relationships: []
       }
+      v_video_performance: {
+        Row: {
+          account_active: boolean | null
+          account_type: string | null
+          account_username: string | null
+          age_days: number | null
+          campaign_id: string | null
+          campaign_name: string | null
+          campaign_start_date: string | null
+          client_cpm: number | null
+          client_name: string | null
+          comments: number | null
+          creator_cpm: number | null
+          creator_fixed: number | null
+          creator_id: string | null
+          creator_name: string | null
+          creator_status: string | null
+          effective_views: number | null
+          engagement_pct: number | null
+          id: string | null
+          last_scraped_at: string | null
+          likes: number | null
+          published_at: string | null
+          raw_effective_views: number | null
+          tiktok_account_id: string | null
+          tiktok_url: string | null
+          tiktok_video_id: string | null
+          total_engagements: number | null
+          video_views_cap: number | null
+          views: number | null
+          views_final: number | null
+          window_closed: boolean | null
+          window_expires_at: string | null
+          window_status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tiktok_accounts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tiktok_accounts_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "videos_tiktok_account_id_fkey"
+            columns: ["tiktok_account_id"]
+            isOneToOne: false
+            referencedRelation: "tiktok_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       bulk_update_video_views: {
@@ -1365,9 +1424,49 @@ export type Database = {
       get_finance_dashboard: { Args: { p_period?: string }; Returns: Json }
       get_last_scrape_at: { Args: never; Returns: string }
       get_onboarding_data: { Args: { p_token: string }; Returns: Json }
+      get_top_videos: {
+        Args: {
+          p_campaign_ids?: string[]
+          p_creator_ids?: string[]
+          p_from?: string
+          p_limit?: number
+          p_offset?: number
+          p_sort_by?: string
+          p_sort_dir?: string
+          p_to?: string
+        }
+        Returns: {
+          account_username: string
+          campaign_id: string
+          campaign_name: string
+          client_name: string
+          comments: number
+          creator_id: string
+          creator_name: string
+          effective_views: number
+          engagement_pct: number
+          id: string
+          likes: number
+          published_at: string
+          raw_views: number
+          tiktok_url: string
+          tiktok_video_id: string
+          total_count: number
+          window_status: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_video_analytics: {
+        Args: {
+          p_campaign_ids?: string[]
+          p_creator_ids?: string[]
+          p_from?: string
+          p_to?: string
+        }
+        Returns: Json
       }
       has_role: {
         Args: {
