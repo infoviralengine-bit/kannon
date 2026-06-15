@@ -27,7 +27,7 @@ URL produzione: `hub.thekannon.io`. URL landing pubblica: `thekannon.io`.
 
 - **Frontend**: React 18 + TypeScript + Vite. UI da shadcn/ui + Tailwind CSS. State server: TanStack Query (react-query v5). Routing: react-router-dom v6. Charts: Recharts.
 - **Backend**: Supabase (Postgres + Auth + RLS + Edge Functions in Deno + Storage). Tutte le query passano dal client `@/integrations/supabase/client`.
-- **Scraping**: Apify (`clockworks/free-tiktok-scraper`). Edge function `scrape-tiktok` orchestra runs + webhook async + ingestion.
+- **Scraping**: Apify (`clockworks/free-tiktok-scraper`). Edge function `scrape-tiktok` orchestra runs + polling background + ingestion (SP#5: no più webhook come meccanismo primario).
 - **Deploy**: Lovable storicamente (preview). Ora il workflow è Claude Code → git push → Lovable preview / Vercel production.
 
 Branding colori (per UI/landing, NON nel hub):
@@ -82,7 +82,7 @@ Mappa concettuale. Per schema completo consultare `supabase/migrations/`. Le mig
 
 ### Video e performance
 - `videos` → tiktok_account_id, tiktok_video_id (UNIQUE), views, likes, comments, published_at, window_expires_at, window_closed, views_final, last_scraped_at, **audio_id**, **audio_name**, **caption**, **hashtags[]**, content_tag
-- `scraping_logs` → run_at, status, accounts_processed, videos_created, videos_updated, error_message
+- `scraping_logs` → run_at, status (CHECK `running`/`success`/`error`), accounts_processed, videos_created, videos_updated, error_message, **run_id, dataset_id, started_at, completed_at, progress_note, triggered_by** (SP#5: status sync per polling background)
 
 ### Pagamenti
 - `client_payments` → entrate da campagne. Generato da cicli. campaign_id, cycle_id, cycle_number, due_date, fixed_amount, cpm_views, cpm_amount, total_amount, is_paid, paid_at, **amount_override**, **notes_override**, **received_at**, **invoice_number**, **invoice_sent_at**, views_paid_cumulative
@@ -106,6 +106,7 @@ Mappa concettuale. Per schema completo consultare `supabase/migrations/`. Le mig
 - `videos` (SP#4): aggiunte colonne **audio_id, audio_name, caption, hashtags text[]** + index trigram su caption (`pg_trgm`).
 - `campaigns` (SP#4): aggiunte **brief_threshold_views bigint DEFAULT 50000, brief_threshold_engagement numeric DEFAULT 5.0**.
 - VIEW `v_brief_stats` → per-brief: matched_videos_count, total_effective_views, total_engagements, avg_engagement_pct, threshold_views/engagement (override brief → default campagna). Usata solo dentro RPC SECURITY DEFINER.
+- Edge function `parse-briefs-from-text` (Anthropic Claude Haiku, `claude-3-5-haiku-latest`) per import bulk da paste testuale (SP#5 Part B). Staff-only. Richiede secret `ANTHROPIC_API_KEY`.
 - Funzioni: `match_video_to_briefs(uuid)`, `rematch_all_unmatched_videos(int)`, RPC `get_content_calendar(uuid,date,date)`, `get_content_analytics(text,uuid,uuid,uuid)` (wrappa `get_campaign_manager_data` + breakdown format/topic), `get_content_insights(text,uuid)`, `notify_brief_event(uuid,text,text,text,text[])`.
 
 ### Notifiche
@@ -153,14 +154,15 @@ Pattern non-distruttivo per correggere manualmente un pagamento auto-calcolato. 
 
 Edge function: `supabase/functions/scrape-tiktok/index.ts`.
 
-Flow:
-1. Trigger manuale (UI) o webhook Apify in arrivo
-2. Recupera account creator attivi (`tiktok_accounts.account_type='creator' AND campaign_id IS NOT NULL AND is_active=true`)
-3. Lancia run Apify (`clockworks~free-tiktok-scraper`) con webhook ACTOR.RUN.SUCCEEDED
-4. Al webhook: scarica dataset paginato (1000/page), normalizza item, dedupe per `tiktok_video_id` (UNIQUE constraint globale)
-5. Split: INSERT batch 200 con `upsert(onConflict:tiktok_video_id, ignoreDuplicates:true)` per video nuovi; UPDATE chunk 50 in Promise.allSettled per esistenti
+Flow (post SP#5 · polling resiliente, niente più dipendenza dal webhook):
+1. "Scrapa ora" (UI) → `handleStartWithPolling`: lancia run Apify SENZA webhook
+2. INSERT subito in `scraping_logs` con `status='running'`, `started_at`, `run_id`; ritorna `{ ok, log_id, run_id }` (202) al client
+3. `EdgeRuntime.waitUntil(pollAndProcess)`: ogni 10s GET `/v2/actor-runs/{runId}`, aggiorna `progress_note` ad ogni iter (max 15 min)
+4. Su `SUCCEEDED` → `runScraping(datasetId)` scarica dataset paginato (1000/page), normalizza, dedupe per `tiktok_video_id` (UNIQUE globale), INSERT batch 200 `upsert(onConflict:tiktok_video_id, ignoreDuplicates)`, UPDATE chunk 50 Promise.allSettled, ritorna i counts → `finalizeLog(status='success')`
+5. Su `FAILED/ABORTED/TIMED-OUT` o timeout → `finalizeLog(status='error')` con messaggio
 6. Window close: se `window_expires_at <= now()` e `!window_closed`, set `window_closed=true` e `views_final=min(views,cap)`
-7. Logga in `scraping_logs`
+7. Frontend: `useScrapingStatus` polla `scraping_logs` (3s se running, 30s altrimenti), `ScrapingStatusBanner` mostra `progress_note` live e fa toast + invalidate query su success/error
+8. Path secondari: `handleManualImport` ("Importa dataset" con `datasetId`), `handleWebhookFallback` (idempotente: se esiste già un log `running`/`success` per quel `run_id` non riprocessa)
 
 API token Apify: prima cerca `settings.value` con `key='apify_api_key'`, poi fallback su env `APIFY_API_KEY`.
 
@@ -221,6 +223,12 @@ Vantaggi: una sola query JSON → un solo round trip → react-query cache pulit
 
 ### Scrittura: insert su tabella + trigger
 Pattern: il client fa `supabase.from(X).insert(...)`. I trigger DB fanno il side-effect (matching, aggregazioni, propagation). Mai logica di business complessa nel frontend.
+
+### AI-powered import (SP#5)
+Pattern per import bulk da testo non strutturato: textarea (paste) → edge function → LLM con structured output (system prompt + schema JSON rigoroso, `JSON.parse` con try/catch e strip dei code fence) → preview editabile in UI → bulk insert. Esempio: `parse-briefs-from-text` (Claude Haiku) → `BriefImportDialog` → `useBulkCreateBriefs`. L'utente rivede sempre prima di scrivere su DB.
+
+### Integrazioni esterne: polling, non webhook (SP#5)
+Per integrazioni esterne (Apify, ecc.) non fidarsi della consegna di un webhook: usa polling background (`EdgeRuntime.waitUntil`) con status sync su una tabella di log (`scraping_logs`) che il frontend polla. Webhook eventuale resta solo come fallback idempotente.
 
 ### Multi-portale + RLS
 Stessa tabella, RLS gating per ruolo. Esempi:
@@ -302,7 +310,11 @@ Ogni Super Prompt = una PR grossa che applica un modulo completo. File spec in `
   - `scrape-tiktok` popola audio_id/audio_name/caption/hashtags su INSERT e UPDATE (UPDATE solo se valore presente)
   - Decisioni effettive: FK client→campagna è `campaigns.client_profile_id`; FK creator→user è `creators.profile_id`; i ruoli sono in `user_roles` (NON `profiles.role`); tutte le policy usano `has_role(auth.uid(),'x'::app_role)`; le RPC sono `v_base || jsonb_build_object(...)` per estendere senza rompere il payload esistente
 
-- **SP #5+** (futuri, ordine non fissato):
+- **SP #5 · Scraping resiliente + AI-paste import** ✅ applicato
+  - Parte A: `scrape-tiktok` refactor da webhook fragile a polling background (`EdgeRuntime.waitUntil` + status sync su `scraping_logs`). Nuove colonne `run_id, dataset_id, started_at, completed_at, progress_note, triggered_by` + CHECK status `running/success/error`. Hook `useScrapingStatus`/`useStartScraping`/`useImportDataset`, componente `ScrapingStatusBanner` integrato in AccountPage, VideoAnalyticsPage, ContentCalendarPage. Webhook resta come fallback idempotente.
+  - Parte B: edge function `parse-briefs-from-text` (Claude Haiku) per import bulk da paste Google Doc. Hook `useParseBriefsFromText`/`useBulkCreateBriefs`, `BriefImportDialog` (paste + preview editabile) nel tab Calendario. Richiede secret `ANTHROPIC_API_KEY` (vedi `docs/edge-functions-secrets.md`).
+
+- **SP #6+** (futuri, ordine non fissato):
   - Creator Pipeline (Closer+Onboarding unificati come kanban)
   - Hiring Creator (outreach recruiting)
   - Pipeline B2B (CRM brand prospect)
@@ -325,6 +337,7 @@ Ogni Super Prompt = una PR grossa che applica un modulo completo. File spec in `
 11. **`has_role` richiede il cast `::app_role`**. Sempre `has_role(auth.uid(),'admin'::app_role)`, mai stringa nuda.
 12. **FK portali**: client→campagna è `campaigns.client_profile_id`; creator→user è `creators.profile_id`. Entrambe puntano a `profiles.id` (= `auth.uid()`). Non esistono `client_user_id` né `creators.user_id`.
 13. **NON usare `WITH CHECK` column-level su UPDATE**. Postgres non supporta UPDATE policies a livello di colonna: una `WITH CHECK` valida solo lo stato finale della riga, non quali colonne sono cambiate. Per restringere quali colonne un ruolo può modificare, usare un trigger `BEFORE UPDATE` come `guard_client_brief_updates` su `video_briefs`.
+14. **NON dipendere da webhook esterni senza fallback**. Per integrazioni esterne (Apify, Stripe, ecc.) il webhook può non arrivare (delay, drop silenzioso, IP block). Usa polling background o un reconciliation job come meccanismo primario; il webhook resta solo fallback idempotente.
 
 ---
 
