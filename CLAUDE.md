@@ -166,6 +166,8 @@ Flow (post SP#5 · polling resiliente, niente più dipendenza dal webhook):
 
 API token Apify: prima cerca `settings.value` con `key='apify_api_key'`, poi fallback su env `APIFY_API_KEY`.
 
+**Anti-pattern storico risolto (15 giu 2026)**: dopo il merge di SP#5 in `main`, il codice nuovo (`handleStartWithPolling`, `pollAndProcess`, `createLog`, `finalizeLog`) NON è stato deployato automaticamente. La function attiva su Supabase era ancora la vecchia versione webhook-based, che leggeva `{{resource.defaultDatasetId}}` come placeholder Apify mai sostituito → 404 "Dataset was not found" a ogni run. Diagnosi: i log dell'edge function deployata mostravano "Step 5: Uso dataset esistente: {{resource.defaultDatasetId}}", stringhe inesistenti nel sorgente locale. Fix: deploy esplicito tramite Supabase MCP `deploy_edge_functions`. **Regola**: dopo ogni modifica a `supabase/functions/*` verificare il deploy ispezionando una stringa unica dei log della function in produzione, non fidarsi del fatto che il merge in `main` abbia propagato il deploy.
+
 **Campi estratti da Apify item**:
 - `id` → `tiktok_video_id`
 - `playCount` → `views`
@@ -338,6 +340,7 @@ Ogni Super Prompt = una PR grossa che applica un modulo completo. File spec in `
 12. **FK portali**: client→campagna è `campaigns.client_profile_id`; creator→user è `creators.profile_id`. Entrambe puntano a `profiles.id` (= `auth.uid()`). Non esistono `client_user_id` né `creators.user_id`.
 13. **NON usare `WITH CHECK` column-level su UPDATE**. Postgres non supporta UPDATE policies a livello di colonna: una `WITH CHECK` valida solo lo stato finale della riga, non quali colonne sono cambiate. Per restringere quali colonne un ruolo può modificare, usare un trigger `BEFORE UPDATE` come `guard_client_brief_updates` su `video_briefs`.
 14. **NON dipendere da webhook esterni senza fallback**. Per integrazioni esterne (Apify, Stripe, ecc.) il webhook può non arrivare (delay, drop silenzioso, IP block). Usa polling background o un reconciliation job come meccanismo primario; il webhook resta solo fallback idempotente.
+15. **NON dare per scontato che il merge in `main` deployi le edge functions**. Il deploy delle edge functions Supabase è separato dal deploy frontend. Dopo ogni modifica a `supabase/functions/*`, verifica il deploy: cerca una stringa unica del nuovo codice nei log della function in produzione, oppure forza il redeploy via Supabase MCP `deploy_edge_functions`. Il caso reale: SP#5 mergiato il 15 giu 2026, ma la function deployata era ancora la versione webhook-based pre-SP#5 → ogni "Scrapa ora" falliva con 404 su `{{resource.defaultDatasetId}}` mai sostituito (~€10/run bruciati su Apify).
 
 ---
 
