@@ -20,6 +20,7 @@ import InsightsTab from "@/components/content-calendar/InsightsTab";
 import CatalogTab from "@/components/content-calendar/CatalogTab";
 import CampaignAnalyticsTab from "@/components/content-calendar/analytics/CampaignAnalyticsTab";
 import { useCampaignOptions } from "@/hooks/useContentCalendar";
+import { ScrapingStatusBanner } from "@/components/scraping/ScrapingStatusBanner";
 
 const STORAGE_KEY = "content-calendar:campaign";
 const TABS = ["calendario", "analytics", "insights", "catalog"] as const;
@@ -62,6 +63,7 @@ export default function ContentCalendarPage() {
 
   return (
     <div className="space-y-4">
+      <ScrapingStatusBanner />
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <CalendarDays className="h-5 w-5 text-primary" />
@@ -99,7 +101,7 @@ export default function ContentCalendarPage() {
           ) : (
             <>
               <TabsContent value="calendario">
-                {campaignId && <CalendarTab campaignId={campaignId} />}
+                {campaignId && <CalendarTab campaignId={campaignId} campaignName={campaignName} />}
               </TabsContent>
               <TabsContent value="analytics">
                 <CampaignAnalyticsTab campaignId={campaignId} />
