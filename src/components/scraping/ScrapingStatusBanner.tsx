@@ -1,0 +1,59 @@
+import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
+import { useScrapingStatus } from "@/hooks/useVideoAnalytics";
+import { toast } from "@/hooks/use-toast";
+
+export function ScrapingStatusBanner() {
+  const { data: log } = useScrapingStatus();
+  const lastStatus = useRef<string | null>(null);
+  const qc = useQueryClient();
+  const [, force] = useState(0);
+
+  // Tick every second so the elapsed counter advances while running.
+  useEffect(() => {
+    if (log?.status !== "running") return;
+    const t = setInterval(() => force((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, [log?.status]);
+
+  useEffect(() => {
+    if (!log) return;
+    if (lastStatus.current === "running" && log.status === "success") {
+      toast({
+        title: "Scraping completato",
+        description: `${log.videos_created} nuovi video, ${log.videos_updated} aggiornati.`,
+      });
+      qc.invalidateQueries({ queryKey: ["video-analytics"] });
+      qc.invalidateQueries({ queryKey: ["videos"] });
+      qc.invalidateQueries({ queryKey: ["videos_for_accounts"] });
+      qc.invalidateQueries({ queryKey: ["content-calendar"] });
+      qc.invalidateQueries({ queryKey: ["last-scrape-log"] });
+    } else if (lastStatus.current === "running" && log.status === "error") {
+      toast({
+        title: "Scraping fallito",
+        description: log.error_message ?? "Errore sconosciuto. Vedi log.",
+        variant: "destructive",
+      });
+    }
+    lastStatus.current = log.status;
+  }, [log, qc]);
+
+  if (!log || log.status !== "running") return null;
+
+  const elapsed = log.started_at
+    ? Math.round((Date.now() - new Date(log.started_at).getTime()) / 1000)
+    : 0;
+
+  return (
+    <Alert>
+      <Loader2 className="h-4 w-4 animate-spin" />
+      <AlertTitle>Scraping in corso</AlertTitle>
+      <AlertDescription>
+        {log.progress_note ?? "In attesa di aggiornamenti..."}
+        <span className="text-xs text-muted-foreground ml-2">({elapsed}s)</span>
+      </AlertDescription>
+    </Alert>
+  );
+}

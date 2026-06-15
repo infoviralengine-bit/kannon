@@ -13,10 +13,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   useVideoAnalytics,
-  useRefreshTikTokScraping,
+  useStartScraping,
+  useScrapingStatus,
   useLastScrapeLog,
   type VideoAnalyticsFilters as Filters,
 } from "@/hooks/useVideoAnalytics";
+import { ScrapingStatusBanner } from "@/components/scraping/ScrapingStatusBanner";
 import { VideoAnalyticsFilters } from "@/components/video-analytics/VideoAnalyticsFilters";
 import { VideoAnalyticsKPIs } from "@/components/video-analytics/VideoAnalyticsKPIs";
 import { VideoTimeSeriesChart } from "@/components/video-analytics/VideoTimeSeriesChart";
@@ -36,18 +38,20 @@ export default function VideoAnalyticsPage() {
   const { role } = useAuth();
   const [filters, setFilters] = useState<Filters>(defaultFilters());
   const { data, isLoading, error } = useVideoAnalytics(filters);
-  const refreshMutation = useRefreshTikTokScraping();
+  const startScraping = useStartScraping();
+  const { data: scrapeLog } = useScrapingStatus();
   const { data: lastLog } = useLastScrapeLog();
   const { toast } = useToast();
+  const isRunning = scrapeLog?.status === "running";
 
   if (role && !isStaff(role)) return <Navigate to="/dashboard" replace />;
 
   const handleRefresh = async () => {
     try {
-      await refreshMutation.mutateAsync();
+      await startScraping.mutateAsync();
       toast({
         title: "Refresh avviato",
-        description: "Lo scraping TikTok è partito. I dati saranno disponibili tra qualche minuto.",
+        description: "Lo scraping TikTok è partito. Lo stato si aggiorna in tempo reale qui sopra.",
       });
     } catch (e: any) {
       toast({ title: "Errore refresh", description: e.message, variant: "destructive" });
@@ -60,6 +64,7 @@ export default function VideoAnalyticsPage() {
 
   return (
     <div className="space-y-6">
+      <ScrapingStatusBanner />
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Video Analytics</h1>
@@ -69,13 +74,13 @@ export default function VideoAnalyticsPage() {
           <VideoAnalyticsFilters value={filters} onChange={setFilters} />
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button disabled={refreshMutation.isPending} className="gap-2">
-                {refreshMutation.isPending ? (
+              <Button disabled={isRunning || startScraping.isPending} className="gap-2">
+                {isRunning || startScraping.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <RefreshCw className="h-4 w-4" />
                 )}
-                Refresh dati
+                {isRunning ? "Scraping in corso..." : "Refresh dati"}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
