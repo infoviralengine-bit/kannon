@@ -14,6 +14,157 @@ export type Database = {
   }
   public: {
     Tables: {
+      brief_change_requests: {
+        Row: {
+          author_id: string
+          brief_id: string
+          created_at: string
+          id: string
+          proposed_caption: string | null
+          proposed_copy_text: string | null
+          proposed_hashtags: string[] | null
+          proposed_visual_note: string | null
+          reason: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+        }
+        Insert: {
+          author_id: string
+          brief_id: string
+          created_at?: string
+          id?: string
+          proposed_caption?: string | null
+          proposed_copy_text?: string | null
+          proposed_hashtags?: string[] | null
+          proposed_visual_note?: string | null
+          reason: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Update: {
+          author_id?: string
+          brief_id?: string
+          created_at?: string
+          id?: string
+          proposed_caption?: string | null
+          proposed_copy_text?: string | null
+          proposed_hashtags?: string[] | null
+          proposed_visual_note?: string | null
+          reason?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brief_change_requests_brief_id_fkey"
+            columns: ["brief_id"]
+            isOneToOne: false
+            referencedRelation: "v_brief_stats"
+            referencedColumns: ["brief_id"]
+          },
+          {
+            foreignKeyName: "brief_change_requests_brief_id_fkey"
+            columns: ["brief_id"]
+            isOneToOne: false
+            referencedRelation: "video_briefs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brief_comments: {
+        Row: {
+          author_id: string
+          author_role: string
+          body: string
+          brief_id: string
+          created_at: string
+          id: string
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+        }
+        Insert: {
+          author_id: string
+          author_role: string
+          body: string
+          brief_id: string
+          created_at?: string
+          id?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Update: {
+          author_id?: string
+          author_role?: string
+          body?: string
+          brief_id?: string
+          created_at?: string
+          id?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brief_comments_brief_id_fkey"
+            columns: ["brief_id"]
+            isOneToOne: false
+            referencedRelation: "v_brief_stats"
+            referencedColumns: ["brief_id"]
+          },
+          {
+            foreignKeyName: "brief_comments_brief_id_fkey"
+            columns: ["brief_id"]
+            isOneToOne: false
+            referencedRelation: "video_briefs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brief_topics: {
+        Row: {
+          brief_id: string
+          topic_id: string
+        }
+        Insert: {
+          brief_id: string
+          topic_id: string
+        }
+        Update: {
+          brief_id?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brief_topics_brief_id_fkey"
+            columns: ["brief_id"]
+            isOneToOne: false
+            referencedRelation: "v_brief_stats"
+            referencedColumns: ["brief_id"]
+          },
+          {
+            foreignKeyName: "brief_topics_brief_id_fkey"
+            columns: ["brief_id"]
+            isOneToOne: false
+            referencedRelation: "video_briefs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brief_topics_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "content_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_creators: {
         Row: {
           campaign_id: string
@@ -52,6 +203,8 @@ export type Database = {
       }
       campaigns: {
         Row: {
+          brief_threshold_engagement: number | null
+          brief_threshold_views: number | null
           client_cpm: number | null
           client_fixed: number | null
           client_name: string
@@ -69,6 +222,8 @@ export type Database = {
           video_views_cap: number | null
         }
         Insert: {
+          brief_threshold_engagement?: number | null
+          brief_threshold_views?: number | null
           client_cpm?: number | null
           client_fixed?: number | null
           client_name: string
@@ -86,6 +241,8 @@ export type Database = {
           video_views_cap?: number | null
         }
         Update: {
+          brief_threshold_engagement?: number | null
+          brief_threshold_views?: number | null
           client_cpm?: number | null
           client_fixed?: number | null
           client_name?: string
@@ -253,6 +410,27 @@ export type Database = {
           source?: string
           status?: string
           tiktok_username?: string | null
+        }
+        Relationships: []
+      }
+      content_topics: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
         }
         Relationships: []
       }
@@ -1082,31 +1260,49 @@ export type Database = {
       scraping_logs: {
         Row: {
           accounts_processed: number
+          completed_at: string | null
           created_at: string
+          dataset_id: string | null
           error_message: string | null
           id: string
+          progress_note: string | null
           run_at: string
+          run_id: string | null
+          started_at: string | null
           status: string
+          triggered_by: string | null
           videos_created: number
           videos_updated: number
         }
         Insert: {
           accounts_processed?: number
+          completed_at?: string | null
           created_at?: string
+          dataset_id?: string | null
           error_message?: string | null
           id?: string
+          progress_note?: string | null
           run_at?: string
+          run_id?: string | null
+          started_at?: string | null
           status: string
+          triggered_by?: string | null
           videos_created?: number
           videos_updated?: number
         }
         Update: {
           accounts_processed?: number
+          completed_at?: string | null
           created_at?: string
+          dataset_id?: string | null
           error_message?: string | null
           id?: string
+          progress_note?: string | null
           run_at?: string
+          run_id?: string | null
+          started_at?: string | null
           status?: string
+          triggered_by?: string | null
           videos_created?: number
           videos_updated?: number
         }
@@ -1218,30 +1414,180 @@ export type Database = {
         }
         Relationships: []
       }
+      video_brief_matches: {
+        Row: {
+          brief_id: string
+          confidence: number
+          created_at: string
+          id: string
+          match_method: string
+          matched_by: string | null
+          video_id: string
+        }
+        Insert: {
+          brief_id: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          match_method: string
+          matched_by?: string | null
+          video_id: string
+        }
+        Update: {
+          brief_id?: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          match_method?: string
+          matched_by?: string | null
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_brief_matches_brief_id_fkey"
+            columns: ["brief_id"]
+            isOneToOne: false
+            referencedRelation: "v_brief_stats"
+            referencedColumns: ["brief_id"]
+          },
+          {
+            foreignKeyName: "video_brief_matches_brief_id_fkey"
+            columns: ["brief_id"]
+            isOneToOne: false
+            referencedRelation: "video_briefs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_brief_matches_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "v_video_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_brief_matches_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_briefs: {
+        Row: {
+          audio_id: string | null
+          campaign_id: string
+          caption: string | null
+          copy_text: string
+          created_at: string
+          created_by: string | null
+          expected_caption_keywords: string[] | null
+          format_id: string | null
+          hashtags: string[] | null
+          id: string
+          planned_publish_date: string
+          reference_links: Json
+          reference_type: string
+          status: string
+          threshold_engagement_override: number | null
+          threshold_views_override: number | null
+          title: string | null
+          updated_at: string
+          visual_note: string | null
+          week_label: string | null
+        }
+        Insert: {
+          audio_id?: string | null
+          campaign_id: string
+          caption?: string | null
+          copy_text: string
+          created_at?: string
+          created_by?: string | null
+          expected_caption_keywords?: string[] | null
+          format_id?: string | null
+          hashtags?: string[] | null
+          id?: string
+          planned_publish_date: string
+          reference_links?: Json
+          reference_type?: string
+          status?: string
+          threshold_engagement_override?: number | null
+          threshold_views_override?: number | null
+          title?: string | null
+          updated_at?: string
+          visual_note?: string | null
+          week_label?: string | null
+        }
+        Update: {
+          audio_id?: string | null
+          campaign_id?: string
+          caption?: string | null
+          copy_text?: string
+          created_at?: string
+          created_by?: string | null
+          expected_caption_keywords?: string[] | null
+          format_id?: string | null
+          hashtags?: string[] | null
+          id?: string
+          planned_publish_date?: string
+          reference_links?: Json
+          reference_type?: string
+          status?: string
+          threshold_engagement_override?: number | null
+          threshold_views_override?: number | null
+          title?: string | null
+          updated_at?: string
+          visual_note?: string | null
+          week_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_briefs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_briefs_format_id_fkey"
+            columns: ["format_id"]
+            isOneToOne: false
+            referencedRelation: "video_formats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_formats: {
         Row: {
           created_at: string
           id: string
+          is_active: boolean
           name: string
         }
         Insert: {
           created_at?: string
           id?: string
+          is_active?: boolean
           name: string
         }
         Update: {
           created_at?: string
           id?: string
+          is_active?: boolean
           name?: string
         }
         Relationships: []
       }
       videos: {
         Row: {
+          audio_id: string | null
+          audio_name: string | null
+          caption: string | null
           comments: number | null
           content_tag: string | null
           created_at: string
           duration_sec: number | null
+          hashtags: string[] | null
           id: string
           last_scraped_at: string | null
           likes: number | null
@@ -1257,10 +1603,14 @@ export type Database = {
           window_expires_at: string | null
         }
         Insert: {
+          audio_id?: string | null
+          audio_name?: string | null
+          caption?: string | null
           comments?: number | null
           content_tag?: string | null
           created_at?: string
           duration_sec?: number | null
+          hashtags?: string[] | null
           id?: string
           last_scraped_at?: string | null
           likes?: number | null
@@ -1276,10 +1626,14 @@ export type Database = {
           window_expires_at?: string | null
         }
         Update: {
+          audio_id?: string | null
+          audio_name?: string | null
+          caption?: string | null
           comments?: number | null
           content_tag?: string | null
           created_at?: string
           duration_sec?: number | null
+          hashtags?: string[] | null
           id?: string
           last_scraped_at?: string | null
           likes?: number | null
@@ -1306,6 +1660,35 @@ export type Database = {
       }
     }
     Views: {
+      v_brief_stats: {
+        Row: {
+          avg_engagement_pct: number | null
+          brief_id: string | null
+          campaign_id: string | null
+          format_id: string | null
+          matched_videos_count: number | null
+          threshold_engagement: number | null
+          threshold_views: number | null
+          total_effective_views: number | null
+          total_engagements: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_briefs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_briefs_format_id_fkey"
+            columns: ["format_id"]
+            isOneToOne: false
+            referencedRelation: "video_formats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_financial_movements: {
         Row: {
           amount: number | null
@@ -1414,6 +1797,23 @@ export type Database = {
         Args: { p_limit?: number; p_user_id: string }
         Returns: Json
       }
+      get_content_analytics: {
+        Args: {
+          p_campaign_id?: string
+          p_format_id?: string
+          p_period?: string
+          p_topic_id?: string
+        }
+        Returns: Json
+      }
+      get_content_calendar: {
+        Args: { p_campaign_id: string; p_from: string; p_to: string }
+        Returns: Json
+      }
+      get_content_insights: {
+        Args: { p_campaign_id?: string; p_period?: string }
+        Returns: Json
+      }
       get_creator_contract_campaigns: {
         Args: { _user_id: string }
         Returns: {
@@ -1475,10 +1875,27 @@ export type Database = {
         }
         Returns: boolean
       }
+      match_video_to_briefs: { Args: { p_video_id: string }; Returns: number }
+      notify_brief_event: {
+        Args: {
+          p_brief_id: string
+          p_link?: string
+          p_message: string
+          p_targets?: string[]
+          p_type: string
+        }
+        Returns: number
+      }
       owns_tiktok_account: {
         Args: { _account_id: string; _user_id: string }
         Returns: boolean
       }
+      rematch_all_unmatched_videos: {
+        Args: { p_days_back?: number }
+        Returns: number
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       update_finance_cash: { Args: { p_amount: number }; Returns: undefined }
     }
     Enums: {
