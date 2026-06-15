@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface VideoAnalyticsFilters {
@@ -162,5 +162,72 @@ export function useLastScrapeLog() {
       return data as { run_at: string; status: string; accounts_processed: number | null; videos_updated: number | null; videos_created: number | null } | null;
     },
     refetchInterval: 30_000,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// SP#5 Part A: resilient scraping status (background polling)
+// ---------------------------------------------------------------------------
+export interface ScrapingLog {
+  id: string;
+  run_at: string;
+  status: "running" | "success" | "error";
+  accounts_processed: number;
+  videos_created: number;
+  videos_updated: number;
+  error_message: string | null;
+  run_id: string | null;
+  dataset_id: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  progress_note: string | null;
+}
+
+/** Current scraping log. Polls every 3s while running, 30s otherwise. */
+export function useScrapingStatus() {
+  return useQuery({
+    queryKey: ["scraping-status-current"],
+    queryFn: async (): Promise<ScrapingLog | null> => {
+      const { data, error } = await supabase
+        .from("scraping_logs")
+        .select("*")
+        .order("run_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data as ScrapingLog | null;
+    },
+    refetchInterval: (q) => {
+      const d = q.state.data as ScrapingLog | null;
+      return d?.status === "running" ? 3_000 : 30_000;
+    },
+  });
+}
+
+export function useStartScraping() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("scrape-tiktok", { body: {} });
+      if (error) throw error;
+      return data as { ok: boolean; log_id: string; run_id: string };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["scraping-status-current"] });
+    },
+  });
+}
+
+export function useImportDataset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (datasetId: string) => {
+      const { data, error } = await supabase.functions.invoke("scrape-tiktok", { body: { datasetId } });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["scraping-status-current"] });
+    },
   });
 }

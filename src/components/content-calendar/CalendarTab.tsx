@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ContentCalendarGrid } from "./ContentCalendarGrid";
 import { BriefDetailDrawer } from "./BriefDetailDrawer";
 import { BriefFormDialog } from "./BriefFormDialog";
+import { BriefImportDialog } from "./BriefImportDialog";
 import { toISODate } from "./_helpers";
 import { useContentCalendar, type Brief } from "@/hooks/useContentCalendar";
 
@@ -36,7 +37,7 @@ function computeRange(key: RangeKey): { from: string; to: string } {
   return { from: toISODate(from), to: toISODate(to) };
 }
 
-export default function CalendarTab({ campaignId }: { campaignId: string }) {
+export default function CalendarTab({ campaignId, campaignName }: { campaignId: string; campaignName?: string | null }) {
   const [range, setRange] = useState<RangeKey>("current");
   const { from, to } = useMemo(() => computeRange(range), [range]);
   const { data, isLoading } = useContentCalendar(campaignId, from, to);
@@ -45,6 +46,7 @@ export default function CalendarTab({ campaignId }: { campaignId: string }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Brief | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const allBriefs = useMemo(() => (data?.weeks ?? []).flatMap((w) => w.briefs), [data]);
   const kpis = useMemo(() => {
@@ -82,9 +84,14 @@ export default function CalendarTab({ campaignId }: { campaignId: string }) {
             </Button>
           ))}
         </div>
-        <Button size="sm" onClick={openNew}>
-          <Plus className="h-4 w-4 mr-1" />Nuovo brief
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+            <FileUp className="h-4 w-4 mr-1" />Importa da Google Doc
+          </Button>
+          <Button size="sm" onClick={openNew}>
+            <Plus className="h-4 w-4 mr-1" />Nuovo brief
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -107,6 +114,7 @@ export default function CalendarTab({ campaignId }: { campaignId: string }) {
 
       <BriefDetailDrawer brief={selected} open={drawerOpen} onOpenChange={setDrawerOpen} onEdit={openEdit} />
       <BriefFormDialog open={formOpen} onOpenChange={setFormOpen} campaignId={campaignId} brief={editing} />
+      <BriefImportDialog open={importOpen} onOpenChange={setImportOpen} campaignId={campaignId} campaignName={campaignName} />
     </div>
   );
 }

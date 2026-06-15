@@ -20,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Plus, Trash2, RefreshCw, Loader2, ChevronDown, ChevronRight, User, Video, Eye } from "lucide-react";
+import { useScrapingStatus, useStartScraping, useImportDataset } from "@/hooks/useVideoAnalytics";
+import { ScrapingStatusBanner } from "@/components/scraping/ScrapingStatusBanner";
 
 export default function AccountPage() {
   const navigate = useNavigate();
@@ -31,68 +33,30 @@ export default function AccountPage() {
     getOutreachToday, getOutreachMonth,
   } = useAccountList();
 
-  const [scraping, setScraping] = useState(false);
   const [datasetIdInput, setDatasetIdInput] = useState("");
   const [showDatasetDialog, setShowDatasetDialog] = useState(false);
 
-  async function runScrapeAndPoll(body?: Record<string, string>) {
-    setScraping(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("scrape-tiktok", {
-        body: body || {},
-      });
-      if (error) throw new Error(error.message);
-      if (data?.error) throw new Error(data.error);
-      toast({
-        title: body?.datasetId ? "Import avviato" : "Scraping avviato",
-        description: data?.message || "In background. Controlla i log per i risultati.",
-      });
-      const pollInterval = setInterval(async () => {
-        const { data: logs } = await supabase
-          .from("scraping_logs")
-          .select("*")
-          .order("run_at", { ascending: false })
-          .limit(1)
-          .single();
-        if (logs && new Date(logs.run_at) > new Date(Date.now() - 60000)) {
-          clearInterval(pollInterval);
-          setScraping(false);
-          queryClient.invalidateQueries({ queryKey: ["tiktok_accounts"] });
-          queryClient.invalidateQueries({ queryKey: ["videos_for_accounts"] });
-          queryClient.invalidateQueries({ queryKey: ["campaign-manager"] });
-          queryClient.invalidateQueries({ queryKey: ["last-scrape-at"] });
-          if (logs.status === "success") {
-            toast({
-              title: "Completato",
-              description: `${logs.videos_created} nuovi video, ${logs.videos_updated} aggiornati (${logs.accounts_processed} account)`,
-            });
-          } else {
-            toast({
-              title: "Terminato con errori",
-              description: logs.error_message?.substring(0, 200) || "Controlla i log per dettagli",
-              variant: "destructive",
-            });
-          }
-        }
-      }, 10000);
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        setScraping(false);
-      }, 20 * 60 * 1000);
-    } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
-      setScraping(false);
-    }
-  }
+  const { data: scrapeLog } = useScrapingStatus();
+  const startScraping = useStartScraping();
+  const importDataset = useImportDataset();
+  const isRunning = scrapeLog?.status === "running";
 
   function handleScrapeNow() {
-    runScrapeAndPoll();
+    startScraping.mutate(undefined, {
+      onSuccess: () =>
+        toast({ title: "Scraping avviato", description: "Stato in tempo reale nel banner in alto." }),
+      onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    });
   }
 
   function handleImportDataset() {
     if (!datasetIdInput.trim()) return;
     setShowDatasetDialog(false);
-    runScrapeAndPoll({ datasetId: datasetIdInput.trim() });
+    importDataset.mutate(datasetIdInput.trim(), {
+      onSuccess: () =>
+        toast({ title: "Import avviato", description: "Stato in tempo reale nel banner in alto." }),
+      onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    });
     setDatasetIdInput("");
   }
 
@@ -195,18 +159,19 @@ export default function AccountPage() {
 
   return (
     <div className="space-y-6">
+      <ScrapingStatusBanner />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Account</h1>
         <div className="flex items-center gap-2">
           {role === "admin" && (
             <>
-              <Button variant="outline" onClick={handleScrapeNow} disabled={scraping}>
-                {scraping ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                {scraping ? "Scraping..." : "🔄 Scrapa Ora"}
+              <Button variant="outline" onClick={handleScrapeNow} disabled={isRunning}>
+                {isRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                {isRunning ? "Scraping..." : "🔄 Scrapa Ora"}
               </Button>
               <Dialog open={showDatasetDialog} onOpenChange={setShowDatasetDialog}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" disabled={scraping}>📥 Importa Dataset</Button>
+                  <Button variant="outline" disabled={isRunning}>📥 Importa Dataset</Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>

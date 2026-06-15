@@ -612,4 +612,75 @@ export function useCampaignOptions() {
   });
 }
 
+// ---------------------------------------------------------------------------
+// SP#5 Part B: AI-paste brief import
+// ---------------------------------------------------------------------------
+export interface ParsedBrief {
+  planned_publish_date: string;
+  title: string;
+  reference_type: "video" | "audio" | "video_audio" | "format_audio" | "format";
+  reference_links: { label: string; url: string }[];
+  copy_text: string;
+  caption: string | null;
+  hashtags: string[];
+  visual_note: string | null;
+  audio_id: string | null;
+  expected_caption_keywords: string[];
+  format_id: string | null;
+  topic_ids: string[];
+}
+
+export function useParseBriefsFromText() {
+  return useMutation({
+    mutationFn: async (input: { raw_text: string; campaign_name?: string }) => {
+      const { data, error } = await supabase.functions.invoke("parse-briefs-from-text", {
+        body: { raw_text: input.raw_text, campaign_context: { campaign_name: input.campaign_name } },
+      });
+      if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error ?? "Parse failed");
+      return data.briefs as ParsedBrief[];
+    },
+  });
+}
+
+export function useBulkCreateBriefs() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { campaign_id: string; briefs: ParsedBrief[] }) => {
+      const rows = input.briefs.map((b) => ({
+        campaign_id: input.campaign_id,
+        planned_publish_date: b.planned_publish_date,
+        title: b.title,
+        reference_type: b.reference_type,
+        reference_links: b.reference_links,
+        copy_text: b.copy_text,
+        caption: b.caption,
+        hashtags: b.hashtags,
+        visual_note: b.visual_note,
+        audio_id: b.audio_id,
+        expected_caption_keywords: b.expected_caption_keywords,
+        format_id: b.format_id,
+        status: "draft" as const,
+      }));
+      const { data, error } = await sb.from("video_briefs").insert(rows).select("id");
+      if (error) throw error;
+
+      const topicLinks: { brief_id: string; topic_id: string }[] = [];
+      (data ?? []).forEach((inserted: any, i: number) => {
+        (input.briefs[i]?.topic_ids ?? []).forEach((tid) =>
+          topicLinks.push({ brief_id: inserted.id, topic_id: tid })
+        );
+      });
+      if (topicLinks.length > 0) {
+        const { error: linkErr } = await sb.from("brief_topics").insert(topicLinks);
+        if (linkErr) throw linkErr;
+      }
+      return (data ?? []) as { id: string }[];
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["content-calendar"] });
+    },
+  });
+}
+
 export { calendarKey };
