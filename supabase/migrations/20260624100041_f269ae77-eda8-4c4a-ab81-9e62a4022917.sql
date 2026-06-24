@@ -1,0 +1,1 @@
+UPDATE public.scraping_logs SET status='error', completed_at=now(), error_message='Recover manuale: poller killed before completion. Dataset disponibile per import.', progress_note='Sblocca: usa "Importa dataset" con id=vp6N4dC7JZloQB59c' WHERE id='67cd4191-f3f6-4d70-97d2-c8ec8044c823' AND status='running';
