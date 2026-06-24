@@ -42,7 +42,10 @@ export default function VideoAnalyticsPage() {
   const { data: scrapeLog } = useScrapingStatus();
   const { data: lastLog } = useLastScrapeLog();
   const { toast } = useToast();
-  const isRunning = scrapeLog?.status === "running";
+  const isRunning =
+    scrapeLog?.status === "running" &&
+    (!scrapeLog.started_at ||
+      Date.now() - new Date(scrapeLog.started_at).getTime() < 5 * 60 * 1000);
 
   if (role && !isStaff(role) && role !== ROLES.CAMPAIGN_MANAGER)
     return <Navigate to="/dashboard" replace />;
