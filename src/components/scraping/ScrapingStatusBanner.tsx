@@ -51,22 +51,6 @@ export function ScrapingStatusBanner() {
 
   const isStale = elapsed > 5 * 60;
 
-  // Auto-recover once per stale log (best effort, silent on failure)
-  if (isStale && autoRecoveredFor.current !== log.id && !recover.isPending) {
-    autoRecoveredFor.current = log.id;
-    recover.mutate(5, {
-      onSuccess: (r) => {
-        if (r?.recovered > 0) {
-          toast({
-            title: "Scraping sbloccato",
-            description: "Run bloccata recuperata automaticamente.",
-          });
-        }
-      },
-      onError: () => { /* user can retry via the button below */ },
-    });
-  }
-
   return (
     <Alert variant={isStale ? "destructive" : "default"}>
       {isStale ? (
