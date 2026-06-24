@@ -118,7 +118,7 @@ async function verifyAdminCaller(req: Request, supabaseAdmin: any): Promise<stri
     });
   }
   const { data: roleData } = await supabaseAdmin.rpc("get_user_role", { _user_id: claimsData.user.id });
-  if (roleData !== "admin") {
+  if (roleData !== "admin" && roleData !== "team" && roleData !== "campaign_manager") {
     throw new Response(JSON.stringify({ ok: false, error: "Admin only" }), {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
