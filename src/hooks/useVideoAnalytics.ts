@@ -231,3 +231,22 @@ export function useImportDataset() {
     },
   });
 }
+
+/** Recovers "running" logs whose background poller died (e.g. iso-runtime shutdown). */
+export function useRecoverScraping() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (minMinutes: number = 5) => {
+      const { data, error } = await supabase.functions.invoke("scrape-tiktok", {
+        body: { action: "recover", minMinutes },
+      });
+      if (error) throw error;
+      return data as { ok: boolean; recovered: number; details: any[] };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["scraping-status-current"] });
+      qc.invalidateQueries({ queryKey: ["videos"] });
+      qc.invalidateQueries({ queryKey: ["video-analytics"] });
+    },
+  });
+}
