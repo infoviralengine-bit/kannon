@@ -376,6 +376,101 @@ async function handleWebhookFallback(supabaseAdmin: any, body: any) {
 }
 
 // ---------------------------------------------------------------------------
+// Path D: recover stuck "running" logs (poller died before completion).
+// Checks Apify run status; if SUCCEEDED, processes the dataset; otherwise
+// marks the log as error so the UI unblocks. Idempotent.
+// ---------------------------------------------------------------------------
+async function handleRecoverStuck(supabaseAdmin: any, req: Request, body: any) {
+  await verifyAdminCaller(req, supabaseAdmin);
+  const minMinutes = Number(body?.minMinutes ?? 5);
+  const cutoff = new Date(Date.now() - minMinutes * 60_000).toISOString();
+
+  const { data: stuck, error } = await supabaseAdmin
+    .from("scraping_logs")
+    .select("id, run_id, dataset_id, started_at")
+    .eq("status", "running")
+    .lt("started_at", cutoff);
+  if (error) throw new Error(`Recover query failed: ${error.message}`);
+
+  const results: any[] = [];
+  for (const log of stuck ?? []) {
+    try {
+      if (!log.run_id) {
+        // Manual import with no run_id, just mark as error
+        await finalizeLog(supabaseAdmin, log.id, {
+          status: "error",
+          dataset_id: log.dataset_id,
+          error_message: "Recover: log senza run_id, marcato come errore",
+          progress_note: "Recover automatico",
+        });
+        results.push({ id: log.id, action: "errored_no_runid" });
+        continue;
+      }
+      const apiToken = await getApifyApiToken(supabaseAdmin);
+      const statusRes = await fetch(`https://api.apify.com/v2/actor-runs/${log.run_id}?token=${apiToken}`);
+      if (!statusRes.ok) {
+        await finalizeLog(supabaseAdmin, log.id, {
+          status: "error",
+          dataset_id: log.dataset_id,
+          error_message: `Recover: HTTP ${statusRes.status} su Apify run`,
+        });
+        results.push({ id: log.id, action: "errored_http", code: statusRes.status });
+        continue;
+      }
+      const statusData = await statusRes.json();
+      const runStatus = statusData.data?.status as string;
+      const datasetId = (statusData.data?.defaultDatasetId ?? log.dataset_id) as string | null;
+
+      if (runStatus === "SUCCEEDED" && datasetId) {
+        await updateLog(supabaseAdmin, log.id, {
+          progress_note: `Recover: processing dataset ${datasetId}...`,
+          dataset_id: datasetId,
+        });
+        const result = await runScraping(supabaseAdmin, datasetId);
+        await finalizeLog(supabaseAdmin, log.id, {
+          status: "success",
+          accounts_processed: result.accounts_processed,
+          videos_created: result.videos_created,
+          videos_updated: result.videos_updated,
+          dataset_id: datasetId,
+          progress_note: `Recover completato. ${result.accounts_processed} account, ${result.videos_created} nuovi, ${result.videos_updated} aggiornati.`,
+        });
+        results.push({ id: log.id, action: "recovered_success", ...result });
+      } else if (runStatus === "RUNNING" || runStatus === "READY") {
+        // Still running on Apify side, resume polling in background.
+        EdgeRuntime.waitUntil(pollAndProcess(supabaseAdmin, log.id, log.run_id));
+        await updateLog(supabaseAdmin, log.id, {
+          progress_note: `Recover: polling ripreso (Apify status=${runStatus})`,
+        });
+        results.push({ id: log.id, action: "polling_resumed", apify_status: runStatus });
+      } else {
+        await finalizeLog(supabaseAdmin, log.id, {
+          status: "error",
+          dataset_id: datasetId,
+          error_message: `Recover: Apify run ended with status ${runStatus}`,
+          progress_note: `Run terminato (${runStatus})`,
+        });
+        results.push({ id: log.id, action: "errored_apify", apify_status: runStatus });
+      }
+    } catch (err: any) {
+      try {
+        await finalizeLog(supabaseAdmin, log.id, {
+          status: "error",
+          dataset_id: log.dataset_id,
+          error_message: `Recover exception: ${err.message}`,
+        });
+      } catch { /* ignore */ }
+      results.push({ id: log.id, action: "errored_exception", error: err.message });
+    }
+  }
+
+  return new Response(
+    JSON.stringify({ ok: true, recovered: results.length, details: results }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Router
 // ---------------------------------------------------------------------------
 Deno.serve(async (req) => {
@@ -392,6 +487,9 @@ Deno.serve(async (req) => {
   try {
     if (body?.source === "apify-webhook" || body?.eventType === "ACTOR.RUN.SUCCEEDED") {
       return await handleWebhookFallback(supabaseAdmin, body);
+    }
+    if (body?.action === "recover") {
+      return await handleRecoverStuck(supabaseAdmin, req, body);
     }
     if (body?.datasetId) {
       return await handleManualImport(supabaseAdmin, body.datasetId, req);
