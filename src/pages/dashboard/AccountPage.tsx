@@ -39,7 +39,12 @@ export default function AccountPage() {
   const { data: scrapeLog } = useScrapingStatus();
   const startScraping = useStartScraping();
   const importDataset = useImportDataset();
-  const isRunning = scrapeLog?.status === "running";
+  // Treat logs older than 5 min as stale: ScrapingStatusBanner auto-recovers them,
+  // and we don't want the UI permanently locked if the poller died.
+  const isRunning =
+    scrapeLog?.status === "running" &&
+    (!scrapeLog.started_at ||
+      Date.now() - new Date(scrapeLog.started_at).getTime() < 5 * 60 * 1000);
 
   function handleScrapeNow() {
     startScraping.mutate(undefined, {
