@@ -21,6 +21,27 @@ export function ScrapingStatusBanner() {
     return () => clearInterval(t);
   }, [log?.status]);
 
+  // Auto-recover once per stale running log (best effort, silent).
+  useEffect(() => {
+    if (!log || log.status !== "running" || !log.started_at) return;
+    const elapsedMs = Date.now() - new Date(log.started_at).getTime();
+    if (elapsedMs < 5 * 60 * 1000) return;
+    if (autoRecoveredFor.current === log.id) return;
+    autoRecoveredFor.current = log.id;
+    recover.mutate(5, {
+      onSuccess: (r) => {
+        if (r?.recovered > 0) {
+          toast({
+            title: "Scraping sbloccato",
+            description: "Run bloccata recuperata automaticamente.",
+          });
+        }
+      },
+      onError: () => { /* user can retry via the button below */ },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [log?.id, log?.started_at, log?.status]);
+
   useEffect(() => {
     if (!log) return;
     if (lastStatus.current === "running" && log.status === "success") {
