@@ -24,7 +24,7 @@ import { VideoAnalyticsKPIs } from "@/components/video-analytics/VideoAnalyticsK
 import { VideoTimeSeriesChart } from "@/components/video-analytics/VideoTimeSeriesChart";
 import { TopBreakdownChart } from "@/components/video-analytics/TopBreakdownChart";
 import { TopVideosTable } from "@/components/video-analytics/TopVideosTable";
-import { isStaff } from "@/lib/roles";
+import { isStaff, ROLES } from "@/lib/roles";
 
 function defaultFilters(): Filters {
   const today = new Date();
@@ -44,7 +44,8 @@ export default function VideoAnalyticsPage() {
   const { toast } = useToast();
   const isRunning = scrapeLog?.status === "running";
 
-  if (role && !isStaff(role)) return <Navigate to="/dashboard" replace />;
+  if (role && !isStaff(role) && role !== ROLES.CAMPAIGN_MANAGER)
+    return <Navigate to="/dashboard" replace />;
 
   const handleRefresh = async () => {
     try {
