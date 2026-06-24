@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
-import { useScrapingStatus } from "@/hooks/useVideoAnalytics";
+import { Button } from "@/components/ui/button";
+import { Loader2, AlertTriangle } from "lucide-react";
+import { useScrapingStatus, useRecoverScraping } from "@/hooks/useVideoAnalytics";
 import { toast } from "@/hooks/use-toast";
 
 export function ScrapingStatusBanner() {
   const { data: log } = useScrapingStatus();
+  const recover = useRecoverScraping();
   const lastStatus = useRef<string | null>(null);
+  const autoRecoveredFor = useRef<string | null>(null);
   const qc = useQueryClient();
   const [, force] = useState(0);
 
@@ -46,13 +49,57 @@ export function ScrapingStatusBanner() {
     ? Math.round((Date.now() - new Date(log.started_at).getTime()) / 1000)
     : 0;
 
+  const isStale = elapsed > 5 * 60;
+
+  // Auto-recover once per stale log (best effort, silent on failure)
+  if (isStale && autoRecoveredFor.current !== log.id && !recover.isPending) {
+    autoRecoveredFor.current = log.id;
+    recover.mutate(5, {
+      onSuccess: (r) => {
+        if (r?.recovered > 0) {
+          toast({
+            title: "Scraping sbloccato",
+            description: "Run bloccata recuperata automaticamente.",
+          });
+        }
+      },
+      onError: () => { /* user can retry via the button below */ },
+    });
+  }
+
   return (
-    <Alert>
-      <Loader2 className="h-4 w-4 animate-spin" />
-      <AlertTitle>Scraping in corso</AlertTitle>
-      <AlertDescription>
-        {log.progress_note ?? "In attesa di aggiornamenti..."}
-        <span className="text-xs text-muted-foreground ml-2">({elapsed}s)</span>
+    <Alert variant={isStale ? "destructive" : "default"}>
+      {isStale ? (
+        <AlertTriangle className="h-4 w-4" />
+      ) : (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      )}
+      <AlertTitle>
+        {isStale ? "Scraping bloccato" : "Scraping in corso"}
+      </AlertTitle>
+      <AlertDescription className="flex items-center justify-between gap-3 flex-wrap">
+        <span>
+          {log.progress_note ?? "In attesa di aggiornamenti..."}
+          <span className="text-xs text-muted-foreground ml-2">({elapsed}s)</span>
+          {isStale && (
+            <span className="block text-xs mt-1 opacity-90">
+              Il poller in background si è interrotto. Sblocco automatico in corso, oppure forza qui sotto.
+            </span>
+          )}
+        </span>
+        {isStale && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => recover.mutate(5)}
+            disabled={recover.isPending}
+          >
+            {recover.isPending ? (
+              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+            ) : null}
+            Sblocca e recupera
+          </Button>
+        )}
       </AlertDescription>
     </Alert>
   );
