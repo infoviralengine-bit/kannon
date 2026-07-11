@@ -79,7 +79,23 @@ export default function FinancePage() {
     setSearchParams({ tab: v }, { replace: true });
   };
 
-  if (role && role !== "admin") return <Navigate to="/dashboard" replace />;
+  if (role && role !== "admin" && role !== "team") return <Navigate to="/dashboard" replace />;
+  const isTeamOnly = role === "team";
+  if (isTeamOnly && activeTab !== "payable") {
+    return <Navigate to="/dashboard/finance?tab=payable" replace />;
+  }
+
+  if (isTeamOnly) {
+    return (
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Pagamenti da fare</h1>
+          <p className="text-muted-foreground">Uscite verso creator e fornitori</p>
+        </div>
+        <PayableTab />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">

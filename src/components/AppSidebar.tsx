@@ -77,6 +77,7 @@ const sidebarSections: SidebarSection[] = [
     label: "Finance",
     items: [
       { label: "Finance", icon: Wallet, path: "/dashboard/finance", roles: [ROLES.ADMIN] },
+      { label: "Pagamenti da fare", icon: Wallet, path: "/dashboard/finance?tab=payable", roles: [ROLES.TEAM] },
     ],
   },
   {
