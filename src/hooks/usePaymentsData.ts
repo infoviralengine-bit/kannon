@@ -53,7 +53,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
 
       if (allCampIds.length) {
         const [{ data: camps }] = await Promise.all([
-          supabase.from("campaigns").select("id, name, client_name, client_fixed, client_cpm, video_views_cap, monthly_spend_cap, status").in("id", allCampIds).eq("status", "active"),
+          supabase.from("campaigns").select("id, name, client_name, client_fixed, client_cpm, video_views_cap, monthly_spend_cap, status").in("id", allCampIds),
         ]);
         (camps ?? []).forEach((c) => campMap.set(c.id, {
           name: c.name, client_name: c.client_name,
@@ -63,7 +63,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           monthly_spend_cap: (c as any).monthly_spend_cap as number | null,
         }));
       }
-      // Filter out payments from non-active campaigns
+      // Keep payments for paused/archived campaigns too: existing receivables remain collectible.
       const activePayments = (payments ?? []).filter((p) => campMap.has(p.campaign_id));
       const campIds = [...campMap.keys()];
 
