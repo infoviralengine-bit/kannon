@@ -140,7 +140,7 @@ export function useTopVideos(
 
 export function useRefreshTikTokScraping() {
   return useMutation({
-    mutationFn: async (campaignId?: string | null) => {
+    mutationFn: async (campaignId: string | null) => {
       const { data, error } = await supabase.functions.invoke("scrape-tiktok", {
         body: campaignId ? { campaignId } : {},
       });
