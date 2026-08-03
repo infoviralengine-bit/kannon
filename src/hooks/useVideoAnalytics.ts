@@ -209,8 +209,10 @@ export function useScrapingStatus() {
 export function useStartScraping() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("scrape-tiktok", { body: {} });
+    mutationFn: async (campaignId: string | null) => {
+      const { data, error } = await supabase.functions.invoke("scrape-tiktok", {
+        body: campaignId ? { campaignId } : {},
+      });
       if (error) throw error;
       return data as { ok: boolean; log_id: string; run_id: string };
     },
