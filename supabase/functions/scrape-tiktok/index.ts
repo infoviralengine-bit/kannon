@@ -130,14 +130,17 @@ async function verifyAdminCaller(req: Request, supabaseAdmin: any): Promise<stri
 // ---------------------------------------------------------------------------
 // Start an Apify run WITHOUT webhook (polling handles completion).
 // ---------------------------------------------------------------------------
-async function startApifyRun(supabaseAdmin: any) {
+async function startApifyRun(supabaseAdmin: any, campaignId?: string | null) {
   const apiToken = await getApifyApiToken(supabaseAdmin);
-  const { data: accounts } = await supabaseAdmin
+  let accQuery = supabaseAdmin
     .from("tiktok_accounts")
     .select("username, campaign_id")
     .eq("account_type", "creator")
     .not("campaign_id", "is", null)
     .eq("is_active", true);
+  // Optional scope: scrape only the accounts of a single campaign.
+  if (campaignId) accQuery = accQuery.eq("campaign_id", campaignId);
+  const { data: accounts } = await accQuery;
 
   const profiles = [
     ...new Set((accounts ?? []).map((a: any) => normalizeTikTokUsername(a.username)).filter(Boolean)),
@@ -181,9 +184,9 @@ async function startApifyRun(supabaseAdmin: any) {
 // ---------------------------------------------------------------------------
 // Path C: "Scrapa ora" -> background polling
 // ---------------------------------------------------------------------------
-async function handleStartWithPolling(supabaseAdmin: any, req: Request) {
+async function handleStartWithPolling(supabaseAdmin: any, req: Request, campaignId?: string | null) {
   const callerId = await verifyAdminCaller(req, supabaseAdmin);
-  const started = await startApifyRun(supabaseAdmin);
+  const started = await startApifyRun(supabaseAdmin, campaignId);
   const logId = await createLog(supabaseAdmin, {
     runId: started.runId,
     datasetId: started.datasetId,
@@ -195,7 +198,7 @@ async function handleStartWithPolling(supabaseAdmin: any, req: Request) {
       ok: true,
       log_id: logId,
       run_id: started.runId,
-      message: `Scraping avviato. Run ${started.runId}. Polling in corso.`,
+      message: `Scraping avviato su ${started.profilesCount} account${campaignId ? " della campagna selezionata" : ""}. Run ${started.runId}.`,
     }),
     { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
@@ -494,7 +497,7 @@ Deno.serve(async (req) => {
     if (body?.datasetId) {
       return await handleManualImport(supabaseAdmin, body.datasetId, req);
     }
-    return await handleStartWithPolling(supabaseAdmin, req);
+    return await handleStartWithPolling(supabaseAdmin, req, body?.campaignId ?? null);
   } catch (err) {
     // verifyAdminCaller throws a Response for auth failures.
     if (err instanceof Response) return err;
