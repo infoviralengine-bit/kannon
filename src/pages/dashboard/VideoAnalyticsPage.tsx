@@ -52,7 +52,7 @@ export default function VideoAnalyticsPage() {
 
   const handleRefresh = async () => {
     try {
-      await startScraping.mutateAsync();
+      await startScraping.mutateAsync(null);
       toast({
         title: "Refresh avviato",
         description: "Lo scraping TikTok è partito. Lo stato si aggiorna in tempo reale qui sopra.",

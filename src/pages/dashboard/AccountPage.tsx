@@ -47,9 +47,14 @@ export default function AccountPage() {
       Date.now() - new Date(scrapeLog.started_at).getTime() < 5 * 60 * 1000);
 
   function handleScrapeNow() {
-    startScraping.mutate(undefined, {
+    // Scope the run to the currently selected campaign filter (if any).
+    const scoped = campaignFilter !== "all" ? campaignFilter : null;
+    startScraping.mutate(scoped, {
       onSuccess: () =>
-        toast({ title: "Scraping avviato", description: "Stato in tempo reale nel banner in alto." }),
+        toast({
+          title: scoped ? "Scraping campagna avviato" : "Scraping avviato",
+          description: "Stato in tempo reale nel banner in alto.",
+        }),
       onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
     });
   }
