@@ -58,7 +58,6 @@ export function useAccountList() {
   });
 
   const today = format(startOfDay(new Date()), "yyyy-MM-dd");
-  const monthStart = format(startOfMonth(new Date()), "yyyy-MM-dd");
 
   const getCreatorVideosToday = (accountId: string) => {
     return (videosQuery.data || []).filter(
