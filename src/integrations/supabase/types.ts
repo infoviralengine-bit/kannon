@@ -730,6 +730,7 @@ export type Database = {
           address_street: string | null
           address_zip: string | null
           created_at: string
+          created_by: string | null
           creator_cpm: number | null
           creator_fixed: number | null
           date_of_birth: string | null
@@ -751,6 +752,7 @@ export type Database = {
           address_street?: string | null
           address_zip?: string | null
           created_at?: string
+          created_by?: string | null
           creator_cpm?: number | null
           creator_fixed?: number | null
           date_of_birth?: string | null
@@ -772,6 +774,7 @@ export type Database = {
           address_street?: string | null
           address_zip?: string | null
           created_at?: string
+          created_by?: string | null
           creator_cpm?: number | null
           creator_fixed?: number | null
           date_of_birth?: string | null
@@ -1213,6 +1216,7 @@ export type Database = {
           account_type: string
           campaign_id: string | null
           created_at: string
+          created_by: string | null
           creator_id: string | null
           following_count: number
           id: string
@@ -1227,6 +1231,7 @@ export type Database = {
           account_type: string
           campaign_id?: string | null
           created_at?: string
+          created_by?: string | null
           creator_id?: string | null
           following_count?: number
           id?: string
@@ -1241,6 +1246,7 @@ export type Database = {
           account_type?: string
           campaign_id?: string | null
           created_at?: string
+          created_by?: string | null
           creator_id?: string | null
           following_count?: number
           id?: string

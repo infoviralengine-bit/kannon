@@ -58,8 +58,8 @@ const sidebarSections: SidebarSection[] = [
   {
     label: "Creator",
     items: [
-      { label: "Creator", icon: Users, path: "/dashboard/creators", roles: ROLE_GROUPS.STAFF },
-      { label: "Account", icon: AtSign, path: "/dashboard/accounts", roles: ROLE_GROUPS.STAFF },
+      { label: "Creator", icon: Users, path: "/dashboard/creators", roles: ROLE_GROUPS.CREATOR_OPS },
+      { label: "Account", icon: AtSign, path: "/dashboard/accounts", roles: ROLE_GROUPS.CREATOR_OPS },
       { label: "Contratti", icon: FileText, path: "/dashboard/contracts", roles: ROLE_GROUPS.STAFF },
     ],
   },

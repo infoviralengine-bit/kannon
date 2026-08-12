@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { formatViews } from "@/lib/format";
 import { cleanUsername } from "@/lib/utils";
+import { ROLES } from "@/lib/roles";
 import { TikTokLink } from "@/components/TikTokLink";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +26,8 @@ import { ScrapingStatusBanner } from "@/components/scraping/ScrapingStatusBanner
 export default function AccountPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
+  const isOperator = role === ROLES.OPERATOR;
   const {
     accounts, creators, campaigns, isLoading,
     getCreatorVideosToday, getAccountTotalViews,
@@ -79,9 +81,13 @@ export default function AccountPage() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      const normalized = cleanUsername(username).trim().toLowerCase();
+      if (!normalized) throw new Error("Username obbligatorio");
+      if (!campaignId) throw new Error("La campagna è obbligatoria");
       const payload: Record<string, unknown> = {
-        username,
+        username: normalized,
         account_type: accountType,
+        created_by: user?.id ?? null,
       };
       if (accountType === "creator") {
         payload.creator_id = creatorId;
@@ -120,6 +126,10 @@ export default function AccountPage() {
   };
 
   const activeCampaigns = campaigns.filter((c) => c.status === "active");
+  const normalizedUsername = cleanUsername(username).trim().toLowerCase();
+  const duplicateAccount =
+    !!normalizedUsername &&
+    accounts.some((a) => cleanUsername(a.username).toLowerCase() === normalizedUsername);
   const creatorAccounts = accounts.filter((a) => a.account_type === "creator");
 
   // Group creator accounts by creator
@@ -163,7 +173,7 @@ export default function AccountPage() {
 
   return (
     <div className="space-y-6">
-      <ScrapingStatusBanner />
+      {!isOperator && <ScrapingStatusBanner />}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Account</h1>
         <div className="flex items-center gap-2">
@@ -213,6 +223,11 @@ export default function AccountPage() {
                 <div>
                   <Label>Username TikTok</Label>
                   <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@username" />
+                  {duplicateAccount && (
+                    <p className="mt-1 text-xs text-destructive">
+                      Attenzione: esiste già un account con questo username.
+                    </p>
+                  )}
                 </div>
                 {accountType === "creator" && (
                   <>
@@ -228,7 +243,7 @@ export default function AccountPage() {
                       </Select>
                     </div>
                     <div>
-                      <Label>Campagna</Label>
+                      <Label>Campagna *</Label>
                       <Select value={campaignId} onValueChange={setCampaignId}>
                         <SelectTrigger><SelectValue placeholder="Seleziona campagna" /></SelectTrigger>
                         <SelectContent>
@@ -279,6 +294,7 @@ export default function AccountPage() {
                 getTotalViews={getAccountTotalViews}
                 navigate={navigate}
                 onDelete={setDeleteTarget}
+                readOnly={isOperator}
               />
             ))}
           </div>
@@ -307,7 +323,7 @@ export default function AccountPage() {
 
 /* ── Creator Group (collapsible card per creator) ── */
 
-function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigate, onDelete }: {
+function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigate, onDelete, readOnly }: {
   group: {
     creatorId: string;
     creatorName: string;
@@ -320,6 +336,7 @@ function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigat
   getTotalViews: (id: string) => number;
   navigate: (path: string) => void;
   onDelete: (target: { id: string; username: string }) => void;
+  readOnly?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -367,10 +384,14 @@ function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigat
                       <TableCell className="text-right">{videosToday}</TableCell>
                       <TableCell className="text-right">{formatViews(getTotalViews(a.id))}</TableCell>
                       <TableCell className="text-right space-x-1">
-                        <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {!readOnly && (
+                          <>
+                            <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
+                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
