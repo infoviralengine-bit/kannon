@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { formatViews } from "@/lib/format";
 import { cleanUsername } from "@/lib/utils";
+import { ROLES } from "@/lib/roles";
 import { TikTokLink } from "@/components/TikTokLink";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +26,8 @@ import { ScrapingStatusBanner } from "@/components/scraping/ScrapingStatusBanner
 export default function AccountPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
+  const isOperator = role === ROLES.OPERATOR;
   const {
     accounts, creators, campaigns, isLoading,
     getCreatorVideosToday, getAccountTotalViews,
@@ -79,9 +81,13 @@ export default function AccountPage() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
+      const normalized = cleanUsername(username).trim().toLowerCase();
+      if (!normalized) throw new Error("Username obbligatorio");
+      if (!campaignId) throw new Error("La campagna è obbligatoria");
       const payload: Record<string, unknown> = {
-        username,
+        username: normalized,
         account_type: accountType,
+        created_by: user?.id ?? null,
       };
       if (accountType === "creator") {
         payload.creator_id = creatorId;
