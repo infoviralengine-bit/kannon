@@ -95,6 +95,8 @@ export default function CreatorPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { role } = useAuth();
+  const isOperator = role === ROLES.OPERATOR;
 
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -221,7 +223,7 @@ export default function CreatorPage() {
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         <span>{c.name}</span>
-                        {!c.hasActiveContract && (
+                        {!isOperator && !c.hasActiveContract && (
                           <Badge className="bg-destructive/15 text-destructive border-destructive/30 text-[10px]">
                             Senza contratto
                           </Badge>
@@ -231,19 +233,27 @@ export default function CreatorPage() {
                     <TableCell className="text-right">{c.activeCampaigns}</TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={c.status === "active"}
-                          onCheckedChange={(checked) => statusMutation.mutate({ id: c.id, status: checked ? "active" : "inactive" })}
-                        />
-                        <span className="text-xs text-muted-foreground">{c.status === "active" ? "Attivo" : "Inattivo"}</span>
-                      </div>
+                      {isOperator ? (
+                        <Badge className={statusColor[c.status]}>{statusLabel[c.status] ?? c.status}</Badge>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={c.status === "active"}
+                            onCheckedChange={(checked) => statusMutation.mutate({ id: c.id, status: checked ? "active" : "inactive" })}
+                          />
+                          <span className="text-xs text-muted-foreground">{c.status === "active" ? "Attivo" : "Inattivo"}</span>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="space-x-1">
-                      <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.id}`)}>Apri</Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: c.id, name: c.name })}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {!isOperator && (
+                        <>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.id}`)}>Apri</Button>
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: c.id, name: c.name })}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
