@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatViews } from "@/lib/format";
 import { useCreatorTable } from "@/hooks/useCreatorData";
+import { useAuth } from "@/contexts/AuthContext";
+import { ROLES } from "@/lib/roles";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +36,7 @@ const statusLabel: Record<string, string> = {
 function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -44,7 +47,8 @@ function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChang
         name,
         email: email || null,
         phone: phone || null,
-      });
+        created_by: user?.id ?? null,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
