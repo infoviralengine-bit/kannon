@@ -126,6 +126,10 @@ export default function AccountPage() {
   };
 
   const activeCampaigns = campaigns.filter((c) => c.status === "active");
+  const normalizedUsername = cleanUsername(username).trim().toLowerCase();
+  const duplicateAccount =
+    !!normalizedUsername &&
+    accounts.some((a) => cleanUsername(a.username).toLowerCase() === normalizedUsername);
   const creatorAccounts = accounts.filter((a) => a.account_type === "creator");
 
   // Group creator accounts by creator
