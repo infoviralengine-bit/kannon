@@ -28,20 +28,6 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/client" replace />;
   }
   if (
-    role === ROLES.OUTREACH &&
-    !window.location.pathname.startsWith("/dashboard/recruiting") &&
-    !window.location.pathname.startsWith("/dashboard/hiring")
-  ) {
-    return <Navigate to="/dashboard/recruiting" replace />;
-  }
-  if (
-    role === ROLES.CLOSER &&
-    !window.location.pathname.startsWith("/dashboard/closer") &&
-    !window.location.pathname.startsWith("/dashboard/creator-pipeline")
-  ) {
-    return <Navigate to="/dashboard/closer" replace />;
-  }
-  if (
     role === ROLES.CAMPAIGN_MANAGER &&
     !window.location.pathname.startsWith("/dashboard/content-calendar") &&
     !window.location.pathname.startsWith("/dashboard/campaign-manager") &&

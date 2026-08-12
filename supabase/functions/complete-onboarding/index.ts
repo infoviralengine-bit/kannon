@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     // 1. Validate token
     const { data: link, error: linkErr } = await admin
       .from("onboarding_links")
-      .select("*, closer_leads(*)")
+      .select("*")
       .eq("token", token)
       .eq("status", "pending")
       .single();
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       .insert({
         name: `${first_name} ${last_name}`,
         email,
-        phone: link.closer_leads?.phone || null,
+        phone: link.phone || null,
         profile_id: userId,
         status: "active",
         onboarding_phase: "warmup",
