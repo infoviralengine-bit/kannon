@@ -41,18 +41,6 @@ function useCreatorTimeline(creatorId: string) {
         supabase.from("contract_signatures").select("signed_at").eq("creator_id", creatorId).order("signed_at", { ascending: true }).limit(1),
       ]);
 
-      // Try to find linked lead via email
-      let leadData: { created_at: string; status: string; call_datetime: string | null } | null = null;
-      if (creator.email) {
-        const { data: leads } = await supabase
-          .from("closer_leads")
-          .select("created_at, status, call_datetime")
-          .eq("email", creator.email)
-          .order("created_at", { ascending: false })
-          .limit(1);
-        if (leads?.length) leadData = leads[0];
-      }
-
       // Get profile created_at (onboarding completed = account created)
       let profileCreatedAt: string | null = null;
       if (creator.profile_id) {
@@ -83,21 +71,13 @@ function useCreatorTimeline(creatorId: string) {
         warmupCompletedAt = latestStart ?? null;
       }
 
-      const callDone = leadData?.status === "done" || leadData?.status === "signed";
-
       // Build milestones
       const milestones: Milestone[] = [
         {
           label: "Lead acquisito",
-          description: leadData ? "Lead creato nel sistema closer" : "Nessun lead collegato trovato",
-          date: leadData?.created_at ?? null,
-          status: leadData ? "completed" : "pending",
-        },
-        {
-          label: "Call completata",
-          description: callDone ? "Call di onboarding completata" : "In attesa della call",
-          date: callDone ? (leadData?.call_datetime ?? leadData?.created_at ?? null) : null,
-          status: callDone ? "completed" : leadData ? "active" : "pending",
+          description: link ? "Link di onboarding generato" : "Nessun link di onboarding trovato",
+          date: link?.created_at ?? null,
+          status: link ? "completed" : "pending",
         },
         {
           label: "Link onboarding inviato",
