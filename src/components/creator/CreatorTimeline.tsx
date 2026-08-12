@@ -74,12 +74,6 @@ function useCreatorTimeline(creatorId: string) {
       // Build milestones
       const milestones: Milestone[] = [
         {
-          label: "Lead acquisito",
-          description: link ? "Link di onboarding generato" : "Nessun link di onboarding trovato",
-          date: link?.created_at ?? null,
-          status: link ? "completed" : "pending",
-        },
-        {
           label: "Link onboarding inviato",
           description: link ? "Link di onboarding generato e inviato" : "Link non ancora inviato",
           date: link?.created_at ?? null,
