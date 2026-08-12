@@ -28,18 +28,13 @@ import {
   CalendarPage
 } from "@/pages/dashboard/ComingSoonPages";
 import FinancePage from "@/pages/dashboard/FinancePage";
-import RecruitingPage from "@/pages/dashboard/RecruitingPage";
-import OutreachManagementPage from "@/pages/dashboard/OutreachManagementPage";
 import ContractsPage from "@/pages/dashboard/ContractsPage";
 import ContractDetailPage from "@/pages/dashboard/ContractDetailPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
-import CloserPage from "@/pages/dashboard/CloserPage";
 import OnboardingMonitorPage from "@/pages/dashboard/OnboardingMonitorPage";
 import VideoAnalyticsPage from "@/pages/dashboard/VideoAnalyticsPage";
 import ContentCalendarPage from "@/pages/dashboard/ContentCalendarPage";
-import CreatorPipelinePage from "@/pages/dashboard/CreatorPipelinePage";
 import PipelineB2BPage from "@/pages/dashboard/PipelineB2BPage";
-import HiringPage from "@/pages/dashboard/HiringPage";
 
 const queryClient = new QueryClient();
 
@@ -56,9 +51,9 @@ const App = () => (
             <Route path="/onboarding/:token" element={<OnboardingPage />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-            {/* Dashboard routes - admin, team & outreach */}
+            {/* Dashboard routes - staff & campaign manager */}
             <Route path="/dashboard" element={
-              <ProtectedRoute allowedRoles={["admin", "team", "outreach", "closer", "campaign_manager"]}>
+              <ProtectedRoute allowedRoles={["admin", "team", "campaign_manager"]}>
                 <DashboardLayout />
               </ProtectedRoute>
             }>
@@ -73,13 +68,12 @@ const App = () => (
               <Route path="payments-receivable" element={<PaymentsReceivablePage />} />
               <Route path="payments-payable" element={<PaymentsPayablePage />} />
               <Route path="pipeline" element={<PipelinePage />} />
-              <Route path="recruiting" element={<RecruitingPage />} />
-              <Route path="outreach" element={<OutreachManagementPage />} />
+              <Route path="recruiting" element={<Navigate to="/dashboard" replace />} />
               <Route path="contracts" element={<ContractsPage />} />
               <Route path="contracts/:id" element={<ContractDetailPage />} />
               <Route path="calendar" element={<CalendarPage />} />
               <Route path="finance" element={<FinancePage />} />
-              <Route path="closer" element={<CloserPage />} />
+              <Route path="closer" element={<Navigate to="/dashboard/onboarding" replace />} />
               <Route path="onboarding" element={<OnboardingMonitorPage />} />
               <Route path="content-calendar" element={<ContentCalendarPage />} />
               <Route path="videos" element={<VideoAnalyticsPage />} />
@@ -87,9 +81,9 @@ const App = () => (
               <Route path="campaign-manager" element={<Navigate to="/dashboard/content-calendar?tab=analytics" replace />} />
               <Route path="trends" element={<Navigate to="/dashboard/content-calendar" replace />} />
               <Route path="trend-tiktok" element={<Navigate to="/dashboard/content-calendar" replace />} />
-              <Route path="creator-pipeline" element={<CreatorPipelinePage />} />
+              <Route path="creator-pipeline" element={<Navigate to="/dashboard/onboarding" replace />} />
               <Route path="pipeline-b2b" element={<PipelineB2BPage />} />
-              <Route path="hiring" element={<HiringPage />} />
+              <Route path="hiring" element={<Navigate to="/dashboard" replace />} />
               <Route path="settings" element={<SettingsPage />} />
               {/* Redirect old payments route */}
               <Route path="payments" element={<Navigate to="/dashboard/payments-receivable" replace />} />

@@ -45,8 +45,6 @@ const sidebarSections: SidebarSection[] = [
     label: "Command Center",
     items: [
       { label: "Home", icon: Home, path: "/dashboard", roles: ROLE_GROUPS.STAFF },
-      { label: "Recruiting", icon: Search, path: "/dashboard/recruiting", roles: [ROLES.OUTREACH] },
-      { label: "Closer", icon: PhoneCall, path: "/dashboard/closer", roles: [ROLES.CLOSER] },
     ],
   },
   {
@@ -60,11 +58,9 @@ const sidebarSections: SidebarSection[] = [
   {
     label: "Creator",
     items: [
-      { label: "Creator Pipeline", icon: GitMerge, path: "/dashboard/creator-pipeline", roles: [...ROLE_GROUPS.STAFF, ROLES.CLOSER], isNew: true },
       { label: "Creator", icon: Users, path: "/dashboard/creators", roles: ROLE_GROUPS.STAFF },
       { label: "Account", icon: AtSign, path: "/dashboard/accounts", roles: ROLE_GROUPS.STAFF },
       { label: "Contratti", icon: FileText, path: "/dashboard/contracts", roles: ROLE_GROUPS.STAFF },
-      { label: "Hiring Creator", icon: UserPlus, path: "/dashboard/hiring", roles: [...ROLE_GROUPS.STAFF, ROLES.OUTREACH], isNew: true },
     ],
   },
   {
