@@ -24,8 +24,6 @@ const ROLE_COLORS: Record<string, string> = {
   team: "bg-blue-600/20 text-blue-400 border-blue-600/30",
   creator: "bg-green-600/20 text-green-400 border-green-600/30",
   client: "bg-orange-600/20 text-orange-400 border-orange-600/30",
-  outreach: "bg-teal-600/20 text-teal-400 border-teal-600/30",
-  closer: "bg-pink-600/20 text-pink-400 border-pink-600/30",
   campaign_manager: "bg-indigo-600/20 text-indigo-400 border-indigo-600/30",
 };
 
@@ -55,7 +53,6 @@ export default function SettingsPage() {
   const [deletingUser, setDeletingUser] = useState<AppUser | null>(null);
 
   const [savingApify, setSavingApify] = useState(false);
-  const [connectingCalendly, setConnectingCalendly] = useState(false);
 
   useEffect(() => {
     if (role !== null && role !== "admin") {
@@ -334,98 +331,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* SECTION 3 — CALENDLY */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Webhook className="h-5 w-5 text-primary" />
-            <div>
-              <CardTitle className="text-lg">Calendly</CardTitle>
-              <CardDescription>Connetti Calendly per ricevere automaticamente le prenotazioni nella sezione Closer.</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Personal Access Token Calendly</Label>
-              <Input
-                type="password"
-                value={settings.calendly_pat || ""}
-                onChange={(e) => setSettings({ ...settings, calendly_pat: e.target.value })}
-                placeholder="Inserisci il tuo Personal Access Token"
-              />
-              <p className="text-xs text-muted-foreground">
-                Ottienilo da{" "}
-                <a href="https://calendly.com/integrations/api_webhooks" target="_blank" rel="noopener noreferrer" className="underline text-primary">
-                  Calendly → Integrazioni → API & Webhooks
-                </a>
-              </p>
-            </div>
-
-            {settings.calendly_connected === "true" && (
-              <div className="flex items-center gap-2 rounded-md border border-green-600/30 bg-green-600/10 px-3 py-2 text-sm text-green-400">
-                ✅ Calendly connesso — webhook attivo
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label>Webhook URL (configurato automaticamente)</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  readOnly
-                  value={`https://ceknjgwzxexxzckcqjmq.supabase.co/functions/v1/calendly-webhook`}
-                  className="font-mono text-xs"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`https://ceknjgwzxexxzckcqjmq.supabase.co/functions/v1/calendly-webhook`);
-                    toast({ title: "URL copiato" });
-                  }}
-                >
-                  Copia
-                </Button>
-              </div>
-            </div>
-
-            <Button
-              disabled={connectingCalendly}
-              onClick={async () => {
-                const pat = (settings.calendly_pat || "").trim();
-                if (!pat || pat.length < 10) {
-                  toast({ title: "Inserisci un token valido", variant: "destructive" });
-                  return;
-                }
-                setConnectingCalendly(true);
-                try {
-                  const { data, error } = await supabase.functions.invoke("connect-calendly", {
-                    body: { personal_access_token: pat },
-                  });
-                  if (error) throw new Error(error.message);
-                  if (data?.error) throw new Error(data.error);
-
-                  // Mark as connected in settings
-                  await supabase.from("settings").upsert(
-                    { key: "calendly_connected", value: "true", updated_at: new Date().toISOString() },
-                    { onConflict: "key" }
-                  );
-                  setSettings({ ...settings, calendly_connected: "true" });
-
-                  toast({ title: data?.message || "Calendly connesso ✅" });
-                } catch (e: any) {
-                  toast({ title: "Errore", description: e.message, variant: "destructive" });
-                }
-                setConnectingCalendly(false);
-              }}
-            >
-              {connectingCalendly ? "Connessione in corso..." : "Connetti Calendly"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* SECTION 4 — SCRAPING LOGS */}
       <ScrapingLogsSection />
 
@@ -461,8 +366,6 @@ export default function SettingsPage() {
                   <SelectItem value="team">Team</SelectItem>
                   <SelectItem value="creator">Creator</SelectItem>
                   <SelectItem value="client">Client</SelectItem>
-                  <SelectItem value="outreach">Outreach</SelectItem>
-                  <SelectItem value="closer">Closer</SelectItem>
                   <SelectItem value="campaign_manager">Campaign Manager</SelectItem>
                 </SelectContent>
               </Select>
@@ -520,8 +423,6 @@ export default function SettingsPage() {
                   <SelectItem value="team">Team</SelectItem>
                   <SelectItem value="creator">Creator</SelectItem>
                   <SelectItem value="client">Client</SelectItem>
-                  <SelectItem value="outreach">Outreach</SelectItem>
-                  <SelectItem value="closer">Closer</SelectItem>
                   <SelectItem value="campaign_manager">Campaign Manager</SelectItem>
                 </SelectContent>
               </Select>

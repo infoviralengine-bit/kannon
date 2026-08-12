@@ -37,7 +37,7 @@ Font (landing, NON hub): Inter (body), Instrument Serif italic (display accents)
 
 ---
 
-## 3. RBAC: i 7 ruoli
+## 3. RBAC: i 5 ruoli
 
 Definiti in `src/lib/roles.ts` come constants. Mai magic string. Usare sempre `ROLES.X` e `ROLE_GROUPS.Y`.
 
@@ -45,8 +45,6 @@ Definiti in `src/lib/roles.ts` come constants. Mai magic string. Usare sempre `R
 |---|---|---|---|
 | `admin` | Owner della piattaforma. Accesso totale. | `/dashboard` | Tutte le sezioni + Finance + Settings |
 | `team` | Operatori interni. Come admin ma senza Finance/Settings. | `/dashboard` | Tutto eccetto Finance/Settings |
-| `outreach` | Single-purpose: solo Recruiting. | `/dashboard/recruiting` | Solo Recruiting |
-| `closer` | Single-purpose: solo Closer. | `/dashboard/closer` | Solo Closer |
 | `campaign_manager` | Pianifica contenuti, gestisce calendario, analytics format. | `/dashboard/content-calendar` | Campagne · Video Analytics · Calendario Contenuti |
 | `creator` | Talento esterno. Solo portale dedicato. | `/creator` | Portale custom (CreatorArea) |
 | `client` | Cliente Kannon. Solo portale dedicato. | `/client` | Portale custom (ClientArea) |
@@ -418,3 +416,17 @@ supabase/
 ---
 
 Ultimo aggiornamento: 15 giugno 2026 (post SP#4).
+
+
+---
+
+## 14. Rimozione ruoli outreach e closer (10 ago 2026)
+
+I ruoli `outreach` e `closer` sono stati eliminati dalla piattaforma:
+- Tabelle droppate: `closer_leads`, `outreach_stats`, `outreach_templates`.
+- `onboarding_links` ora è autonomo: contiene `first_name`, `last_name`, `phone`.
+- La generazione dei link di onboarding vive in `/dashboard/onboarding` (`OnboardingMonitorPage`), non più in CloserPage.
+- Pagine e hook rimossi: CloserPage, RecruitingPage, OutreachManagementPage, HiringPage, CreatorPipelinePage, `useCloserData`, `useOutreachData`, `components/outreach/*`.
+- Edge functions eliminate: `calendly-webhook`, `connect-calendly`. Sezione Calendly rimossa da Impostazioni.
+- Route legacy (`closer`, `creator-pipeline`, `recruiting`, `hiring`) restano come redirect.
+- L'enum `app_role` conserva ancora i valori `outreach`/`closer` per compatibilità: nessun ruolo attivo li usa nell'UI.

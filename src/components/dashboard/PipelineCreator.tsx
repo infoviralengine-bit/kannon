@@ -21,12 +21,10 @@ export function usePipelineData() {
         { data: creators },
         { data: accounts },
         { data: onboardingLinks },
-        { data: leads },
       ] = await Promise.all([
         supabase.from("creators").select("id, profile_id, status"),
         supabase.from("tiktok_accounts").select("creator_id, warmup_day, following_count"),
         supabase.from("onboarding_links").select("creator_id, completed_at, status"),
-        supabase.from("closer_leads").select("id, email, status"),
       ]);
 
       const allCreators = creators ?? [];
@@ -47,12 +45,8 @@ export function usePipelineData() {
         creatorWarmupDone.set(c.id, done);
       });
 
-      // Leads not yet linked to a creator (not onboarded)
-      const leadCreatorIds = new Set(allLinks.filter(l => l.creator_id).map(l => l.creator_id));
-      const leadsNotOnboarded = (leads ?? []).filter(l => {
-        // A lead is "not onboarded" if no onboarding link exists for it or it's still pending
-        return l.status !== "done" && l.status !== "signed";
-      });
+      // Lead: pending onboarding links not yet converted into a creator
+      const pendingLinks = allLinks.filter(l => !l.creator_id && !l.completed_at);
 
       // Onboarding: have an onboarding link with creator but no profile_id (or link not completed)
       const onboarding = allCreators.filter(c => {
@@ -70,7 +64,7 @@ export function usePipelineData() {
       const operativi = allCreators.filter(c => creatorWarmupDone.get(c.id));
 
       return {
-        lead: leadsNotOnboarded.length,
+        lead: pendingLinks.length,
         onboarding: onboarding.length,
         warmup: warmup.length,
         operativi: operativi.length,

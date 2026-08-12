@@ -11,7 +11,6 @@ const ALLOWED_TABLES = [
   "tiktok_accounts",
   "payments",
   "videos",
-  "outreach_stats",
   "campaign_creators",
   "settings",
   "profiles",

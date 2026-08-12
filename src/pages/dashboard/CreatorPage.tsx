@@ -121,7 +121,6 @@ export default function CreatorPage() {
       if (accounts?.length) {
         const accountIds = accounts.map(a => a.id);
         await supabase.from("videos").delete().in("tiktok_account_id", accountIds);
-        await supabase.from("outreach_stats").delete().in("tiktok_account_id", accountIds);
         await supabase.from("tiktok_accounts").delete().eq("creator_id", creatorId);
       }
       await supabase.from("contract_signatures").delete().eq("creator_id", creatorId);

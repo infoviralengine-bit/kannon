@@ -6,8 +6,6 @@
 export const ROLES = {
   ADMIN: "admin",
   TEAM: "team",
-  OUTREACH: "outreach",
-  CLOSER: "closer",
   CAMPAIGN_MANAGER: "campaign_manager",
   CREATOR: "creator",
   CLIENT: "client",
@@ -26,16 +24,7 @@ export const ROLE_GROUPS = {
   INTERNAL: [
     ROLES.ADMIN,
     ROLES.TEAM,
-    ROLES.OUTREACH,
-    ROLES.CLOSER,
     ROLES.CAMPAIGN_MANAGER,
-  ] as AppRole[],
-
-  /** Single-purpose operators (each sees only their dedicated page).
-   *  NB: campaign_manager removed after SP#4 (now has a normal multi-page sidebar). */
-  SINGLE_PURPOSE: [
-    ROLES.OUTREACH,
-    ROLES.CLOSER,
   ] as AppRole[],
 
   /** External roles routed to dedicated portals */
@@ -63,8 +52,6 @@ export function isStaff(role: AppRole | null): boolean {
 export const ROLE_DEFAULT_ROUTE: Record<AppRole, string> = {
   [ROLES.ADMIN]: "/dashboard",
   [ROLES.TEAM]: "/dashboard",
-  [ROLES.OUTREACH]: "/dashboard/recruiting",
-  [ROLES.CLOSER]: "/dashboard/closer",
   [ROLES.CAMPAIGN_MANAGER]: "/dashboard/content-calendar",
   [ROLES.CREATOR]: "/creator",
   [ROLES.CLIENT]: "/client",
