@@ -27,7 +27,7 @@ interface CreatorPipelineRow {
   createdAt: string;
   accountCount: number;
   warmupProgress: string;
-  isLead: boolean; // true if from closer_leads, not yet a creator
+  isLead: boolean; // true if from a pending onboarding link, not yet a creator
   manualPhase: string | null;
 }
 
@@ -65,12 +65,10 @@ function useOnboardingPipeline() {
         { data: creators },
         { data: accounts },
         { data: onboardingLinks },
-        { data: leads },
       ] = await Promise.all([
         supabase.from("creators").select("id, name, email, profile_id, created_at, status, onboarding_phase"),
         supabase.from("tiktok_accounts").select("creator_id, warmup_day, following_count"),
-        supabase.from("onboarding_links").select("creator_id, completed_at, status"),
-        supabase.from("closer_leads").select("id, first_name, last_name, email, status, created_at"),
+        supabase.from("onboarding_links").select("id, creator_id, completed_at, status, first_name, last_name, created_at"),
       ]);
 
       const allCreators = (creators ?? []) as any[];
@@ -97,17 +95,13 @@ function useOnboardingPipeline() {
         };
       });
 
-      // Unlinked leads
-      const creatorEmails = new Set(allCreators.map((c: any) => c.email).filter(Boolean));
-      const unlinkedLeads = (leads ?? []).filter(l => {
-        if (l.email && creatorEmails.has(l.email)) return false;
-        return l.status !== "done" && l.status !== "signed";
-      });
+      // Pending onboarding links not yet converted into a creator
+      const pendingLinks = allLinks.filter(l => !l.creator_id && !l.completed_at);
 
-      const leadRows: CreatorPipelineRow[] = unlinkedLeads.map(l => ({
-        id: `lead-${l.id}`,
-        name: `${l.first_name} ${l.last_name}`,
-        email: l.email,
+      const leadRows: CreatorPipelineRow[] = pendingLinks.map(l => ({
+        id: `link-${l.id}`,
+        name: [l.first_name, l.last_name].filter(Boolean).join(" ") || "Senza nome",
+        email: null,
         phase: "lead" as const,
         phaseLabel: "Lead",
         createdAt: l.created_at,
