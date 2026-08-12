@@ -12,8 +12,15 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { UserPlus, Users, Flame, Rocket, Clock, AlertCircle } from "lucide-react";
+import { UserPlus, Users, Flame, Rocket, Clock, AlertCircle, Link2, Copy } from "lucide-react";
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import { useOnboardingLinks, useCreateOnboardingLink, getOnboardingBaseUrl } from "@/hooks/useOnboardingLinks";
 
 type Phase = "all" | "lead" | "onboarding" | "warmup" | "operativi";
 type OnboardingPhase = "lead" | "onboarding" | "warmup" | "operativi";
@@ -175,6 +182,151 @@ function PhaseSelector({ creatorId, currentPhase }: { creatorId: string; current
   );
 }
 
+
+function GenerateLinkDialog() {
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [contractIds, setContractIds] = useState<string[]>([]);
+  const createLink = useCreateOnboardingLink();
+
+  const { data: contracts } = useQuery({
+    queryKey: ["contracts-active-for-onboarding"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contracts")
+        .select("id, name, type, is_active")
+        .eq("is_active", true)
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const toggle = (id: string) =>
+    setContractIds(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
+
+  const submit = async () => {
+    if (!firstName.trim() || !lastName.trim()) {
+      toast({ title: "Nome e cognome obbligatori", variant: "destructive" });
+      return;
+    }
+    if (!contractIds.length) {
+      toast({ title: "Seleziona almeno un contratto", variant: "destructive" });
+      return;
+    }
+    try {
+      const link = await createLink.mutateAsync({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        phone: phone.trim() || null,
+        contract_ids: contractIds,
+      });
+      const url = `${getOnboardingBaseUrl()}/onboarding/${link.token}`;
+      await navigator.clipboard.writeText(url).catch(() => undefined);
+      toast({ title: "Link generato e copiato", description: url });
+      setOpen(false);
+      setFirstName(""); setLastName(""); setPhone(""); setContractIds([]);
+    } catch (e) {
+      toast({ title: "Errore", description: (e as Error).message, variant: "destructive" });
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="gap-2">
+          <Link2 className="h-4 w-4" />
+          Genera link onboarding
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Genera link onboarding</DialogTitle>
+          <DialogDescription>Il creator compilerà i suoi dati e firmerà i contratti selezionati.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Nome</Label>
+              <Input value={firstName} onChange={e => setFirstName(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Cognome</Label>
+              <Input value={lastName} onChange={e => setLastName(e.target.value)} />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Telefono (opzionale)</Label>
+            <Input value={phone} onChange={e => setPhone(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Contratti da firmare</Label>
+            <div className="space-y-2 max-h-48 overflow-y-auto rounded-md border border-border p-3">
+              {!contracts?.length ? (
+                <p className="text-sm text-muted-foreground">Nessun contratto attivo</p>
+              ) : contracts.map(c => (
+                <label key={c.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox checked={contractIds.includes(c.id)} onCheckedChange={() => toggle(c.id)} />
+                  <span>{c.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <Button onClick={submit} disabled={createLink.isPending} className="w-full">
+            {createLink.isPending ? "Generazione..." : "Genera e copia link"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PendingLinksCard() {
+  const { toast } = useToast();
+  const { data: links, isLoading } = useOnboardingLinks();
+  const pending = (links ?? []).filter(l => !l.completed_at);
+
+  if (isLoading || !pending.length) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Link onboarding in attesa ({pending.length})</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {pending.map(l => {
+          const url = `${getOnboardingBaseUrl()}/onboarding/${l.token}`;
+          return (
+            <div key={l.id} className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">
+                  {[l.first_name, l.last_name].filter(Boolean).join(" ") || "Senza nome"}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">{formatDate(l.created_at)} · {url}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 shrink-0"
+                onClick={() => {
+                  navigator.clipboard.writeText(url);
+                  toast({ title: "Link copiato" });
+                }}
+              >
+                <Copy className="h-3.5 w-3.5" />
+                Copia
+              </Button>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function OnboardingMonitorPage() {
   const navigate = useNavigate();
   const { data, isLoading } = useOnboardingPipeline();
@@ -184,10 +336,15 @@ export default function OnboardingMonitorPage() {
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Onboarding Creator</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Monitora e gestisci lo stato di avanzamento di ogni creator</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Onboarding Creator</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Genera i link di onboarding e monitora lo stato di ogni creator</p>
+        </div>
+        <GenerateLinkDialog />
       </div>
+
+      <PendingLinksCard />
 
       {/* Phase stat boxes */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
