@@ -25,6 +25,7 @@ const ROLE_COLORS: Record<string, string> = {
   creator: "bg-green-600/20 text-green-400 border-green-600/30",
   client: "bg-orange-600/20 text-orange-400 border-orange-600/30",
   campaign_manager: "bg-indigo-600/20 text-indigo-400 border-indigo-600/30",
+  operator: "bg-cyan-600/20 text-cyan-400 border-cyan-600/30",
 };
 
 export default function SettingsPage() {
@@ -367,6 +368,7 @@ export default function SettingsPage() {
                   <SelectItem value="creator">Creator</SelectItem>
                   <SelectItem value="client">Client</SelectItem>
                   <SelectItem value="campaign_manager">Campaign Manager</SelectItem>
+                  <SelectItem value="operator">Operator (Account Manager)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -424,6 +426,7 @@ export default function SettingsPage() {
                   <SelectItem value="creator">Creator</SelectItem>
                   <SelectItem value="client">Client</SelectItem>
                   <SelectItem value="campaign_manager">Campaign Manager</SelectItem>
+                  <SelectItem value="operator">Operator (Account Manager)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
