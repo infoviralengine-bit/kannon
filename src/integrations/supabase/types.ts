@@ -362,57 +362,6 @@ export type Database = {
           },
         ]
       }
-      closer_leads: {
-        Row: {
-          call_channel: string
-          call_datetime: string
-          created_at: string
-          created_by: string | null
-          email: string | null
-          first_name: string
-          id: string
-          last_name: string
-          meet_link: string | null
-          notes: string | null
-          phone: string | null
-          source: string
-          status: string
-          tiktok_username: string | null
-        }
-        Insert: {
-          call_channel?: string
-          call_datetime: string
-          created_at?: string
-          created_by?: string | null
-          email?: string | null
-          first_name: string
-          id?: string
-          last_name: string
-          meet_link?: string | null
-          notes?: string | null
-          phone?: string | null
-          source?: string
-          status?: string
-          tiktok_username?: string | null
-        }
-        Update: {
-          call_channel?: string
-          call_datetime?: string
-          created_at?: string
-          created_by?: string | null
-          email?: string | null
-          first_name?: string
-          id?: string
-          last_name?: string
-          meet_link?: string | null
-          notes?: string | null
-          phone?: string | null
-          source?: string
-          status?: string
-          tiktok_username?: string | null
-        }
-        Relationships: []
-      }
       content_topics: {
         Row: {
           created_at: string
@@ -983,8 +932,10 @@ export type Database = {
           contract_ids: string[]
           created_at: string
           creator_id: string | null
+          first_name: string | null
           id: string
-          lead_id: string
+          last_name: string | null
+          phone: string | null
           status: string
           token: string
         }
@@ -993,8 +944,10 @@ export type Database = {
           contract_ids?: string[]
           created_at?: string
           creator_id?: string | null
+          first_name?: string | null
           id?: string
-          lead_id: string
+          last_name?: string | null
+          phone?: string | null
           status?: string
           token?: string
         }
@@ -1003,8 +956,10 @@ export type Database = {
           contract_ids?: string[]
           created_at?: string
           creator_id?: string | null
+          first_name?: string | null
           id?: string
-          lead_id?: string
+          last_name?: string | null
+          phone?: string | null
           status?: string
           token?: string
         }
@@ -1016,83 +971,7 @@ export type Database = {
             referencedRelation: "creators"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "onboarding_links_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "closer_leads"
-            referencedColumns: ["id"]
-          },
         ]
-      }
-      outreach_stats: {
-        Row: {
-          created_at: string
-          date: string
-          dm_sent: number | null
-          id: string
-          replies_received: number | null
-          template_id: string | null
-          tiktok_account_id: string
-        }
-        Insert: {
-          created_at?: string
-          date?: string
-          dm_sent?: number | null
-          id?: string
-          replies_received?: number | null
-          template_id?: string | null
-          tiktok_account_id: string
-        }
-        Update: {
-          created_at?: string
-          date?: string
-          dm_sent?: number | null
-          id?: string
-          replies_received?: number | null
-          template_id?: string | null
-          tiktok_account_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "outreach_stats_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "outreach_templates"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "outreach_stats_tiktok_account_id_fkey"
-            columns: ["tiktok_account_id"]
-            isOneToOne: false
-            referencedRelation: "tiktok_accounts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      outreach_templates: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          is_active: boolean
-          name: string
-        }
-        Insert: {
-          content?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          name: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          name?: string
-        }
-        Relationships: []
       }
       payment_cycles: {
         Row: {
