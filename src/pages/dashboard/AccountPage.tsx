@@ -219,6 +219,11 @@ export default function AccountPage() {
                 <div>
                   <Label>Username TikTok</Label>
                   <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@username" />
+                  {duplicateAccount && (
+                    <p className="mt-1 text-xs text-destructive">
+                      Attenzione: esiste già un account con questo username.
+                    </p>
+                  )}
                 </div>
                 {accountType === "creator" && (
                   <>
@@ -234,7 +239,7 @@ export default function AccountPage() {
                       </Select>
                     </div>
                     <div>
-                      <Label>Campagna</Label>
+                      <Label>Campagna *</Label>
                       <Select value={campaignId} onValueChange={setCampaignId}>
                         <SelectTrigger><SelectValue placeholder="Seleziona campagna" /></SelectTrigger>
                         <SelectContent>
