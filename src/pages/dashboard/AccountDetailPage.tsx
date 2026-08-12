@@ -42,8 +42,6 @@ export default function AccountDetailPage() {
     return <div className="text-center py-12 text-muted-foreground">Account non trovato.</div>;
   }
 
-  const isCreator = data.account.account_type === "creator";
-
   return (
     <div className="space-y-6">
       <Breadcrumb>
@@ -56,12 +54,10 @@ export default function AccountDetailPage() {
 
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-bold flex items-center gap-2"><TikTokLink username={data.account.username} className="text-2xl" /></h1>
-        <Badge variant={isCreator ? "default" : "secondary"}>
-          {isCreator ? "Creator" : "Outreach"}
-        </Badge>
+        <Badge variant="default">Creator</Badge>
       </div>
 
-      {isCreator && data.creator && (
+      {data.creator && (
         <div className="flex gap-6 text-sm text-muted-foreground">
           <span>Creator: <Link to={`/dashboard/creators/${data.creator.id}`} className="text-primary hover:underline">{data.creator.name}</Link></span>
           {data.campaign && (
@@ -70,7 +66,7 @@ export default function AccountDetailPage() {
         </div>
       )}
 
-      {isCreator ? <CreatorDetail data={data} /> : <OutreachDetail data={data} />}
+      <CreatorDetail data={data} />
     </div>
   );
 }
@@ -262,95 +258,6 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
                       {v.last_scraped_at ? format(new Date(v.last_scraped_at), "dd/MM HH:mm") : "—"}
                     </TableCell>
                   </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </>
-  );
-}
-
-function OutreachDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) {
-  const queryClient = useQueryClient();
-  const [dmOpen, setDmOpen] = useState(false);
-  const [dmDate, setDmDate] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [dmSent, setDmSent] = useState("");
-  const [repliesReceived, setRepliesReceived] = useState("0");
-
-  const addDmMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("outreach_stats").insert({
-        tiktok_account_id: data.account!.id,
-        date: dmDate,
-        dm_sent: parseInt(dmSent) || 0,
-        replies_received: parseInt(repliesReceived) || 0,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["outreach_for_account"] });
-      toast({ title: "DM registrati" });
-      setDmOpen(false);
-      setDmSent(""); setRepliesReceived("0");
-    },
-    onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
-  });
-
-  return (
-    <>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <KPICard title="DM oggi" value={data.dmToday} />
-        <KPICard title="DM settimana" value={data.dmWeek} />
-        <KPICard title="DM mese" value={data.dmMonth} />
-        <KPICard title="Risposte oggi" value={data.repliesToday} />
-        <KPICard title="Risposte settimana" value={data.repliesWeek} />
-        <KPICard title="Tasso risposta %" value={`${data.responseRateMonth.toFixed(1)}%`} />
-      </div>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Storico DM</CardTitle>
-          <Dialog open={dmOpen} onOpenChange={setDmOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm"><Plus className="mr-2 h-4 w-4" /> Registra DM</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>Registra DM</DialogTitle></DialogHeader>
-              <div className="space-y-4">
-                <div><Label>Data</Label><Input type="date" value={dmDate} onChange={(e) => setDmDate(e.target.value)} /></div>
-                <div><Label>DM inviati</Label><Input type="number" value={dmSent} onChange={(e) => setDmSent(e.target.value)} /></div>
-                <div><Label>Risposte ricevute</Label><Input type="number" value={repliesReceived} onChange={(e) => setRepliesReceived(e.target.value)} /></div>
-                <Button className="w-full" disabled={!dmSent} onClick={() => addDmMutation.mutate()}>Salva</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent>
-          {data.outreach.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground">Nessun dato DM registrato.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead className="text-right">DM inviati</TableHead>
-                  <TableHead className="text-right">Risposte</TableHead>
-                  <TableHead className="text-right">Tasso %</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.outreach.map((o) => {
-                  const rate = (o.dm_sent || 0) > 0 ? (((o.replies_received || 0) / (o.dm_sent || 1)) * 100).toFixed(1) : "0.0";
-                  return (
-                    <TableRow key={o.id}>
-                      <TableCell>{format(new Date(o.date), "dd/MM/yyyy")}</TableCell>
-                      <TableCell className="text-right">{o.dm_sent}</TableCell>
-                      <TableCell className="text-right">{o.replies_received}</TableCell>
-                      <TableCell className="text-right">{rate}%</TableCell>
-                    </TableRow>
                   );
                 })}
               </TableBody>
