@@ -294,6 +294,7 @@ export default function AccountPage() {
                 getTotalViews={getAccountTotalViews}
                 navigate={navigate}
                 onDelete={setDeleteTarget}
+                readOnly={isOperator}
               />
             ))}
           </div>
@@ -322,7 +323,7 @@ export default function AccountPage() {
 
 /* ── Creator Group (collapsible card per creator) ── */
 
-function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigate, onDelete }: {
+function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigate, onDelete, readOnly }: {
   group: {
     creatorId: string;
     creatorName: string;
@@ -335,6 +336,7 @@ function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigat
   getTotalViews: (id: string) => number;
   navigate: (path: string) => void;
   onDelete: (target: { id: string; username: string }) => void;
+  readOnly?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -382,10 +384,14 @@ function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigat
                       <TableCell className="text-right">{videosToday}</TableCell>
                       <TableCell className="text-right">{formatViews(getTotalViews(a.id))}</TableCell>
                       <TableCell className="text-right space-x-1">
-                        <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {!readOnly && (
+                          <>
+                            <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
+                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
