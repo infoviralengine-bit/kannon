@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -30,7 +29,6 @@ export default function AccountPage() {
   const {
     accounts, creators, campaigns, isLoading,
     getCreatorVideosToday, getAccountTotalViews,
-    getOutreachToday, getOutreachMonth,
   } = useAccountList();
 
   const [datasetIdInput, setDatasetIdInput] = useState("");
@@ -71,12 +69,11 @@ export default function AccountPage() {
   }
 
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState("creator");
   const [campaignFilter, setCampaignFilter] = useState<string>("all");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; username: string } | null>(null);
 
   const [username, setUsername] = useState("");
-  const [accountType, setAccountType] = useState<string>("");
+  const accountType = "creator";
   const [creatorId, setCreatorId] = useState<string>("");
   const [campaignId, setCampaignId] = useState<string>("");
 
@@ -105,7 +102,6 @@ export default function AccountPage() {
   const deleteMutation = useMutation({
     mutationFn: async (accountId: string) => {
       await supabase.from("videos").delete().eq("tiktok_account_id", accountId);
-      await supabase.from("outreach_stats").delete().eq("tiktok_account_id", accountId);
       const { error } = await supabase.from("tiktok_accounts").delete().eq("id", accountId);
       if (error) throw error;
     },
@@ -119,14 +115,12 @@ export default function AccountPage() {
 
   const resetForm = () => {
     setUsername("");
-    setAccountType("");
     setCreatorId("");
     setCampaignId("");
   };
 
   const activeCampaigns = campaigns.filter((c) => c.status === "active");
   const creatorAccounts = accounts.filter((a) => a.account_type === "creator");
-  const outreachAccounts = accounts.filter((a) => a.account_type === "outreach");
 
   // Group creator accounts by creator
   const accountsByCreator = new Map<string, typeof creatorAccounts>();
@@ -220,16 +214,6 @@ export default function AccountPage() {
                   <Label>Username TikTok</Label>
                   <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@username" />
                 </div>
-                <div>
-                  <Label>Tipo Account</Label>
-                  <Select value={accountType} onValueChange={setAccountType}>
-                    <SelectTrigger><SelectValue placeholder="Seleziona tipo" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="creator">Creator</SelectItem>
-                      <SelectItem value="outreach">Outreach</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
                 {accountType === "creator" && (
                   <>
                     <div>
@@ -258,7 +242,7 @@ export default function AccountPage() {
                 )}
                 <Button
                   className="w-full"
-                  disabled={!username || !accountType || (accountType === "creator" && (!creatorId || !campaignId))}
+                  disabled={!username || !creatorId || !campaignId}
                   onClick={() => createMutation.mutate()}
                 >
                   Crea Account
@@ -269,60 +253,44 @@ export default function AccountPage() {
         </div>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
+      <div className="space-y-4">
         <div className="flex items-center gap-4 flex-wrap">
-          <TabsList>
-            <TabsTrigger value="creator">Creator ({creatorAccounts.length})</TabsTrigger>
-            <TabsTrigger value="outreach">Outreach ({outreachAccounts.length})</TabsTrigger>
-          </TabsList>
-          {tab === "creator" && (
-            <Select value={campaignFilter} onValueChange={setCampaignFilter}>
-              <SelectTrigger className="w-48"><SelectValue placeholder="Filtra campagna" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tutte le campagne</SelectItem>
-                {campaigns.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <Select value={campaignFilter} onValueChange={setCampaignFilter}>
+            <SelectTrigger className="w-48"><SelectValue placeholder="Filtra campagna" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tutte le campagne</SelectItem>
+              {campaigns.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <TabsContent value="creator">
-          {filteredCreatorGroups.length === 0 ? (
-            <Card><CardContent className="py-12 text-center text-muted-foreground">Nessun account creator trovato.</CardContent></Card>
-          ) : (
-            <div className="space-y-3">
-              {filteredCreatorGroups.map((group) => (
-                <CreatorGroup
-                  key={group.creatorId}
-                  group={group}
-                  campaigns={campaigns}
-                  getVideosToday={getCreatorVideosToday}
-                  getTotalViews={getAccountTotalViews}
-                  navigate={navigate}
-                  onDelete={setDeleteTarget}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="outreach">
-          {outreachAccounts.length === 0 ? (
-            <Card><CardContent className="py-12 text-center text-muted-foreground">Nessun account outreach trovato.</CardContent></Card>
-          ) : (
-            <OutreachTable accounts={outreachAccounts} getOutreachToday={getOutreachToday} getOutreachMonth={getOutreachMonth} navigate={navigate} onDelete={setDeleteTarget} />
-          )}
-        </TabsContent>
-      </Tabs>
+        {filteredCreatorGroups.length === 0 ? (
+          <Card><CardContent className="py-12 text-center text-muted-foreground">Nessun account creator trovato.</CardContent></Card>
+        ) : (
+          <div className="space-y-3">
+            {filteredCreatorGroups.map((group) => (
+              <CreatorGroup
+                key={group.creatorId}
+                group={group}
+                campaigns={campaigns}
+                getVideosToday={getCreatorVideosToday}
+                getTotalViews={getAccountTotalViews}
+                navigate={navigate}
+                onDelete={setDeleteTarget}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       <Dialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Elimina Account</DialogTitle>
             <DialogDescription>
-              Sei sicuro di voler eliminare <strong>@{cleanUsername(deleteTarget?.username)}</strong>? Verranno eliminati anche tutti i video e le statistiche di outreach associate. Questa azione è irreversibile.
+              Sei sicuro di voler eliminare <strong>@{cleanUsername(deleteTarget?.username)}</strong>? Verranno eliminati anche tutti i video associati. Questa azione è irreversibile.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -416,45 +384,3 @@ function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigat
   );
 }
 
-/* ── Outreach Table ── */
-
-function OutreachTable({ accounts, getOutreachToday, getOutreachMonth, navigate, onDelete }: any) {
-  return (
-    <Card>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Username</TableHead>
-            <TableHead className="text-right">DM oggi</TableHead>
-            <TableHead className="text-right">Risposte oggi</TableHead>
-            <TableHead className="text-right">Tasso risposta %</TableHead>
-            <TableHead className="text-right">DM mese</TableHead>
-            <TableHead />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {accounts.map((a: any) => {
-            const { dm, replies } = getOutreachToday(a.id);
-            const rate = dm > 0 ? ((replies / dm) * 100).toFixed(1) : "0.0";
-            const dmMonth = getOutreachMonth(a.id);
-            return (
-              <TableRow key={a.id}>
-                <TableCell className="font-medium"><TikTokLink username={a.username} /></TableCell>
-                <TableCell className="text-right">{dm}</TableCell>
-                <TableCell className="text-right">{replies}</TableCell>
-                <TableCell className="text-right">{rate}%</TableCell>
-                <TableCell className="text-right">{formatViews(dmMonth)}</TableCell>
-                <TableCell className="text-right space-x-1">
-                  <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
-                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </Card>
-  );
-}
