@@ -7,6 +7,8 @@ export const ROLES = {
   ADMIN: "admin",
   TEAM: "team",
   CAMPAIGN_MANAGER: "campaign_manager",
+  /** Account Manager: può solo vedere e creare creator e account */
+  OPERATOR: "operator",
   CREATOR: "creator",
   CLIENT: "client",
 } as const;
@@ -25,7 +27,11 @@ export const ROLE_GROUPS = {
     ROLES.ADMIN,
     ROLES.TEAM,
     ROLES.CAMPAIGN_MANAGER,
+    ROLES.OPERATOR,
   ] as AppRole[],
+
+  /** Ruoli che possono gestire creator e account */
+  CREATOR_OPS: [ROLES.ADMIN, ROLES.TEAM, ROLES.OPERATOR] as AppRole[],
 
   /** External roles routed to dedicated portals */
   EXTERNAL: [ROLES.CREATOR, ROLES.CLIENT] as AppRole[],
@@ -53,6 +59,7 @@ export const ROLE_DEFAULT_ROUTE: Record<AppRole, string> = {
   [ROLES.ADMIN]: "/dashboard",
   [ROLES.TEAM]: "/dashboard",
   [ROLES.CAMPAIGN_MANAGER]: "/dashboard/content-calendar",
+  [ROLES.OPERATOR]: "/dashboard/creators",
   [ROLES.CREATOR]: "/creator",
   [ROLES.CLIENT]: "/client",
 };
