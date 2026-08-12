@@ -173,7 +173,7 @@ export default function AccountPage() {
 
   return (
     <div className="space-y-6">
-      <ScrapingStatusBanner />
+      {!isOperator && <ScrapingStatusBanner />}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Account</h1>
         <div className="flex items-center gap-2">
