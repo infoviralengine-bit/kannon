@@ -53,7 +53,7 @@ const App = () => (
 
             {/* Dashboard routes - staff & campaign manager */}
             <Route path="/dashboard" element={
-              <ProtectedRoute allowedRoles={["admin", "team", "campaign_manager"]}>
+              <ProtectedRoute allowedRoles={["admin", "team", "campaign_manager", "operator"]}>
                 <DashboardLayout />
               </ProtectedRoute>
             }>
