@@ -39,7 +39,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   // Operator (Account Manager): solo liste creator e account, niente dettaglio
   if (role === ROLES.OPERATOR) {
     const p = window.location.pathname;
-    const allowed = p === "/dashboard/creators" || p === "/dashboard/accounts";
+    const allowed =
+      p === "/dashboard/creators" || p.startsWith("/dashboard/accounts");
     if (!allowed) return <Navigate to="/dashboard/creators" replace />;
   }
   if ((role === ROLES.ADMIN || role === ROLES.TEAM) && (window.location.pathname === "/" || window.location.pathname === "/login")) {
