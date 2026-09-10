@@ -384,14 +384,10 @@ function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigat
                       <TableCell className="text-right">{videosToday}</TableCell>
                       <TableCell className="text-right">{formatViews(getTotalViews(a.id))}</TableCell>
                       <TableCell className="text-right space-x-1">
-                        {!readOnly && (
-                          <>
-                            <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
-                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
