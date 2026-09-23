@@ -209,6 +209,7 @@ export type Database = {
           client_fixed: number | null
           client_name: string
           client_profile_id: string | null
+          company_id: string | null
           created_at: string
           end_date: string | null
           id: string
@@ -228,6 +229,7 @@ export type Database = {
           client_fixed?: number | null
           client_name: string
           client_profile_id?: string | null
+          company_id?: string | null
           created_at?: string
           end_date?: string | null
           id?: string
@@ -247,6 +249,7 @@ export type Database = {
           client_fixed?: number | null
           client_name?: string
           client_profile_id?: string | null
+          company_id?: string | null
           created_at?: string
           end_date?: string | null
           id?: string
@@ -265,6 +268,13 @@ export type Database = {
             columns: ["client_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaigns_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -358,6 +368,483 @@ export type Database = {
             columns: ["cycle_id"]
             isOneToOne: false
             referencedRelation: "payment_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          app_name: string | null
+          app_store_url: string | null
+          client_profile_id: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          deal_cpm: number | null
+          deal_estimated_views: number | null
+          deal_fixed: number | null
+          deal_performance_note: string | null
+          deal_performance_pct: number | null
+          deal_type: string | null
+          estimated_monthly_value: number | null
+          growth_stage: string | null
+          id: string
+          last_contact_at: string | null
+          legal_name: string | null
+          lost_at: string | null
+          lost_note: string | null
+          lost_reason: string | null
+          name: string
+          next_step: string | null
+          next_step_date: string | null
+          notes: string | null
+          owner_id: string | null
+          play_store_url: string | null
+          previous_stage: string | null
+          sector: string | null
+          source_channel: string | null
+          stage: string
+          status: string
+          temperature: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          app_name?: string | null
+          app_store_url?: string | null
+          client_profile_id?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          deal_cpm?: number | null
+          deal_estimated_views?: number | null
+          deal_fixed?: number | null
+          deal_performance_note?: string | null
+          deal_performance_pct?: number | null
+          deal_type?: string | null
+          estimated_monthly_value?: number | null
+          growth_stage?: string | null
+          id?: string
+          last_contact_at?: string | null
+          legal_name?: string | null
+          lost_at?: string | null
+          lost_note?: string | null
+          lost_reason?: string | null
+          name: string
+          next_step?: string | null
+          next_step_date?: string | null
+          notes?: string | null
+          owner_id?: string | null
+          play_store_url?: string | null
+          previous_stage?: string | null
+          sector?: string | null
+          source_channel?: string | null
+          stage?: string
+          status?: string
+          temperature?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          app_name?: string | null
+          app_store_url?: string | null
+          client_profile_id?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          deal_cpm?: number | null
+          deal_estimated_views?: number | null
+          deal_fixed?: number | null
+          deal_performance_note?: string | null
+          deal_performance_pct?: number | null
+          deal_type?: string | null
+          estimated_monthly_value?: number | null
+          growth_stage?: string | null
+          id?: string
+          last_contact_at?: string | null
+          legal_name?: string | null
+          lost_at?: string | null
+          lost_note?: string | null
+          lost_reason?: string | null
+          name?: string
+          next_step?: string | null
+          next_step_date?: string | null
+          notes?: string | null
+          owner_id?: string | null
+          play_store_url?: string | null
+          previous_stage?: string | null
+          sector?: string | null
+          source_channel?: string | null
+          stage?: string
+          status?: string
+          temperature?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "companies_client_profile_id_fkey"
+            columns: ["client_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companies_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companies_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_activities: {
+        Row: {
+          author_id: string | null
+          body: string | null
+          company_id: string
+          created_at: string
+          direction: string | null
+          full_text: string | null
+          id: string
+          next_steps: string | null
+          objections: string | null
+          occurred_at: string
+          outcome: string | null
+          participants: string | null
+          summary: string | null
+          type: string
+        }
+        Insert: {
+          author_id?: string | null
+          body?: string | null
+          company_id: string
+          created_at?: string
+          direction?: string | null
+          full_text?: string | null
+          id?: string
+          next_steps?: string | null
+          objections?: string | null
+          occurred_at?: string
+          outcome?: string | null
+          participants?: string | null
+          summary?: string | null
+          type?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string | null
+          company_id?: string
+          created_at?: string
+          direction?: string | null
+          full_text?: string | null
+          id?: string
+          next_steps?: string | null
+          objections?: string | null
+          occurred_at?: string
+          outcome?: string | null
+          participants?: string | null
+          summary?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_activities_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_activities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_contacts: {
+        Row: {
+          company_id: string
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          is_primary: boolean
+          notes: string | null
+          phone: string | null
+          role_title: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          is_primary?: boolean
+          notes?: string | null
+          phone?: string | null
+          role_title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_primary?: boolean
+          notes?: string | null
+          phone?: string | null
+          role_title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_documents: {
+        Row: {
+          company_id: string
+          created_at: string
+          direction: string
+          doc_type: string
+          due_date: string | null
+          id: string
+          link_url: string | null
+          mime_type: string | null
+          name: string
+          size_bytes: number | null
+          status: string
+          storage_path: string | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          direction?: string
+          doc_type?: string
+          due_date?: string | null
+          id?: string
+          link_url?: string | null
+          mime_type?: string | null
+          name: string
+          size_bytes?: number | null
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          direction?: string
+          doc_type?: string
+          due_date?: string | null
+          id?: string
+          link_url?: string | null
+          mime_type?: string | null
+          name?: string
+          size_bytes?: number | null
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_notes: {
+        Row: {
+          author_id: string | null
+          body: string
+          company_id: string
+          created_at: string
+          id: string
+          is_pinned: boolean
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          company_id: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_notes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_onboarding_steps: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          done_at: string | null
+          due_date: string | null
+          id: string
+          is_done: boolean
+          position: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          done_at?: string | null
+          due_date?: string | null
+          id?: string
+          is_done?: boolean
+          position?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          done_at?: string | null
+          due_date?: string | null
+          id?: string
+          is_done?: boolean
+          position?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_onboarding_steps_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_tasks: {
+        Row: {
+          assignee_id: string | null
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          done_at: string | null
+          due_date: string | null
+          due_time: string | null
+          id: string
+          is_done: boolean
+          is_next_step: boolean
+          notes: string | null
+          task_type: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          done_at?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          id?: string
+          is_done?: boolean
+          is_next_step?: boolean
+          notes?: string | null
+          task_type?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          done_at?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          id?: string
+          is_done?: boolean
+          is_next_step?: boolean
+          notes?: string | null
+          task_type?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_tasks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -975,6 +1462,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      onboarding_template_steps: {
+        Row: {
+          created_at: string
+          description: string | null
+          due_days: number
+          id: string
+          is_active: boolean
+          position: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          due_days?: number
+          id?: string
+          is_active?: boolean
+          position?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          due_days?: number
+          id?: string
+          is_active?: boolean
+          position?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       payment_cycles: {
         Row: {
@@ -1673,6 +2193,7 @@ export type Database = {
           total_views: number
         }[]
       }
+      get_channel_stats: { Args: { p_period?: string }; Returns: Json }
       get_client_campaign_data: { Args: { p_user_id: string }; Returns: Json }
       get_client_daily_views: {
         Args: { p_days?: number; p_user_id: string }
@@ -1682,6 +2203,7 @@ export type Database = {
         Args: { p_limit?: number; p_user_id: string }
         Returns: Json
       }
+      get_company_payments: { Args: { p_company_id: string }; Returns: Json }
       get_content_analytics: {
         Args: {
           p_campaign_id?: string

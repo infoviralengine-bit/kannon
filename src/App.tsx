@@ -34,7 +34,11 @@ import SettingsPage from "@/pages/dashboard/SettingsPage";
 import OnboardingMonitorPage from "@/pages/dashboard/OnboardingMonitorPage";
 import VideoAnalyticsPage from "@/pages/dashboard/VideoAnalyticsPage";
 import ContentCalendarPage from "@/pages/dashboard/ContentCalendarPage";
+import ClientiPage from "@/pages/dashboard/ClientiPage";
 import PipelineB2BPage from "@/pages/dashboard/PipelineB2BPage";
+import CompanyDetailPage from "@/pages/dashboard/CompanyDetailPage";
+import AgendaPage from "@/pages/dashboard/AgendaPage";
+import CanaliPage from "@/pages/dashboard/CanaliPage";
 
 const queryClient = new QueryClient();
 
@@ -82,7 +86,12 @@ const App = () => (
               <Route path="trends" element={<Navigate to="/dashboard/content-calendar" replace />} />
               <Route path="trend-tiktok" element={<Navigate to="/dashboard/content-calendar" replace />} />
               <Route path="creator-pipeline" element={<Navigate to="/dashboard/onboarding" replace />} />
-              <Route path="pipeline-b2b" element={<PipelineB2BPage />} />
+              <Route path="clients" element={<ClientiPage />} />
+              <Route path="clients/pipeline" element={<PipelineB2BPage />} />
+              <Route path="clients/agenda" element={<AgendaPage />} />
+              <Route path="clients/canali" element={<CanaliPage />} />
+              <Route path="clients/:id" element={<CompanyDetailPage />} />
+              <Route path="pipeline-b2b" element={<Navigate to="/dashboard/clients/pipeline" replace />} />
               <Route path="hiring" element={<Navigate to="/dashboard" replace />} />
               <Route path="settings" element={<SettingsPage />} />
               {/* Redirect old payments route */}

@@ -1,0 +1,349 @@
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useSaveCompany, useStaffProfiles, type Company } from "@/hooks/useCompanies";
+import {
+  COMPANY_STAGES, STAGE_LABEL, COMPANY_STATUSES, STATUS_LABEL,
+  TEMPERATURES, TEMPERATURE_LABEL, DEAL_TYPES, DEAL_TYPE_LABEL,
+  GROWTH_STAGES, GROWTH_STAGE_LABEL,
+  SOURCE_CHANNELS, dealNeedsCpm, dealNeedsFixed, dealNeedsPerformance,
+  type DealType,
+} from "@/lib/companies";
+
+const NONE = "__none__";
+
+type Props = {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  company?: Company | null;
+};
+
+export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
+  const save = useSaveCompany();
+  const { data: staff = [] } = useStaffProfiles();
+
+  const [name, setName] = useState("");
+  const [legalName, setLegalName] = useState("");
+  const [status, setStatus] = useState("lead");
+  const [stage, setStage] = useState("nuova");
+  const [temperature, setTemperature] = useState(NONE);
+  const [sourceChannel, setSourceChannel] = useState(NONE);
+  const [ownerId, setOwnerId] = useState(NONE);
+  const [sector, setSector] = useState("");
+  const [website, setWebsite] = useState("");
+  const [appName, setAppName] = useState("");
+  const [appStoreUrl, setAppStoreUrl] = useState("");
+  const [playStoreUrl, setPlayStoreUrl] = useState("");
+  const [country, setCountry] = useState("");
+  const [growthStage, setGrowthStage] = useState(NONE);
+  const [dealType, setDealType] = useState(NONE);
+  const [dealFixed, setDealFixed] = useState("");
+  const [dealCpm, setDealCpm] = useState("");
+  const [dealViews, setDealViews] = useState("");
+  const [dealPct, setDealPct] = useState("");
+  const [dealPctNote, setDealPctNote] = useState("");
+  const [monthlyValue, setMonthlyValue] = useState("");
+  const [nextStep, setNextStep] = useState("");
+  const [nextStepDate, setNextStepDate] = useState("");
+  const [lostReason, setLostReason] = useState("");
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setName(company?.name ?? "");
+    setLegalName(company?.legal_name ?? "");
+    setStatus(company?.status ?? "lead");
+    setStage(company?.stage ?? "nuova");
+    setTemperature(company?.temperature ?? NONE);
+    setSourceChannel(company?.source_channel ?? NONE);
+    setOwnerId(company?.owner_id ?? NONE);
+    setSector(company?.sector ?? "");
+    setWebsite(company?.website ?? "");
+    setAppName(company?.app_name ?? "");
+    setAppStoreUrl(company?.app_store_url ?? "");
+    setPlayStoreUrl(company?.play_store_url ?? "");
+    setCountry(company?.country ?? "");
+    setGrowthStage(company?.growth_stage ?? NONE);
+    setDealType(company?.deal_type ?? NONE);
+    setDealFixed(company?.deal_fixed?.toString() ?? "");
+    setDealCpm(company?.deal_cpm?.toString() ?? "");
+    setDealViews(company?.deal_estimated_views?.toString() ?? "");
+    setDealPct(company?.deal_performance_pct?.toString() ?? "");
+    setDealPctNote(company?.deal_performance_note ?? "");
+    setMonthlyValue(company?.estimated_monthly_value?.toString() ?? "");
+    setNextStep(company?.next_step ?? "");
+    setNextStepDate(company?.next_step_date ?? "");
+    setLostReason(company?.lost_reason ?? "");
+    setNotes(company?.notes ?? "");
+  }, [open, company]);
+
+  const num = (v: string) => (v.trim() === "" ? null : Number(v.replace(",", ".")));
+  const opt = (v: string) => (v === NONE ? null : v);
+  const dt = opt(dealType) as DealType | null;
+
+  const isLost = stage === "perso";
+  const needsNextStep = status === "lead" && !isLost;
+  const canSave =
+    !!name.trim() && (!needsNextStep || !!nextStep.trim()) && (!isLost || !!lostReason.trim());
+
+  const handleSave = () => {
+    if (!canSave) return;
+    save.mutate(
+      {
+        id: company?.id,
+        values: {
+          name: name.trim(),
+          legal_name: legalName.trim() || null,
+          status: status as Company["status"],
+          stage: stage as Company["stage"],
+          temperature: opt(temperature),
+          source_channel: opt(sourceChannel),
+          owner_id: opt(ownerId),
+          sector: sector.trim() || null,
+          website: website.trim() || null,
+          app_name: appName.trim() || null,
+          app_store_url: appStoreUrl.trim() || null,
+          play_store_url: playStoreUrl.trim() || null,
+          country: country.trim() || null,
+          growth_stage: opt(growthStage),
+          deal_type: dt,
+          deal_fixed: dealNeedsFixed(dt) ? num(dealFixed) : null,
+          deal_cpm: dealNeedsCpm(dt) ? num(dealCpm) : null,
+          deal_estimated_views: dealNeedsCpm(dt) ? num(dealViews) : null,
+          deal_performance_pct: dealNeedsPerformance(dt) ? num(dealPct) : null,
+          deal_performance_note: dealNeedsPerformance(dt) ? dealPctNote.trim() || null : null,
+          estimated_monthly_value: num(monthlyValue),
+          next_step: isLost ? null : nextStep.trim() || null,
+          next_step_date: isLost ? null : nextStepDate || null,
+          lost_reason: isLost ? lostReason.trim() : company?.lost_reason ?? null,
+          notes: notes.trim() || null,
+        } as Partial<Company>,
+      },
+      { onSuccess: () => onOpenChange(false) },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{company ? "Modifica azienda" : "Nuova azienda"}</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-2">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-1.5">
+              <Label>Nome azienda *</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Es. Unflat" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Ragione sociale</Label>
+              <Input value={legalName} onChange={(e) => setLegalName(e.target.value)} placeholder="Opzionale" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="grid gap-1.5">
+              <Label>Stato</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {COMPANY_STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Stadio</Label>
+              <Select value={stage} onValueChange={setStage}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {COMPANY_STAGES.map((s) => (
+                    <SelectItem key={s} value={s}>{STAGE_LABEL[s]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Temperatura</Label>
+              <Select value={temperature} onValueChange={setTemperature}>
+                <SelectTrigger><SelectValue placeholder="Non indicata" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>Non indicata</SelectItem>
+                  {TEMPERATURES.map((t) => (
+                    <SelectItem key={t} value={t}>{TEMPERATURE_LABEL[t]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="grid gap-1.5">
+              <Label>Canale di arrivo</Label>
+              <Select value={sourceChannel} onValueChange={setSourceChannel}>
+                <SelectTrigger><SelectValue placeholder="Non indicato" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>Non indicato</SelectItem>
+                  {SOURCE_CHANNELS.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Responsabile</Label>
+              <Select value={ownerId} onValueChange={setOwnerId}>
+                <SelectTrigger><SelectValue placeholder="Nessuno" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>Nessuno</SelectItem>
+                  {staff.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.full_name ?? "Senza nome"}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Settore</Label>
+              <Input value={sector} onChange={(e) => setSector(e.target.value)} placeholder="Es. Fintech" />
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-border p-4 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label>Nome dell'app</Label>
+                <Input value={appName} onChange={(e) => setAppName(e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Paese</Label>
+                <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Es. Italia" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label>Link App Store</Label>
+                <Input value={appStoreUrl} onChange={(e) => setAppStoreUrl(e.target.value)} placeholder="https://" />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Link Play Store</Label>
+                <Input value={playStoreUrl} onChange={(e) => setPlayStoreUrl(e.target.value)} placeholder="https://" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label>Sito web</Label>
+                <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Fase di crescita</Label>
+                <Select value={growthStage} onValueChange={setGrowthStage}>
+                  <SelectTrigger><SelectValue placeholder="Non indicata" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE}>Non indicata</SelectItem>
+                    {GROWTH_STAGES.map((g) => (
+                      <SelectItem key={g} value={g}>{GROWTH_STAGE_LABEL[g]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-border p-4 space-y-4">
+            <div className="grid gap-1.5">
+              <Label>Tipo di accordo</Label>
+              <Select value={dealType} onValueChange={setDealType}>
+                <SelectTrigger><SelectValue placeholder="Da definire" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>Da definire</SelectItem>
+                  {DEAL_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>{DEAL_TYPE_LABEL[t]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {dealNeedsFixed(dt) && (
+              <div className="grid gap-1.5">
+                <Label>Fisso mensile (€)</Label>
+                <Input type="number" step="0.01" value={dealFixed} onChange={(e) => setDealFixed(e.target.value)} />
+              </div>
+            )}
+
+            {dealNeedsCpm(dt) && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-1.5">
+                  <Label>CPM (€)</Label>
+                  <Input type="number" step="0.01" value={dealCpm} onChange={(e) => setDealCpm(e.target.value)} />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>Views stimate al mese</Label>
+                  <Input type="number" step="1" value={dealViews} onChange={(e) => setDealViews(e.target.value)} />
+                </div>
+              </div>
+            )}
+
+            {dealNeedsPerformance(dt) && (
+              <div className="grid gap-4">
+                <div className="grid gap-1.5">
+                  <Label>Percentuale performance (%)</Label>
+                  <Input type="number" step="0.01" value={dealPct} onChange={(e) => setDealPct(e.target.value)} />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>Cosa conta come conversione</Label>
+                  <Textarea rows={2} value={dealPctNote} onChange={(e) => setDealPctNote(e.target.value)}
+                    placeholder="Es. registrazione completata con documento verificato" />
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-1.5">
+              <Label>Valore mensile stimato (€)</Label>
+              <Input type="number" step="0.01" value={monthlyValue} onChange={(e) => setMonthlyValue(e.target.value)} />
+              <p className="text-xs text-muted-foreground">
+                Inserito a mano: performance e CPM non si possono calcolare in anticipo.
+              </p>
+            </div>
+          </div>
+
+          {isLost ? (
+            <div className="grid gap-1.5">
+              <Label>Motivo della perdita *</Label>
+              <Input value={lostReason} onChange={(e) => setLostReason(e.target.value)}
+                placeholder="Es. budget non disponibile" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label>Prossimo passo {needsNextStep ? "*" : ""}</Label>
+                <Input value={nextStep} onChange={(e) => setNextStep(e.target.value)} placeholder="Es. inviare proposta" />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Data prossimo passo</Label>
+                <Input type="date" value={nextStepDate} onChange={(e) => setNextStepDate(e.target.value)} />
+              </div>
+            </div>
+          )}
+
+          <div className="grid gap-1.5">
+            <Label>Note</Label>
+            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Annulla</Button>
+          <Button onClick={handleSave} disabled={!canSave || save.isPending}>
+            {save.isPending ? "Salvataggio..." : "Salva"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

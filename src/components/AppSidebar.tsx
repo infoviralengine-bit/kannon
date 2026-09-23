@@ -1,8 +1,9 @@
 import {
   Home, Megaphone, BarChart3, CalendarDays, GitMerge, Users, AtSign,
-  FileText, UserPlus, Briefcase, Wallet, FileBarChart,
+  FileText, UserPlus, Briefcase, Building2, Wallet, FileBarChart,
   Settings, LogOut, Search, PhoneCall,
   type LucideIcon,
+  Radio,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -64,9 +65,12 @@ const sidebarSections: SidebarSection[] = [
     ],
   },
   {
-    label: "Sales",
+    label: "Clienti",
     items: [
-      { label: "Pipeline B2B", icon: Briefcase, path: "/dashboard/pipeline-b2b", roles: ROLE_GROUPS.STAFF, isNew: true },
+      { label: "Pipeline B2B", icon: GitMerge, path: "/dashboard/clients/pipeline", roles: ROLE_GROUPS.STAFF, isNew: true },
+      { label: "Clienti", icon: Building2, path: "/dashboard/clients", roles: ROLE_GROUPS.STAFF },
+      { label: "Agenda", icon: CalendarDays, path: "/dashboard/clients/agenda", roles: ROLE_GROUPS.STAFF },
+      { label: "Canali", icon: Radio, path: "/dashboard/clients/canali", roles: ROLE_GROUPS.STAFF },
     ],
   },
   {
@@ -103,9 +107,10 @@ export function AppSidebar() {
   const { profile, role, signOut } = useAuth();
   const appRole = (role as AppRole | null);
 
+  const exactPaths = ["/dashboard", "/dashboard/clients"];
   const isActive = (path: string) =>
-    path === "/dashboard"
-      ? location.pathname === "/dashboard"
+    exactPaths.includes(path)
+      ? location.pathname === path
       : location.pathname.startsWith(path);
 
   const initials = profile?.full_name
