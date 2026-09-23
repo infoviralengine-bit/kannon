@@ -1,3 +1,5 @@
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useI18n } from "@/i18n";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCreatorPortal } from "@/hooks/useCreatorPortal";
@@ -192,10 +194,16 @@ function Header({ name, onSignOut }: { name: string | null; onSignOut: () => voi
       </div>
       <div className="flex items-center gap-3">
         {name && <span className="text-sm text-muted-foreground">{name}</span>}
+        <LanguageSwitcher />
         <Button variant="ghost" size="sm" onClick={onSignOut}>
-          <LogOut className="mr-2 h-4 w-4" />Esci
+          <LogOut className="mr-2 h-4 w-4" /><SignOutLabel />
         </Button>
       </div>
     </header>
   );
+}
+
+function SignOutLabel() {
+  const { t } = useI18n();
+  return <>{t("Esci")}</>;
 }
