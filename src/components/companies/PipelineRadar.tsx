@@ -13,8 +13,8 @@ interface Props {
 const SIZE = 800;
 const C = SIZE / 2;
 const R = C - 40;
-// Dal centro (vinta) verso l'esterno (nuova)
-const RINGS: CompanyStage[] = [...PIPELINE_STAGES].reverse();
+// Dal centro (trattativa) verso l'esterno (nuova). Le vinte non appaiono nel radar.
+const RINGS: CompanyStage[] = [...PIPELINE_STAGES].filter((s) => s !== "vinto").reverse();
 const BAND = R / RINGS.length;
 
 // Scala colore: rosso (centro) → viola → blu (esterno), coerente col gradiente
@@ -36,8 +36,8 @@ function displayName(c: Company) {
 
 export function PipelineRadar({ companies, onOpenCompany }: Props) {
   const [hover, setHover] = useState<string | null>(null);
-  const active = companies.filter((c) => c.stage !== "perso");
-  const lost = companies.length - active.length;
+  const active = companies.filter((c) => c.stage !== "perso" && c.stage !== "vinto");
+  const hidden = companies.length - active.length;
   const totalValue = active.reduce((s, c) => s + Number(c.estimated_monthly_value ?? 0), 0);
 
   const nodes = useMemo(() => {
@@ -65,14 +65,14 @@ export function PipelineRadar({ companies, onOpenCompany }: Props) {
       <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
         <p className="text-xs text-muted-foreground">
           Più una lead è vicina al centro, più è vicina alla chiusura.
-          {lost > 0 && <span className="block">{lost} lead perse non mostrate</span>}
+          {hidden > 0 && <span className="block">{hidden} lead vinte o perse non mostrate</span>}
         </p>
         <div className="flex gap-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full" style={{ background: "rgb(59 130 246)" }} /> Nuove
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-accent" /> Vinte
+            <span className="h-2 w-2 rounded-full bg-accent" /> In chiusura
           </span>
         </div>
       </div>
