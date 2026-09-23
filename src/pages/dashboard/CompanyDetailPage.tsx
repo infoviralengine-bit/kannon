@@ -101,22 +101,24 @@ export default function CompanyDetailPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {company.stage === "perso" ? (
-              <Button variant="outline" onClick={() => updateStage.mutate({
-                id: company.id, stage: (company.previous_stage ?? "nuova") as CompanyStage })}>
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Riapri in {STAGE_LABEL[(company.previous_stage ?? "nuova") as CompanyStage]}
-              </Button>
-            ) : (
-              <>
-                {nextStage && (
-                  <Button variant="outline" onClick={() => setMove(nextStage)}>
-                    <ArrowDown className="mr-1 h-4 w-4 text-green-600" /> {STAGE_LABEL[nextStage]}
-                  </Button>
-                )}
-                <Button variant="outline" className="hover:border-destructive hover:text-destructive"
-                  onClick={() => setMove("perso")}>Persa</Button>
-              </>
+            {company.status === "lead" && (
+              company.stage === "perso" ? (
+                <Button variant="outline" onClick={() => updateStage.mutate({
+                  id: company.id, stage: (company.previous_stage ?? "nuova") as CompanyStage })}>
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Riapri in {STAGE_LABEL[(company.previous_stage ?? "nuova") as CompanyStage]}
+                </Button>
+              ) : (
+                <>
+                  {nextStage && (
+                    <Button variant="outline" onClick={() => setMove(nextStage)}>
+                      <ArrowDown className="mr-1 h-4 w-4 text-green-600" /> {STAGE_LABEL[nextStage]}
+                    </Button>
+                  )}
+                  <Button variant="outline" className="hover:border-destructive hover:text-destructive"
+                    onClick={() => setMove("perso")}>Persa</Button>
+                </>
+              )
             )}
             <Button variant="outline" onClick={() => setEditOpen(true)}>
               <Pencil className="mr-2 h-4 w-4" /> Modifica
