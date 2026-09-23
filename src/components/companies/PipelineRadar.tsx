@@ -13,8 +13,8 @@ interface Props {
 const SIZE = 800;
 const C = SIZE / 2;
 const R = C - 40;
-// Dal centro (vinta) verso l'esterno (nuova)
-const RINGS: CompanyStage[] = [...PIPELINE_STAGES].reverse();
+// Dal centro (trattativa) verso l'esterno (nuova). Le vinte non appaiono nel radar.
+const RINGS: CompanyStage[] = [...PIPELINE_STAGES].filter((s) => s !== "vinto").reverse();
 const BAND = R / RINGS.length;
 
 // Scala colore: rosso (centro) → viola → blu (esterno), coerente col gradiente
@@ -36,8 +36,8 @@ function displayName(c: Company) {
 
 export function PipelineRadar({ companies, onOpenCompany }: Props) {
   const [hover, setHover] = useState<string | null>(null);
-  const active = companies.filter((c) => c.stage !== "perso");
-  const lost = companies.length - active.length;
+  const active = companies.filter((c) => c.stage !== "perso" && c.stage !== "vinto");
+  const hidden = companies.length - active.length;
   const totalValue = active.reduce((s, c) => s + Number(c.estimated_monthly_value ?? 0), 0);
 
   const nodes = useMemo(() => {
