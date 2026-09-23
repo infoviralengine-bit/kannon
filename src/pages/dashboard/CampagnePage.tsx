@@ -27,6 +27,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCompanyOptions } from "@/hooks/useCompanies";
 
 const statusColor: Record<string, string> = {
   active: "bg-success/20 text-success border-success/30",
@@ -43,7 +45,9 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
   const { toast } = useToast();
   const qc = useQueryClient();
   const [name, setName] = useState("");
-  const [clientName, setClientName] = useState("");
+  const [companyId, setCompanyId] = useState("");
+  const { data: companyOptions = [] } = useCompanyOptions();
+  const clientName = companyOptions.find((c) => c.id === companyId)?.name ?? "";
   const [clientCpm, setClientCpm] = useState("2.00");
   const [clientFixed, setClientFixed] = useState("0.00");
   const [startDate, setStartDate] = useState<Date>();
@@ -55,7 +59,7 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!name || !clientName || !startDate) throw new Error("Compila i campi obbligatori");
+      if (!name || !companyId || !startDate) throw new Error("Compila i campi obbligatori");
       const startStr = format(startDate, "yyyy-MM-dd");
       const parsedViewsCap = videoViewsCap.trim() ? parseInt(videoViewsCap) : null;
       const parsedSpendCap = monthlySpendCap.trim() ? parseFloat(monthlySpendCap) : null;
@@ -63,6 +67,7 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
       const { data: newCamp, error } = await supabase.from("campaigns").insert({
         name,
         client_name: clientName,
+        company_id: companyId,
         client_cpm: isNaN(parseFloat(clientCpm)) ? 0 : parseFloat(clientCpm),
         client_fixed: fixedVal,
         start_date: startStr,
@@ -105,7 +110,7 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
       qc.invalidateQueries({ queryKey: ["campaign-table"] });
       qc.invalidateQueries({ queryKey: ["active-campaigns-count"] });
       onOpenChange(false);
-      setName(""); setClientName(""); setClientCpm("2.00"); setClientFixed("0.00");
+      setName(""); setCompanyId(""); setClientCpm("2.00"); setClientFixed("0.00");
       setStartDate(undefined); setEndDate(undefined); setNotes(""); setMinMonthlyVideos("0");
       setVideoViewsCap(""); setMonthlySpendCap("");
     },
@@ -126,8 +131,20 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Es. Campagna Estate" />
           </div>
           <div className="grid gap-1.5">
-            <Label>Nome cliente *</Label>
-            <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Es. Brand XYZ" />
+            <Label>Cliente *</Label>
+            <Select value={companyId} onValueChange={setCompanyId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleziona un cliente" />
+              </SelectTrigger>
+              <SelectContent>
+                {companyOptions.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              I clienti si creano nella sezione Clienti.
+            </p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">

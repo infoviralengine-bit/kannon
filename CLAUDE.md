@@ -430,3 +430,37 @@ I ruoli `outreach` e `closer` sono stati eliminati dalla piattaforma:
 - Edge functions eliminate: `calendly-webhook`, `connect-calendly`. Sezione Calendly rimossa da Impostazioni.
 - Route legacy (`closer`, `creator-pipeline`, `recruiting`, `hiring`) restano come redirect.
 - L'enum `app_role` conserva ancora i valori `outreach`/`closer` per compatibilità: nessun ruolo attivo li usa nell'UI.
+
+---
+
+## 15. SP #6 · Clienti e Pipeline B2B (fase 1)
+
+Modulo che introduce il cliente come entità, non più solo `campaigns.client_name`.
+
+Tabelle (tutte RLS staff-only: `has_role(auth.uid(),'admin'|'team')`):
+- `companies` → name, legal_name, status (lead/cliente/ex_cliente), stage a 9 stadi (`nuova/contattata/ha_risposto/call_fissata/call_fatta/proposta_inviata/trattativa/vinto/perso`), previous_stage, temperature (caldo/tiepido/freddo), source_channel, owner_id (responsabile, solo admin/team), app_name, app_store_url, play_store_url, country, sector, growth_stage, deal_type (fisso_cpm/fisso_performance/solo_cpm/solo_fisso) + deal_fixed, deal_cpm, deal_estimated_views, deal_performance_pct, deal_performance_note, estimated_monthly_value (manuale), next_step, next_step_date, lost_reason, lost_at, website, notes, client_profile_id, created_by
+- `company_contacts`; `company_activities` (tipo + `direction` in/out, summary, full_text, activity_date); `company_tasks` (task_type, due_date, due_time, is_next_step); `company_documents` (direction `da_inviare`/`da_ricevere`, doc_type, status, due_date, file o link; bucket privato `company-documents`, policy storage staff-only)
+- `onboarding_template_steps` (modello editabile, seed 10 step con `due_days`) + `company_onboarding_steps` (copia con scadenze calcolate al passaggio a `vinto`)
+- `campaigns.company_id` (FK ON DELETE SET NULL); `client_name` resta ed è sincronizzato
+
+Trigger e funzioni:
+- `handle_company_stage_change` (BEFORE UPDATE su companies): salva `previous_stage`, gestisce lost_at, riapertura lead persa allo stadio precedente, lead vinta → status `cliente`, logga attività `cambio_stadio` (anche per la temperatura), copia la checklist onboarding con scadenze
+- `sync_campaign_client_name` (BEFORE INSERT/UPDATE OF company_id su campaigns) e `propagate_company_name` (AFTER UPDATE OF name su companies)
+- `refresh_company_client_status` (AFTER INSERT/UPDATE/DELETE su campaigns): `cliente` se esiste almeno una campagna attiva, altrimenti `ex_cliente`
+- `get_company_payments(uuid)` → RPC read-only `SECURITY DEFINER`, solo `admin`: righe `client_payments` delle campagne dell'azienda con importo effettivo (COALESCE override). Non scrive nulla.
+
+Frontend (5 pagine):
+- `/dashboard/clients/pipeline` → `PipelineB2BPage` (Kanban 8 colonne o tabella, ricerca, filtri responsabile/canale/temperatura/scadenza/inattività, ordinamento, KPI, `StageMoveDialog` per cambio stadio con motivo obbligatorio sulle perse)
+- `/dashboard/clients` → `ClientiPage` (card clienti e ex clienti con campagne, task, documenti, onboarding, valore stimato)
+- `/dashboard/clients/:id` → `CompanyDetailPage` (URL proprio, `NextStepCard`, 7 tab: Panoramica, Attività, Da fare, Documenti, Onboarding, Campagne, Pagamenti; Onboarding/Campagne solo clienti, Pagamenti solo admin)
+- `/dashboard/clients/agenda` → `AgendaPage` (viste ritardo/oggi/settimana/tutti, filtro assegnatario, completa e posticipa)
+- Impostazioni → `OnboardingTemplateCard` (modello onboarding editabile, vale per i clienti nuovi)
+- Supporto: `src/lib/companies.ts`, `src/hooks/useCompanies.ts`, `src/components/companies/` (PipelineKanban, PipelineTable, CompanyFormDialog, StageMoveDialog, NextStepCard, `tabs/*`). Il vecchio `CompanyDetailDrawer` è stato rimosso, `/dashboard/pipeline-b2b` è un redirect
+- `CampagnePage`: il campo "Nome cliente" libero è diventato il selettore "Cliente" (obbligatorio), che imposta `company_id`
+
+Da fare prima del passaggio in produzione: migrazione dati da `client_name` ad aziende (raggruppamenti da confermare, es. "Tot Money"/"ToT") e spostamento di `campaigns.client_profile_id` su `companies.client_profile_id`.
+
+### SP #6 · Aggiornamento (23 set 2026)
+- Scheda azienda `/dashboard/clients/:id`: niente più tab, pagina verticale a sezioni con indice laterale (Riepilogo, Cronologia unificata filtrabile, Note call strutturate, Appunti fissabili, Email e messaggi, File, Da fare, + Onboarding/Campagne/Pagamenti per clienti). Componenti in `src/components/companies/detail/`.
+- Nuova tabella `company_notes` (staff-only). `company_activities` + colonne `participants, outcome, objections, next_steps`.
+- Pagina `/dashboard/clients/canali` (`CanaliPage`) su RPC `get_channel_stats(p_period)` staff-only. Clic su canale apre la pipeline filtrata (`?channel=`). Hook in `src/hooks/useCompanyNotes.ts`.
