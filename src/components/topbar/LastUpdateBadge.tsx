@@ -2,22 +2,24 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { t, useI18n } from "@/i18n";
 import { RefreshCw } from "lucide-react";
 
 function formatRelative(iso: string | null): string {
   if (!iso) return "—";
   const diffMs = Date.now() - new Date(iso).getTime();
   const min = Math.floor(diffMs / 60000);
-  if (min < 1) return "ora";
-  if (min < 60) return `${min}m fa`;
+  if (min < 1) return t("ora");
+  if (min < 60) return t("{n}m fa", { n: min });
   const h = Math.floor(min / 60);
-  if (h < 24) return `${h}h fa`;
+  if (h < 24) return t("{n}h fa", { n: h });
   const d = Math.floor(h / 24);
-  return `${d}g fa`;
+  return t("{n}g fa", { n: d });
 }
 
 export function LastUpdateBadge() {
   const { role } = useAuth();
+  useI18n();
   const eligible = role === "admin" || role === "team" || role === "campaign_manager";
 
   const { data } = useQuery({
@@ -33,7 +35,7 @@ export function LastUpdateBadge() {
 
   if (!eligible) return null;
 
-  const tooltip = data ? new Date(data).toLocaleString("it-IT") : "Mai";
+  const tooltip = data ? new Date(data).toLocaleString("it-IT") : t("Mai");
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -41,10 +43,10 @@ export function LastUpdateBadge() {
         <TooltipTrigger asChild>
           <div className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground px-2 py-1 rounded-md hover:bg-muted/40 cursor-default">
             <RefreshCw className="h-3 w-3" />
-            <span>Aggiornato {formatRelative(data ?? null)}</span>
+            <span>{t("Aggiornato {when}", { when: formatRelative(data ?? null) })}</span>
           </div>
         </TooltipTrigger>
-        <TooltipContent>Ultimo scraping: {tooltip}</TooltipContent>
+        <TooltipContent>{t("Ultimo scraping: {when}", { when: tooltip })}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

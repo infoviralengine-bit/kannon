@@ -26,6 +26,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import logoFull from "@/assets/kannon-logo-red.svg";
 import logoSymbol from "@/assets/kannon-symbol-red.svg";
+import { useI18n } from "@/i18n";
 import { ROLES, ROLE_GROUPS, canAccess, type AppRole } from "@/lib/roles";
 
 type SidebarItem = {
@@ -89,13 +90,14 @@ const sidebarSections: SidebarSection[] = [
 ];
 
 const settingsItem: SidebarItem = {
-  label: "Settings", icon: Settings, path: "/dashboard/settings", roles: [ROLES.ADMIN],
+  label: "Impostazioni", icon: Settings, path: "/dashboard/settings", roles: [ROLES.ADMIN],
 };
 
 function NewBadge() {
+  const { t } = useI18n();
   return (
     <span className="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-      New
+      {t("Nuovo")}
     </span>
   );
 }
@@ -105,6 +107,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { profile, role, signOut } = useAuth();
+  const { t } = useI18n();
   const appRole = (role as AppRole | null);
 
   const exactPaths = ["/dashboard", "/dashboard/clients"];
@@ -134,7 +137,7 @@ export function AppSidebar() {
       <SidebarMenuButton asChild isActive={isActive(item.path)}>
         <NavLink to={item.path} end={item.path === "/dashboard"} className="flex items-center gap-2">
           <item.icon className="h-4 w-4" />
-          {!collapsed && <span>{item.label}</span>}
+          {!collapsed && <span>{t(item.label)}</span>}
           {!collapsed && item.isNew && <NewBadge />}
         </NavLink>
       </SidebarMenuButton>
@@ -158,7 +161,7 @@ export function AppSidebar() {
           <SidebarGroup key={section.label}>
             {!collapsed && (
               <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                {section.label}
+                {t(section.label)}
               </SidebarGroupLabel>
             )}
             <SidebarGroupContent>
