@@ -10,3 +10,4 @@ Numeri/valute/date restano it-IT. Stringhe avvolte in t("testo italiano"), dizio
 - [x] Impostazioni, portale creator, portale clienti (portals)
 - [x] Verifica finale: compilazione, test, controllo visivo in EN
 - [x] Scheda lead/clienti: rimossa sezione comunicazioni, timeline ampliata e documenti ordinati per data dichiarata
+- [x] Timeline lead/clienti: riordino manuale persistente e cancellazione con conferma
