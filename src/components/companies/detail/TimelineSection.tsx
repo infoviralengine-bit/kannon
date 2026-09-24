@@ -83,13 +83,14 @@ function prettyStage(summary: string) {
     `${STAGE_LABEL[from as CompanyStage] ?? from} → ${STAGE_LABEL[to as CompanyStage] ?? to}`);
 }
 
-function SortableTimelineItem({ item, canDrag, isOpen, onToggle, onDelete, onOpenItem }: {
+function SortableTimelineItem({ item, canDrag, isOpen, onToggle, onDelete, onOpenItem, showConnector }: {
   item: Item;
   canDrag: boolean;
   isOpen: boolean;
   onToggle: () => void;
   onDelete: () => void;
   onOpenItem: () => void;
+  showConnector: boolean;
 }) {
   const { t } = useI18n();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -97,10 +98,14 @@ function SortableTimelineItem({ item, canDrag, isOpen, onToggle, onDelete, onOpe
     disabled: !canDrag,
   });
   const Icon = ICON[item.kind];
+  const hasLink = item.kind !== "fase";
 
   return (
     <li ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}
       className={`group relative rounded-md border border-border/50 bg-background/30 p-4 transition-[transform,border-color,background-color,box-shadow] duration-200 ease-out hover:z-10 hover:scale-[1.015] hover:border-accent/60 hover:bg-background hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none ${isDragging ? "z-20 opacity-80 shadow-xl" : ""}`}>
+      {showConnector && (
+        <span aria-hidden="true" className="absolute -left-[30px] top-[30px] h-[calc(100%+16px)] border-l border-border/60" />
+      )}
       <span className="absolute -left-[43px] top-4 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background transition-colors group-hover:border-accent group-hover:text-accent">
         <Icon className="h-4 w-4" />
       </span>
@@ -118,12 +123,16 @@ function SortableTimelineItem({ item, canDrag, isOpen, onToggle, onDelete, onOpe
             <span>{formatDateTimeIt(item.date)}</span>
             {item.author && <span>· {item.author}</span>}
           </div>
-          <button type="button" onClick={onOpenItem}
-            className="mt-2 inline-flex max-w-full items-center gap-1.5 text-left text-base leading-relaxed hover:text-accent hover:underline">
-            <span className="truncate">{item.title}</span>
-            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-          </button>
-          {item.detail && (
+          {hasLink ? (
+            <button type="button" onClick={onOpenItem}
+              className="mt-2 inline-flex max-w-full items-center gap-1.5 text-left text-base leading-relaxed hover:text-accent hover:underline">
+              <span className="truncate">{item.title}</span>
+              <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+            </button>
+          ) : (
+            <p className="mt-2 text-base leading-relaxed">{item.title}</p>
+          )}
+          {item.detail && item.kind !== "nota" && (
             <>
               <Button type="button" variant="link" className="h-auto p-0 text-xs text-accent" onClick={onToggle}>
                 {isOpen ? t("Nascondi") : t("Mostra dettagli")}
@@ -283,13 +292,11 @@ export function TimelineSection({ companyId, activities, documents, tasks, notes
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={visible.map((item) => item.id)} strategy={verticalListSortingStrategy}>
           <ol className="relative ml-4 space-y-4 pl-7">
-            {visible.length > 1 && (
-              <span aria-hidden="true" className="absolute bottom-[30px] left-0 top-[30px] border-l border-border/60" />
-            )}
-            {visible.map((item) => (
+            {visible.map((item, index) => (
               <SortableTimelineItem key={item.id} item={item} canDrag={filter === "tutto"}
                 isOpen={open === item.id} onToggle={() => setOpen(open === item.id ? null : item.id)}
-                onDelete={() => setPendingDelete(item)} onOpenItem={() => openTimelineItem(item)} />
+                onDelete={() => setPendingDelete(item)} onOpenItem={() => openTimelineItem(item)}
+                showConnector={index < visible.length - 1} />
             ))}
             {!visible.length && <p className="text-sm text-muted-foreground">{t("Nessun evento.")}</p>}
           </ol>
