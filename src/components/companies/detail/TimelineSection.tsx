@@ -78,9 +78,22 @@ function activityKind(type: string): Kind {
   return "messaggio";
 }
 
-function prettyStage(summary: string) {
-  return summary.replace(/(\w+) -> (\w+)/, (_match, from, to) =>
-    `${STAGE_LABEL[from as CompanyStage] ?? from} → ${STAGE_LABEL[to as CompanyStage] ?? to}`);
+function translateSystemSummary(summary: string, translate: (text: string) => string) {
+  const stageMatch = summary.match(/^Stadio:\s+(\w+)\s+->\s+(\w+)(.*)$/);
+  if (stageMatch) {
+    const [, from, to, suffix] = stageMatch;
+    const fromLabel = STAGE_LABEL[from as CompanyStage];
+    const toLabel = STAGE_LABEL[to as CompanyStage];
+    return `${translate("Stadio")}: ${translate(fromLabel ?? from)} → ${translate(toLabel ?? to)}${suffix}`;
+  }
+
+  const temperatureMatch = summary.match(/^Temperatura:\s+(\w+|-)\s+->\s+(\w+|-)(.*)$/);
+  if (temperatureMatch) {
+    const [, from, to, suffix] = temperatureMatch;
+    return `${translate("Temperatura")}: ${translate(from)} → ${translate(to)}${suffix}`;
+  }
+
+  return translate(summary);
 }
 
 function SortableTimelineItem({ item, canDrag, isOpen, onToggle, onDelete, onOpenItem, showConnector }: {
@@ -179,7 +192,7 @@ export function TimelineSection({ companyId, activities, documents, tasks, notes
       const kind = activityKind(activity.type);
       const detail = [
         activity.participants && t("Partecipanti: {value}", { value: activity.participants }),
-        activity.outcome && t("Esito: {value}", { value: activity.outcome }),
+        activity.outcome && t("Esito: {value}", { value: t(activity.outcome) }),
         activity.objections && t("Obiezioni: {value}", { value: activity.objections }),
         activity.next_steps && t("Prossimi passi: {value}", { value: activity.next_steps }),
         activity.full_text,
@@ -187,7 +200,9 @@ export function TimelineSection({ companyId, activities, documents, tasks, notes
       const text = activity.summary ?? activity.body ?? "";
       out.push({
         id: `activity-${activity.id}`, sourceId: activity.id, itemType: "activity", kind, date: activity.occurred_at,
-        title: activity.type === "cambio_stadio" ? prettyStage(text) : text,
+        title: activity.type === "cambio_stadio" || activity.type === "sistema"
+          ? translateSystemSummary(text, t)
+          : text,
         label: t(ACTIVITY_TYPE_LABEL[activity.type as ActivityType] ?? activity.type),
         detail: detail || null, direction: activity.direction, author: authorName(activity.author_id),
       });
