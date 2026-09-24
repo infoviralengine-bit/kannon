@@ -946,7 +946,6 @@ export type Database = {
           creator_id: string
           id: string
           ip_address: string | null
-          onboarding_link_id: string | null
           signed_at: string
         }
         Insert: {
@@ -955,7 +954,6 @@ export type Database = {
           creator_id: string
           id?: string
           ip_address?: string | null
-          onboarding_link_id?: string | null
           signed_at?: string
         }
         Update: {
@@ -964,7 +962,6 @@ export type Database = {
           creator_id?: string
           id?: string
           ip_address?: string | null
-          onboarding_link_id?: string | null
           signed_at?: string
         }
         Relationships: [
@@ -980,13 +977,6 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "creators"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contract_signatures_onboarding_link_id_fkey"
-            columns: ["onboarding_link_id"]
-            isOneToOne: false
-            referencedRelation: "onboarding_links"
             referencedColumns: ["id"]
           },
         ]
@@ -1412,53 +1402,6 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      onboarding_links: {
-        Row: {
-          completed_at: string | null
-          contract_ids: string[]
-          created_at: string
-          creator_id: string | null
-          first_name: string | null
-          id: string
-          last_name: string | null
-          phone: string | null
-          status: string
-          token: string
-        }
-        Insert: {
-          completed_at?: string | null
-          contract_ids?: string[]
-          created_at?: string
-          creator_id?: string | null
-          first_name?: string | null
-          id?: string
-          last_name?: string | null
-          phone?: string | null
-          status?: string
-          token?: string
-        }
-        Update: {
-          completed_at?: string | null
-          contract_ids?: string[]
-          created_at?: string
-          creator_id?: string | null
-          first_name?: string | null
-          id?: string
-          last_name?: string | null
-          phone?: string | null
-          status?: string
-          token?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "onboarding_links_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "creators"
             referencedColumns: ["id"]
           },
         ]
@@ -2230,7 +2173,6 @@ export type Database = {
       }
       get_finance_dashboard: { Args: { p_period?: string }; Returns: Json }
       get_last_scrape_at: { Args: never; Returns: string }
-      get_onboarding_data: { Args: { p_token: string }; Returns: Json }
       get_top_videos: {
         Args: {
           p_campaign_ids?: string[]
