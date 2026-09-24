@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ArrowRightLeft, CheckSquare, FileText, Mail, MessageSquare, Phone, StickyNote } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   ACTIVITY_DIRECTION_LABEL, ACTIVITY_TYPE_LABEL, STAGE_LABEL, formatDateTimeIt,
@@ -60,54 +61,59 @@ export function TimelineSection({ activities, documents, tasks, notes, authorNam
       });
     });
     documents.forEach((d) => out.push({
-      id: `d-${d.id}`, kind: "file", date: d.created_at, title: d.name,
+      id: `d-${d.id}`, kind: "file", date: d.occurred_at, title: d.name,
       label: t(d.direction === "da_inviare" ? "File inviato" : "File ricevuto"),
     }));
-    tasks.filter((tk) => tk.is_done && tk.done_at).forEach((tk) => out.push({
-      id: `t-${tk.id}`, kind: "task", date: tk.done_at!, title: tk.title, label: t("Task completato"), detail: tk.notes,
-    }));
+    tasks.forEach((tk) => {
+      if (!tk.is_done || !tk.done_at) return;
+      out.push({
+        id: `t-${tk.id}`, kind: "task", date: tk.done_at, title: tk.title,
+        label: t("Task completato"), detail: tk.notes,
+      });
+    });
     notes.forEach((n) => out.push({
       id: `n-${n.id}`, kind: "nota", date: n.created_at, title: n.body.split("\n")[0].slice(0, 140),
       label: t("Appunto"), detail: n.body.length > 140 || n.body.includes("\n") ? n.body : null, author: authorName(n.author_id),
     }));
     return out.sort((a, b) => b.date.localeCompare(a.date));
-  }, [activities, documents, tasks, notes, authorName]);
+  }, [activities, documents, tasks, notes, authorName, t]);
 
   const visible = filter === "tutto" ? items : items.filter((i) => i.kind === filter);
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-1">
+    <div className="space-y-5">
+      <div className="flex flex-wrap gap-2">
         {FILTERS.map((f) => (
-          <button key={f.key} onClick={() => setFilter(f.key)}
-            className={cn("rounded-full border px-2.5 py-1 text-xs",
-              filter === f.key ? "border-foreground bg-foreground text-background" : "border-border/60 hover:border-accent hover:text-accent")}>
+          <Button key={f.key} type="button" size="sm" variant={filter === f.key ? "default" : "outline"}
+            onClick={() => setFilter(f.key)} className="h-8 rounded-full px-3 text-xs">
             {t(f.label)}
-          </button>
+          </Button>
         ))}
       </div>
-      <ol className="relative ml-3 space-y-3 border-l border-border/60 pl-5">
+      <ol className="relative ml-4 space-y-4 border-l border-border/60 pl-7">
         {visible.map((i) => {
           const Icon = ICON[i.kind];
           const isOpen = open === i.id;
           return (
-            <li key={i.id} className="relative">
-              <span className="absolute -left-[31px] flex h-5 w-5 items-center justify-center rounded-full border border-border bg-background">
-                <Icon className="h-3 w-3" />
+            <li key={i.id}
+              className="group relative rounded-md border border-border/50 bg-background/30 p-4 transition-[transform,border-color,background-color,box-shadow] duration-200 ease-out hover:z-10 hover:scale-[1.015] hover:border-accent/60 hover:bg-background hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none">
+              <span className="absolute -left-[43px] top-4 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background transition-colors group-hover:border-accent group-hover:text-accent">
+                <Icon className="h-4 w-4" />
               </span>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="outline" className="text-[10px]">{i.label}</Badge>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <Badge variant="outline" className="text-xs">{i.label}</Badge>
                 {i.direction && <span>{t(ACTIVITY_DIRECTION_LABEL[i.direction as ActivityDirection] ?? i.direction)}</span>}
                 <span>{formatDateTimeIt(i.date)}</span>
                 {i.author && <span>· {i.author}</span>}
               </div>
-              <p className="mt-1 text-sm">{i.title}</p>
+              <p className="mt-2 text-base leading-relaxed">{i.title}</p>
               {i.detail && (
                 <>
-                  <button className="text-xs text-accent" onClick={() => setOpen(isOpen ? null : i.id)}>
+                  <Button type="button" variant="link" className="h-auto p-0 text-xs text-accent"
+                    onClick={() => setOpen(isOpen ? null : i.id)}>
                     {isOpen ? t("Nascondi") : t("Mostra dettagli")}
-                  </button>
-                  {isOpen && <p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/40 p-2 text-xs">{i.detail}</p>}
+                  </Button>
+                  {isOpen && <p className="mt-2 whitespace-pre-wrap rounded-md bg-muted/40 p-3 text-sm">{i.detail}</p>}
                 </>
               )}
             </li>
