@@ -9,6 +9,7 @@ import { BriefFormDialog } from "./BriefFormDialog";
 import { BriefImportDialog } from "./BriefImportDialog";
 import { toISODate } from "./_helpers";
 import { useContentCalendar, type Brief } from "@/hooks/useContentCalendar";
+import { useI18n } from "@/i18n";
 
 type RangeKey = "current" | "previous" | "last90";
 
@@ -38,6 +39,7 @@ function computeRange(key: RangeKey): { from: string; to: string } {
 }
 
 export default function CalendarTab({ campaignId, campaignName }: { campaignId: string; campaignName?: string | null }) {
+  const { t } = useI18n();
   const [range, setRange] = useState<RangeKey>("current");
   const { from, to } = useMemo(() => computeRange(range), [range]);
   const { data, isLoading } = useContentCalendar(campaignId, from, to);
@@ -80,26 +82,26 @@ export default function CalendarTab({ campaignId, campaignName }: { campaignId: 
         <div className="flex gap-1">
           {(Object.keys(RANGE_LABELS) as RangeKey[]).map((k) => (
             <Button key={k} size="sm" variant={range === k ? "default" : "outline"} onClick={() => setRange(k)}>
-              {RANGE_LABELS[k]}
+              {t(RANGE_LABELS[k])}
             </Button>
           ))}
         </div>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
-            <FileUp className="h-4 w-4 mr-1" />Importa da Google Doc
+            <FileUp className="h-4 w-4 mr-1" />{t("Importa da Google Doc")}
           </Button>
           <Button size="sm" onClick={openNew}>
-            <Plus className="h-4 w-4 mr-1" />Nuovo brief
+            <Plus className="h-4 w-4 mr-1" />{t("Nuovo brief")}
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-        <Kpi label="Tot brief" value={kpis.total} />
-        <Kpi label="Bozze" value={kpis.draft} />
-        <Kpi label="In revisione" value={kpis.in_review} />
-        <Kpi label="Approvati" value={kpis.approved} />
-        <Kpi label="Winner" value={kpis.winners} />
+        <Kpi label={t("Tot brief")} value={kpis.total} />
+        <Kpi label={t("Bozze")} value={kpis.draft} />
+        <Kpi label={t("In revisione")} value={kpis.in_review} />
+        <Kpi label={t("Approvati")} value={kpis.approved} />
+        <Kpi label={t("Winner")} value={kpis.winners} />
       </div>
 
       {isLoading ? (
