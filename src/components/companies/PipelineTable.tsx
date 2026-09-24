@@ -27,7 +27,6 @@ export function PipelineTable({ companies, ownerName, onOpenCompany }: Props) {
             <TableRow>
               <TableHead>{t("Azienda")}</TableHead>
               <TableHead>{t("Stadio")}</TableHead>
-              <TableHead>{t("Temperatura")}</TableHead>
               <TableHead>{t("Responsabile")}</TableHead>
               <TableHead>{t("Valore mensile")}</TableHead>
               <TableHead>{t("Prossimo passo")}</TableHead>
@@ -42,17 +41,17 @@ export function PipelineTable({ companies, ownerName, onOpenCompany }: Props) {
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <CompanyLogo name={c.name} logoUrl={c.logo_url} className="h-8 w-8" />
-                      <span>{c.app_name || c.name}</span>
+                      <div className="min-w-0">
+                        <p className="truncate">{c.name}</p>
+                        {c.temperature && c.status !== "cliente" && (
+                          <Badge variant="outline" className={cn("mt-1 text-[10px]", TEMPERATURE_BADGE[c.temperature as Temperature])}>
+                            {t(TEMPERATURE_LABEL[c.temperature as Temperature])}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>{c.status === "cliente" ? "-" : t(STAGE_LABEL[c.stage as CompanyStage])}</TableCell>
-                  <TableCell>
-                    {c.temperature && c.status !== "cliente" ? (
-                      <Badge variant="outline" className={cn("text-[10px]", TEMPERATURE_BADGE[c.temperature as Temperature])}>
-                        {t(TEMPERATURE_LABEL[c.temperature as Temperature])}
-                      </Badge>
-                    ) : "-"}
-                  </TableCell>
                   <TableCell>{ownerName(c.owner_id)}</TableCell>
                   <TableCell>
                     {c.estimated_monthly_value != null ? formatCurrency(Number(c.estimated_monthly_value)) : "-"}
@@ -70,7 +69,7 @@ export function PipelineTable({ companies, ownerName, onOpenCompany }: Props) {
             })}
             {!companies.length && (
               <TableRow>
-                <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
                   {t("Nessuna lead con questi filtri.")}
                 </TableCell>
               </TableRow>

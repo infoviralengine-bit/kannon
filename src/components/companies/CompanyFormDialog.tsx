@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ImagePlus, Upload } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useSaveCompany, useStaffProfiles, type Company } from "@/hooks/useCompanies";
+import { useSaveCompany, useStaffProfiles, useUploadCompanyLogo, type Company } from "@/hooks/useCompanies";
 import { useI18n } from "@/i18n";
 import { CompanyLogo } from "@/components/companies/CompanyLogo";
 import {
@@ -27,7 +28,9 @@ type Props = {
 export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
   const { t } = useI18n();
   const save = useSaveCompany();
+  const uploadLogo = useUploadCompanyLogo();
   const { data: staff = [] } = useStaffProfiles();
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
   const [legalName, setLegalName] = useState("");
@@ -39,6 +42,9 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
   const [sector, setSector] = useState("");
   const [website, setWebsite] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [savedCompanyId, setSavedCompanyId] = useState<string | null>(null);
   const [appName, setAppName] = useState("");
   const [appStoreUrl, setAppStoreUrl] = useState("");
   const [playStoreUrl, setPlayStoreUrl] = useState("");
@@ -68,6 +74,9 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
     setSector(company?.sector ?? "");
     setWebsite(company?.website ?? "");
     setLogoUrl(company?.logo_url ?? "");
+    setLogoFile(null);
+    setLogoPreview(null);
+    setSavedCompanyId(company?.id ?? null);
     setAppName(company?.app_name ?? "");
     setAppStoreUrl(company?.app_store_url ?? "");
     setPlayStoreUrl(company?.play_store_url ?? "");
@@ -86,6 +95,12 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
     setNotes(company?.notes ?? "");
   }, [open, company]);
 
+  useEffect(() => {
+    return () => {
+      if (logoPreview) URL.revokeObjectURL(logoPreview);
+    };
+  }, [logoPreview]);
+
   const num = (v: string) => (v.trim() === "" ? null : Number(v.replace(",", ".")));
   const opt = (v: string) => (v === NONE ? null : v);
   const dt = opt(dealType) as DealType | null;
@@ -95,11 +110,11 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
   const canSave =
     !!name.trim() && (!needsNextStep || !!nextStep.trim()) && (!isLost || !!lostReason.trim());
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!canSave) return;
-    save.mutate(
-      {
-        id: company?.id,
+    try {
+      const companyId = await save.mutateAsync({
+        id: savedCompanyId ?? company?.id,
         values: {
           name: name.trim(),
           legal_name: legalName.trim() || null,
@@ -128,9 +143,15 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
           lost_reason: isLost ? lostReason.trim() : company?.lost_reason ?? null,
           notes: notes.trim() || null,
         } as Partial<Company>,
-      },
-      { onSuccess: () => onOpenChange(false) },
-    );
+      });
+      setSavedCompanyId(companyId);
+      if (logoFile) {
+        await uploadLogo.mutateAsync({ companyId, file: logoFile, previousLogoUrl: company?.logo_url });
+      }
+      onOpenChange(false);
+    } catch {
+      // Le mutation mostrano già il messaggio di errore appropriato.
+    }
   };
 
   return (
@@ -154,13 +175,34 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
 
           <div className="grid gap-1.5">
             <Label>{t("Logo azienda")}</Label>
-            <div className="flex items-center gap-3">
-              <CompanyLogo name={name || t("Azienda")} logoUrl={logoUrl} className="h-12 w-12" />
+            <div className="flex flex-wrap items-center gap-3">
+              <CompanyLogo name={name || t("Azienda")} logoUrl={logoPreview ?? logoUrl} className="h-14 w-14" />
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  if (logoPreview) URL.revokeObjectURL(logoPreview);
+                  setLogoFile(file);
+                  setLogoPreview(URL.createObjectURL(file));
+                  event.target.value = "";
+                }}
+              />
+              <Button type="button" variant="outline" onClick={() => logoInputRef.current?.click()}>
+                {logoUrl || logoFile ? <Upload className="mr-2 h-4 w-4" /> : <ImagePlus className="mr-2 h-4 w-4" />}
+                {logoUrl || logoFile ? t("Sostituisci logo") : t("Carica logo")}
+              </Button>
+              <span className="text-xs text-muted-foreground">{t("PNG, JPG, WEBP o SVG, massimo 5 MB")}</span>
+              <div className="hidden">
               <Input
                 value={logoUrl}
                 onChange={(event) => setLogoUrl(event.target.value)}
                 placeholder={t("Incolla il link del logo")}
               />
+              </div>
             </div>
           </div>
 
@@ -357,8 +399,8 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t("Annulla")}</Button>
-          <Button onClick={handleSave} disabled={!canSave || save.isPending}>
-            {save.isPending ? t("Salvataggio...") : t("Salva")}
+          <Button onClick={handleSave} disabled={!canSave || save.isPending || uploadLogo.isPending}>
+            {save.isPending || uploadLogo.isPending ? t("Salvataggio...") : t("Salva")}
           </Button>
         </DialogFooter>
       </DialogContent>
