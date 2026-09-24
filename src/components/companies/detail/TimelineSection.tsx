@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowRightLeft, CheckSquare, FileText, GripVertical, Mail, MessageSquare, Phone, StickyNote, Trash2 } from "lucide-react";
+import { ArrowRightLeft, CheckSquare, ExternalLink, FileText, GripVertical, Mail, MessageSquare, Phone, StickyNote, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,8 +33,9 @@ import {
   ACTIVITY_DIRECTION_LABEL, ACTIVITY_TYPE_LABEL, STAGE_LABEL, formatDateTimeIt,
   type ActivityDirection, type ActivityType, type CompanyStage,
 } from "@/lib/companies";
-import type { CompanyActivity, CompanyDocument, CompanyTask } from "@/hooks/useCompanies";
+import { openDocument, type CompanyActivity, type CompanyDocument, type CompanyTask } from "@/hooks/useCompanies";
 import type { CompanyNote } from "@/hooks/useCompanyNotes";
+import { useToast } from "@/hooks/use-toast";
 import {
   useDeleteTimelineItem,
   useSaveTimelineOrder,
@@ -56,6 +57,7 @@ type Item = {
   direction?: string | null;
   author?: string;
   storagePath?: string | null;
+  linkUrl?: string | null;
 };
 
 const FILTERS: { key: Kind | "tutto"; label: string }[] = [
@@ -81,12 +83,13 @@ function prettyStage(summary: string) {
     `${STAGE_LABEL[from as CompanyStage] ?? from} → ${STAGE_LABEL[to as CompanyStage] ?? to}`);
 }
 
-function SortableTimelineItem({ item, canDrag, isOpen, onToggle, onDelete }: {
+function SortableTimelineItem({ item, canDrag, isOpen, onToggle, onDelete, onOpenItem }: {
   item: Item;
   canDrag: boolean;
   isOpen: boolean;
   onToggle: () => void;
   onDelete: () => void;
+  onOpenItem: () => void;
 }) {
   const { t } = useI18n();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -115,7 +118,11 @@ function SortableTimelineItem({ item, canDrag, isOpen, onToggle, onDelete }: {
             <span>{formatDateTimeIt(item.date)}</span>
             {item.author && <span>· {item.author}</span>}
           </div>
-          <p className="mt-2 text-base leading-relaxed">{item.title}</p>
+          <button type="button" onClick={onOpenItem}
+            className="mt-2 inline-flex max-w-full items-center gap-1.5 text-left text-base leading-relaxed hover:text-accent hover:underline">
+            <span className="truncate">{item.title}</span>
+            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+          </button>
           {item.detail && (
             <>
               <Button type="button" variant="link" className="h-auto p-0 text-xs text-accent" onClick={onToggle}>
@@ -144,6 +151,7 @@ export function TimelineSection({ companyId, activities, documents, tasks, notes
   authorName: (id: string | null) => string | undefined;
 }) {
   const { t } = useI18n();
+  const { toast } = useToast();
   const [filter, setFilter] = useState<Kind | "tutto">("tutto");
   const [open, setOpen] = useState<string | null>(null);
   const [orderedIds, setOrderedIds] = useState<string[]>([]);
@@ -178,7 +186,7 @@ export function TimelineSection({ companyId, activities, documents, tasks, notes
     documents.forEach((document) => out.push({
       id: `document-${document.id}`, sourceId: document.id, itemType: "document", kind: "file", date: document.occurred_at,
       title: document.name, label: t(document.direction === "da_inviare" ? "File inviato" : "File ricevuto"),
-      storagePath: document.storage_path,
+      storagePath: document.storage_path, linkUrl: document.link_url,
     }));
     tasks.forEach((task) => {
       if (!task.is_done || !task.done_at) return;
@@ -239,6 +247,29 @@ export function TimelineSection({ companyId, activities, documents, tasks, notes
     }, { onSuccess: () => setPendingDelete(null) });
   };
 
+  const openTimelineItem = (item: Item) => {
+    if (item.itemType === "document" && item.storagePath) {
+      openDocument(item.storagePath).catch((error: Error) =>
+        toast({ title: t("Errore"), description: error.message, variant: "destructive" }));
+      return;
+    }
+    if (item.itemType === "document" && item.linkUrl) {
+      window.open(item.linkUrl, "_blank", "noopener");
+      return;
+    }
+
+    const sectionId: Record<Kind, string> = {
+      call: "call",
+      email: "cronologia",
+      messaggio: "cronologia",
+      fase: "riepilogo",
+      file: "file",
+      task: "task",
+      nota: "appunti",
+    };
+    document.getElementById(sectionId[item.kind])?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap gap-2">
@@ -251,11 +282,14 @@ export function TimelineSection({ companyId, activities, documents, tasks, notes
       </div>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={visible.map((item) => item.id)} strategy={verticalListSortingStrategy}>
-          <ol className="relative ml-4 space-y-4 border-l border-border/60 pl-7">
+          <ol className="relative ml-4 space-y-4 pl-7">
+            {visible.length > 1 && (
+              <span aria-hidden="true" className="absolute bottom-[30px] left-0 top-[30px] border-l border-border/60" />
+            )}
             {visible.map((item) => (
               <SortableTimelineItem key={item.id} item={item} canDrag={filter === "tutto"}
                 isOpen={open === item.id} onToggle={() => setOpen(open === item.id ? null : item.id)}
-                onDelete={() => setPendingDelete(item)} />
+                onDelete={() => setPendingDelete(item)} onOpenItem={() => openTimelineItem(item)} />
             ))}
             {!visible.length && <p className="text-sm text-muted-foreground">{t("Nessun evento.")}</p>}
           </ol>
