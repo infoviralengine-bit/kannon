@@ -21,6 +21,7 @@ import {
   useAllCreatorsForSelect,
 } from "@/hooks/useCampaignData";
 import { useCampaignCycles, type ClientPaymentRow } from "@/hooks/usePaymentsData";
+import { useCompanyOptions } from "@/hooks/useCompanies";
 import {
   type PaymentTerms,
   DEFAULT_STANDARD, DEFAULT_TOT_SPLIT,
