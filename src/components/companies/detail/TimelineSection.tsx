@@ -76,7 +76,7 @@ export function TimelineSection({ activities, documents, tasks, notes, authorNam
       label: t("Appunto"), detail: n.body.length > 140 || n.body.includes("\n") ? n.body : null, author: authorName(n.author_id),
     }));
     return out.sort((a, b) => b.date.localeCompare(a.date));
-  }, [activities, documents, tasks, notes, authorName]);
+  }, [activities, documents, tasks, notes, authorName, t]);
 
   const visible = filter === "tutto" ? items : items.filter((i) => i.kind === filter);
 
