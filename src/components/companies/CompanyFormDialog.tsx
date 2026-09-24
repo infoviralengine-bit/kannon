@@ -168,7 +168,7 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Es. Unflat")} />
             </div>
             <div className="grid gap-1.5">
-              <Label>{t("Ragione sociale")}</Label>
+              <Label>{t("Referente")}</Label>
               <Input value={legalName} onChange={(e) => setLegalName(e.target.value)} placeholder={t("Opzionale")} />
             </div>
           </div>
