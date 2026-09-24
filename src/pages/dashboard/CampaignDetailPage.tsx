@@ -21,6 +21,7 @@ import {
   useAllCreatorsForSelect,
 } from "@/hooks/useCampaignData";
 import { useCampaignCycles, type ClientPaymentRow } from "@/hooks/usePaymentsData";
+import { useCompanyOptions } from "@/hooks/useCompanies";
 import {
   type PaymentTerms,
   DEFAULT_STANDARD, DEFAULT_TOT_SPLIT,
@@ -97,13 +98,16 @@ function EditCampaignModal({
     min_monthly_videos?: number | null;
     video_views_cap?: number | null;
     monthly_spend_cap?: number | null;
+    company_id?: string | null;
   };
 }) {
   const { toast } = useToast();
   const { t } = useI18n();
   const qc = useQueryClient();
   const [name, setName] = useState(campaign.name);
-  const [clientName, setClientName] = useState(campaign.client_name);
+  const [companyId, setCompanyId] = useState(campaign.company_id ?? "");
+  const { data: companyOptions = [] } = useCompanyOptions();
+  const clientName = companyOptions.find((c) => c.id === companyId)?.name ?? campaign.client_name;
   const [clientCpm, setClientCpm] = useState(String(campaign.client_cpm ?? 0));
   const [clientFixed, setClientFixed] = useState(String(campaign.client_fixed ?? 0));
   const [startDate, setStartDate] = useState<Date | undefined>(new Date(campaign.start_date));
@@ -115,7 +119,7 @@ function EditCampaignModal({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!name || !clientName || !startDate) throw new Error(t("Compila i campi obbligatori"));
+      if (!name || !companyId || !startDate) throw new Error(t("Compila i campi obbligatori"));
       const parsedCpm = parseFloat(clientCpm);
       const newCpm = isNaN(parsedCpm) ? 0 : parsedCpm;
       const parsedFixed = parseFloat(clientFixed);
@@ -127,6 +131,7 @@ function EditCampaignModal({
 
       const { error } = await supabase.from("campaigns").update({
         name,
+        company_id: companyId,
         client_name: clientName,
         client_cpm: newCpm,
         client_fixed: newFixed,
@@ -202,8 +207,17 @@ function EditCampaignModal({
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="grid gap-1.5">
-            <Label>{t("Nome cliente *")}</Label>
-            <Input value={clientName} onChange={(e) => setClientName(e.target.value)} />
+            <Label>{t("Cliente *")}</Label>
+            <Select value={companyId} onValueChange={setCompanyId}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("Seleziona un cliente")} />
+              </SelectTrigger>
+              <SelectContent>
+                {companyOptions.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
