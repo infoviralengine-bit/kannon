@@ -106,6 +106,7 @@ export type CompanyDocument = {
   storage_path: string | null;
   size_bytes: number | null;
   mime_type: string | null;
+  occurred_at: string;
   created_at: string;
 };
 

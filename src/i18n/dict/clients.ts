@@ -332,6 +332,7 @@ export const clients: Record<string, string> = {
   // DocumentsTab
   "Nome *": "Name *",
   "Es. contratto firmato": "E.g. signed contract",
+  "Data di invio o ricezione *": "Sent or received on *",
   "Link": "Link",
   "Niente in lista.": "Nothing in the list.",
   "{type} · entro {date}": "{type}, due {date}",

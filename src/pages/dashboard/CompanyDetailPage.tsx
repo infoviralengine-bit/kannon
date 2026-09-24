@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowDown, ArrowLeft, FilePlus, ListTodo, MessageSquare, Pencil, Phone, RotateCcw, StickyNote } from "lucide-react";
+import { ArrowDown, ArrowLeft, FilePlus, ListTodo, Pencil, Phone, RotateCcw, StickyNote } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,7 +16,6 @@ import { NextStepCard } from "@/components/companies/NextStepCard";
 import { CompanyFormDialog } from "@/components/companies/CompanyFormDialog";
 import { StageMoveDialog } from "@/components/companies/StageMoveDialog";
 import { OverviewTab } from "@/components/companies/tabs/OverviewTab";
-import { ActivityTab } from "@/components/companies/tabs/ActivityTab";
 import { TasksTab } from "@/components/companies/tabs/TasksTab";
 import { DocumentsTab } from "@/components/companies/tabs/DocumentsTab";
 import { OnboardingTab } from "@/components/companies/tabs/OnboardingTab";
@@ -59,7 +58,6 @@ export default function CompanyDetailPage() {
   const stageIdx = PIPELINE_STAGES.indexOf(company.stage as CompanyStage);
   const nextStage = stageIdx >= 0 && stageIdx < PIPELINE_STAGES.length - 1 ? PIPELINE_STAGES[stageIdx + 1] : null;
   const calls = activities.filter((a) => a.type === "chiamata" || a.type === "incontro");
-  const messages = activities.filter((a) => !["chiamata", "incontro", "cambio_stadio", "sistema", "nota"].includes(a.type));
   const openTasks = tasks.filter((t) => !t.is_done).length;
   const temp = company.temperature as Temperature | null;
 
@@ -68,7 +66,6 @@ export default function CompanyDetailPage() {
     { id: "cronologia", label: t("Cronologia") },
     { id: "call", label: t("Call"), count: calls.length },
     { id: "appunti", label: t("Appunti"), count: notes.length },
-    { id: "comunicazioni", label: t("Email e messaggi"), count: messages.length },
     { id: "file", label: t("File"), count: documents.length },
     { id: "task", label: t("Da fare"), count: openTasks },
     ...(isClient ? [{ id: "onboarding", label: t("Onboarding") }, { id: "campagne", label: t("Campagne"), count: campaigns.length }] : []),
@@ -134,9 +131,6 @@ export default function CompanyDetailPage() {
           <Button size="sm" variant="secondary" onClick={() => { setNoteOpen(true); go("appunti"); }}>
             <StickyNote className="mr-1.5 h-3.5 w-3.5" /> {t("Appunto")}
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => go("comunicazioni")}>
-            <MessageSquare className="mr-1.5 h-3.5 w-3.5" /> {t("Email o messaggio")}
-          </Button>
           <Button size="sm" variant="secondary" onClick={() => go("file")}>
             <FilePlus className="mr-1.5 h-3.5 w-3.5" /> {t("File")}
           </Button>
@@ -166,9 +160,6 @@ export default function CompanyDetailPage() {
           <Section id="appunti" title={t("Appunti")} count={notes.length}
             action={!noteOpen && <Button size="sm" variant="outline" onClick={() => setNoteOpen(true)}>{t("Nuovo appunto")}</Button>}>
             <NotesSection companyId={company.id} notes={notes} formOpen={noteOpen} setFormOpen={setNoteOpen} authorName={authorName} />
-          </Section>
-          <Section id="comunicazioni" title={t("Email e messaggi")} count={messages.length}>
-            <ActivityTab companyId={company.id} activities={messages} types={["email", "messaggio", "whatsapp", "linkedin"]} />
           </Section>
           <Section id="file" title={t("File e documenti")} count={documents.length}>
             <DocumentsTab companyId={company.id} documents={documents} />

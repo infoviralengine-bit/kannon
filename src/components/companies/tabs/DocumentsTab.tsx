@@ -25,15 +25,16 @@ export function DocumentsTab({ companyId, documents }: { companyId: string; docu
   const [name, setName] = useState("");
   const [docType, setDocType] = useState<DocType>("altro");
   const [dueDate, setDueDate] = useState("");
+  const [occurredAt, setOccurredAt] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
 
   const openDialog = (direction: DocDirection) => {
-    setName(""); setDocType("altro"); setDueDate(""); setLinkUrl("");
+    setName(""); setDocType("altro"); setDueDate(""); setOccurredAt(""); setLinkUrl("");
     setDialogFor(direction);
   };
 
   const submit = () => {
-    if (!name.trim() || !dialogFor) return;
+    if (!name.trim() || !dialogFor || !occurredAt) return;
     saveDoc.mutate(
       {
         values: {
@@ -42,6 +43,7 @@ export function DocumentsTab({ companyId, documents }: { companyId: string; docu
           direction: dialogFor,
           doc_type: docType,
           due_date: dueDate || null,
+          occurred_at: new Date(occurredAt).toISOString(),
           link_url: linkUrl.trim() || null,
           status: "in_attesa",
         },
@@ -97,13 +99,17 @@ export function DocumentsTab({ companyId, documents }: { companyId: string; docu
               </div>
             </div>
             <div className="grid gap-1.5">
+              <Label>{t("Data di invio o ricezione *")}</Label>
+              <Input type="datetime-local" value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
               <Label>{t("Link")}</Label>
               <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://" />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogFor(null)}>{t("Annulla")}</Button>
-            <Button onClick={submit} disabled={!name.trim() || saveDoc.isPending}>{t("Salva")}</Button>
+            <Button onClick={submit} disabled={!name.trim() || !occurredAt || saveDoc.isPending}>{t("Salva")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -118,6 +124,7 @@ function DocumentRow({ doc, companyId }: { doc: CompanyDocument; companyId: stri
   const saveDoc = useSaveDocument();
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
+  const storagePath = doc.storage_path;
 
   const overdue = doc.status === "in_attesa" && isOverdue(doc.due_date);
 
@@ -152,9 +159,9 @@ function DocumentRow({ doc, companyId }: { doc: CompanyDocument; companyId: stri
         <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => inputRef.current?.click()}>
           <Upload className="mr-1 h-3 w-3" /> {doc.storage_path ? t("Sostituisci") : t("Carica")}
         </Button>
-        {doc.storage_path && (
+        {storagePath && (
           <Button size="sm" variant="ghost" className="h-7 px-2 text-xs"
-            onClick={() => openDocument(doc.storage_path!).catch((e: Error) =>
+            onClick={() => openDocument(storagePath).catch((e: Error) =>
               toast({ title: t("Errore"), description: e.message, variant: "destructive" }))}>
             <Download className="mr-1 h-3 w-3" /> {t("Apri")}
           </Button>
