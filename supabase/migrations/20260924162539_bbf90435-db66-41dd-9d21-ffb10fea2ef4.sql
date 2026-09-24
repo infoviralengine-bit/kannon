@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.propagate_campaign_referent() FROM PUBLIC, anon, authenticated;
