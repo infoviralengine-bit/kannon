@@ -117,7 +117,7 @@ export function useCampaignTable() {
       ] = await Promise.all([
         supabase.from("campaign_creators").select("campaign_id, creator_id"),
         supabase.from("creators").select("id, status"),
-        supabase.from("tiktok_accounts").select("id, campaign_id"),
+        supabase.from("tiktok_accounts").select("id, campaign_id, creator_id"),
         supabase.rpc("get_campaign_total_views", { p_campaign_ids: campaignIds }),
         supabase.from("companies").select("id, name, logo_url"),
       ]);
@@ -171,10 +171,14 @@ export function useCampaignTable() {
         const campMonthVideos = monthVideos.filter((v) => campAccIds.has(v.tiktok_account_id));
         const monthViews = campMonthVideos.reduce((s, v) => s + (v.views ?? 0), 0);
 
-        const campaignCreatorIds = (ccRows ?? [])
-          .filter((r) => r.campaign_id === c.id)
-          .map((r) => r.creator_id);
-        const activeCreators = campaignCreatorIds.filter(
+        // Creators = explicit assignments UNION creators owning an account linked to the campaign
+        const campaignCreatorIds = new Set<string>(
+          (ccRows ?? []).filter((r) => r.campaign_id === c.id).map((r) => r.creator_id)
+        );
+        (accounts ?? []).forEach((a) => {
+          if (a.campaign_id === c.id && a.creator_id) campaignCreatorIds.add(a.creator_id);
+        });
+        const activeCreators = [...campaignCreatorIds].filter(
           (id) => creatorMap.get(id)?.status === "active"
         );
 
