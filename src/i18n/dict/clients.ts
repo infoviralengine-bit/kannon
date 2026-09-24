@@ -307,6 +307,13 @@ export const clients: Record<string, string> = {
   "Nascondi": "Hide",
   "Mostra dettagli": "Show details",
   "Nessun evento.": "No events.",
+  "Trascina per riordinare": "Drag to reorder",
+  "Elimina dalla cronologia": "Delete from timeline",
+  "Eliminare questo elemento?": "Delete this item?",
+  "L’elemento verrà eliminato definitivamente dalla cronologia e dalla relativa sezione.":
+    "The item will be permanently deleted from the timeline and its related section.",
+  "Ordine non salvato": "Order not saved",
+  "Elemento eliminato dalla cronologia": "Item deleted from timeline",
   "Partecipanti: {value}": "Participants: {value}",
   "Esito: {value}": "Outcome: {value}",
   "Obiezioni: {value}": "Objections: {value}",

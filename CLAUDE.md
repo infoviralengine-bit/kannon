@@ -462,6 +462,7 @@ Da fare prima del passaggio in produzione: migrazione dati da `client_name` ad a
 ### SP #6 · Aggiornamento (23 set 2026)
 - Scheda azienda `/dashboard/clients/:id`: niente più tab, pagina verticale a sezioni con indice laterale (Riepilogo, Cronologia unificata filtrabile, Note call strutturate, Appunti fissabili, Email e messaggi, File, Da fare, + Onboarding/Campagne/Pagamenti per clienti). Componenti in `src/components/companies/detail/`.
 - Nuova tabella `company_notes` (staff-only). `company_activities` + colonne `participants, outcome, objections, next_steps`.
+- Nuova tabella `company_timeline_order` (staff-only) per salvare il riordino manuale della timeline senza alterare le date degli eventi. La timeline consente drag-and-drop globale e cancellazione confermata di attività, documenti, task completati e appunti.
 - Pagina `/dashboard/clients/canali` (`CanaliPage`) su RPC `get_channel_stats(p_period)` staff-only. Clic su canale apre la pipeline filtrata (`?channel=`). Hook in `src/hooks/useCompanyNotes.ts`.
 
 ---

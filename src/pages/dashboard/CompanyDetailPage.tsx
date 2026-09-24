@@ -149,7 +149,7 @@ export default function CompanyDetailPage() {
             <OverviewTab company={company} contacts={contacts} ownerName={ownerName} />
           </Section>
           <Section id="cronologia" title={t("Cronologia")}>
-            <TimelineSection activities={activities} documents={documents} tasks={tasks} notes={notes} authorName={authorName} />
+            <TimelineSection companyId={company.id} activities={activities} documents={documents} tasks={tasks} notes={notes} authorName={authorName} />
           </Section>
           <Section id="call" title={t("Note call")} count={calls.length}
             action={!callOpen && <Button size="sm" variant="outline" onClick={() => setCallOpen(true)}>{t("Nuova call")}</Button>}>
