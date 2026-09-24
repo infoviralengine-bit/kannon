@@ -852,6 +852,44 @@ export type Database = {
           },
         ]
       }
+      company_timeline_order: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          item_id: string
+          item_type: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          item_id: string
+          item_type: string
+          position: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_timeline_order_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_topics: {
         Row: {
           created_at: string
