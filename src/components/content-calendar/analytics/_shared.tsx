@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Minus, ArrowUp, ArrowDown } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 /** Percent change current vs previous period. */
 export function trendPercent(current: number, prev: number): number {
@@ -29,12 +30,13 @@ export function TrendBadge({ current, prev }: { current: number; prev: number })
 }
 
 export function ViralBadge({ velocity }: { velocity: number }) {
+  const { t } = useI18n();
   if (velocity >= 100_000)
-    return <Badge className="bg-red-500 text-white hover:bg-red-500/90">🔥 Virale</Badge>;
+    return <Badge className="bg-red-500 text-white hover:bg-red-500/90">🔥 {t("Virale")}</Badge>;
   if (velocity >= 50_000)
-    return <Badge className="bg-orange-500 text-white hover:bg-orange-500/90">🚀 Esplodendo</Badge>;
+    return <Badge className="bg-orange-500 text-white hover:bg-orange-500/90">🚀 {t("Esplodendo")}</Badge>;
   if (velocity >= 10_000)
-    return <Badge className="bg-amber-500 text-white hover:bg-amber-500/90">⚡ In crescita</Badge>;
+    return <Badge className="bg-amber-500 text-white hover:bg-amber-500/90">⚡ {t("In crescita")}</Badge>;
   return null;
 }
 

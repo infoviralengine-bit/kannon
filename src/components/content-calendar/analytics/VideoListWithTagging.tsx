@@ -25,10 +25,12 @@ import { formatViews } from "@/lib/format";
 import { cleanUsername } from "@/lib/utils";
 import { useVideoFormats } from "@/hooks/useContentCatalog";
 import { arr, num } from "./_shared";
+import { useI18n } from "@/i18n";
 
 const PAGE = 100;
 
 export function VideoListWithTagging({ data }: { data: any }) {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const { data: formats } = useVideoFormats();
   const [search, setSearch] = useState("");
@@ -43,9 +45,9 @@ export function VideoListWithTagging({ data }: { data: any }) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["content-analytics"] });
-      toast({ title: "Formato salvato" });
+      toast({ title: t("Formato salvato") });
     },
-    onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 
   const filtered = useMemo(() => {
@@ -60,16 +62,16 @@ export function VideoListWithTagging({ data }: { data: any }) {
 
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">Video pubblicati</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="text-base">{t("Video pubblicati")}</CardTitle></CardHeader>
       <CardContent className="space-y-3">
-        <Input placeholder="Cerca per account, creator o campagna" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Input placeholder={t("Cerca per account, creator o campagna")} value={search} onChange={(e) => setSearch(e.target.value)} />
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Account</TableHead>
-                <TableHead>Creator</TableHead>
-                <TableHead>Campagna</TableHead>
+                <TableHead>{t("Creator")}</TableHead>
+                <TableHead>{t("Campagna")}</TableHead>
                 <TableHead className="text-right">Views</TableHead>
                 <TableHead className="text-right">ER</TableHead>
                 <TableHead>Format</TableHead>
@@ -92,9 +94,9 @@ export function VideoListWithTagging({ data }: { data: any }) {
                       value={v.contentTag ?? "__none__"}
                       onValueChange={(val) => saveTag.mutate({ videoId: v.videoId, tag: val === "__none__" ? null : val })}
                     >
-                      <SelectTrigger className="h-7 w-36 text-xs border-dashed"><SelectValue placeholder="Format..." /></SelectTrigger>
+                      <SelectTrigger className="h-7 w-36 text-xs border-dashed"><SelectValue placeholder={t("Format...")} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__none__"><span className="text-muted-foreground">Nessuno</span></SelectItem>
+                        <SelectItem value="__none__"><span className="text-muted-foreground">{t("Nessuno")}</span></SelectItem>
                         {(formats ?? []).map((f) => (
                           <SelectItem key={f.id} value={f.name}>{f.name}</SelectItem>
                         ))}
@@ -108,7 +110,7 @@ export function VideoListWithTagging({ data }: { data: any }) {
         </div>
         {filtered.length > limit && (
           <div className="flex justify-center">
-            <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + PAGE)}>Mostra altri</Button>
+            <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + PAGE)}>{t("Mostra altri")}</Button>
           </div>
         )}
       </CardContent>

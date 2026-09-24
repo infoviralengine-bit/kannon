@@ -768,6 +768,7 @@ function DeleteCampaignModal({ open, onOpenChange, campaign }: {
   campaign: { id: string; name: string };
 }) {
   const { toast } = useToast();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [confirmed, setConfirmed] = useState(false);
@@ -791,7 +792,7 @@ function DeleteCampaignModal({ open, onOpenChange, campaign }: {
       if (e5) throw e5;
     },
     onSuccess: () => {
-      toast({ title: "Campagna eliminata" });
+      toast({ title: t("Campagna eliminata") });
       qc.invalidateQueries({ queryKey: ["campaign-table"] });
       qc.invalidateQueries({ queryKey: ["active-campaigns-count"] });
       navigate("/dashboard/campaigns");
@@ -804,21 +805,21 @@ function DeleteCampaignModal({ open, onOpenChange, campaign }: {
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setConfirmed(false); setNameInput(""); } }}>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle className="text-destructive">Elimina Campagna</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="text-destructive">{t("Elimina Campagna")}</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
           <p className="text-sm text-muted-foreground">
-            Sei sicuro di voler eliminare la campagna <strong>{campaign.name}</strong>? Questa azione è irreversibile e cancellerà i cicli di pagamento e scollegherà creator e account dalla campagna.
+            {t("Sei sicuro di voler eliminare la campagna {name}? Questa azione è irreversibile e cancellerà i cicli di pagamento e scollegherà creator e account dalla campagna.", { name: campaign.name })}
           </p>
           <div className="flex items-center gap-2">
             <Checkbox id="confirm-delete" checked={confirmed} onCheckedChange={(v) => setConfirmed(v === true)} />
-            <label htmlFor="confirm-delete" className="text-sm">Ho capito che questa azione è irreversibile</label>
+            <label htmlFor="confirm-delete" className="text-sm">{t("Ho capito che questa azione è irreversibile")}</label>
           </div>
           <div className="grid gap-1.5">
-            <Label>Scrivi "<strong>{campaign.name}</strong>" per confermare</Label>
+            <Label>{t('Scrivi "{name}" per confermare', { name: campaign.name })}</Label>
             <Input value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder={campaign.name} />
           </div>
           <Button variant="destructive" onClick={() => mutation.mutate()} disabled={!canDelete || mutation.isPending}>
-            {mutation.isPending ? "Eliminazione..." : "Elimina definitivamente"}
+            {mutation.isPending ? t("Eliminazione...") : t("Elimina definitivamente")}
           </Button>
         </div>
       </DialogContent>
@@ -835,6 +836,7 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
   navigate: ReturnType<typeof useNavigate>;
 }) {
   const { toast } = useToast();
+  const { t } = useI18n();
   const qc = useQueryClient();
 
   const removeCreatorMutation = useMutation({
@@ -847,7 +849,7 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Creator rimosso dalla campagna" });
+      toast({ title: t("Creator rimosso dalla campagna") });
       qc.invalidateQueries({ queryKey: ["campaign-creators", campaignId] });
       qc.invalidateQueries({ queryKey: ["campaign-kpi", campaignId] });
     },
@@ -879,27 +881,27 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Creator</CardTitle>
+        <CardTitle className="text-lg">{t("Creator")}</CardTitle>
         {!isCompleted && (
-          <Button size="sm" onClick={onAddCreator}>+ Aggiungi Creator</Button>
+          <Button size="sm" onClick={onAddCreator}>{t("+ Aggiungi Creator")}</Button>
         )}
       </CardHeader>
       <CardContent>
         {creators.isLoading ? (
           <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
         ) : !creators.data?.length ? (
-          <p className="text-sm text-muted-foreground text-center py-6">Nessun creator associato.</p>
+          <p className="text-sm text-muted-foreground text-center py-6">{t("Nessun creator associato.")}</p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Contratto</TableHead>
-                <TableHead>Account</TableHead>
-                <TableHead className="text-right">Oggi</TableHead>
-                <TableHead className="text-right">Settimana</TableHead>
-                <TableHead className="text-right">Mese</TableHead>
-                <TableHead className="text-right">Views Totali</TableHead>
+                <TableHead>{t("Nome")}</TableHead>
+                <TableHead>{t("Contratto")}</TableHead>
+                <TableHead>{t("Account")}</TableHead>
+                <TableHead className="text-right">{t("Oggi")}</TableHead>
+                <TableHead className="text-right">{t("Settimana")}</TableHead>
+                <TableHead className="text-right">{t("Mese")}</TableHead>
+                <TableHead className="text-right">{t("Views Totali")}</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
@@ -926,7 +928,7 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.creatorId}`)}>
-                          Apri
+                          {t("Apri")}
                         </Button>
                         {!isCompleted && (
                           <Button
@@ -955,6 +957,7 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
 /* ── Remove Account Button ── */
 function RemoveAccountButton({ accountId, campaignId }: { accountId: string; campaignId: string }) {
   const { toast } = useToast();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const mutation = useMutation({
     mutationFn: async () => {
@@ -965,7 +968,7 @@ function RemoveAccountButton({ accountId, campaignId }: { accountId: string; cam
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Account rimosso dalla campagna" });
+      toast({ title: t("Account rimosso dalla campagna") });
       qc.invalidateQueries({ queryKey: ["campaign-accounts", campaignId] });
       qc.invalidateQueries({ queryKey: ["campaign-kpi", campaignId] });
     },

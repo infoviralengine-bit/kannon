@@ -6,6 +6,7 @@ import { AccountStats, EarningsData } from "@/hooks/useCreatorPortal";
 import { formatCurrency, formatViews } from "@/lib/format";
 import CreatorVideoList, { CreatorVideo } from "./CreatorVideoList";
 import { TikTokLink } from "@/components/TikTokLink";
+import { useI18n } from "@/i18n";
 
 interface Props {
   accountStats: AccountStats[];
@@ -16,14 +17,15 @@ interface Props {
 }
 
 export default function CreatorDashboard({ accountStats, earnings, creatorName, monthLabel = "questo mese", periodVideos = [] }: Props) {
+  const { t } = useI18n();
   const hasContracts = earnings.contractBreakdowns.length > 0;
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold">Ciao {creatorName} 👋</h2>
+        <h2 className="text-xl font-bold">{t("Ciao")} {creatorName} 👋</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Ecco un riepilogo delle tue performance
+          {t("Ecco un riepilogo delle tue performance")}
         </p>
       </div>
 
@@ -31,7 +33,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground">Views totali</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">{t("Views totali")}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <Eye className="h-4 w-4 text-primary" />
@@ -40,7 +42,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground">Video pubblicati</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">{t("Video pubblicati")}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <Video className="h-4 w-4 text-primary" />
@@ -49,7 +51,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground">Guadagno {monthLabel}</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">{t("Guadagno")} {monthLabel}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" />
@@ -58,7 +60,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground">Guadagno totale</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">{t("Guadagno totale")}</CardTitle>
           </CardHeader>
           <CardContent>
             <span className="text-2xl font-bold">{formatCurrency(earnings.totalEarnings)}</span>
@@ -70,7 +72,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground">Views {monthLabel}</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">{t("Views")} {monthLabel}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <Eye className="h-4 w-4 text-primary" />
@@ -79,7 +81,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs text-muted-foreground">Video {monthLabel}</CardTitle>
+            <CardTitle className="text-xs text-muted-foreground">{t("Video")} {monthLabel}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center gap-2">
             <Video className="h-4 w-4 text-primary" />
@@ -94,20 +96,20 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="h-4 w-4 text-primary" />
-              Dettaglio guadagni {monthLabel}
+              {t("Dettaglio guadagni")} {monthLabel}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Contratto</TableHead>
-                  <TableHead className="text-right">Video</TableHead>
-                  <TableHead className="text-right">Target</TableHead>
-                  <TableHead className="text-right">Fisso</TableHead>
-                  <TableHead className="text-right">CPM</TableHead>
-                  <TableHead className="text-right">Views</TableHead>
-                  <TableHead className="text-right">Subtotale</TableHead>
+                  <TableHead>{t("Contratto")}</TableHead>
+                  <TableHead className="text-right">{t("Video")}</TableHead>
+                  <TableHead className="text-right">{t("Target")}</TableHead>
+                  <TableHead className="text-right">{t("Fisso")}</TableHead>
+                  <TableHead className="text-right">{t("CPM")}</TableHead>
+                  <TableHead className="text-right">{t("Views")}</TableHead>
+                  <TableHead className="text-right">{t("Subtotale")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -134,7 +136,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
               </TableBody>
             </Table>
             <div className="mt-3 text-right">
-              <span className="text-sm text-muted-foreground mr-2">Totale {monthLabel}:</span>
+              <span className="text-sm text-muted-foreground mr-2">{t("Totale")} {monthLabel}:</span>
               <span className="text-lg font-bold">{formatCurrency(earnings.monthEarnings)}</span>
             </div>
           </CardContent>
@@ -144,7 +146,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
       {/* Per-account stats */}
       <div>
         <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
-          <Smartphone className="h-4 w-4 text-primary" /> I tuoi account
+          <Smartphone className="h-4 w-4 text-primary" /> {t("I tuoi account")}
         </h3>
         <div className="grid gap-3 md:grid-cols-2">
           {accountStats.map((acc) => (
@@ -152,24 +154,24 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <TikTokLink username={acc.username} className="font-semibold" />
-                  <Badge variant="default">Attivo</Badge>
+                  <Badge variant="default">{t("Attivo")}</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">{acc.campaignName}</p>
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <div>
-                    <p className="text-xs text-muted-foreground">Views totali</p>
+                    <p className="text-xs text-muted-foreground">{t("Views totali")}</p>
                     <p className="font-semibold">{formatViews(acc.totalViews)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Video totali</p>
+                    <p className="text-xs text-muted-foreground">{t("Video totali")}</p>
                     <p className="font-semibold">{acc.totalVideos}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Views {monthLabel}</p>
+                    <p className="text-xs text-muted-foreground">{t("Views")} {monthLabel}</p>
                     <p className="font-semibold">{formatViews(acc.monthViews)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Video {monthLabel}</p>
+                    <p className="text-xs text-muted-foreground">{t("Video")} {monthLabel}</p>
                     <p className="font-semibold">{acc.monthVideos}</p>
                   </div>
                 </div>
@@ -179,7 +181,7 @@ export default function CreatorDashboard({ accountStats, earnings, creatorName, 
           {accountStats.length === 0 && (
             <Card>
               <CardContent className="p-4 text-sm text-muted-foreground">
-                Nessun account collegato
+                {t("Nessun account collegato")}
               </CardContent>
             </Card>
           )}

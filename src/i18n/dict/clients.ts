@@ -257,6 +257,7 @@ export const clients: Record<string, string> = {
   "Ferma da": "Idle since",
   "{n} giorni": "{n} days",
   "Nessuna lead con questi filtri.": "No leads with these filters.",
+  "Valore mensile": "Monthly value",
 
   // StageMoveDialog
   "Segna come persa": "Mark as lost",

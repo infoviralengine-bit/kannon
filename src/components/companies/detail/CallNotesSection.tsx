@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { formatDateTimeIt } from "@/lib/companies";
 import { useAddCallNote } from "@/hooks/useCompanyNotes";
 import type { CompanyActivity } from "@/hooks/useCompanies";
+import { useI18n } from "@/i18n";
 
 const OUTCOMES = ["Positiva", "Da ricontattare", "Serve proposta", "Non interessati"];
 
@@ -14,6 +15,7 @@ export function CallNotesSection({ companyId, activities, formOpen, setFormOpen,
   companyId: string; activities: CompanyActivity[]; formOpen: boolean; setFormOpen: (v: boolean) => void;
   onUpdateNextStep: (text: string) => void; authorName: (id: string | null) => string | undefined;
 }) {
+  const { t } = useI18n();
   const add = useAddCallNote();
   const [type, setType] = useState("chiamata");
   const [when, setWhen] = useState("");
@@ -50,55 +52,55 @@ export function CallNotesSection({ companyId, activities, formOpen, setFormOpen,
         <div className="grid gap-3 rounded-lg border border-border/60 bg-background/40 p-3">
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="grid gap-1.5">
-              <Label>Tipo</Label>
+              <Label>{t("Tipo")}</Label>
               <Select value={type} onValueChange={setType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="chiamata">Call</SelectItem>
-                  <SelectItem value="incontro">Incontro</SelectItem>
+                  <SelectItem value="chiamata">{t("Call")}</SelectItem>
+                  <SelectItem value="incontro">{t("Incontro")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid gap-1.5">
-              <Label>Quando</Label>
+              <Label>{t("Quando")}</Label>
               <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Esito</Label>
+              <Label>{t("Esito")}</Label>
               <Select value={outcome} onValueChange={setOutcome}>
-                <SelectTrigger><SelectValue placeholder="Seleziona" /></SelectTrigger>
-                <SelectContent>{OUTCOMES.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
+                <SelectTrigger><SelectValue placeholder={t("Seleziona")} /></SelectTrigger>
+                <SelectContent>{OUTCOMES.map((o) => <SelectItem key={o} value={o}>{t(o)}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <Label>Titolo *</Label>
-              <Input value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="Es. call di presentazione" />
+              <Label>{t("Titolo *")}</Label>
+              <Input value={summary} onChange={(e) => setSummary(e.target.value)} placeholder={t("Es. call di presentazione")} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Partecipanti</Label>
-              <Input value={participants} onChange={(e) => setParticipants(e.target.value)} placeholder="Es. Marco (CEO), Stan" />
+              <Label>{t("Partecipanti")}</Label>
+              <Input value={participants} onChange={(e) => setParticipants(e.target.value)} placeholder={t("Es. Marco (CEO), Stan")} />
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label>Punti discussi</Label>
+            <Label>{t("Punti discussi")}</Label>
             <Textarea rows={3} value={points} onChange={(e) => setPoints(e.target.value)} />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <Label>Obiezioni</Label>
+              <Label>{t("Obiezioni")}</Label>
               <Textarea rows={2} value={objections} onChange={(e) => setObjections(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Prossimi passi</Label>
+              <Label>{t("Prossimi passi")}</Label>
               <Textarea rows={2} value={nextSteps} onChange={(e) => setNextSteps(e.target.value)}
-                placeholder="Se compilato, puoi aggiornare il prossimo passo della lead" />
+                placeholder={t("Se compilato, puoi aggiornare il prossimo passo della lead")} />
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setFormOpen(false)}>Annulla</Button>
-            <Button onClick={submit} disabled={!summary.trim() || add.isPending}>Salva call</Button>
+            <Button variant="ghost" onClick={() => setFormOpen(false)}>{t("Annulla")}</Button>
+            <Button onClick={submit} disabled={!summary.trim() || add.isPending}>{t("Salva call")}</Button>
           </div>
         </div>
       )}
@@ -120,7 +122,7 @@ export function CallNotesSection({ companyId, activities, formOpen, setFormOpen,
           </dl>
         </div>
       ))}
-      {!calls.length && !formOpen && <p className="text-sm text-muted-foreground">Nessuna call registrata.</p>}
+      {!calls.length && !formOpen && <p className="text-sm text-muted-foreground">{t("Nessuna call registrata.")}</p>}
     </div>
   );
 }
