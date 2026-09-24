@@ -16,8 +16,10 @@ import {
   openDocument, useDeleteDocument, useSaveDocument, useUploadDocument, type CompanyDocument,
 } from "@/hooks/useCompanies";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/i18n";
 
 export function DocumentsTab({ companyId, documents }: { companyId: string; documents: CompanyDocument[] }) {
+  const { t } = useI18n();
   const saveDoc = useSaveDocument();
   const [dialogFor, setDialogFor] = useState<DocDirection | null>(null);
   const [name, setName] = useState("");
@@ -55,7 +57,7 @@ export function DocumentsTab({ companyId, documents }: { companyId: string; docu
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-base">{DOC_DIRECTION_LABEL[dir]}</CardTitle>
             <Button size="sm" variant="outline" onClick={() => openDialog(dir)}>
-              <Plus className="mr-1 h-4 w-4" /> Aggiungi
+              <Plus className="mr-1 h-4 w-4" /> {t("Aggiungi")}
             </Button>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -63,7 +65,7 @@ export function DocumentsTab({ companyId, documents }: { companyId: string; docu
               <DocumentRow key={d.id} doc={d} companyId={companyId} />
             ))}
             {!documents.filter((d) => d.direction === dir).length && (
-              <p className="text-sm text-muted-foreground">Niente in lista.</p>
+              <p className="text-sm text-muted-foreground">{t("Niente in lista.")}</p>
             )}
           </CardContent>
         </Card>
@@ -76,12 +78,12 @@ export function DocumentsTab({ companyId, documents }: { companyId: string; docu
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label>Nome *</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Es. contratto firmato" />
+              <Label>{t("Nome *")}</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Es. contratto firmato")} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Tipo</Label>
+                <Label>{t("Tipo")}</Label>
                 <Select value={docType} onValueChange={(v) => setDocType(v as DocType)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -90,18 +92,18 @@ export function DocumentsTab({ companyId, documents }: { companyId: string; docu
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Scadenza</Label>
+                <Label>{t("Scadenza")}</Label>
                 <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label>Link</Label>
+              <Label>{t("Link")}</Label>
               <Input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} placeholder="https://" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogFor(null)}>Annulla</Button>
-            <Button onClick={submit} disabled={!name.trim() || saveDoc.isPending}>Salva</Button>
+            <Button variant="outline" onClick={() => setDialogFor(null)}>{t("Annulla")}</Button>
+            <Button onClick={submit} disabled={!name.trim() || saveDoc.isPending}>{t("Salva")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -110,6 +112,7 @@ export function DocumentsTab({ companyId, documents }: { companyId: string; docu
 }
 
 function DocumentRow({ doc, companyId }: { doc: CompanyDocument; companyId: string }) {
+  const { t } = useI18n();
   const upload = useUploadDocument();
   const remove = useDeleteDocument();
   const saveDoc = useSaveDocument();
@@ -124,15 +127,19 @@ function DocumentRow({ doc, companyId }: { doc: CompanyDocument; companyId: stri
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{doc.name}</p>
           <p className="text-xs text-muted-foreground">
-            {DOC_TYPE_LABEL[doc.doc_type as DocType] ?? doc.doc_type}
-            {doc.due_date && ` · entro ${formatDateIt(doc.due_date)}`}
+            {doc.due_date
+              ? t("{type} · entro {date}", {
+                  type: t(DOC_TYPE_LABEL[doc.doc_type as DocType] ?? doc.doc_type),
+                  date: formatDateIt(doc.due_date),
+                })
+              : t(DOC_TYPE_LABEL[doc.doc_type as DocType] ?? doc.doc_type)}
           </p>
         </div>
         <Badge variant="outline" className={cn("text-[10px]",
           doc.status === "fatto"
             ? "bg-success/20 text-success border-success/30"
             : overdue ? "bg-destructive/20 text-destructive border-destructive/30" : "")}>
-          {doc.status === "fatto" ? "Completato" : "In attesa"}
+          {doc.status === "fatto" ? t("Completato") : t("In attesa")}
         </Badge>
       </div>
       <div className="mt-2 flex flex-wrap gap-1">
@@ -143,30 +150,30 @@ function DocumentRow({ doc, companyId }: { doc: CompanyDocument; companyId: stri
             e.target.value = "";
           }} />
         <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => inputRef.current?.click()}>
-          <Upload className="mr-1 h-3 w-3" /> {doc.storage_path ? "Sostituisci" : "Carica"}
+          <Upload className="mr-1 h-3 w-3" /> {doc.storage_path ? t("Sostituisci") : t("Carica")}
         </Button>
         {doc.storage_path && (
           <Button size="sm" variant="ghost" className="h-7 px-2 text-xs"
             onClick={() => openDocument(doc.storage_path!).catch((e: Error) =>
-              toast({ title: "Errore", description: e.message, variant: "destructive" }))}>
-            <Download className="mr-1 h-3 w-3" /> Apri
+              toast({ title: t("Errore"), description: e.message, variant: "destructive" }))}>
+            <Download className="mr-1 h-3 w-3" /> {t("Apri")}
           </Button>
         )}
         {doc.link_url && (
           <a href={doc.link_url} target="_blank" rel="noopener"
             className="inline-flex h-7 items-center rounded-md px-2 text-xs text-muted-foreground hover:text-primary">
-            <ExternalLink className="mr-1 h-3 w-3" /> Link
+            <ExternalLink className="mr-1 h-3 w-3" /> {t("Link")}
           </a>
         )}
         {doc.status === "in_attesa" ? (
           <Button size="sm" variant="ghost" className="h-7 px-2 text-xs"
             onClick={() => saveDoc.mutate({ id: doc.id, values: { company_id: companyId, status: "fatto" } })}>
-            Segna completato
+            {t("Segna completato")}
           </Button>
         ) : (
           <Button size="sm" variant="ghost" className="h-7 px-2 text-xs"
             onClick={() => saveDoc.mutate({ id: doc.id, values: { company_id: companyId, status: "in_attesa" } })}>
-            Rimetti in attesa
+            {t("Rimetti in attesa")}
           </Button>
         )}
         <Button size="sm" variant="ghost" className="h-7 px-2"
