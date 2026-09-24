@@ -629,6 +629,7 @@ export type Database = {
           link_url: string | null
           mime_type: string | null
           name: string
+          occurred_at: string
           size_bytes: number | null
           status: string
           storage_path: string | null
@@ -645,6 +646,7 @@ export type Database = {
           link_url?: string | null
           mime_type?: string | null
           name: string
+          occurred_at?: string
           size_bytes?: number | null
           status?: string
           storage_path?: string | null
@@ -661,6 +663,7 @@ export type Database = {
           link_url?: string | null
           mime_type?: string | null
           name?: string
+          occurred_at?: string
           size_bytes?: number | null
           status?: string
           storage_path?: string | null
