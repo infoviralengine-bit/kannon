@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { t } from "@/i18n";
 
 const db = supabase as any;
 
@@ -59,7 +60,7 @@ export function useSaveNote() {
       return n.companyId;
     },
     onSuccess: (id) => qc.invalidateQueries({ queryKey: ["company-notes", id] }),
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -74,9 +75,9 @@ export function useDeleteNote() {
     },
     onSuccess: (id) => {
       qc.invalidateQueries({ queryKey: ["company-notes", id] });
-      toast({ title: "Appunto eliminato" });
+      toast({ title: t("Appunto eliminato") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -104,9 +105,9 @@ export function useAddCallNote() {
     onSuccess: (id) => {
       qc.invalidateQueries({ queryKey: ["company", id] });
       qc.invalidateQueries({ queryKey: ["companies"] });
-      toast({ title: "Call registrata" });
+      toast({ title: t("Call registrata") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
