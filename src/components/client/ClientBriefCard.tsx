@@ -14,7 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { useI18n, t } from "@/i18n";
+import { useI18n } from "@/i18n";
 import { useChangeBriefStatus } from "@/hooks/useContentCalendar";
 import { STATUS_META, formatDateIt } from "@/components/content-calendar/_helpers";
 import type { PortalBrief } from "@/hooks/useClientBriefs";
