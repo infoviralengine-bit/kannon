@@ -411,7 +411,7 @@ export function PayableTab() {
             <DialogTitle>{t("Conferma pagamento")}</DialogTitle>
             <DialogDescription>
               {t("Segna come pagato")} <strong>{confirm?.creator.creatorName}</strong> {t("per")}{" "}
-              {confirm?.section.contractName} {t("Periodo {n}?", { n: confirm?.periodNumber })}
+              {confirm?.section.contractName} {t("Periodo {n}?", { n: confirm?.periodNumber ?? 0 })}
             </DialogDescription>
           </DialogHeader>
           {confirm && (

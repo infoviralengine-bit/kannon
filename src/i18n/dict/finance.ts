@@ -63,7 +63,7 @@ export const finance: Record<string, string> = {
   "Elimina": "Delete",
   "Eliminando...": "Deleting...",
   "Eliminare \"{name}\"?": "Delete \"{name}\"?",
-  "Eliminare \"{name}\"?": "Delete \"{name}\"?",
+  "Eliminare questo pagamento?": "Delete this payment?",
   "Emessa": "Issued",
   "Emissione": "Issuance",
   "Entrata": "Income",
