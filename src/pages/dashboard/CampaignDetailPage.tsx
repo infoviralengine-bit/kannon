@@ -98,13 +98,16 @@ function EditCampaignModal({
     min_monthly_videos?: number | null;
     video_views_cap?: number | null;
     monthly_spend_cap?: number | null;
+    company_id?: string | null;
   };
 }) {
   const { toast } = useToast();
   const { t } = useI18n();
   const qc = useQueryClient();
   const [name, setName] = useState(campaign.name);
-  const [clientName, setClientName] = useState(campaign.client_name);
+  const [companyId, setCompanyId] = useState(campaign.company_id ?? "");
+  const { data: companyOptions = [] } = useCompanyOptions();
+  const clientName = companyOptions.find((c) => c.id === companyId)?.name ?? campaign.client_name;
   const [clientCpm, setClientCpm] = useState(String(campaign.client_cpm ?? 0));
   const [clientFixed, setClientFixed] = useState(String(campaign.client_fixed ?? 0));
   const [startDate, setStartDate] = useState<Date | undefined>(new Date(campaign.start_date));
@@ -116,7 +119,7 @@ function EditCampaignModal({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!name || !clientName || !startDate) throw new Error(t("Compila i campi obbligatori"));
+      if (!name || !companyId || !startDate) throw new Error(t("Compila i campi obbligatori"));
       const parsedCpm = parseFloat(clientCpm);
       const newCpm = isNaN(parsedCpm) ? 0 : parsedCpm;
       const parsedFixed = parseFloat(clientFixed);
