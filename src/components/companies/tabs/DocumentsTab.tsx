@@ -55,7 +55,7 @@ export function DocumentsTab({ companyId, documents }: { companyId: string; docu
       {(["da_inviare", "da_ricevere"] as DocDirection[]).map((dir) => (
         <Card key={dir}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">{DOC_DIRECTION_LABEL[dir]}</CardTitle>
+            <CardTitle className="text-base">{t(DOC_DIRECTION_LABEL[dir])}</CardTitle>
             <Button size="sm" variant="outline" onClick={() => openDialog(dir)}>
               <Plus className="mr-1 h-4 w-4" /> {t("Aggiungi")}
             </Button>
@@ -74,7 +74,7 @@ export function DocumentsTab({ companyId, documents }: { companyId: string; docu
       <Dialog open={!!dialogFor} onOpenChange={(v) => { if (!v) setDialogFor(null); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{dialogFor ? DOC_DIRECTION_LABEL[dialogFor] : ""}</DialogTitle>
+            <DialogTitle>{dialogFor ? t(DOC_DIRECTION_LABEL[dialogFor]) : ""}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">

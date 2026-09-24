@@ -257,4 +257,10 @@ export const core: Record<string, string> = {
 
   // CampagnePage
   "Es. Campagna Estate": "e.g. Summer Campaign",
+  "Niente da fare al momento.": "Nothing to do right now.",
+  "Completate": "Completed",
+  "Es. call di presentazione, molto interessati": "E.g. intro call, very interested",
+  "Es. call di presentazione": "E.g. intro call",
+  "Onboarding": "Onboarding",
+  "nome@agenzia.com": "name@agency.com",
 };

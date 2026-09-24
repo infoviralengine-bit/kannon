@@ -368,6 +368,7 @@ export const clients: Record<string, string> = {
   "Telefono": "Phone",
 
   // PaymentsTab
+  "Campagna": "Campaign",
   "Pagamenti non disponibili.": "Payments unavailable.",
   "Fatturato collegato": "Linked revenue",
   "Ancora da incassare": "Still to collect",
