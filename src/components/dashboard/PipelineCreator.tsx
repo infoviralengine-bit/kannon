@@ -34,7 +34,7 @@ export function usePipelineData() {
         creatorWarmupDone.set(c.id, done);
       });
 
-      // Warmup: has account but warmup not complete (have profile_id) but warmup not complete
+      // Warmup: warmup not complete
       const warmup = allCreators.filter(c => {
         return !creatorWarmupDone.get(c.id);
       });

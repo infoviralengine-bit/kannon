@@ -424,8 +424,7 @@ Ultimo aggiornamento: 15 giugno 2026 (post SP#4).
 
 I ruoli `outreach` e `closer` sono stati eliminati dalla piattaforma:
 - Tabelle droppate: `closer_leads`, `outreach_stats`, `outreach_templates`.
-- `onboarding_links` ora è autonomo: contiene `first_name`, `last_name`, `phone`.
-- La generazione dei link di onboarding vive in `/dashboard/onboarding` (`OnboardingMonitorPage`), non più in CloserPage.
+- Onboarding creator automatico rimosso del tutto (24 set 2026): tabella `onboarding_links`, RPC `get_onboarding_data`, colonna `contract_signatures.onboarding_link_id`, edge function `complete-onboarding`, pagine `/onboarding/*` e `/dashboard/onboarding` (ora redirect a `/dashboard/creators`). I creator si creano solo a mano. `creators.onboarding_phase` resta (usato dal portale creator).
 - Pagine e hook rimossi: CloserPage, RecruitingPage, OutreachManagementPage, HiringPage, CreatorPipelinePage, `useCloserData`, `useOutreachData`, `components/outreach/*`.
 - Edge functions eliminate: `calendly-webhook`, `connect-calendly`. Sezione Calendly rimossa da Impostazioni.
 - Route legacy (`closer`, `creator-pipeline`, `recruiting`, `hiring`) restano come redirect.
@@ -464,3 +463,12 @@ Da fare prima del passaggio in produzione: migrazione dati da `client_name` ad a
 - Scheda azienda `/dashboard/clients/:id`: niente più tab, pagina verticale a sezioni con indice laterale (Riepilogo, Cronologia unificata filtrabile, Note call strutturate, Appunti fissabili, Email e messaggi, File, Da fare, + Onboarding/Campagne/Pagamenti per clienti). Componenti in `src/components/companies/detail/`.
 - Nuova tabella `company_notes` (staff-only). `company_activities` + colonne `participants, outcome, objections, next_steps`.
 - Pagina `/dashboard/clients/canali` (`CanaliPage`) su RPC `get_channel_stats(p_period)` staff-only. Clic su canale apre la pipeline filtrata (`?channel=`). Hook in `src/hooks/useCompanyNotes.ts`.
+
+---
+
+## 16. Interfaccia bilingue IT/EN (24 set 2026)
+
+- `src/i18n/index.ts`: `useI18n()` e `t("testo italiano", vars?)`. Il testo sorgente resta in italiano; `src/i18n/en.ts` è il dizionario inglese con chiave = frase italiana. Chiave mancante → italiano.
+- Lingua scelta con `LanguageSwitcher` (hub, portale creator, portale clienti), salvata in localStorage `kannon-lang`.
+- Numeri, valute e date restano sempre in formato it-IT.
+- Nuovo testo UI: sempre avvolto in `t()` con traduzione aggiunta in `en.ts`.
