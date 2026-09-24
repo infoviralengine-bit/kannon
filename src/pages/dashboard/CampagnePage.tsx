@@ -226,7 +226,7 @@ export default function CampagnePage() {
   const { data: campaigns, isLoading } = useCampaignTable();
   const { role } = useAuth();
   const isTeam = role === "team";
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("active");
   const [modalOpen, setModalOpen] = useState(false);
 
   const filtered = (campaigns ?? []).filter((c) => {
