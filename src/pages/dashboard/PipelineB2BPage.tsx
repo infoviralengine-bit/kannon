@@ -15,6 +15,7 @@ import {
   type CompanyStage, type Temperature,
 } from "@/lib/companies";
 import { useCompanies, useStaffProfiles, type Company } from "@/hooks/useCompanies";
+import { useI18n } from "@/i18n";
 import { PipelineKanban } from "@/components/companies/PipelineKanban";
 import { PipelineTable } from "@/components/companies/PipelineTable";
 import { CompanyFormDialog } from "@/components/companies/CompanyFormDialog";
@@ -49,6 +50,7 @@ const STAGE_WEIGHT: Record<CompanyStage, number> = {
 };
 
 export default function PipelineB2BPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { data: companies = [], isLoading } = useCompanies();
   const { data: staff = [] } = useStaffProfiles();
@@ -106,16 +108,16 @@ export default function PipelineB2BPage() {
   const ownerName = (id: string | null) => staff.find((p) => p.id === id)?.full_name ?? "-";
   const openCompany = (id: string) => navigate(`/dashboard/clients/${id}`);
 
-  const ownerLabel = owner === ALL ? "Tutti" : ownerName(owner);
-  const channelLabel = channel === ALL ? "Tutti" : channel;
-  const temperatureLabel = temperature === ALL ? "Tutte" : TEMPERATURE_LABEL[temperature as Temperature];
+  const ownerLabel = owner === ALL ? t("Tutti") : ownerName(owner);
+  const channelLabel = channel === ALL ? t("Tutti") : channel;
+  const temperatureLabel = temperature === ALL ? t("Tutte") : t(TEMPERATURE_LABEL[temperature as Temperature]);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold">Pipeline B2B</h1>
-          <p className="text-xs text-muted-foreground">Le trattative aperte, dallo scouting alla firma.</p>
+          <h1 className="text-xl font-semibold">{t("Pipeline B2B")}</h1>
+          <p className="text-xs text-muted-foreground">{t("Le trattative aperte, dallo scouting alla firma.")}</p>
         </div>
         <div className="flex gap-2">
           <div className="flex rounded-md border border-border/60 bg-card p-0.5">
@@ -126,13 +128,13 @@ export default function PipelineB2BPage() {
             ] as const).map(([v, Icon, label]) => (
               <Button key={v} size="sm" variant={view === v ? "secondary" : "ghost"}
                 className={cn("h-8 gap-1.5 px-2.5", view === v && "text-accent")}
-                onClick={() => setView(v)} aria-label={`Vista ${label}`}>
-                <Icon className="h-4 w-4" /> <span className="text-xs">{label}</span>
+                onClick={() => setView(v)} aria-label={t("Vista {label}", { label: t(label) })}>
+                <Icon className="h-4 w-4" /> <span className="text-xs">{t(label)}</span>
               </Button>
             ))}
           </div>
           <Button onClick={() => setFormOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Nuova lead
+            <Plus className="mr-2 h-4 w-4" /> {t("Nuova lead")}
           </Button>
         </div>
       </div>
@@ -140,20 +142,20 @@ export default function PipelineB2BPage() {
       <div className="grid gap-3 md:grid-cols-3">
         <OperationalCard
           icon={<AlertCircle className="h-3.5 w-3.5" />}
-          label="Azioni urgenti"
+          label={t("Azioni urgenti")}
           value={String(urgentActions).padStart(2, "0")}
-          detail={`${overdue} scadute · ${withoutNextStep} senza prossimo passo`}
+          detail={t("{overdue} scadute · {withoutNextStep} senza prossimo passo", { overdue, withoutNextStep })}
           urgent={urgentActions > 0}
         />
         <OperationalCard
-          label="Valore ponderato"
+          label={t("Valore ponderato")}
           value={formatCurrency(weightedValue)}
         />
         <OperationalCard
           icon={<CalendarCheck className="h-3.5 w-3.5" />}
-          label="Attività oggi"
+          label={t("Attività oggi")}
           value={String(activitiesToday.length).padStart(2, "0")}
-          detail={`${callsToday} call fissate · ${followUpsToday} follow-up`}
+          detail={t("{callsToday} call fissate · {followUpsToday} follow-up", { callsToday, followUpsToday })}
         />
       </div>
 
@@ -163,7 +165,7 @@ export default function PipelineB2BPage() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               className="h-10 rounded-lg border-none bg-surface pl-9 text-sm placeholder:text-muted-foreground/60"
-              placeholder="Cerca azienda o app"
+              placeholder={t("Cerca azienda o app")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -171,48 +173,48 @@ export default function PipelineB2BPage() {
 
           <Select value={owner} onValueChange={setOwner}>
             <SelectTrigger className="h-10 w-auto gap-1 rounded-lg border-border/50 bg-surface/60 px-2 text-[13px] hover:bg-surface">
-              <span className="text-muted-foreground">Resp.:</span>
+              <span className="text-muted-foreground">{t("Resp.:")}</span>
               <span className="font-medium">{ownerLabel}</span>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>Tutti i responsabili</SelectItem>
-              {staff.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name ?? "Senza nome"}</SelectItem>)}
+              <SelectItem value={ALL}>{t("Tutti i responsabili")}</SelectItem>
+              {staff.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name ?? t("Senza nome")}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={channel} onValueChange={setChannel}>
             <SelectTrigger className="h-10 w-auto gap-1 rounded-lg border-border/50 bg-surface/60 px-2 text-[13px] hover:bg-surface">
-              <span className="text-muted-foreground">Canale:</span>
+              <span className="text-muted-foreground">{t("Canale:")}</span>
               <span className="font-medium">{channelLabel}</span>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>Tutti i canali</SelectItem>
+              <SelectItem value={ALL}>{t("Tutti i canali")}</SelectItem>
               {SOURCE_CHANNELS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={temperature} onValueChange={setTemperature}>
             <SelectTrigger className="h-10 w-auto gap-1 rounded-lg border-border/50 bg-surface/60 px-2 text-[13px] hover:bg-surface">
-              <span className="text-muted-foreground">Temp.:</span>
+              <span className="text-muted-foreground">{t("Temp.:")}</span>
               <span className="font-medium">{temperatureLabel}</span>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>Tutte</SelectItem>
-              {TEMPERATURES.map((t) => <SelectItem key={t} value={t}>{TEMPERATURE_LABEL[t]}</SelectItem>)}
+              <SelectItem value={ALL}>{t("Tutte")}</SelectItem>
+              {TEMPERATURES.map((temp) => <SelectItem key={temp} value={temp}>{t(TEMPERATURE_LABEL[temp])}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={sort} onValueChange={setSort}>
             <SelectTrigger className="h-10 w-auto gap-1 rounded-lg border-border/50 bg-surface/60 px-2 text-[13px] hover:bg-surface">
-              <span className="text-muted-foreground">Ordina:</span>
-              <span className="font-medium">{SORT_SHORT[sort]}</span>
+              <span className="text-muted-foreground">{t("Ordina:")}</span>
+              <span className="font-medium">{t(SORT_SHORT[sort])}</span>
             </SelectTrigger>
             <SelectContent>
               {Object.entries(SORT_LABELS).map(([value, label]) => (
-                <SelectItem key={value} value={value}>{label}</SelectItem>
+                <SelectItem key={value} value={value}>{t(label)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <FilterToggle label="Passo scaduto" active={onlyOverdue} onClick={() => setOnlyOverdue(!onlyOverdue)} />
-          <FilterToggle label="Ferme da 14gg" active={onlyIdle} onClick={() => setOnlyIdle(!onlyIdle)} />
+          <FilterToggle label={t("Passo scaduto")} active={onlyOverdue} onClick={() => setOnlyOverdue(!onlyOverdue)} />
+          <FilterToggle label={t("Ferme da 14gg")} active={onlyIdle} onClick={() => setOnlyIdle(!onlyIdle)} />
         </div>
       </div>
 

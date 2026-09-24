@@ -27,6 +27,7 @@ import {
   useCampaignVideosSearch,
   type Brief,
 } from "@/hooks/useContentCalendar";
+import { useI18n } from "@/i18n";
 
 const METHOD_LABEL: Record<string, string> = {
   audio_id: "Audio",
@@ -35,6 +36,7 @@ const METHOD_LABEL: Record<string, string> = {
 };
 
 export function BriefVideoMatchesPanel({ briefId, brief }: { briefId: string; brief: Brief | null }) {
+  const { t } = useI18n();
   const { data, isLoading } = useBrief(briefId);
   const removeMatch = useRemoveMatch();
   const refresh = useRefreshMatching();
@@ -44,37 +46,37 @@ export function BriefVideoMatchesPanel({ briefId, brief }: { briefId: string; br
   const onRefresh = async () => {
     try {
       const n = await refresh.mutateAsync(30);
-      toast({ title: "Matching aggiornato", description: `${n} nuovi match.` });
+      toast({ title: t("Matching aggiornato"), description: t("{n} nuovi match.", { n }) });
     } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     }
   };
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium">Video matchati ({matches.length})</h4>
+        <h4 className="text-sm font-medium">{t("Video matchati ({n})", { n: matches.length })}</h4>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={onRefresh} disabled={refresh.isPending}>
-            <RefreshCw className="h-3.5 w-3.5 mr-1" />Aggiorna
+            <RefreshCw className="h-3.5 w-3.5 mr-1" />{t("Aggiorna")}
           </Button>
           <Button size="sm" onClick={() => setSearchOpen(true)} disabled={!brief}>
-            <Plus className="h-3.5 w-3.5 mr-1" />Match manuale
+            <Plus className="h-3.5 w-3.5 mr-1" />{t("Match manuale")}
           </Button>
         </div>
       </div>
 
-      {isLoading && <p className="text-sm text-muted-foreground">Caricamento...</p>}
-      {!isLoading && matches.length === 0 && <p className="text-sm text-muted-foreground">Nessun video matchato.</p>}
+      {isLoading && <p className="text-sm text-muted-foreground">{t("Caricamento...")}</p>}
+      {!isLoading && matches.length === 0 && <p className="text-sm text-muted-foreground">{t("Nessun video matchato.")}</p>}
 
       {matches.length > 0 && (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Account</TableHead>
+              <TableHead>{t("Account")}</TableHead>
               <TableHead className="text-right">Views</TableHead>
-              <TableHead className="text-right">Eng. %</TableHead>
-              <TableHead>Metodo</TableHead>
+              <TableHead className="text-right">{t("Eng. %")}</TableHead>
+              <TableHead>{t("Metodo")}</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
@@ -123,6 +125,7 @@ function ManualMatchDialog({
   briefId: string;
   campaignId: string;
 }) {
+  const { t } = useI18n();
   const [search, setSearch] = useState("");
   const { data: videos, isLoading } = useCampaignVideosSearch(campaignId, search);
   const manualMatch = useManualMatch();
@@ -130,30 +133,30 @@ function ManualMatchDialog({
   const add = async (videoId: string) => {
     try {
       await manualMatch.mutateAsync({ videoId, briefId });
-      toast({ title: "Match aggiunto" });
+      toast({ title: t("Match aggiunto") });
     } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>Aggiungi match manuale</DialogTitle></DialogHeader>
-        <Input placeholder="Cerca nella caption..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        <DialogHeader><DialogTitle>{t("Aggiungi match manuale")}</DialogTitle></DialogHeader>
+        <Input placeholder={t("Cerca nella caption...")} value={search} onChange={(e) => setSearch(e.target.value)} />
         <div className="max-h-80 overflow-y-auto space-y-1.5">
-          {isLoading && <p className="text-sm text-muted-foreground">Caricamento...</p>}
+          {isLoading && <p className="text-sm text-muted-foreground">{t("Caricamento...")}</p>}
           {(videos ?? []).map((v) => (
             <div key={v.id} className="flex items-center justify-between gap-2 rounded-md border border-border p-2 text-sm">
               <div className="min-w-0">
                 <p className="font-medium">@{v.username ?? "?"}</p>
-                <p className="text-xs text-muted-foreground truncate">{v.caption ?? "(nessuna caption)"}</p>
+                <p className="text-xs text-muted-foreground truncate">{v.caption ?? t("(nessuna caption)")}</p>
                 <p className="text-[10px] text-muted-foreground">{formatViews(v.views)} views</p>
               </div>
-              <Button size="sm" variant="outline" onClick={() => add(v.id)} disabled={manualMatch.isPending}>Match</Button>
+              <Button size="sm" variant="outline" onClick={() => add(v.id)} disabled={manualMatch.isPending}>{t("Match")}</Button>
             </div>
           ))}
-          {!isLoading && (videos ?? []).length === 0 && <p className="text-sm text-muted-foreground">Nessun video trovato.</p>}
+          {!isLoading && (videos ?? []).length === 0 && <p className="text-sm text-muted-foreground">{t("Nessun video trovato.")}</p>}
         </div>
       </DialogContent>
     </Dialog>

@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { useScrapingStatus, useRecoverScraping } from "@/hooks/useVideoAnalytics";
 import { toast } from "@/hooks/use-toast";
+import { useI18n, t } from "@/i18n";
 
 export function ScrapingStatusBanner() {
+  const { t: tt } = useI18n();
   const { data: log } = useScrapingStatus();
   const recover = useRecoverScraping();
   const lastStatus = useRef<string | null>(null);
@@ -32,8 +34,8 @@ export function ScrapingStatusBanner() {
       onSuccess: (r) => {
         if (r?.recovered > 0) {
           toast({
-            title: "Scraping sbloccato",
-            description: "Run bloccata recuperata automaticamente.",
+            title: t("Scraping sbloccato"),
+            description: t("Run bloccata recuperata automaticamente."),
           });
         }
       },
@@ -46,8 +48,8 @@ export function ScrapingStatusBanner() {
     if (!log) return;
     if (lastStatus.current === "running" && log.status === "success") {
       toast({
-        title: "Scraping completato",
-        description: `${log.videos_created} nuovi video, ${log.videos_updated} aggiornati.`,
+        title: t("Scraping completato"),
+        description: t("{created} nuovi video, {updated} aggiornati.", { created: log.videos_created, updated: log.videos_updated }),
       });
       qc.invalidateQueries({ queryKey: ["video-analytics"] });
       qc.invalidateQueries({ queryKey: ["videos"] });
@@ -56,8 +58,8 @@ export function ScrapingStatusBanner() {
       qc.invalidateQueries({ queryKey: ["last-scrape-log"] });
     } else if (lastStatus.current === "running" && log.status === "error") {
       toast({
-        title: "Scraping fallito",
-        description: log.error_message ?? "Errore sconosciuto. Vedi log.",
+        title: t("Scraping fallito"),
+        description: log.error_message ?? t("Errore sconosciuto. Vedi log."),
         variant: "destructive",
       });
     }
@@ -80,15 +82,15 @@ export function ScrapingStatusBanner() {
         <Loader2 className="h-4 w-4 animate-spin" />
       )}
       <AlertTitle>
-        {isStale ? "Scraping bloccato" : "Scraping in corso"}
+        {isStale ? tt("Scraping bloccato") : tt("Scraping in corso")}
       </AlertTitle>
       <AlertDescription className="flex items-center justify-between gap-3 flex-wrap">
         <span>
-          {log.progress_note ?? "In attesa di aggiornamenti..."}
+          {log.progress_note ?? tt("In attesa di aggiornamenti...")}
           <span className="text-xs text-muted-foreground ml-2">({elapsed}s)</span>
           {isStale && (
             <span className="block text-xs mt-1 opacity-90">
-              Il poller in background si è interrotto. Sblocco automatico in corso, oppure forza qui sotto.
+              {tt("Il poller in background si è interrotto. Sblocco automatico in corso, oppure forza qui sotto.")}
             </span>
           )}
         </span>
@@ -102,7 +104,7 @@ export function ScrapingStatusBanner() {
             {recover.isPending ? (
               <Loader2 className="mr-2 h-3 w-3 animate-spin" />
             ) : null}
-            Sblocca e recupera
+            {tt("Sblocca e recupera")}
           </Button>
         )}
       </AlertDescription>

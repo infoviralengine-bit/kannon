@@ -17,6 +17,7 @@ import logoFull from "@/assets/kannon-logo-red.svg";
 type Section = "dashboard" | "warmup" | "contenuti" | "calendario" | "guadagni";
 
 export default function CreatorArea() {
+  const { t } = useI18n();
   const { profile, signOut } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState<number | undefined>(undefined);
   const { data, isLoading } = useCreatorPortal(selectedPeriod);
@@ -59,8 +60,8 @@ export default function CreatorArea() {
       <div className="min-h-screen bg-background">
         <Header name={profile?.full_name ?? null} onSignOut={signOut} />
         <div className="max-w-2xl mx-auto p-6 text-center mt-20">
-          <h2 className="text-xl font-semibold mb-2">Nessun profilo creator collegato</h2>
-          <p className="text-muted-foreground">Contatta l'agenzia per collegare il tuo account.</p>
+          <h2 className="text-xl font-semibold mb-2">{t("Nessun profilo creator collegato")}</h2>
+          <p className="text-muted-foreground">{t("Contatta l'agenzia per collegare il tuo account.")}</p>
         </div>
       </div>
     );
@@ -85,17 +86,17 @@ export default function CreatorArea() {
   // Build nav items based on status
   const NAV_ITEMS: { key: Section; label: string; icon: typeof Flame }[] = isOperativo
     ? [
-        { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { key: "guadagni", label: "Guadagni", icon: Coins },
-        { key: "contenuti", label: "Contenuti", icon: FileText },
-        { key: "calendario", label: "Calendario", icon: CalendarDays },
+        { key: "dashboard", label: t("Dashboard"), icon: LayoutDashboard },
+        { key: "guadagni", label: t("Guadagni"), icon: Coins },
+        { key: "contenuti", label: t("Contenuti"), icon: FileText },
+        { key: "calendario", label: t("Calendario"), icon: CalendarDays },
       ]
     : [
-        { key: "warmup", label: "Warmup", icon: Flame },
-        { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { key: "contenuti", label: "Contenuti", icon: FileText },
-        { key: "calendario", label: "Calendario", icon: CalendarDays },
-        { key: "guadagni", label: "Guadagni", icon: Coins },
+        { key: "warmup", label: t("Warmup"), icon: Flame },
+        { key: "dashboard", label: t("Dashboard"), icon: LayoutDashboard },
+        { key: "contenuti", label: t("Contenuti"), icon: FileText },
+        { key: "calendario", label: t("Calendario"), icon: CalendarDays },
+        { key: "guadagni", label: t("Guadagni"), icon: Coins },
       ];
 
   const currentPeriod = selectedPeriod ?? data?.defaultPeriod ?? 1;
@@ -144,7 +145,7 @@ export default function CreatorArea() {
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm font-medium min-w-[100px] text-center">
-              Periodo {currentPeriod}
+              {t("Periodo {n}", { n: currentPeriod })}
             </span>
             <Button
               variant="ghost"
@@ -172,7 +173,7 @@ export default function CreatorArea() {
             accountStats={data.accountStats}
             earnings={data.earnings}
             creatorName={data.creator.name}
-            monthLabel={`Periodo ${currentPeriod}`}
+            monthLabel={t("Periodo {n}", { n: currentPeriod })}
             periodVideos={data.periodVideos}
           />
         )}

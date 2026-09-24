@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatViews } from "@/lib/format";
 import { useCreatorTable } from "@/hooks/useCreatorData";
 import { useAuth } from "@/contexts/AuthContext";
+import { useI18n, t } from "@/i18n";
 import { ROLES } from "@/lib/roles";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ const statusLabel: Record<string, string> = {
 
 
 function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const { t } = useI18n();
   const { toast } = useToast();
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -42,7 +44,7 @@ function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChang
   const [phone, setPhone] = useState("");
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!name) throw new Error("Il nome è obbligatorio");
+      if (!name) throw new Error(t("Il nome è obbligatorio"));
       const { error } = await supabase.from("creators").insert({
         name,
         email: email || null,
@@ -52,38 +54,38 @@ function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChang
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Creator creato con successo" });
+      toast({ title: t("Creator creato con successo") });
       qc.invalidateQueries({ queryKey: ["creator-table"] });
       qc.invalidateQueries({ queryKey: ["active-creators-count"] });
       onOpenChange(false);
       setName(""); setEmail(""); setPhone("");
     },
     onError: (e: Error) => {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     },
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>Nuovo Creator</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("Nuovo Creator")}</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-1.5">
-            <Label>Nome *</Label>
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Es. Mario Rossi" />
+            <Label>{t("Nome *")}</Label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder={t("Es. Mario Rossi")} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
-              <Label>Email</Label>
+              <Label>{t("Email")}</Label>
               <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@example.com" />
             </div>
             <div className="grid gap-1.5">
-              <Label>Telefono</Label>
+              <Label>{t("Telefono")}</Label>
               <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="+39..." />
             </div>
           </div>
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
-            {mutation.isPending ? "Creazione..." : "Crea Creator"}
+            {mutation.isPending ? t("Creazione...") : t("Crea Creator")}
           </Button>
         </div>
       </DialogContent>
@@ -92,6 +94,7 @@ function CreateCreatorModal({ open, onOpenChange }: { open: boolean; onOpenChang
 }
 
 export default function CreatorPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -131,7 +134,6 @@ export default function CreatorPage() {
       }
       await supabase.from("contract_signatures").delete().eq("creator_id", creatorId);
       await supabase.from("contract_creators").delete().eq("creator_id", creatorId);
-      await supabase.from("onboarding_links").update({ creator_id: null }).eq("creator_id", creatorId);
       await supabase.from("creator_calendar").delete().eq("creator_id", creatorId);
       await supabase.from("creator_content").delete().eq("creator_id", creatorId);
       await supabase.from("campaign_creators").delete().eq("creator_id", creatorId);
@@ -141,13 +143,13 @@ export default function CreatorPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Creator eliminato" });
+      toast({ title: t("Creator eliminato") });
       qc.invalidateQueries({ queryKey: ["creator-table"] });
       qc.invalidateQueries({ queryKey: ["active-creators-count"] });
       setDeleteTarget(null);
     },
     onError: (e: Error) => {
-      toast({ title: "Errore eliminazione", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore eliminazione"), description: e.message, variant: "destructive" });
     },
   });
 
@@ -157,7 +159,7 @@ export default function CreatorPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Status aggiornato" });
+      toast({ title: t("Status aggiornato") });
       qc.invalidateQueries({ queryKey: ["creator-table"] });
       qc.invalidateQueries({ queryKey: ["active-creators-count"] });
     },
@@ -171,9 +173,9 @@ export default function CreatorPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Creator</h1>
+        <h1 className="text-2xl font-bold">{t("Creator")}</h1>
         <Button onClick={() => setModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Nuovo Creator
+          <Plus className="mr-2 h-4 w-4" /> {t("Nuovo Creator")}
         </Button>
       </div>
 
@@ -183,7 +185,7 @@ export default function CreatorPage() {
         <div className="flex gap-2">
           {(["all", "active", "inactive"] as const).map(f => (
             <Button key={f} size="sm" variant={filter === f ? "default" : "outline"} onClick={() => setFilter(f)}>
-              {f === "all" ? "Tutti" : f === "active" ? "Attivi" : "Inattivi"}
+              {f === "all" ? t("Tutti") : f === "active" ? t("Attivi") : t("Inattivi")}
             </Button>
           ))}
         </div>
@@ -205,15 +207,15 @@ export default function CreatorPage() {
               {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
             </div>
           ) : !filtered.length ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Nessun creator trovato.</p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t("Nessun creator trovato.")}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead className="text-right">Campagne attive</TableHead>
-                  <TableHead className="text-right">Views totali</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t("Nome")}</TableHead>
+                  <TableHead className="text-right">{t("Campagne attive")}</TableHead>
+                  <TableHead className="text-right">{t("Views totali")}</TableHead>
+                  <TableHead>{t("Status")}</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -225,7 +227,7 @@ export default function CreatorPage() {
                         <span>{c.name}</span>
                         {!isOperator && !c.hasActiveContract && (
                           <Badge className="bg-destructive/15 text-destructive border-destructive/30 text-[10px]">
-                            Senza contratto
+                            {t("Senza contratto")}
                           </Badge>
                         )}
                       </div>
@@ -234,21 +236,21 @@ export default function CreatorPage() {
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
                     <TableCell>
                       {isOperator ? (
-                        <Badge className={statusColor[c.status]}>{statusLabel[c.status] ?? c.status}</Badge>
+                        <Badge className={statusColor[c.status]}>{t(statusLabel[c.status] ?? c.status)}</Badge>
                       ) : (
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={c.status === "active"}
                             onCheckedChange={(checked) => statusMutation.mutate({ id: c.id, status: checked ? "active" : "inactive" })}
                           />
-                          <span className="text-xs text-muted-foreground">{c.status === "active" ? "Attivo" : "Inattivo"}</span>
+                          <span className="text-xs text-muted-foreground">{c.status === "active" ? t("Attivo") : t("Inattivo")}</span>
                         </div>
                       )}
                     </TableCell>
                     <TableCell className="space-x-1">
                       {!isOperator && (
                         <>
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.id}`)}>Apri</Button>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.id}`)}>{t("Apri")}</Button>
                           <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: c.id, name: c.name })}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -267,15 +269,15 @@ export default function CreatorPage() {
       <Dialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Elimina Creator</DialogTitle>
+            <DialogTitle>{t("Elimina Creator")}</DialogTitle>
             <DialogDescription>
-              Sei sicuro di voler eliminare <strong>{deleteTarget?.name}</strong>? Verranno eliminati anche tutti i video, account, pagamenti e associazioni alle campagne. Questa azione è irreversibile.
+              {t("Sei sicuro di voler eliminare")} <strong>{deleteTarget?.name}</strong>? {t("Verranno eliminati anche tutti i video, account, pagamenti e associazioni alle campagne. Questa azione è irreversibile.")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Annulla</Button>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>{t("Annulla")}</Button>
             <Button variant="destructive" onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)} disabled={deleteMutation.isPending}>
-              {deleteMutation.isPending ? "Eliminazione..." : "Elimina"}
+              {deleteMutation.isPending ? t("Eliminazione...") : t("Elimina")}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,6 +1,7 @@
 import { BriefCard } from "./BriefCard";
 import { WeekHeader } from "./WeekHeader";
 import { WEEKDAY_LABELS, weekdayIndexMon } from "./_helpers";
+import { useI18n } from "@/i18n";
 import type { Brief, CalendarWeek } from "@/hooks/useContentCalendar";
 
 export function ContentCalendarGrid({
@@ -12,10 +13,11 @@ export function ContentCalendarGrid({
   campaignId: string;
   onOpenBrief: (brief: Brief) => void;
 }) {
+  const { t } = useI18n();
   if (weeks.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-        Nessun brief nel periodo selezionato. Crea il primo con "+ Nuovo brief".
+        {t('Nessun brief nel periodo selezionato. Crea il primo con "+ Nuovo brief".')}
       </div>
     );
   }
@@ -35,7 +37,7 @@ export function ContentCalendarGrid({
               {WEEKDAY_LABELS.map((label, i) => (
                 <div key={label} className="space-y-1.5">
                   <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70 text-center">
-                    {label}
+                    {t(label)}
                   </div>
                   <div className="space-y-1.5 min-h-[40px]">
                     {byDay[i].map((b) => (

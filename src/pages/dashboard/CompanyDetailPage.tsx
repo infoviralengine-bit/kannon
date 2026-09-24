@@ -26,10 +26,12 @@ import { Section, SectionNav } from "@/components/companies/detail/Section";
 import { TimelineSection } from "@/components/companies/detail/TimelineSection";
 import { CallNotesSection } from "@/components/companies/detail/CallNotesSection";
 import { NotesSection } from "@/components/companies/detail/NotesSection";
+import { useI18n } from "@/i18n";
 
 const go = (id: string) => setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }), 50);
 
 export default function CompanyDetailPage() {
+  const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { role } = useAuth();
@@ -62,15 +64,15 @@ export default function CompanyDetailPage() {
   const temp = company.temperature as Temperature | null;
 
   const nav = [
-    { id: "riepilogo", label: "Riepilogo" },
-    { id: "cronologia", label: "Cronologia" },
-    { id: "call", label: "Call", count: calls.length },
-    { id: "appunti", label: "Appunti", count: notes.length },
-    { id: "comunicazioni", label: "Email e messaggi", count: messages.length },
-    { id: "file", label: "File", count: documents.length },
-    { id: "task", label: "Da fare", count: openTasks },
-    ...(isClient ? [{ id: "onboarding", label: "Onboarding" }, { id: "campagne", label: "Campagne", count: campaigns.length }] : []),
-    ...(isClient && isAdmin ? [{ id: "pagamenti", label: "Pagamenti" }] : []),
+    { id: "riepilogo", label: t("Riepilogo") },
+    { id: "cronologia", label: t("Cronologia") },
+    { id: "call", label: t("Call"), count: calls.length },
+    { id: "appunti", label: t("Appunti"), count: notes.length },
+    { id: "comunicazioni", label: t("Email e messaggi"), count: messages.length },
+    { id: "file", label: t("File"), count: documents.length },
+    { id: "task", label: t("Da fare"), count: openTasks },
+    ...(isClient ? [{ id: "onboarding", label: t("Onboarding") }, { id: "campagne", label: t("Campagne"), count: campaigns.length }] : []),
+    ...(isClient && isAdmin ? [{ id: "pagamenti", label: t("Pagamenti") }] : []),
   ];
 
   return (
@@ -78,25 +80,25 @@ export default function CompanyDetailPage() {
       <header className="rounded-xl border border-border/50 bg-card p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label="Indietro">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label={t("Indietro")}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
               <h1 className="font-display text-2xl font-semibold">{displayName}</h1>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className={STATUS_BADGE[company.status as CompanyStatus]}>
-                  {STATUS_LABEL[company.status as CompanyStatus]}
+                  {t(STATUS_LABEL[company.status as CompanyStatus])}
                 </Badge>
                 {company.status !== "cliente" && (
-                  <Badge variant="outline" className="border-accent/40 text-accent">{STAGE_LABEL[company.stage as CompanyStage]}</Badge>
+                  <Badge variant="outline" className="border-accent/40 text-accent">{t(STAGE_LABEL[company.stage as CompanyStage])}</Badge>
                 )}
-                {temp && company.status !== "cliente" && <Badge variant="outline" className={TEMPERATURE_BADGE[temp]}>{TEMPERATURE_LABEL[temp]}</Badge>}
+                {temp && company.status !== "cliente" && <Badge variant="outline" className={TEMPERATURE_BADGE[temp]}>{t(TEMPERATURE_LABEL[temp])}</Badge>}
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                {primary ? `${primary.full_name}${primary.role_title ? ` (${primary.role_title})` : ""}` : "Nessun referente"}
-                {" · "}Responsabile: {ownerName}
-                {" · "}Valore: {company.estimated_monthly_value ? formatCurrency(company.estimated_monthly_value) : "-"}
-                {" · "}Ultimo contatto: {formatDateIt(company.last_contact_at)}
+                {primary ? `${primary.full_name}${primary.role_title ? ` (${primary.role_title})` : ""}` : t("Nessun referente")}
+                {" · "}{t("Responsabile: {name}", { name: ownerName })}
+                {" · "}{t("Valore: {value}", { value: company.estimated_monthly_value ? formatCurrency(company.estimated_monthly_value) : "-" })}
+                {" · "}{t("Ultimo contatto: {date}", { date: formatDateIt(company.last_contact_at) })}
               </p>
             </div>
           </div>
@@ -106,40 +108,40 @@ export default function CompanyDetailPage() {
                 <Button variant="outline" onClick={() => updateStage.mutate({
                   id: company.id, stage: (company.previous_stage ?? "nuova") as CompanyStage })}>
                   <RotateCcw className="mr-2 h-4 w-4" />
-                  Riapri in {STAGE_LABEL[(company.previous_stage ?? "nuova") as CompanyStage]}
+                  {t("Riapri in {stage}", { stage: t(STAGE_LABEL[(company.previous_stage ?? "nuova") as CompanyStage]) })}
                 </Button>
               ) : (
                 <>
                   {nextStage && (
                     <Button variant="outline" onClick={() => setMove(nextStage)}>
-                      <ArrowDown className="mr-1 h-4 w-4 text-green-600" /> {STAGE_LABEL[nextStage]}
+                      <ArrowDown className="mr-1 h-4 w-4 text-green-600" /> {t(STAGE_LABEL[nextStage])}
                     </Button>
                   )}
                   <Button variant="outline" className="hover:border-destructive hover:text-destructive"
-                    onClick={() => setMove("perso")}>Persa</Button>
+                    onClick={() => setMove("perso")}>{t("Persa")}</Button>
                 </>
               )
             )}
             <Button variant="outline" onClick={() => setEditOpen(true)}>
-              <Pencil className="mr-2 h-4 w-4" /> Modifica
+              <Pencil className="mr-2 h-4 w-4" /> {t("Modifica")}
             </Button>
           </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-2 border-t border-border/40 pt-3">
           <Button size="sm" variant="secondary" onClick={() => { setCallOpen(true); go("call"); }}>
-            <Phone className="mr-1.5 h-3.5 w-3.5" /> Call
+            <Phone className="mr-1.5 h-3.5 w-3.5" /> {t("Call")}
           </Button>
           <Button size="sm" variant="secondary" onClick={() => { setNoteOpen(true); go("appunti"); }}>
-            <StickyNote className="mr-1.5 h-3.5 w-3.5" /> Appunto
+            <StickyNote className="mr-1.5 h-3.5 w-3.5" /> {t("Appunto")}
           </Button>
           <Button size="sm" variant="secondary" onClick={() => go("comunicazioni")}>
-            <MessageSquare className="mr-1.5 h-3.5 w-3.5" /> Email o messaggio
+            <MessageSquare className="mr-1.5 h-3.5 w-3.5" /> {t("Email o messaggio")}
           </Button>
           <Button size="sm" variant="secondary" onClick={() => go("file")}>
-            <FilePlus className="mr-1.5 h-3.5 w-3.5" /> File
+            <FilePlus className="mr-1.5 h-3.5 w-3.5" /> {t("File")}
           </Button>
           <Button size="sm" variant="secondary" onClick={() => go("task")}>
-            <ListTodo className="mr-1.5 h-3.5 w-3.5" /> Task
+            <ListTodo className="mr-1.5 h-3.5 w-3.5" /> {t("Task")}
           </Button>
         </div>
       </header>
@@ -149,43 +151,43 @@ export default function CompanyDetailPage() {
         <div className="space-y-4">
           {company.stage !== "perso" && <NextStepCard company={company} />}
 
-          <Section id="riepilogo" title="Riepilogo">
+          <Section id="riepilogo" title={t("Riepilogo")}>
             <OverviewTab company={company} contacts={contacts} ownerName={ownerName} />
           </Section>
-          <Section id="cronologia" title="Cronologia">
+          <Section id="cronologia" title={t("Cronologia")}>
             <TimelineSection activities={activities} documents={documents} tasks={tasks} notes={notes} authorName={authorName} />
           </Section>
-          <Section id="call" title="Note call" count={calls.length}
-            action={!callOpen && <Button size="sm" variant="outline" onClick={() => setCallOpen(true)}>Nuova call</Button>}>
+          <Section id="call" title={t("Note call")} count={calls.length}
+            action={!callOpen && <Button size="sm" variant="outline" onClick={() => setCallOpen(true)}>{t("Nuova call")}</Button>}>
             <CallNotesSection companyId={company.id} activities={activities} formOpen={callOpen} setFormOpen={setCallOpen}
               authorName={authorName}
               onUpdateNextStep={(text) => saveCompany.mutate({ id: company.id, values: { next_step: text } })} />
           </Section>
-          <Section id="appunti" title="Appunti" count={notes.length}
-            action={!noteOpen && <Button size="sm" variant="outline" onClick={() => setNoteOpen(true)}>Nuovo appunto</Button>}>
+          <Section id="appunti" title={t("Appunti")} count={notes.length}
+            action={!noteOpen && <Button size="sm" variant="outline" onClick={() => setNoteOpen(true)}>{t("Nuovo appunto")}</Button>}>
             <NotesSection companyId={company.id} notes={notes} formOpen={noteOpen} setFormOpen={setNoteOpen} authorName={authorName} />
           </Section>
-          <Section id="comunicazioni" title="Email e messaggi" count={messages.length}>
+          <Section id="comunicazioni" title={t("Email e messaggi")} count={messages.length}>
             <ActivityTab companyId={company.id} activities={messages} types={["email", "messaggio", "whatsapp", "linkedin"]} />
           </Section>
-          <Section id="file" title="File e documenti" count={documents.length}>
+          <Section id="file" title={t("File e documenti")} count={documents.length}>
             <DocumentsTab companyId={company.id} documents={documents} />
           </Section>
-          <Section id="task" title="Da fare" count={openTasks}>
+          <Section id="task" title={t("Da fare")} count={openTasks}>
             <TasksTab companyId={company.id} tasks={tasks} />
           </Section>
           {isClient && (
             <>
-              <Section id="onboarding" title="Onboarding">
+              <Section id="onboarding" title={t("Onboarding")}>
                 <OnboardingTab companyId={company.id} steps={onboardingSteps} />
               </Section>
-              <Section id="campagne" title="Campagne" count={campaigns.length}>
+              <Section id="campagne" title={t("Campagne")} count={campaigns.length}>
                 <CampaignsTab campaigns={campaigns} />
               </Section>
             </>
           )}
           {isClient && isAdmin && (
-            <Section id="pagamenti" title="Pagamenti">
+            <Section id="pagamenti" title={t("Pagamenti")}>
               <PaymentsTab companyId={company.id} />
             </Section>
           )}

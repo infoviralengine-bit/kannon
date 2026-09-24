@@ -9,8 +9,6 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
-import OnboardingPage from "@/pages/OnboardingPage";
-import OnboardingCompleted from "@/pages/OnboardingCompleted";
 import CreatorArea from "@/pages/CreatorArea";
 import ClientArea from "@/pages/ClientArea";
 import GeneralePage from "@/pages/dashboard/GeneralePage";
@@ -31,7 +29,6 @@ import FinancePage from "@/pages/dashboard/FinancePage";
 import ContractsPage from "@/pages/dashboard/ContractsPage";
 import ContractDetailPage from "@/pages/dashboard/ContractDetailPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
-import OnboardingMonitorPage from "@/pages/dashboard/OnboardingMonitorPage";
 import VideoAnalyticsPage from "@/pages/dashboard/VideoAnalyticsPage";
 import ContentCalendarPage from "@/pages/dashboard/ContentCalendarPage";
 import ClientiPage from "@/pages/dashboard/ClientiPage";
@@ -51,8 +48,6 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
-            <Route path="/onboarding/completed" element={<OnboardingCompleted />} />
-            <Route path="/onboarding/:token" element={<OnboardingPage />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
             {/* Dashboard routes - staff & campaign manager */}
@@ -77,15 +72,15 @@ const App = () => (
               <Route path="contracts/:id" element={<ContractDetailPage />} />
               <Route path="calendar" element={<CalendarPage />} />
               <Route path="finance" element={<FinancePage />} />
-              <Route path="closer" element={<Navigate to="/dashboard/onboarding" replace />} />
-              <Route path="onboarding" element={<OnboardingMonitorPage />} />
+              <Route path="closer" element={<Navigate to="/dashboard/creators" replace />} />
+              <Route path="onboarding" element={<Navigate to="/dashboard/creators" replace />} />
               <Route path="content-calendar" element={<ContentCalendarPage />} />
               <Route path="videos" element={<VideoAnalyticsPage />} />
               {/* Backward-compat redirects (SP#4) */}
               <Route path="campaign-manager" element={<Navigate to="/dashboard/content-calendar?tab=analytics" replace />} />
               <Route path="trends" element={<Navigate to="/dashboard/content-calendar" replace />} />
               <Route path="trend-tiktok" element={<Navigate to="/dashboard/content-calendar" replace />} />
-              <Route path="creator-pipeline" element={<Navigate to="/dashboard/onboarding" replace />} />
+              <Route path="creator-pipeline" element={<Navigate to="/dashboard/creators" replace />} />
               <Route path="clients" element={<ClientiPage />} />
               <Route path="clients/pipeline" element={<PipelineB2BPage />} />
               <Route path="clients/agenda" element={<AgendaPage />} />

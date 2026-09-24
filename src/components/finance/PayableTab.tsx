@@ -20,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { useI18n } from "@/i18n";
 
 function Shimmer({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse rounded-lg bg-muted ${className}`} />;
@@ -32,6 +33,7 @@ interface ConfirmData {
 }
 
 export function PayableTab() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [periodOffset, setPeriodOffset] = useState<number>(0);
   const [showOnlyActive, setShowOnlyActive] = useState(true);
@@ -89,13 +91,13 @@ export function PayableTab() {
         if (error) throw error;
       }
 
-      toast({ title: "Pagamento registrato", description: `${creator.creatorName} segnato come pagato.` });
+      toast({ title: t("Pagamento registrato"), description: t("{name} segnato come pagato.", { name: creator.creatorName }) });
       qc.invalidateQueries({ queryKey: ["contract-payable"] });
       qc.invalidateQueries({ queryKey: ["creator-payments"] });
       qc.invalidateQueries({ queryKey: ["finance-dashboard"] });
       qc.invalidateQueries({ queryKey: ["financial-movements"] });
     } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     } finally {
       setSaving(false);
       setConfirm(null);
@@ -153,9 +155,9 @@ export function PayableTab() {
               const refPeriod = Math.max(1, maxCurrent + periodOffset);
               return (
                 <>
-                  <p className="text-xs font-medium text-foreground">Periodo {refPeriod}</p>
+                  <p className="text-xs font-medium text-foreground">{t("Periodo {n}", { n: refPeriod })}</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {periodOffset === 0 ? "Corrente" : "Applicato a tutti i contratti"}
+                    {periodOffset === 0 ? t("Corrente") : t("Applicato a tutti i contratti")}
                   </p>
                 </>
               );
@@ -166,7 +168,7 @@ export function PayableTab() {
           </Button>
           {periodOffset !== 0 && (
             <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setPeriodOffset(0)}>
-              Corrente
+              {t("Corrente")}
             </Button>
           )}
         </div>
@@ -175,18 +177,18 @@ export function PayableTab() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Da pagare</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">{t("Da pagare")}</p>
             <p className="text-xl font-bold text-foreground">{formatCurrency(globalPending)}</p>
           </div>
           <div className="h-8 w-px bg-border" />
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Già pagato</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">{t("Già pagato")}</p>
             <p className="text-xl font-bold text-emerald-400">{formatCurrency(globalPaid)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Switch id="active-filter" checked={showOnlyActive} onCheckedChange={setShowOnlyActive} />
-          <Label htmlFor="active-filter" className="text-xs text-muted-foreground cursor-pointer">Solo con attività</Label>
+          <Label htmlFor="active-filter" className="text-xs text-muted-foreground cursor-pointer">{t("Solo con attività")}</Label>
         </div>
       </div>
 
@@ -194,7 +196,7 @@ export function PayableTab() {
         <div className="space-y-3">{[1, 2, 3].map((i) => <Shimmer key={i} className="h-32" />)}</div>
       ) : !allSections.length ? (
         <Card className="border-border bg-card">
-          <CardContent className="py-12 text-center text-muted-foreground">Nessun contratto attivo.</CardContent>
+          <CardContent className="py-12 text-center text-muted-foreground">{t("Nessun contratto attivo.")}</CardContent>
         </Card>
       ) : (
         <>
@@ -203,16 +205,16 @@ export function PayableTab() {
               <div className="flex items-center gap-3">
                 <Users className="h-5 w-5 text-primary" />
                 <div>
-                  <CardTitle className="text-base text-foreground">Totale per Creator</CardTitle>
+                  <CardTitle className="text-base text-foreground">{t("Totale per Creator")}</CardTitle>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Somma di tutti i contratti nei periodi selezionati. Espandi per vedere il dettaglio.
+                    {t("Somma di tutti i contratti nei periodi selezionati. Espandi per vedere il dettaglio.")}
                   </p>
                 </div>
               </div>
             </CardHeader>
             {!creatorRollups.length ? (
               <CardContent className="py-8 text-center text-muted-foreground text-sm">
-                Nessun creator con attività nei periodi selezionati.
+                {t("Nessun creator con attività nei periodi selezionati.")}
               </CardContent>
             ) : (
               <div className="divide-y divide-border">
@@ -227,18 +229,18 @@ export function PayableTab() {
                             {r.creatorName}
                           </span>
                           <Badge className="bg-muted text-muted-foreground border-border text-[10px] shrink-0">
-                            {r.breakdown.length} {r.breakdown.length === 1 ? "contratto" : "contratti"}
+                            {r.breakdown.length} {r.breakdown.length === 1 ? t("contratto") : t("contratti")}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-4 shrink-0">
                           {r.totalPaid > 0 && (
                             <div className="text-right hidden sm:block">
-                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Pagato</p>
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("Pagato")}</p>
                               <p className="text-sm font-semibold text-emerald-400">{formatCurrency(r.totalPaid)}</p>
                             </div>
                           )}
                           <div className="text-right">
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Da pagare</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("Da pagare")}</p>
                             <p className="text-base font-bold text-foreground">{formatCurrency(r.totalPending)}</p>
                           </div>
                         </div>
@@ -249,13 +251,13 @@ export function PayableTab() {
                         <Table>
                           <TableHeader>
                             <TableRow className="border-border hover:bg-transparent">
-                              <TableHead className="text-muted-foreground text-xs">Contratto</TableHead>
-                              <TableHead className="text-muted-foreground text-xs text-center">Video</TableHead>
-                              <TableHead className="text-muted-foreground text-xs text-center">Fisso</TableHead>
+                              <TableHead className="text-muted-foreground text-xs">{t("Contratto")}</TableHead>
+                              <TableHead className="text-muted-foreground text-xs text-center">{t("Video")}</TableHead>
+                              <TableHead className="text-muted-foreground text-xs text-center">{t("Fisso")}</TableHead>
                               <TableHead className="text-muted-foreground text-xs text-right">CPM</TableHead>
-                              <TableHead className="text-muted-foreground text-xs text-right">Subtotale</TableHead>
-                              <TableHead className="text-muted-foreground text-xs">Stato</TableHead>
-                              <TableHead className="text-muted-foreground text-xs text-right">Azioni</TableHead>
+                              <TableHead className="text-muted-foreground text-xs text-right">{t("Subtotale")}</TableHead>
+                              <TableHead className="text-muted-foreground text-xs">{t("Stato")}</TableHead>
+                              <TableHead className="text-muted-foreground text-xs text-right">{t("Azioni")}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -267,7 +269,7 @@ export function PayableTab() {
                                     {b.contractName}
                                   </span>
                                   <p className="text-[10px] text-muted-foreground">
-                                    Periodo {b.periodNumber} · {getPeriodLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart, b.section.periodOverrides)}
+                                    {t("Periodo {n} ·", { n: b.periodNumber })} {getPeriodLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart, b.section.periodOverrides)}
                                   </p>
                                 </TableCell>
                                 <TableCell className="text-center text-muted-foreground text-sm">
@@ -282,9 +284,9 @@ export function PayableTab() {
                                 <TableCell className="text-right font-semibold text-foreground">{formatCurrency(b.creator.subtotal)}</TableCell>
                                 <TableCell>
                                   {b.creator.isPaid ? (
-                                    <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30 text-[10px]">✅ Pagato</Badge>
+                                    <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30 text-[10px]">✅ {t("Pagato")}</Badge>
                                   ) : b.creator.subtotal > 0 ? (
-                                    <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30 text-[10px]">⏳ Da pagare</Badge>
+                                    <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30 text-[10px]">⏳ {t("Da pagare")}</Badge>
                                   ) : (
                                     <Badge className="bg-muted text-muted-foreground border-border text-[10px]">—</Badge>
                                   )}
@@ -293,7 +295,7 @@ export function PayableTab() {
                                   {!b.creator.isPaid && b.creator.subtotal > 0 && (
                                     <Button size="sm" variant="outline" className="border-border hover:bg-muted"
                                       onClick={() => setConfirm({ creator: b.creator, section: b.section, periodNumber: b.periodNumber })}>
-                                      <Check className="mr-1 h-3 w-3" /> Pagato
+                                      <Check className="mr-1 h-3 w-3" /> {t("Pagato")}
                                     </Button>
                                   )}
                                 </TableCell>
@@ -328,30 +330,30 @@ export function PayableTab() {
                           onClick={() => navigate(`/dashboard/contracts/${section.contractId}`)}>
                           {section.contractName}
                         </CardTitle>
-                        <p className="text-xs text-muted-foreground mt-0.5">Subtotale: {formatCurrency(sectionPending)}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t("Subtotale: {v}", { v: formatCurrency(sectionPending) })}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-medium text-foreground">Periodo {pn}</p>
+                      <p className="text-xs font-medium text-foreground">{t("Periodo {n}", { n: pn })}</p>
                       <p className="text-[10px] text-muted-foreground">{getPeriodLabel(section.startDate, pn, section.firstPeriodStart, section.periodOverrides)}</p>
                     </div>
                   </div>
                 </CardHeader>
                 {!filteredCreators.length ? (
                   <CardContent className="py-8 text-center text-muted-foreground text-sm">
-                    {showOnlyActive ? "Nessun creator con attività per questo periodo." : "Nessun creator in questo contratto."}
+                    {showOnlyActive ? t("Nessun creator con attività per questo periodo.") : t("Nessun creator in questo contratto.")}
                   </CardContent>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow className="border-border hover:bg-transparent">
-                        <TableHead className="text-muted-foreground">Creator</TableHead>
-                        <TableHead className="text-muted-foreground text-center">Video</TableHead>
-                        <TableHead className="text-muted-foreground text-center">Fisso</TableHead>
+                        <TableHead className="text-muted-foreground">{t("Creator")}</TableHead>
+                        <TableHead className="text-muted-foreground text-center">{t("Video")}</TableHead>
+                        <TableHead className="text-muted-foreground text-center">{t("Fisso")}</TableHead>
                         <TableHead className="text-muted-foreground text-right">CPM</TableHead>
-                        <TableHead className="text-muted-foreground text-right">Totale</TableHead>
-                        <TableHead className="text-muted-foreground">Status</TableHead>
-                        <TableHead className="text-muted-foreground text-right">Azioni</TableHead>
+                        <TableHead className="text-muted-foreground text-right">{t("Totale")}</TableHead>
+                        <TableHead className="text-muted-foreground">{t("Status")}</TableHead>
+                        <TableHead className="text-muted-foreground text-right">{t("Azioni")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -373,9 +375,9 @@ export function PayableTab() {
                           <TableCell className="text-right font-semibold text-foreground">{formatCurrency(cr.subtotal)}</TableCell>
                           <TableCell>
                             {cr.isPaid ? (
-                              <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30 text-[10px]">✅ Pagato</Badge>
+                              <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/30 text-[10px]">✅ {t("Pagato")}</Badge>
                             ) : cr.subtotal > 0 ? (
-                              <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30 text-[10px]">⏳ Da pagare</Badge>
+                              <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30 text-[10px]">⏳ {t("Da pagare")}</Badge>
                             ) : (
                               <Badge className="bg-muted text-muted-foreground border-border text-[10px]">—</Badge>
                             )}
@@ -388,7 +390,7 @@ export function PayableTab() {
                             ) : cr.subtotal > 0 ? (
                               <Button size="sm" variant="outline" className="border-border hover:bg-muted"
                                 onClick={() => setConfirm({ creator: cr, section, periodNumber: pn })}>
-                                <Check className="mr-1 h-3 w-3" /> Pagato
+                                <Check className="mr-1 h-3 w-3" /> {t("Pagato")}
                               </Button>
                             ) : null}
                           </TableCell>
@@ -406,16 +408,16 @@ export function PayableTab() {
       <Dialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
         <DialogContent className="bg-card border-border">
           <DialogHeader>
-            <DialogTitle>Conferma pagamento</DialogTitle>
+            <DialogTitle>{t("Conferma pagamento")}</DialogTitle>
             <DialogDescription>
-              Segna come pagato <strong>{confirm?.creator.creatorName}</strong> per{" "}
-              {confirm?.section.contractName} — Periodo {confirm?.periodNumber}?
+              {t("Segna come pagato")} <strong>{confirm?.creator.creatorName}</strong> {t("per")}{" "}
+              {confirm?.section.contractName} {t("Periodo {n}?", { n: confirm?.periodNumber })}
             </DialogDescription>
           </DialogHeader>
           {confirm && (
             <div className="space-y-2 text-sm">
               <div className="flex justify-between py-1">
-                <span className="text-muted-foreground">Fisso</span>
+                <span className="text-muted-foreground">{t("Fisso")}</span>
                 <span className="text-foreground">{formatCurrency(confirm.creator.fixedEarned ? confirm.creator.fixedAmount : 0)}</span>
               </div>
               <div className="flex justify-between py-1">
@@ -423,15 +425,15 @@ export function PayableTab() {
                 <span className="text-foreground">{formatCurrency(confirm.creator.cpmAmount)}</span>
               </div>
               <div className="flex justify-between font-semibold pt-2 border-t border-border">
-                <span>Totale</span>
+                <span>{t("Totale")}</span>
                 <span className="text-foreground">{formatCurrency(confirm.creator.subtotal)}</span>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" className="border-border" onClick={() => setConfirm(null)}>Annulla</Button>
+            <Button variant="outline" className="border-border" onClick={() => setConfirm(null)}>{t("Annulla")}</Button>
             <Button onClick={() => confirm && handleMarkPaid(confirm)} disabled={saving}>
-              {saving ? "Salvataggio..." : "Conferma Pagamento"}
+              {saving ? t("Salvataggio...") : t("Conferma Pagamento")}
             </Button>
           </DialogFooter>
         </DialogContent>

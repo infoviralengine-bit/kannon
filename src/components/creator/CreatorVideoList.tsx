@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Video, Eye, Heart, MessageCircle, Clock, CheckCircle, ExternalLink } from "lucide-react";
 import { formatViews } from "@/lib/format";
 import { cleanUsername } from "@/lib/utils";
+import { useI18n } from "@/i18n";
 
 export interface CreatorVideo {
   id: string;
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export default function CreatorVideoList({ videos, monthLabel }: Props) {
+  const { t } = useI18n();
   // Group by campaign, then by account
   const campaignGroups = new Map<string, { name: string; accounts: Map<string, { username: string; videos: CreatorVideo[] }> }>();
 
@@ -46,7 +48,7 @@ export default function CreatorVideoList({ videos, monthLabel }: Props) {
       <Card>
         <CardContent className="p-6 text-center text-muted-foreground">
           <Video className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p>Nessun video pubblicato in questo periodo</p>
+          <p>{t("Nessun video pubblicato in questo periodo")}</p>
         </CardContent>
       </Card>
     );
@@ -57,10 +59,10 @@ export default function CreatorVideoList({ videos, monthLabel }: Props) {
       <div>
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Video className="h-4 w-4 text-primary" />
-          Video pubblicati {monthLabel && `— ${monthLabel}`}
+          {t("Video pubblicati")} {monthLabel && `: ${monthLabel}`}
         </h3>
         <p className="text-sm text-muted-foreground mt-1">
-          {videos.length} video totali in questo periodo
+          {t("{n} video totali in questo periodo", { n: videos.length })}
         </p>
       </div>
 
@@ -70,7 +72,7 @@ export default function CreatorVideoList({ videos, monthLabel }: Props) {
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Badge variant="outline" className="font-normal">{campName}</Badge>
               <span className="text-muted-foreground text-xs">
-                {Array.from(accounts.values()).reduce((s, a) => s + a.videos.length, 0)} video
+                {t("{n} video", { n: Array.from(accounts.values()).reduce((s, a) => s + a.videos.length, 0) })}
               </span>
             </CardTitle>
           </CardHeader>
@@ -88,24 +90,24 @@ export default function CreatorVideoList({ videos, monthLabel }: Props) {
                     <ExternalLink className="h-3 w-3" />
                   </a>
                   <span className="text-xs text-muted-foreground">
-                    ({accVideos.length} video)
+                    ({t("{n} video", { n: accVideos.length })})
                   </span>
                 </div>
                 <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="min-w-[140px]">Pubblicato</TableHead>
+                        <TableHead className="min-w-[140px]">{t("Pubblicato")}</TableHead>
                         <TableHead className="text-right">
-                          <span className="flex items-center justify-end gap-1"><Eye className="h-3.5 w-3.5" /> Views</span>
+                          <span className="flex items-center justify-end gap-1"><Eye className="h-3.5 w-3.5" /> {t("Views")}</span>
                         </TableHead>
                         <TableHead className="text-right">
-                          <span className="flex items-center justify-end gap-1"><Heart className="h-3.5 w-3.5" /> Likes</span>
+                          <span className="flex items-center justify-end gap-1"><Heart className="h-3.5 w-3.5" /> {t("Likes")}</span>
                         </TableHead>
                         <TableHead className="text-right">
-                          <span className="flex items-center justify-end gap-1"><MessageCircle className="h-3.5 w-3.5" /> Commenti</span>
+                          <span className="flex items-center justify-end gap-1"><MessageCircle className="h-3.5 w-3.5" /> {t("Commenti")}</span>
                         </TableHead>
-                        <TableHead className="text-center">Finestra CPM</TableHead>
+                        <TableHead className="text-center">{t("Finestra CPM")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -137,11 +139,11 @@ export default function CreatorVideoList({ videos, monthLabel }: Props) {
                             <TableCell className="text-center">
                               {v.windowClosed ? (
                                 <Badge variant="secondary" className="text-xs gap-1">
-                                  <CheckCircle className="h-3 w-3" /> Chiusa
+                                  <CheckCircle className="h-3 w-3" /> {t("Chiusa")}
                                 </Badge>
                               ) : (
                                 <Badge variant="outline" className="text-xs gap-1">
-                                  <Clock className="h-3 w-3" /> Aperta
+                                  <Clock className="h-3 w-3" /> {t("Aperta")}
                                 </Badge>
                               )}
                             </TableCell>

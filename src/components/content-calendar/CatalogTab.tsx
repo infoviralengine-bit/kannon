@@ -28,15 +28,17 @@ import {
   type CatalogItem,
 } from "@/hooks/useContentCatalog";
 import type { UseMutationResult } from "@tanstack/react-query";
+import { useI18n } from "@/i18n";
 
 export default function CatalogTab() {
+  const { t } = useI18n();
   const formats = useVideoFormats();
   const topics = useContentTopics();
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <CatalogCard
-        title="Format"
+        title={t("Format")}
         items={formats.data ?? []}
         isLoading={formats.isLoading}
         useCreate={useCreateFormat}
@@ -45,7 +47,7 @@ export default function CatalogTab() {
         useDelete={useDeleteFormat}
       />
       <CatalogCard
-        title="Topic"
+        title={t("Topic")}
         items={topics.data ?? []}
         isLoading={topics.isLoading}
         useCreate={useCreateTopic}
@@ -76,6 +78,7 @@ function CatalogCard({
   useToggle: CrudHook<{ id: string; is_active: boolean }>;
   useDelete: CrudHook<string>;
 }) {
+  const { t } = useI18n();
   const create = useCreate();
   const rename = useRename();
   const toggle = useToggle();
@@ -87,7 +90,7 @@ function CatalogCard({
   const onCreate = () => {
     if (!newName.trim()) return;
     create.mutate(newName.trim(), {
-      onSuccess: () => { setNewName(""); toast({ title: `${title} aggiunto` }); },
+      onSuccess: () => { setNewName(""); toast({ title: t("{title} aggiunto", { title }) }); },
       onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
     });
   };
@@ -95,7 +98,7 @@ function CatalogCard({
   const onRename = (id: string) => {
     if (!editName.trim()) return;
     rename.mutate({ id, name: editName.trim() }, {
-      onSuccess: () => { setEditId(null); toast({ title: "Rinominato" }); },
+      onSuccess: () => { setEditId(null); toast({ title: t("Rinominato") }); },
       onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
     });
   };
@@ -103,15 +106,15 @@ function CatalogCard({
   const onDelete = (item: CatalogItem) => {
     if (item.brief_count > 0) {
       toast({
-        title: "Impossibile eliminare",
-        description: `${item.brief_count} brief usano questo elemento. Disattivalo invece di eliminarlo.`,
+        title: t("Impossibile eliminare"),
+        description: t("{n} brief usano questo elemento. Disattivalo invece di eliminarlo.", { n: item.brief_count }),
         variant: "destructive",
       });
       return;
     }
     del.mutate(item.id, {
-      onSuccess: () => toast({ title: "Eliminato" }),
-      onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+      onSuccess: () => toast({ title: t("Eliminato") }),
+      onError: (e: any) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
     });
   };
 
@@ -120,14 +123,14 @@ function CatalogCard({
       <CardHeader><CardTitle className="text-base">{title}</CardTitle></CardHeader>
       <CardContent className="space-y-3">
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Caricamento...</p>
+          <p className="text-sm text-muted-foreground">{t("Caricamento...")}</p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead className="text-center">Brief</TableHead>
-                <TableHead className="text-center">Attivo</TableHead>
+                <TableHead>{t("Nome")}</TableHead>
+                <TableHead className="text-center">{t("Brief")}</TableHead>
+                <TableHead className="text-center">{t("Attivo")}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -164,7 +167,7 @@ function CatalogCard({
                 </TableRow>
               ))}
               {items.length === 0 && (
-                <TableRow><TableCell colSpan={4} className="text-center text-sm text-muted-foreground">Nessun elemento.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} className="text-center text-sm text-muted-foreground">{t("Nessun elemento.")}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -172,12 +175,12 @@ function CatalogCard({
 
         <div className="flex gap-2">
           <Input
-            placeholder={`Aggiungi ${title.toLowerCase()}`}
+            placeholder={t("Aggiungi {title}", { title: title.toLowerCase() })}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") onCreate(); }}
           />
-          <Button onClick={onCreate} disabled={create.isPending || !newName.trim()}>Aggiungi</Button>
+          <Button onClick={onCreate} disabled={create.isPending || !newName.trim()}>{t("Aggiungi")}</Button>
         </div>
       </CardContent>
     </Card>

@@ -22,8 +22,10 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Plus, ExternalLink } from "lucide-react";
+import { useI18n, t } from "@/i18n";
 
 export default function AccountDetailPage() {
+  const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const data = useAccountDetail(id!);
 
@@ -39,14 +41,14 @@ export default function AccountDetailPage() {
   }
 
   if (!data.account) {
-    return <div className="text-center py-12 text-muted-foreground">Account non trovato.</div>;
+    return <div className="text-center py-12 text-muted-foreground">{t("Account non trovato.")}</div>;
   }
 
   return (
     <div className="space-y-6">
       <Breadcrumb>
         <BreadcrumbList>
-          <BreadcrumbItem><BreadcrumbLink asChild><Link to="/dashboard/accounts">Account</Link></BreadcrumbLink></BreadcrumbItem>
+          <BreadcrumbItem><BreadcrumbLink asChild><Link to="/dashboard/accounts">{t("Account")}</Link></BreadcrumbLink></BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem><BreadcrumbPage>@{cleanUsername(data.account.username)}</BreadcrumbPage></BreadcrumbItem>
         </BreadcrumbList>
@@ -54,14 +56,14 @@ export default function AccountDetailPage() {
 
       <div className="flex items-center gap-3">
         <h1 className="text-2xl font-bold flex items-center gap-2"><TikTokLink username={data.account.username} className="text-2xl" /></h1>
-        <Badge variant="default">Creator</Badge>
+        <Badge variant="default">{t("Creator")}</Badge>
       </div>
 
       {data.creator && (
         <div className="flex gap-6 text-sm text-muted-foreground">
-          <span>Creator: <Link to={`/dashboard/creators/${data.creator.id}`} className="text-primary hover:underline">{data.creator.name}</Link></span>
+          <span>{t("Creator")}: <Link to={`/dashboard/creators/${data.creator.id}`} className="text-primary hover:underline">{data.creator.name}</Link></span>
           {data.campaign && (
-            <span>Campagna: <Link to={`/dashboard/campaigns/${data.campaign.id}`} className="text-primary hover:underline">{data.campaign.name}</Link></span>
+            <span>{t("Campagna")}: <Link to={`/dashboard/campaigns/${data.campaign.id}`} className="text-primary hover:underline">{data.campaign.name}</Link></span>
           )}
         </div>
       )}
@@ -88,6 +90,7 @@ function KPICard({ title, value, icon }: { title: string; value: string | number
 }
 
 function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) {
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoId, setVideoId] = useState("");
@@ -129,21 +132,21 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["videos_for_account"] });
-      toast({ title: "Video aggiunto" });
+      toast({ title: t("Video aggiunto") });
       setVideoOpen(false);
       setVideoId(""); setPubDate(""); setViews("0"); setLikes("0"); setComments("0");
     },
-    onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 
   const chartConfig = {
-    views: { label: "Views", color: "hsl(var(--primary))" },
+    views: { label: t("Views"), color: "hsl(var(--primary))" },
   };
 
   function renderCapCell(videoViews: number) {
     if (videoCap == null) return "—";
     if (videoViews >= videoCap) {
-      return <span className="text-warning font-semibold">⚠️ CAP RAGGIUNTO</span>;
+      return <span className="text-warning font-semibold">⚠️ {t("CAP RAGGIUNTO")}</span>;
     }
     const vk = videoViews >= 1000 ? `${(videoViews / 1000).toFixed(0)}k` : String(videoViews);
     const ck = videoCap >= 1000 ? `${(videoCap / 1000).toFixed(0)}k` : String(videoCap);
@@ -155,20 +158,20 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <KPICard
-          title="Video oggi"
+          title={t("Video oggi")}
           value={data.videosToday}
         />
-        <KPICard title="Video settimana" value={data.videosWeek} />
-        <KPICard title="Video mese" value={data.videosMonth} />
-        <KPICard title="Views oggi" value={formatViews(data.viewsToday)} />
-        <KPICard title="Views settimana" value={formatViews(data.viewsWeek)} />
-        <KPICard title="Views mese" value={formatViews(data.viewsMonth)} />
+        <KPICard title={t("Video settimana")} value={data.videosWeek} />
+        <KPICard title={t("Video mese")} value={data.videosMonth} />
+        <KPICard title={t("Views oggi")} value={formatViews(data.viewsToday)} />
+        <KPICard title={t("Views settimana")} value={formatViews(data.viewsWeek)} />
+        <KPICard title={t("Views mese")} value={formatViews(data.viewsMonth)} />
       </div>
 
 
       {/* Chart */}
       <Card>
-        <CardHeader><CardTitle>Views ultimi 30 giorni</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{t("Views ultimi 30 giorni")}</CardTitle></CardHeader>
         <CardContent>
           <ChartContainer config={chartConfig} className="h-[250px] w-full">
             <BarChart data={data.last30Days}>
@@ -185,41 +188,41 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
       {/* Videos table */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Video</CardTitle>
+          <CardTitle>{t("Video")}</CardTitle>
           <Dialog open={videoOpen} onOpenChange={setVideoOpen}>
             <DialogTrigger asChild>
-              <Button size="sm"><Plus className="mr-2 h-4 w-4" /> Aggiungi Video</Button>
+              <Button size="sm"><Plus className="mr-2 h-4 w-4" /> {t("Aggiungi Video")}</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Aggiungi Video manualmente</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{t("Aggiungi Video manualmente")}</DialogTitle></DialogHeader>
               <div className="space-y-4">
-                <div><Label>TikTok Video ID</Label><Input value={videoId} onChange={(e) => setVideoId(e.target.value)} /></div>
-                <div><Label>Data pubblicazione</Label><Input type="datetime-local" value={pubDate} onChange={(e) => setPubDate(e.target.value)} /></div>
+                <div><Label>{t("TikTok Video ID")}</Label><Input value={videoId} onChange={(e) => setVideoId(e.target.value)} /></div>
+                <div><Label>{t("Data pubblicazione")}</Label><Input type="datetime-local" value={pubDate} onChange={(e) => setPubDate(e.target.value)} /></div>
                 <div className="grid grid-cols-3 gap-3">
-                  <div><Label>Views</Label><Input type="number" value={views} onChange={(e) => setViews(e.target.value)} /></div>
-                  <div><Label>Likes</Label><Input type="number" value={likes} onChange={(e) => setLikes(e.target.value)} /></div>
-                  <div><Label>Commenti</Label><Input type="number" value={comments} onChange={(e) => setComments(e.target.value)} /></div>
+                  <div><Label>{t("Views")}</Label><Input type="number" value={views} onChange={(e) => setViews(e.target.value)} /></div>
+                  <div><Label>{t("Likes")}</Label><Input type="number" value={likes} onChange={(e) => setLikes(e.target.value)} /></div>
+                  <div><Label>{t("Commenti")}</Label><Input type="number" value={comments} onChange={(e) => setComments(e.target.value)} /></div>
                 </div>
-                <Button className="w-full" disabled={!videoId || !pubDate} onClick={() => addVideoMutation.mutate()}>Salva Video</Button>
+                <Button className="w-full" disabled={!videoId || !pubDate} onClick={() => addVideoMutation.mutate()}>{t("Salva Video")}</Button>
               </div>
             </DialogContent>
           </Dialog>
         </CardHeader>
         <CardContent>
           {data.videos.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground">Nessun video registrato.</p>
+            <p className="text-center py-8 text-muted-foreground">{t("Nessun video registrato.")}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Video ID</TableHead>
-                  <TableHead>Data pubblicazione</TableHead>
-                  <TableHead className="text-right">Views</TableHead>
-                  <TableHead className="text-right">Likes</TableHead>
-                  <TableHead className="text-right">Commenti</TableHead>
-                  <TableHead>Cap</TableHead>
-                  <TableHead>Finestra</TableHead>
-                  <TableHead>Ultimo scraping</TableHead>
+                  <TableHead>{t("Video ID")}</TableHead>
+                  <TableHead>{t("Data pubblicazione")}</TableHead>
+                  <TableHead className="text-right">{t("Views")}</TableHead>
+                  <TableHead className="text-right">{t("Likes")}</TableHead>
+                  <TableHead className="text-right">{t("Commenti")}</TableHead>
+                  <TableHead>{t("Cap")}</TableHead>
+                  <TableHead>{t("Finestra")}</TableHead>
+                  <TableHead>{t("Ultimo scraping")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -245,13 +248,13 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
                     <TableCell>{renderCapCell(v.views || 0)}</TableCell>
                     <TableCell>
                       {wStatus === "open" && (
-                        <span className="text-sm">🟢 {daysLeft}g rimasti</span>
+                        <span className="text-sm">🟢 {t("{n}g rimasti", { n: daysLeft })}</span>
                       )}
                       {wStatus === "closing" && (
                         <span className="text-sm text-warning">⏳ &lt;24h</span>
                       )}
                       {wStatus === "closed" && (
-                        <span className="text-sm text-muted-foreground">🔴 Chiusa{v.window_expires_at ? ` ${format(new Date(v.window_expires_at), "dd/MM")}` : ""}</span>
+                        <span className="text-sm text-muted-foreground">🔴 {t("Chiusa")}{v.window_expires_at ? ` ${format(new Date(v.window_expires_at), "dd/MM")}` : ""}</span>
                       )}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">

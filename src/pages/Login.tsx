@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/i18n";
 import logoFull from "@/assets/kannon-logo-red.svg";
 
 export default function Login() {
@@ -15,6 +16,7 @@ export default function Login() {
   const { signIn, user, role } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useI18n();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -31,7 +33,7 @@ export default function Login() {
     const { error } = await signIn(email, password);
     setLoading(false);
     if (error) {
-      toast({ title: "Errore di accesso", description: error.message, variant: "destructive" });
+      toast({ title: t("Errore di accesso"), description: error.message, variant: "destructive" });
     }
   };
 
@@ -40,7 +42,7 @@ export default function Login() {
       <Card className="w-full max-w-sm animate-fade-in">
         <CardHeader className="text-center pb-2">
           <img src={logoFull} alt="Kannon" className="mx-auto h-10 w-auto mb-4" />
-          <p className="text-sm text-muted-foreground mt-1">Accedi alla dashboard</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("Accedi alla dashboard")}</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -53,7 +55,7 @@ export default function Login() {
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="••••••••" />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Accesso..." : "Accedi"}
+              {loading ? t("Accesso...") : t("Accedi")}
             </Button>
           </form>
         </CardContent>

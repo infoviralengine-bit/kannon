@@ -22,8 +22,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Plus, Trash2, RefreshCw, Loader2, ChevronDown, ChevronRight, User, Video, Eye } from "lucide-react";
 import { useScrapingStatus, useStartScraping, useImportDataset } from "@/hooks/useVideoAnalytics";
 import { ScrapingStatusBanner } from "@/components/scraping/ScrapingStatusBanner";
+import { useI18n, t } from "@/i18n";
 
 export default function AccountPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { role, user } = useAuth();
@@ -52,10 +54,10 @@ export default function AccountPage() {
     startScraping.mutate(scoped, {
       onSuccess: () =>
         toast({
-          title: scoped ? "Scraping campagna avviato" : "Scraping avviato",
-          description: "Stato in tempo reale nel banner in alto.",
+          title: scoped ? t("Scraping campagna avviato") : t("Scraping avviato"),
+          description: t("Stato in tempo reale nel banner in alto."),
         }),
-      onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+      onError: (e: any) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
     });
   }
 
@@ -64,8 +66,8 @@ export default function AccountPage() {
     setShowDatasetDialog(false);
     importDataset.mutate(datasetIdInput.trim(), {
       onSuccess: () =>
-        toast({ title: "Import avviato", description: "Stato in tempo reale nel banner in alto." }),
-      onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+        toast({ title: t("Import avviato"), description: t("Stato in tempo reale nel banner in alto.") }),
+      onError: (e: any) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
     });
     setDatasetIdInput("");
   }
@@ -82,8 +84,8 @@ export default function AccountPage() {
   const createMutation = useMutation({
     mutationFn: async () => {
       const normalized = cleanUsername(username).trim().toLowerCase();
-      if (!normalized) throw new Error("Username obbligatorio");
-      if (!campaignId) throw new Error("La campagna è obbligatoria");
+      if (!normalized) throw new Error(t("Username obbligatorio"));
+      if (!campaignId) throw new Error(t("La campagna è obbligatoria"));
       const payload: Record<string, unknown> = {
         username: normalized,
         account_type: accountType,
@@ -98,11 +100,11 @@ export default function AccountPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tiktok_accounts"] });
-      toast({ title: "Account creato con successo" });
+      toast({ title: t("Account creato con successo") });
       setOpen(false);
       resetForm();
     },
-    onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 
   const deleteMutation = useMutation({
@@ -113,10 +115,10 @@ export default function AccountPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tiktok_accounts"] });
-      toast({ title: "Account eliminato" });
+      toast({ title: t("Account eliminato") });
       setDeleteTarget(null);
     },
-    onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 
   const resetForm = () => {
@@ -145,7 +147,7 @@ export default function AccountPage() {
   const sortedCreatorGroups = Array.from(accountsByCreator.entries())
     .map(([cid, accs]) => ({
       creatorId: cid,
-      creatorName: cid === "_unassigned" ? "Non assegnato" : (creators.find((c) => c.id === cid)?.name ?? "Sconosciuto"),
+      creatorName: cid === "_unassigned" ? t("Non assegnato") : (creators.find((c) => c.id === cid)?.name ?? t("Sconosciuto")),
       accounts: accs,
       totalViews: accs.reduce((s, a) => s + getAccountTotalViews(a.id), 0),
       totalVideosToday: accs.reduce((s, a) => s + getCreatorVideosToday(a.id), 0),
@@ -175,30 +177,30 @@ export default function AccountPage() {
     <div className="space-y-6">
       {!isOperator && <ScrapingStatusBanner />}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Account</h1>
+        <h1 className="text-2xl font-bold">{t("Account")}</h1>
         <div className="flex items-center gap-2">
           {role === "admin" && (
             <>
               <Button variant="outline" onClick={handleScrapeNow} disabled={isRunning}>
                 {isRunning ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                {isRunning ? "Scraping..." : "🔄 Scrapa Ora"}
+                {isRunning ? t("Scraping...") : `🔄 ${t("Scrapa Ora")}`}
               </Button>
               <Dialog open={showDatasetDialog} onOpenChange={setShowDatasetDialog}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" disabled={isRunning}>📥 Importa Dataset</Button>
+                  <Button variant="outline" disabled={isRunning}>📥 {t("Importa Dataset")}</Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Importa da Dataset Apify</DialogTitle>
+                    <DialogTitle>{t("Importa da Dataset Apify")}</DialogTitle>
                     <DialogDescription>
-                      Incolla il Dataset ID di una run completata manualmente su Apify. Lo trovi nella pagina della run sotto "Default dataset".
+                      {t(`Incolla il Dataset ID di una run completata manualmente su Apify. Lo trovi nella pagina della run sotto "Default dataset".`)}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <Label>Dataset ID</Label>
+                      <Label>{t("Dataset ID")}</Label>
                       <Input
-                        placeholder="es. abc123XYZ..."
+                        placeholder={t("es. abc123XYZ...")}
                         value={datasetIdInput}
                         onChange={(e) => setDatasetIdInput(e.target.value)}
                       />
@@ -206,7 +208,7 @@ export default function AccountPage() {
                   </div>
                   <DialogFooter>
                     <Button onClick={handleImportDataset} disabled={!datasetIdInput.trim()}>
-                      Importa
+                      {t("Importa")}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -215,26 +217,26 @@ export default function AccountPage() {
           )}
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" /> Nuovo Account</Button>
+              <Button><Plus className="mr-2 h-4 w-4" /> {t("Nuovo Account")}</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Nuovo Account</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{t("Nuovo Account")}</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label>Username TikTok</Label>
+                  <Label>{t("Username TikTok")}</Label>
                   <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="@username" />
                   {duplicateAccount && (
                     <p className="mt-1 text-xs text-destructive">
-                      Attenzione: esiste già un account con questo username.
+                      {t("Attenzione: esiste già un account con questo username.")}
                     </p>
                   )}
                 </div>
                 {accountType === "creator" && (
                   <>
                     <div>
-                      <Label>Creator associato</Label>
+                      <Label>{t("Creator associato")}</Label>
                       <Select value={creatorId} onValueChange={setCreatorId}>
-                        <SelectTrigger><SelectValue placeholder="Seleziona creator" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder={t("Seleziona creator")} /></SelectTrigger>
                         <SelectContent>
                           {creators.filter((c) => c.status === "active").sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
                             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -243,9 +245,9 @@ export default function AccountPage() {
                       </Select>
                     </div>
                     <div>
-                      <Label>Campagna *</Label>
+                      <Label>{t("Campagna *")}</Label>
                       <Select value={campaignId} onValueChange={setCampaignId}>
-                        <SelectTrigger><SelectValue placeholder="Seleziona campagna" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder={t("Seleziona campagna")} /></SelectTrigger>
                         <SelectContent>
                           {activeCampaigns.map((c) => (
                             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -260,7 +262,7 @@ export default function AccountPage() {
                   disabled={!username || !creatorId || !campaignId}
                   onClick={() => createMutation.mutate()}
                 >
-                  Crea Account
+                  {t("Crea Account")}
                 </Button>
               </div>
             </DialogContent>
@@ -271,9 +273,9 @@ export default function AccountPage() {
       <div className="space-y-4">
         <div className="flex items-center gap-4 flex-wrap">
           <Select value={campaignFilter} onValueChange={setCampaignFilter}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="Filtra campagna" /></SelectTrigger>
+            <SelectTrigger className="w-48"><SelectValue placeholder={t("Filtra campagna")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tutte le campagne</SelectItem>
+              <SelectItem value="all">{t("Tutte le campagne")}</SelectItem>
               {campaigns.map((c) => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}
@@ -282,7 +284,7 @@ export default function AccountPage() {
         </div>
 
         {filteredCreatorGroups.length === 0 ? (
-          <Card><CardContent className="py-12 text-center text-muted-foreground">Nessun account creator trovato.</CardContent></Card>
+          <Card><CardContent className="py-12 text-center text-muted-foreground">{t("Nessun account creator trovato.")}</CardContent></Card>
         ) : (
           <div className="space-y-3">
             {filteredCreatorGroups.map((group) => (
@@ -304,15 +306,15 @@ export default function AccountPage() {
       <Dialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Elimina Account</DialogTitle>
+            <DialogTitle>{t("Elimina Account")}</DialogTitle>
             <DialogDescription>
-              Sei sicuro di voler eliminare <strong>@{cleanUsername(deleteTarget?.username)}</strong>? Verranno eliminati anche tutti i video associati. Questa azione è irreversibile.
+              {t("Sei sicuro di voler eliminare")} <strong>@{cleanUsername(deleteTarget?.username)}</strong>? {t("Verranno eliminati anche tutti i video associati. Questa azione è irreversibile.")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Annulla</Button>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>{t("Annulla")}</Button>
             <Button variant="destructive" onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)} disabled={deleteMutation.isPending}>
-              {deleteMutation.isPending ? "Eliminazione..." : "Elimina"}
+              {deleteMutation.isPending ? t("Eliminazione...") : t("Elimina")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -338,6 +340,7 @@ function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigat
   onDelete: (target: { id: string; username: string }) => void;
   readOnly?: boolean;
 }) {
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(true);
 
   return (
@@ -352,10 +355,10 @@ function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigat
                   <User className="h-4 w-4 text-primary" />
                   <CardTitle className="text-base">{group.creatorName}</CardTitle>
                 </div>
-                <Badge variant="secondary" className="text-xs">{group.accounts.length} account</Badge>
+                <Badge variant="secondary" className="text-xs">{group.accounts.length} {t("account")}</Badge>
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1"><Video className="h-3.5 w-3.5" /> {group.totalVideosToday} oggi</span>
+                <span className="flex items-center gap-1"><Video className="h-3.5 w-3.5" /> {group.totalVideosToday} {t("oggi")}</span>
                 <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> {formatViews(group.totalViews)}</span>
               </div>
             </div>
@@ -366,10 +369,10 @@ function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigat
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-6">Username</TableHead>
-                  <TableHead>Campagna</TableHead>
-                  <TableHead className="text-right">Video oggi</TableHead>
-                  <TableHead className="text-right">Views totali</TableHead>
+                  <TableHead className="pl-6">{t("Username")}</TableHead>
+                  <TableHead>{t("Campagna")}</TableHead>
+                  <TableHead className="text-right">{t("Video oggi")}</TableHead>
+                  <TableHead className="text-right">{t("Views totali")}</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -384,7 +387,7 @@ function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigat
                       <TableCell className="text-right">{videosToday}</TableCell>
                       <TableCell className="text-right">{formatViews(getTotalViews(a.id))}</TableCell>
                       <TableCell className="text-right space-x-1">
-                        <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>Apri</Button>
+                        <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.id}`)}>{t("Apri")}</Button>
                         <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => onDelete({ id: a.id, username: a.username })}>
                           <Trash2 className="h-4 w-4" />
                         </Button>

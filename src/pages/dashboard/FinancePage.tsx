@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, Pencil, Trash2, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
+import { useI18n } from "@/i18n";
 import { AddEntryDialog } from "@/components/finance/AddEntryDialog";
 import { CashEditDialog } from "@/components/finance/CashEditDialog";
 import { MovementsTable } from "@/components/finance/MovementsTable";
@@ -60,6 +61,7 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "
 };
 
 export default function FinancePage() {
+  const { t } = useI18n();
   const { role } = useAuth();
   const [period, setPeriod] = useState<FinancePeriod>("month");
   const { data, isLoading, error } = useFinanceData(period);
@@ -89,8 +91,8 @@ export default function FinancePage() {
     return (
       <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Pagamenti da fare</h1>
-          <p className="text-muted-foreground">Uscite verso creator e fornitori</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("Pagamenti da fare")}</h1>
+          <p className="text-muted-foreground">{t("Uscite verso creator e fornitori")}</p>
         </div>
         <PayableTab />
       </div>
@@ -101,8 +103,8 @@ export default function FinancePage() {
     <div className="p-6 space-y-6">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Finance</h1>
-          <p className="text-muted-foreground">Panoramica finanziaria</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("Finance")}</h1>
+          <p className="text-muted-foreground">{t("Panoramica finanziaria")}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="inline-flex rounded-md border bg-card p-1">
@@ -112,7 +114,7 @@ export default function FinancePage() {
                 onClick={() => setPeriod(p)}
                 className={`px-3 py-1.5 text-sm rounded ${period === p ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
               >
-                {PERIOD_LABELS[p]}
+                {t(PERIOD_LABELS[p])}
               </button>
             ))}
           </div>
@@ -123,7 +125,7 @@ export default function FinancePage() {
       {error && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Errore</AlertTitle>
+          <AlertTitle>{t("Errore")}</AlertTitle>
           <AlertDescription>{(error as Error).message}</AlertDescription>
         </Alert>
       )}
@@ -142,26 +144,26 @@ export default function FinancePage() {
               className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-1.5 hover:bg-muted"
             >
               <ArrowDownCircle className="h-3.5 w-3.5 text-emerald-400" />
-              Pagamenti da ricevere
+              {t("Pagamenti da ricevere")}
             </button>
             <button
               onClick={() => handleTabChange("payable")}
               className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-1.5 hover:bg-muted"
             >
               <ArrowUpCircle className="h-3.5 w-3.5 text-amber-400" />
-              Pagamenti da fare
+              {t("Pagamenti da fare")}
             </button>
           </div>
 
           <TabsList className="flex-wrap h-auto">
-            <TabsTrigger value="cash">Cash</TabsTrigger>
-            <TabsTrigger value="receivable">Da Ricevere</TabsTrigger>
-            <TabsTrigger value="payable">Da Pagare</TabsTrigger>
-            <TabsTrigger value="movements">Movimenti</TabsTrigger>
-            <TabsTrigger value="revenue">Ricavi</TabsTrigger>
-            <TabsTrigger value="costs">Costi</TabsTrigger>
-            <TabsTrigger value="margins">Margini</TabsTrigger>
-            <TabsTrigger value="forecast">Forecast</TabsTrigger>
+            <TabsTrigger value="cash">{t("Cash")}</TabsTrigger>
+            <TabsTrigger value="receivable">{t("Da Ricevere")}</TabsTrigger>
+            <TabsTrigger value="payable">{t("Da Pagare")}</TabsTrigger>
+            <TabsTrigger value="movements">{t("Movimenti")}</TabsTrigger>
+            <TabsTrigger value="revenue">{t("Ricavi")}</TabsTrigger>
+            <TabsTrigger value="costs">{t("Costi")}</TabsTrigger>
+            <TabsTrigger value="margins">{t("Margini")}</TabsTrigger>
+            <TabsTrigger value="forecast">{t("Forecast")}</TabsTrigger>
           </TabsList>
 
           {/* RECEIVABLE */}
@@ -183,37 +185,37 @@ export default function FinancePage() {
           <TabsContent value="cash" className="space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <KpiCard
-                label="Cash in bank"
-                value={data.cash.in_bank == null ? <span className="text-base text-muted-foreground">Non impostato</span> : formatCurrency(data.cash.in_bank)}
-                hint={data.cash.updated_at ? `Aggiornato ${fmtDate(data.cash.updated_at)}` : undefined}
+                label={t("Cash in bank")}
+                value={data.cash.in_bank == null ? <span className="text-base text-muted-foreground">{t("Non impostato")}</span> : formatCurrency(data.cash.in_bank)}
+                hint={data.cash.updated_at ? t("Aggiornato {when}", { when: fmtDate(data.cash.updated_at) }) : undefined}
                 action={<CashEditDialog current={data.cash.in_bank} trigger={<Button variant="ghost" size="icon" className="h-7 w-7"><Pencil className="h-3.5 w-3.5" /></Button>} />}
               />
-              <KpiCard label="Burn mensile" value={formatCurrency(data.cash.burn_monthly || 0)} hint="Costi del mese corrente" />
+              <KpiCard label={t("Burn mensile")} value={formatCurrency(data.cash.burn_monthly || 0)} hint={t("Costi del mese corrente")} />
               <KpiCard
-                label="Runway"
-                value={data.cash.runway_months == null ? "—" : `${data.cash.runway_months.toFixed(1)} mesi`}
-                hint="Cash / burn medio 3m"
+                label={t("Runway")}
+                value={data.cash.runway_months == null ? "—" : t("{n} mesi", { n: data.cash.runway_months.toFixed(1) })}
+                hint={t("Cash / burn medio 3m")}
                 accent={data.cash.runway_months != null && data.cash.runway_months < 3 ? "negative" : undefined}
               />
-              <KpiCard label="Cash atteso" value={formatCurrency(data.cash.cash_expected || 0)} hint="Fatture non pagate" />
+              <KpiCard label={t("Cash atteso")} value={formatCurrency(data.cash.cash_expected || 0)} hint={t("Fatture non pagate")} />
             </div>
 
             <Card>
-              <CardHeader><CardTitle>Flussi previsti</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t("Flussi previsti")}</CardTitle></CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader><TableRow>
-                    <TableHead>Tipo</TableHead><TableHead>Descrizione</TableHead><TableHead className="text-right">Importo</TableHead><TableHead>Data</TableHead><TableHead>Status</TableHead><TableHead></TableHead>
+                    <TableHead>{t("Tipo")}</TableHead><TableHead>{t("Descrizione")}</TableHead><TableHead className="text-right">{t("Importo")}</TableHead><TableHead>{t("Data")}</TableHead><TableHead>{t("Status")}</TableHead><TableHead></TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
-                    {data.flows.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nessun flusso previsto</TableCell></TableRow>}
+                    {data.flows.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">{t("Nessun flusso previsto")}</TableCell></TableRow>}
                     {data.flows.map((f: any) => (
                       <TableRow key={f.id}>
-                        <TableCell><Badge variant={f.type.startsWith("revenue") || f.type === "invoice_out" ? "default" : "secondary"}>{f.type === "revenue" || f.type === "invoice_out" ? "Entrata" : "Uscita"}</Badge></TableCell>
+                        <TableCell><Badge variant={f.type.startsWith("revenue") || f.type === "invoice_out" ? "default" : "secondary"}>{f.type === "revenue" || f.type === "invoice_out" ? t("Entrata") : t("Uscita")}</Badge></TableCell>
                         <TableCell>{f.description || "—"}</TableCell>
                         <TableCell className="text-right font-mono">{formatCurrency(Number(f.amount))}</TableCell>
                         <TableCell>{fmtDate(f.date)}</TableCell>
-                        <TableCell><Badge variant={STATUS_VARIANT[f.status]}>{STATUS_LABEL[f.status]}</Badge></TableCell>
+                        <TableCell><Badge variant={STATUS_VARIANT[f.status]}>{t(STATUS_LABEL[f.status])}</Badge></TableCell>
                         <TableCell><Button variant="ghost" size="icon" onClick={() => deleteEntry.mutate(f.id)}><Trash2 className="h-3.5 w-3.5" /></Button></TableCell>
                       </TableRow>
                     ))}
@@ -223,23 +225,23 @@ export default function FinancePage() {
             </Card>
 
             <Card>
-              <CardHeader><CardTitle>Fatture</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t("Fatture")}</CardTitle></CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader><TableRow>
-                    <TableHead>N. fattura</TableHead><TableHead>Brand</TableHead><TableHead>Tipo</TableHead><TableHead className="text-right">Importo</TableHead><TableHead>Emissione</TableHead><TableHead>Scadenza</TableHead><TableHead>Status</TableHead>
+                    <TableHead>{t("N. fattura")}</TableHead><TableHead>{t("Brand")}</TableHead><TableHead>{t("Tipo")}</TableHead><TableHead className="text-right">{t("Importo")}</TableHead><TableHead>{t("Emissione")}</TableHead><TableHead>{t("Scadenza")}</TableHead><TableHead>{t("Status")}</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
-                    {data.invoices.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Nessuna fattura</TableCell></TableRow>}
+                    {data.invoices.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">{t("Nessuna fattura")}</TableCell></TableRow>}
                     {data.invoices.map((inv: any) => (
                       <TableRow key={inv.id}>
                         <TableCell className="font-mono">{inv.invoice_number || "—"}</TableCell>
                         <TableCell>{inv.brand_name || "—"}</TableCell>
-                        <TableCell><Badge variant="outline">{inv.type === "invoice_out" ? "Emessa" : "Ricevuta"}</Badge></TableCell>
+                        <TableCell><Badge variant="outline">{inv.type === "invoice_out" ? t("Emessa") : t("Ricevuta")}</Badge></TableCell>
                         <TableCell className="text-right font-mono">{formatCurrency(Number(inv.amount))}</TableCell>
                         <TableCell>{fmtDate(inv.date)}</TableCell>
                         <TableCell>{fmtDate(inv.due_date)}</TableCell>
-                        <TableCell><Badge variant={STATUS_VARIANT[inv.status]}>{STATUS_LABEL[inv.status]}</Badge></TableCell>
+                        <TableCell><Badge variant={STATUS_VARIANT[inv.status]}>{t(STATUS_LABEL[inv.status])}</Badge></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -251,15 +253,15 @@ export default function FinancePage() {
           {/* REVENUE */}
           <TabsContent value="revenue" className="space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <KpiCard label="Revenue MTD" value={formatCurrency(data.revenue.mtd || 0)} />
+              <KpiCard label={t("Revenue MTD")} value={formatCurrency(data.revenue.mtd || 0)} />
               <KpiCard
-                label="MoM"
+                label={t("MoM")}
                 value={data.revenue.mom_pct == null ? "—" : `${data.revenue.mom_pct > 0 ? "+" : ""}${data.revenue.mom_pct.toFixed(1)}%`}
                 accent={data.revenue.mom_pct != null ? (data.revenue.mom_pct >= 0 ? "positive" : "negative") : undefined}
-                hint={`Prec: ${formatCurrency(data.revenue.prev_month || 0)}`}
+                hint={t("Prec: {v}", { v: formatCurrency(data.revenue.prev_month || 0) })}
               />
               <KpiCard
-                label="Top brand"
+                label={t("Top brand")}
                 value={<div className="text-sm space-y-0.5">
                   {(data.revenue.top_brands || []).slice(0, 3).map((b) => (
                     <div key={b.brand} className="flex justify-between gap-3"><span className="truncate">{b.brand}</span><span className="font-mono">{formatCurrency(Number(b.revenue))}</span></div>
@@ -267,11 +269,11 @@ export default function FinancePage() {
                   {(!data.revenue.top_brands || data.revenue.top_brands.length === 0) && <span className="text-muted-foreground">—</span>}
                 </div>}
               />
-              <KpiCard label="Pipeline (weighted)" value={formatCurrency((data.revenue.pipeline || 0) * 0.5)} hint={`Totale: ${formatCurrency(data.revenue.pipeline || 0)}`} />
+              <KpiCard label={t("Pipeline (weighted)")} value={formatCurrency((data.revenue.pipeline || 0) * 0.5)} hint={t("Totale: {v}", { v: formatCurrency(data.revenue.pipeline || 0) })} />
             </div>
 
             <Card>
-              <CardHeader><CardTitle>Ricavi mensili (ultimi 6 mesi)</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t("Ricavi mensili (ultimi 6 mesi)")}</CardTitle></CardHeader>
               <CardContent style={{ height: 280 }}>
                 <ResponsiveContainer>
                   <BarChart data={data.revenue.monthly.map((m) => ({ ...m, label: fmtMonth(m.month) }))}>
@@ -286,14 +288,14 @@ export default function FinancePage() {
             </Card>
 
             <Card>
-              <CardHeader><CardTitle>Ricavi per campagna</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t("Ricavi per campagna")}</CardTitle></CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader><TableRow>
-                    <TableHead>Campagna</TableHead><TableHead>Brand</TableHead><TableHead className="text-right">Fisso</TableHead><TableHead className="text-right">Variabile</TableHead><TableHead className="text-right">Totale</TableHead><TableHead>Status</TableHead>
+                    <TableHead>{t("Campagna")}</TableHead><TableHead>{t("Brand")}</TableHead><TableHead className="text-right">{t("Fisso")}</TableHead><TableHead className="text-right">{t("Variabile")}</TableHead><TableHead className="text-right">{t("Totale")}</TableHead><TableHead>{t("Status")}</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
-                    {data.revenue.by_campaign.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nessun dato</TableCell></TableRow>}
+                    {data.revenue.by_campaign.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">{t("Nessun dato")}</TableCell></TableRow>}
                     {data.revenue.by_campaign.map((r: any) => (
                       <TableRow key={r.campaign_id}>
                         <TableCell>{r.campaign}</TableCell>
@@ -303,7 +305,7 @@ export default function FinancePage() {
                         <TableCell className="text-right font-mono font-semibold">{formatCurrency(Number(r.revenue_total))}</TableCell>
                         <TableCell>
                           <Badge variant={r.all_paid ? "default" : r.any_paid ? "secondary" : "outline"}>
-                            {r.all_paid ? "Pagato" : r.any_paid ? "Parziale" : "Da pagare"}
+                            {r.all_paid ? t("Pagato") : r.any_paid ? t("Parziale") : t("Da pagare")}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -320,13 +322,13 @@ export default function FinancePage() {
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
               {["creator_pay", "operator_pay", "tool", "software", "other"].map((cat) => {
                 const found = data.costs.by_category.find((c) => c.category === cat);
-                const label = cat === "creator_pay" ? "Creator" : cat === "operator_pay" ? "Operator" : cat === "tool" ? "Tool" : cat === "software" ? "Software" : "Altri";
-                return <KpiCard key={cat} label={`Costo ${label}`} value={formatCurrency(Number(found?.amount ?? 0))} />;
+                const label = cat === "creator_pay" ? t("Creator") : cat === "operator_pay" ? t("Operator") : cat === "tool" ? t("Tool") : cat === "software" ? t("Software") : t("Altri");
+                return <KpiCard key={cat} label={t("Costo {label}", { label })} value={formatCurrency(Number(found?.amount ?? 0))} />;
               })}
             </div>
 
             <Card>
-              <CardHeader><CardTitle>Trend costi mensili</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t("Trend costi mensili")}</CardTitle></CardHeader>
               <CardContent style={{ height: 280 }}>
                 <ResponsiveContainer>
                   <LineChart data={data.costs.monthly.map((m) => ({ ...m, label: fmtMonth(m.month) }))}>
@@ -341,12 +343,12 @@ export default function FinancePage() {
             </Card>
 
             <Card>
-              <CardHeader><CardTitle>Costi per categoria</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t("Costi per categoria")}</CardTitle></CardHeader>
               <CardContent>
                 <Table>
-                  <TableHeader><TableRow><TableHead>Categoria</TableHead><TableHead className="text-right">Importo</TableHead></TableRow></TableHeader>
+                  <TableHeader><TableRow><TableHead>{t("Categoria")}</TableHead><TableHead className="text-right">{t("Importo")}</TableHead></TableRow></TableHeader>
                   <TableBody>
-                    {data.costs.by_category.length === 0 && <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground py-8">Nessun costo</TableCell></TableRow>}
+                    {data.costs.by_category.length === 0 && <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground py-8">{t("Nessun costo")}</TableCell></TableRow>}
                     {data.costs.by_category.map((c) => (
                       <TableRow key={c.category}><TableCell className="capitalize">{c.category.replace("_", " ")}</TableCell><TableCell className="text-right font-mono">{formatCurrency(Number(c.amount))}</TableCell></TableRow>
                     ))}
@@ -359,20 +361,20 @@ export default function FinancePage() {
           {/* MARGINS */}
           <TabsContent value="margins" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <KpiCard label="Margine lordo" value={formatCurrency(data.margins.gross || 0)} accent={data.margins.gross >= 0 ? "positive" : "negative"} />
-              <KpiCard label="Margine %" value={`${data.margins.gross_pct.toFixed(1)}%`} accent={data.margins.gross_pct >= 0 ? "positive" : "negative"} />
-              <KpiCard label="P&L" value={formatCurrency(data.margins.pl || 0)} hint={`Ricavi ${formatCurrency(data.margins.total_revenue)} − Costi ${formatCurrency(data.margins.total_costs)}`} accent={data.margins.pl >= 0 ? "positive" : "negative"} />
+              <KpiCard label={t("Margine lordo")} value={formatCurrency(data.margins.gross || 0)} accent={data.margins.gross >= 0 ? "positive" : "negative"} />
+              <KpiCard label={t("Margine %")} value={`${data.margins.gross_pct.toFixed(1)}%`} accent={data.margins.gross_pct >= 0 ? "positive" : "negative"} />
+              <KpiCard label={t("P&L")} value={formatCurrency(data.margins.pl || 0)} hint={t("Ricavi {rev} − Costi {cost}", { rev: formatCurrency(data.margins.total_revenue), cost: formatCurrency(data.margins.total_costs) })} accent={data.margins.pl >= 0 ? "positive" : "negative"} />
             </div>
 
             <Card>
-              <CardHeader><CardTitle>Margine per campagna</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t("Margine per campagna")}</CardTitle></CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader><TableRow>
-                    <TableHead>Campagna</TableHead><TableHead className="text-right">Revenue</TableHead><TableHead className="text-right">Costo creator</TableHead><TableHead className="text-right">Costo operator</TableHead><TableHead className="text-right">Margine</TableHead><TableHead className="text-right">%</TableHead>
+                    <TableHead>{t("Campagna")}</TableHead><TableHead className="text-right">{t("Revenue")}</TableHead><TableHead className="text-right">{t("Costo creator")}</TableHead><TableHead className="text-right">{t("Costo operator")}</TableHead><TableHead className="text-right">{t("Margine")}</TableHead><TableHead className="text-right">%</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
-                    {data.margins.by_campaign.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nessun dato</TableCell></TableRow>}
+                    {data.margins.by_campaign.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">{t("Nessun dato")}</TableCell></TableRow>}
                     {data.margins.by_campaign.map((r: any) => {
                       const neg = Number(r.margin) < 0;
                       return (
@@ -392,14 +394,14 @@ export default function FinancePage() {
             </Card>
 
             <Card>
-              <CardHeader><CardTitle>Margine per creator</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t("Margine per creator")}</CardTitle></CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader><TableRow>
-                    <TableHead>Creator</TableHead><TableHead className="text-right">Costo</TableHead><TableHead className="text-right">Revenue generato</TableHead><TableHead className="text-right">Margine</TableHead><TableHead className="text-right">%</TableHead>
+                    <TableHead>{t("Creator")}</TableHead><TableHead className="text-right">{t("Costo")}</TableHead><TableHead className="text-right">{t("Revenue generato")}</TableHead><TableHead className="text-right">{t("Margine")}</TableHead><TableHead className="text-right">%</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
-                    {data.margins.by_creator.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nessun dato</TableCell></TableRow>}
+                    {data.margins.by_creator.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">{t("Nessun dato")}</TableCell></TableRow>}
                     {data.margins.by_creator.map((r: any) => {
                       const neg = Number(r.margin) < 0;
                       return (
@@ -423,17 +425,17 @@ export default function FinancePage() {
             {data.cash.runway_months != null && data.cash.runway_months < 3 && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Runway critico</AlertTitle>
-                <AlertDescription>Il runway nello scenario pessimistico è inferiore a 3 mesi ({data.cash.runway_months.toFixed(1)} mesi).</AlertDescription>
+                <AlertTitle>{t("Runway critico")}</AlertTitle>
+                <AlertDescription>{t("Il runway nello scenario pessimistico è inferiore a 3 mesi ({n} mesi).", { n: data.cash.runway_months.toFixed(1) })}</AlertDescription>
               </Alert>
             )}
 
             <Card>
-              <CardHeader><CardTitle>Forecast 90 giorni — 3 scenari</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t("Forecast 90 giorni, 3 scenari")}</CardTitle></CardHeader>
               <CardContent style={{ height: 360 }}>
                 {data.forecast.length === 0 ? (
                   <div className="h-full flex items-center justify-center text-muted-foreground">
-                    Dati insufficienti per il forecast. Aggiungi entrate/uscite con date future.
+                    {t("Dati insufficienti per il forecast. Aggiungi entrate/uscite con date future.")}
                   </div>
                 ) : (
                   <ResponsiveContainer>
@@ -458,9 +460,9 @@ export default function FinancePage() {
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><TrendingDown className="h-4 w-4 text-destructive" />Pessimistico</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(Number(data.forecast.at(-1)?.pessimistic ?? 0))}</div><div className="text-xs text-muted-foreground">solo revenue confermata</div></CardContent></Card>
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Wallet className="h-4 w-4 text-primary" />Base</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(Number(data.forecast.at(-1)?.base ?? 0))}</div><div className="text-xs text-muted-foreground">+ pipeline weighted (50%)</div></CardContent></Card>
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><TrendingUp className="h-4 w-4 text-emerald-400" />Ottimistico</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(Number(data.forecast.at(-1)?.optimistic ?? 0))}</div><div className="text-xs text-muted-foreground">+ full pipeline</div></CardContent></Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><TrendingDown className="h-4 w-4 text-destructive" />{t("Pessimistico")}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(Number(data.forecast.at(-1)?.pessimistic ?? 0))}</div><div className="text-xs text-muted-foreground">{t("solo revenue confermata")}</div></CardContent></Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Wallet className="h-4 w-4 text-primary" />{t("Base")}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(Number(data.forecast.at(-1)?.base ?? 0))}</div><div className="text-xs text-muted-foreground">{t("+ pipeline weighted (50%)")}</div></CardContent></Card>
+              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><TrendingUp className="h-4 w-4 text-emerald-400" />{t("Ottimistico")}</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{formatCurrency(Number(data.forecast.at(-1)?.optimistic ?? 0))}</div><div className="text-xs text-muted-foreground">{t("+ full pipeline")}</div></CardContent></Card>
             </div>
           </TabsContent>
         </Tabs>

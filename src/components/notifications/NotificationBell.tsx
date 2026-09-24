@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useI18n, t } from "@/i18n";
 
 function iconFor(n: Notification) {
   switch (n.type) {
@@ -25,15 +26,16 @@ function iconFor(n: Notification) {
 function relative(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "ora";
-  if (m < 60) return `${m}m`;
+  if (m < 1) return t("ora");
+  if (m < 60) return t("{m}m", { m });
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
+  if (h < 24) return t("{h}h", { h });
   const d = Math.floor(h / 24);
-  return `${d}g`;
+  return t("{d}g", { d });
 }
 
 export function NotificationBell() {
+  const { t } = useI18n();
   const { role } = useAuth();
   const eligible = role === "admin" || role === "team" || role === "campaign_manager";
   const navigate = useNavigate();
@@ -49,7 +51,7 @@ export function NotificationBell() {
         <button
           type="button"
           className="relative flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted/40 text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Notifiche"
+          aria-label={t("Notifiche")}
         >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
@@ -61,7 +63,7 @@ export function NotificationBell() {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-          <span className="text-sm font-medium">Notifiche</span>
+          <span className="text-sm font-medium">{t("Notifiche")}</span>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
@@ -69,14 +71,14 @@ export function NotificationBell() {
               className="h-6 px-2 text-xs"
               onClick={() => markAllAsRead.mutate()}
             >
-              Segna lette
+              {t("Segna lette")}
             </Button>
           )}
         </div>
         <ScrollArea className="max-h-80">
           {items.length === 0 ? (
             <div className="px-3 py-6 text-center text-xs text-muted-foreground">
-              Nessuna notifica
+              {t("Nessuna notifica")}
             </div>
           ) : (
             <ul className="divide-y divide-border">
