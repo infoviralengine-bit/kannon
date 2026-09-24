@@ -113,12 +113,12 @@ export function CallNotesSection({ companyId, activities, formOpen, setFormOpen,
               {formatDateTimeIt(c.occurred_at)}{authorName(c.author_id) ? ` · ${authorName(c.author_id)}` : ""}
             </span>
           </div>
-          {c.outcome && <p className="mt-1 text-xs"><span className="font-medium text-accent">{c.outcome}</span></p>}
+          {c.outcome && <p className="mt-1 text-xs"><span className="font-medium text-accent">{t(c.outcome)}</span></p>}
           <dl className="mt-2 grid gap-2 text-xs sm:grid-cols-2">
-            {c.participants && <Field label="Partecipanti" value={c.participants} />}
-            {c.full_text && <Field label="Punti discussi" value={c.full_text} />}
-            {c.objections && <Field label="Obiezioni" value={c.objections} />}
-            {c.next_steps && <Field label="Prossimi passi" value={c.next_steps} />}
+            {c.participants && <Field label={t("Partecipanti")} value={c.participants} />}
+            {c.full_text && <Field label={t("Punti discussi")} value={c.full_text} />}
+            {c.objections && <Field label={t("Obiezioni")} value={c.objections} />}
+            {c.next_steps && <Field label={t("Prossimi passi")} value={c.next_steps} />}
           </dl>
         </div>
       ))}

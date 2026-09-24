@@ -318,6 +318,9 @@ export const clients: Record<string, string> = {
   "Esito: {value}": "Outcome: {value}",
   "Obiezioni: {value}": "Objections: {value}",
   "Prossimi passi: {value}": "Next steps: {value}",
+  "caldo": "hot",
+  "tiepido": "warm",
+  "freddo": "cold",
 
   // ActivityTab
   "Registra attività": "Log activity",

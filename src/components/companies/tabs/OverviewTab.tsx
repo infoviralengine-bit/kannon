@@ -68,12 +68,12 @@ export function OverviewTab({ company, contacts, ownerName }: Props) {
           <Row label={t("Settore")} value={company.sector} />
           <Row label={t("Paese")} value={company.country} />
           <Row label={t("Fase di crescita")} value={
-            company.growth_stage ? GROWTH_STAGE_LABEL[company.growth_stage as GrowthStage] : null
+            company.growth_stage ? t(GROWTH_STAGE_LABEL[company.growth_stage as GrowthStage]) : null
           } />
           <Row label={t("Canale di arrivo")} value={company.source_channel} />
           <Row label={t("Responsabile")} value={ownerName} />
           <Row label={t("Temperatura")} value={
-            company.temperature && company.status !== "cliente" ? TEMPERATURE_LABEL[company.temperature as Temperature] : null
+            company.temperature && company.status !== "cliente" ? t(TEMPERATURE_LABEL[company.temperature as Temperature]) : null
           } />
           <Row label={t("Ultimo contatto")} value={
             company.last_contact_at ? formatDateIt(company.last_contact_at) : null
@@ -92,7 +92,7 @@ export function OverviewTab({ company, contacts, ownerName }: Props) {
       <Card>
         <CardHeader><CardTitle className="text-base">{t("Accordo")}</CardTitle></CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <Row label={t("Tipo")} value={company.deal_type ? DEAL_TYPE_LABEL[company.deal_type as DealType] : null} />
+          <Row label={t("Tipo")} value={company.deal_type ? t(DEAL_TYPE_LABEL[company.deal_type as DealType]) : null} />
           {company.deal_fixed != null && <Row label={t("Fisso mensile")} value={formatCurrency(Number(company.deal_fixed))} />}
           {company.deal_cpm != null && <Row label={t("CPM")} value={formatCurrency(Number(company.deal_cpm))} />}
           {company.deal_estimated_views != null && (
