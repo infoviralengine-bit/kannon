@@ -21,7 +21,7 @@ import { DocumentsTab } from "@/components/companies/tabs/DocumentsTab";
 import { OnboardingTab } from "@/components/companies/tabs/OnboardingTab";
 import { CampaignsTab } from "@/components/companies/tabs/CampaignsTab";
 import { PaymentsTab } from "@/components/companies/tabs/PaymentsTab";
-import { Section, SectionNav } from "@/components/companies/detail/Section";
+import { Section } from "@/components/companies/detail/Section";
 import { TimelineSection } from "@/components/companies/detail/TimelineSection";
 import { CallNotesSection } from "@/components/companies/detail/CallNotesSection";
 import { NotesSection } from "@/components/companies/detail/NotesSection";
@@ -60,17 +60,6 @@ export default function CompanyDetailPage() {
   const calls = activities.filter((a) => a.type === "chiamata" || a.type === "incontro");
   const openTasks = tasks.filter((t) => !t.is_done).length;
   const temp = company.temperature as Temperature | null;
-
-  const nav = [
-    { id: "riepilogo", label: t("Riepilogo") },
-    { id: "cronologia", label: t("Cronologia") },
-    { id: "call", label: t("Call"), count: calls.length },
-    { id: "appunti", label: t("Appunti"), count: notes.length },
-    { id: "file", label: t("File"), count: documents.length },
-    { id: "task", label: t("Da fare"), count: openTasks },
-    ...(isClient ? [{ id: "onboarding", label: t("Onboarding") }, { id: "campagne", label: t("Campagne"), count: campaigns.length }] : []),
-    ...(isClient && isAdmin ? [{ id: "pagamenti", label: t("Pagamenti") }] : []),
-  ];
 
   return (
     <div className="space-y-4">
@@ -140,9 +129,7 @@ export default function CompanyDetailPage() {
         </div>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)]">
-        <SectionNav items={nav} />
-        <div className="space-y-4">
+      <div className="space-y-4">
           {company.stage !== "perso" && <NextStepCard company={company} />}
 
           <Section id="riepilogo" title={t("Riepilogo")}>
@@ -182,7 +169,6 @@ export default function CompanyDetailPage() {
               <PaymentsTab companyId={company.id} />
             </Section>
           )}
-        </div>
       </div>
 
       <CompanyFormDialog open={editOpen} onOpenChange={setEditOpen} company={company} />
