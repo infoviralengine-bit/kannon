@@ -614,6 +614,7 @@ function PaymentTermsSection({ campaignId, campaign }: {
   campaign: any;
 }) {
   const { toast } = useToast();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [terms, setTerms] = useState<PaymentTerms>(parsePaymentTerms(campaign?.payment_terms));
   const [saving, setSaving] = useState(false);
@@ -635,11 +636,11 @@ function PaymentTermsSection({ campaignId, campaign }: {
         body: { campaign_id: campaignId },
       });
       if (error) throw error;
-      if (data && data.ok === false) throw new Error(data.error || "Errore rigenerazione");
+      if (data && data.ok === false) throw new Error(data.error || t("Errore rigenerazione"));
 
       toast({
-        title: "Scadenzario rigenerato",
-        description: `${data?.generated ?? 0} pagamenti generati. Quelli già pagati sono stati preservati.`,
+        title: t("Scadenzario rigenerato"),
+        description: t("{n} pagamenti generati. Quelli già pagati sono stati preservati.", { n: data?.generated ?? 0 }),
       });
       qc.invalidateQueries({ queryKey: ["client-payments"] });
       qc.invalidateQueries({ queryKey: ["campaign-cycles", campaignId] });
@@ -654,11 +655,11 @@ function PaymentTermsSection({ campaignId, campaign }: {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Termini di pagamento</CardTitle>
+        <CardTitle className="text-lg">{t("Termini di pagamento")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-1.5">
-          <Label>Tipo di regola</Label>
+          <Label>{t("Tipo di regola")}</Label>
           <Select
             value={terms.type}
             onValueChange={(v) =>
@@ -667,8 +668,8 @@ function PaymentTermsSection({ campaignId, campaign }: {
           >
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="standard_lagged">Standard mensile (fisso + CPM laggato)</SelectItem>
-              <SelectItem value="tot_split">ToT split (fisso 50/50 + CPM finale)</SelectItem>
+              <SelectItem value="standard_lagged">{t("Standard mensile (fisso + CPM laggato)")}</SelectItem>
+              <SelectItem value="tot_split">{t("ToT split (fisso 50/50 + CPM finale)")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -676,21 +677,21 @@ function PaymentTermsSection({ campaignId, campaign }: {
         {terms.type === "standard_lagged" && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="grid gap-1.5">
-              <Label>Giorno scadenza fisso</Label>
+              <Label>{t("Giorno scadenza fisso")}</Label>
               <Input
                 type="number" min={1} max={28} value={terms.fixedDueDay}
                 onChange={(e) => setTerms({ ...terms, fixedDueDay: Number(e.target.value) })}
               />
             </div>
             <div className="grid gap-1.5">
-              <Label>Lag CPM (mesi)</Label>
+              <Label>{t("Lag CPM (mesi)")}</Label>
               <Input
                 type="number" min={0} max={3} value={terms.cpmLagMonths}
                 onChange={(e) => setTerms({ ...terms, cpmLagMonths: Number(e.target.value) })}
               />
             </div>
             <div className="grid gap-1.5">
-              <Label>Ritardo CPM finale (giorni)</Label>
+              <Label>{t("Ritardo CPM finale (giorni)")}</Label>
               <Input
                 type="number" min={0} value={terms.finalCpmDelayDays}
                 onChange={(e) => setTerms({ ...terms, finalCpmDelayDays: Number(e.target.value) })}
@@ -703,21 +704,21 @@ function PaymentTermsSection({ campaignId, campaign }: {
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="grid gap-1.5">
-                <Label>Giorno 1ª metà (del cycle)</Label>
+                <Label>{t("Giorno 1ª metà (del cycle)")}</Label>
                 <Input
                   type="number" min={1} max={28} value={terms.firstHalfDay}
                   onChange={(e) => setTerms({ ...terms, firstHalfDay: Number(e.target.value) })}
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label>Giorno 2ª metà (del cycle)</Label>
+                <Label>{t("Giorno 2ª metà (del cycle)")}</Label>
                 <Input
                   type="number" min={2} max={28} value={terms.secondHalfDay}
                   onChange={(e) => setTerms({ ...terms, secondHalfDay: Number(e.target.value) })}
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label>Ritardo CPM finale (giorni dopo end_date)</Label>
+                <Label>{t("Ritardo CPM finale (giorni dopo end_date)")}</Label>
                 <Input
                   type="number" min={0} value={terms.cpmPayoutDelayDays}
                   onChange={(e) => setTerms({ ...terms, cpmPayoutDelayDays: Number(e.target.value) })}
@@ -725,32 +726,32 @@ function PaymentTermsSection({ campaignId, campaign }: {
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Nota: i cycle ToT sono ancorati alla data di start della campagna (mese 1 = start → start+30 giorni). Il "giorno 1" della 1ª metà = primo giorno del cycle.
+              {t('Nota: i cycle ToT sono ancorati alla data di start della campagna (mese 1 = start → start+30 giorni). Il "giorno 1" della 1ª metà = primo giorno del cycle.')}
             </p>
           </div>
         )}
 
         <div className="flex items-center justify-between pt-2 border-t">
           <p className="text-sm text-muted-foreground">
-            Anteprima: <span className="font-medium text-foreground">{paymentTermsLabel(terms)}</span>
+            {t("Anteprima:")} <span className="font-medium text-foreground">{paymentTermsLabel(terms)}</span>
           </p>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button disabled={saving}>
-                {saving ? "Salvando..." : "Salva e rigenera scadenzario"}
+                {saving ? t("Salvando...") : t("Salva e rigenera scadenzario")}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Confermi rigenerazione?</AlertDialogTitle>
+                <AlertDialogTitle>{t("Confermi rigenerazione?")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Vengono cancellati i pagamenti non ancora ricevuti e ricreati secondo la nuova regola. I pagamenti già marcati come "Pagato" restano intoccati.
+                  {t('Vengono cancellati i pagamenti non ancora ricevuti e ricreati secondo la nuova regola. I pagamenti già marcati come "Pagato" restano intoccati.')}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Annulla</AlertDialogCancel>
+                <AlertDialogCancel>{t("Annulla")}</AlertDialogCancel>
                 <AlertDialogAction onClick={handleSaveAndRegenerate}>
-                  Sì, rigenera
+                  {t("Sì, rigenera")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

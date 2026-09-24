@@ -42,6 +42,7 @@ function KpiFinancialCard({
   accentClass: string;
   loading: boolean;
 }) {
+  const { t } = useI18n();
   const animated = useCountUp(value, 1400, !loading);
   const diff = prevValue !== undefined ? value - prevValue : undefined;
   const diffPct = prevValue && prevValue > 0 ? ((diff ?? 0) / prevValue) * 100 : undefined;

@@ -20,11 +20,13 @@ import {
   ViralVideosTable,
 } from "./AnalyticsTables";
 import { VideoListWithTagging } from "./VideoListWithTagging";
+import { useI18n } from "@/i18n";
 
 const PERIODS = ["7d", "30d", "90d"] as const;
 const ALL = "__all__";
 
 export default function CampaignAnalyticsTab({ campaignId }: { campaignId: string | null }) {
+  const { t } = useI18n();
   const [period, setPeriod] = useState<(typeof PERIODS)[number]>("30d");
   const [campaignFilter, setCampaignFilter] = useState<string>(campaignId ?? ALL);
   const [formatId, setFormatId] = useState<string>(ALL);
@@ -54,23 +56,23 @@ export default function CampaignAnalyticsTab({ campaignId }: { campaignId: strin
           ))}
         </div>
         <Select value={campaignFilter} onValueChange={setCampaignFilter}>
-          <SelectTrigger className="w-[180px] h-9"><SelectValue placeholder="Campagna" /></SelectTrigger>
+          <SelectTrigger className="w-[180px] h-9"><SelectValue placeholder={t("Campagna")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Tutte le campagne</SelectItem>
+            <SelectItem value={ALL}>{t("Tutte le campagne")}</SelectItem>
             {(campaigns ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={formatId} onValueChange={setFormatId}>
-          <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="Format" /></SelectTrigger>
+          <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder={t("Format")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Tutti i format</SelectItem>
+            <SelectItem value={ALL}>{t("Tutti i format")}</SelectItem>
             {(formats ?? []).map((f) => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={topicId} onValueChange={setTopicId}>
-          <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder="Topic" /></SelectTrigger>
+          <SelectTrigger className="w-[150px] h-9"><SelectValue placeholder={t("Topic")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Tutti i topic</SelectItem>
+            <SelectItem value={ALL}>{t("Tutti i topic")}</SelectItem>
             {(topics ?? []).map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
           </SelectContent>
         </Select>
