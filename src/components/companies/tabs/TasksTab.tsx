@@ -106,6 +106,7 @@ function TaskRow({
   onToggle: (v: { id: string; isDone: boolean; companyId: string | null }) => void;
   onDelete: (v: { id: string; companyId: string | null }) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="flex items-center gap-3 rounded-md border border-border p-3">
       <Checkbox checked={task.is_done}
@@ -113,7 +114,7 @@ function TaskRow({
       <div className="flex-1">
         <p className={cn("text-sm", task.is_done && "text-muted-foreground line-through")}>{task.title}</p>
         {task.task_type && (
-          <p className="text-xs text-muted-foreground">{TASK_TYPE_LABEL[task.task_type as TaskType] ?? task.task_type}</p>
+          <p className="text-xs text-muted-foreground">{t(TASK_TYPE_LABEL[task.task_type as TaskType] ?? task.task_type)}</p>
         )}
       </div>
       {task.due_date && (
