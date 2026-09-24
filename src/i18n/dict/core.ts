@@ -254,4 +254,7 @@ export const core: Record<string, string> = {
   "Zona pericolosa": "Danger zone",
   "Elimina questa campagna e tutti i dati collegati": "Delete this campaign and all related data",
   "Elimina Campagna ": "Delete Campaign",
+
+  // CampagnePage
+  "Es. Campagna Estate": "e.g. Summer Campaign",
 };

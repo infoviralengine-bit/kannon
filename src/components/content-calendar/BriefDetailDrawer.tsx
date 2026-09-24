@@ -79,7 +79,7 @@ export function BriefDetailDrawer({
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader className="space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge className={meta.badge}>{meta.label}</Badge>
+            <Badge className={meta.badge}>{t(meta.label)}</Badge>
             {brief.is_winner && <Badge className="bg-emerald-500/15 text-emerald-600">{t("Winner")}</Badge>}
             <span className="text-xs text-muted-foreground">{formatDateIt(brief.planned_publish_date, { day: "numeric", month: "long", year: "numeric" })}</span>
           </div>

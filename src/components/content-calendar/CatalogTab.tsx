@@ -99,7 +99,7 @@ function CatalogCard({
     if (!editName.trim()) return;
     rename.mutate({ id, name: editName.trim() }, {
       onSuccess: () => { setEditId(null); toast({ title: t("Rinominato") }); },
-      onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+      onError: (e: any) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
     });
   };
 

@@ -12,15 +12,17 @@ import { Badge } from "@/components/ui/badge";
 import { formatViews } from "@/lib/format";
 import { cleanUsername } from "@/lib/utils";
 import { arr, num } from "./_shared";
+import { useI18n } from "@/i18n";
 
 export function CampaignsTable({ data }: { data: any }) {
+  const { t } = useI18n();
   const rows = arr<any>(data?.campaigns);
   if (rows.length === 0) return null;
   return (
-    <Section title="Campagne">
+    <Section title={t("Campagne")}>
       <Table>
         <TableHeader>
-          <TableRow><TableHead>Campagna</TableHead><TableHead className="text-right">Views</TableHead><TableHead className="text-center">Creator</TableHead></TableRow>
+          <TableRow><TableHead>{t("Campagna")}</TableHead><TableHead className="text-right">Views</TableHead><TableHead className="text-center">{t("Creator")}</TableHead></TableRow>
         </TableHeader>
         <TableBody>
           {rows.sort((a, b) => num(b.views) - num(a.views)).map((c) => (
@@ -37,14 +39,15 @@ export function CampaignsTable({ data }: { data: any }) {
 }
 
 export function CreatorRankingTable({ data }: { data: any }) {
+  const { t } = useI18n();
   const rows = arr<any>(data?.creatorRankingDetailed);
   if (rows.length === 0) return null;
   return (
-    <Section title="Ranking creator">
+    <Section title={t("Ranking creator")}>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Creator</TableHead>
+            <TableHead>{t("Creator")}</TableHead>
             <TableHead className="text-right">Views</TableHead>
             <TableHead className="text-center">Video</TableHead>
             <TableHead className="text-right">ER</TableHead>
@@ -54,7 +57,7 @@ export function CreatorRankingTable({ data }: { data: any }) {
         <TableBody>
           {rows.map((c, i) => (
             <TableRow key={c.creatorId ?? i}>
-              <TableCell className="font-medium">{c.creatorName ?? "Sconosciuto"}</TableCell>
+              <TableCell className="font-medium">{c.creatorName ?? t("Sconosciuto")}</TableCell>
               <TableCell className="text-right">{formatViews(num(c.views))}</TableCell>
               <TableCell className="text-center">{num(c.videoCount)}</TableCell>
               <TableCell className="text-right">{num(c.engagementRate).toFixed(1)}%</TableCell>
@@ -68,10 +71,11 @@ export function CreatorRankingTable({ data }: { data: any }) {
 }
 
 export function FormatStatsTable({ data }: { data: any }) {
+  const { t } = useI18n();
   const breakdown = arr<any>(data?.format_breakdown);
   if (breakdown.length > 0) {
     return (
-      <Section title="Performance per format">
+      <Section title={t("Performance per format")}>
         <Table>
           <TableHeader>
             <TableRow>
@@ -103,10 +107,10 @@ export function FormatStatsTable({ data }: { data: any }) {
   const legacy = arr<any>(data?.formatStats);
   if (legacy.length === 0) return null;
   return (
-    <Section title="Performance per format">
+    <Section title={t("Performance per format")}>
       <Table>
         <TableHeader>
-          <TableRow><TableHead>Tag</TableHead><TableHead className="text-center">Video</TableHead><TableHead className="text-right">Media views</TableHead><TableHead className="text-right">Eng. %</TableHead></TableRow>
+          <TableRow><TableHead>Tag</TableHead><TableHead className="text-center">Video</TableHead><TableHead className="text-right">{t("Media views")}</TableHead><TableHead className="text-right">Eng. %</TableHead></TableRow>
         </TableHeader>
         <TableBody>
           {legacy.map((f, i) => (
@@ -124,10 +128,11 @@ export function FormatStatsTable({ data }: { data: any }) {
 }
 
 export function TopicStatsTable({ data }: { data: any }) {
+  const { t } = useI18n();
   const rows = arr<any>(data?.topic_breakdown);
   if (rows.length === 0) return null;
   return (
-    <Section title="Performance per topic">
+    <Section title={t("Performance per topic")}>
       <Table>
         <TableHeader>
           <TableRow>
@@ -157,13 +162,14 @@ export function TopicStatsTable({ data }: { data: any }) {
 }
 
 export function ViralVideosTable({ data }: { data: any }) {
+  const { t } = useI18n();
   const rows = arr<any>(data?.viralVideos);
   if (rows.length === 0) return null;
   return (
-    <Section title="Top performer">
+    <Section title={t("Top performer")}>
       <Table>
         <TableHeader>
-          <TableRow><TableHead>Account</TableHead><TableHead>Creator</TableHead><TableHead className="text-right">Views</TableHead><TableHead className="text-right">ER</TableHead></TableRow>
+          <TableRow><TableHead>Account</TableHead><TableHead>{t("Creator")}</TableHead><TableHead className="text-right">Views</TableHead><TableHead className="text-right">ER</TableHead></TableRow>
         </TableHeader>
         <TableBody>
           {rows.map((v) => (

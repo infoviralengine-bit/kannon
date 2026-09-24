@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useI18n } from "@/i18n";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,7 @@ function mondayOf(d: Date): Date {
 }
 
 export function CreatorBriefCalendar() {
+  const { t } = useI18n();
   const { data, isLoading } = useCreatorAssignedBriefs();
   const [selected, setSelected] = useState<PortalBrief | null>(null);
 
@@ -36,7 +38,7 @@ export function CreatorBriefCalendar() {
   if (weeks.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-        Nessun contenuto in calendario.
+        {t("Nessun contenuto in calendario.")}
       </div>
     );
   }
@@ -50,12 +52,12 @@ export function CreatorBriefCalendar() {
         return (
           <div key={weekStart} className="space-y-2">
             <h3 className="text-sm font-semibold">
-              Settimana del {formatDateIt(start)} {" - "} {formatDateIt(addDays(start, 6))}
+              {t("Settimana del")} {formatDateIt(start)} {" - "} {formatDateIt(addDays(start, 6))}
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
               {WEEKDAY_LABELS.map((label, i) => (
                 <div key={label} className="space-y-1.5">
-                  <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70 text-center">{label}</div>
+                  <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70 text-center">{t(label)}</div>
                   <div className="space-y-1.5 min-h-[40px]">
                     {byDay[i].map((b) => (
                       <button
@@ -82,7 +84,7 @@ export function CreatorBriefCalendar() {
 
       <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-          <SheetHeader><SheetTitle>Dettaglio contenuto</SheetTitle></SheetHeader>
+          <SheetHeader><SheetTitle>{t("Dettaglio contenuto")}</SheetTitle></SheetHeader>
           {selected && <div className="mt-4"><CreatorBriefCard brief={selected} /></div>}
         </SheetContent>
       </Sheet>

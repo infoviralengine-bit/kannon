@@ -266,6 +266,8 @@ export const clients: Record<string, string> = {
   "Diventa cliente e parte la checklist di onboarding. Ricordati di creare la campagna.":
     "Becomes a client and the onboarding checklist starts. Remember to create the campaign.",
   "Conferma": "Confirm",
+  " · scaduto": " · overdue",
+  "senza data": "no date",
 
   // CallNotesSection
   "Esito": "Outcome",

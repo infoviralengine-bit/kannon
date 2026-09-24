@@ -9,6 +9,7 @@ import {
 } from "@/lib/companies";
 import type { Company } from "@/hooks/useCompanies";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n";
 
 type Props = {
   companies: Company[];
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export function PipelineKanban({ companies, ownerName, onOpenCompany, onRequestStage }: Props) {
+  const { t } = useI18n();
   const [dragId, setDragId] = useState<string | null>(null);
   const firstPopulatedStage = PIPELINE_STAGES.find((stage) => companies.some((c) => c.stage === stage));
   const [selectedStage, setSelectedStage] = useState<CompanyStage>(firstPopulatedStage ?? "nuova");
@@ -46,8 +48,8 @@ export function PipelineKanban({ companies, ownerName, onOpenCompany, onRequestS
     <div className="grid min-h-[460px] overflow-hidden rounded-lg border border-border bg-card lg:grid-cols-[minmax(360px,2fr)_minmax(0,3fr)]">
       <aside className="border-b border-border bg-background/40 lg:border-b-0 lg:border-r">
         <div className="border-b border-border px-5 py-3">
-          <p className="text-base font-semibold">Fasi</p>
-          <p className="text-xs text-muted-foreground">{companies.length} lead nei risultati</p>
+          <p className="text-base font-semibold">{t("Fasi")}</p>
+          <p className="text-xs text-muted-foreground">{t("{n} lead nei risultati", { n: companies.length })}</p>
         </div>
         <nav className="grid grid-cols-2 gap-1.5 p-3 sm:grid-cols-3 lg:grid-cols-1 lg:p-4">
         {PIPELINE_STAGES.map((stage) => {
@@ -70,7 +72,7 @@ export function PipelineKanban({ companies, ownerName, onOpenCompany, onRequestS
               )}
             >
               <div className="min-w-0">
-                <span className="block truncate text-sm font-semibold">{STAGE_LABEL[stage]}</span>
+                <span className="block truncate text-sm font-semibold">{t(STAGE_LABEL[stage])}</span>
                 {total > 0 && <span className="block truncate text-xs font-normal text-muted-foreground">{formatCurrency(total)}</span>}
               </div>
               <Badge variant={selected ? "default" : "outline"} className="ml-3 shrink-0 px-2 text-xs">
@@ -85,23 +87,23 @@ export function PipelineKanban({ companies, ownerName, onOpenCompany, onRequestS
       <section className="min-w-0">
         <header className="flex min-h-12 flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2">
           <div>
-            <h2 className="text-sm font-semibold">{STAGE_LABEL[selectedStage]}</h2>
+            <h2 className="text-sm font-semibold">{t(STAGE_LABEL[selectedStage])}</h2>
             <p className="text-[11px] text-muted-foreground">
-              {stageItems.length} {stageItems.length === 1 ? "azienda" : "aziende"}
+              {t("{n} {label}", { n: stageItems.length, label: t(stageItems.length === 1 ? "azienda" : "aziende") })}
             </p>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            {formatCurrency(stageItems.reduce((sum, company) => sum + Number(company.estimated_monthly_value ?? 0), 0))} / mese
+            {formatCurrency(stageItems.reduce((sum, company) => sum + Number(company.estimated_monthly_value ?? 0), 0))} {t("/ mese")}
           </p>
         </header>
 
         <div className="overflow-x-auto">
           <div className="min-w-[640px]">
             <div className="grid grid-cols-[minmax(170px,1.4fr)_100px_120px_minmax(150px,1fr)_90px] border-b border-border bg-background/50 px-3 py-2 text-[9px] font-semibold uppercase text-muted-foreground">
-              <span>Azienda</span>
-              <span>Valore</span>
-              <span>Responsabile</span>
-              <span>Prossimo passo</span>
+              <span>{t("Azienda")}</span>
+              <span>{t("Valore")}</span>
+              <span>{t("Responsabile")}</span>
+              <span>{t("Prossimo passo")}</span>
               <span />
             </div>
             <div className="max-h-[560px] overflow-y-auto">
@@ -129,7 +131,7 @@ export function PipelineKanban({ companies, ownerName, onOpenCompany, onRequestS
                           {c.temperature === "caldo"
                             ? <Flame className="mr-0.5 h-2 w-2" />
                             : <Thermometer className="mr-0.5 h-2 w-2" />}
-                          {TEMPERATURE_LABEL[c.temperature as Temperature]}
+                          {t(TEMPERATURE_LABEL[c.temperature as Temperature])}
                         </Badge>
                       )}
                       </div>
@@ -137,7 +139,7 @@ export function PipelineKanban({ companies, ownerName, onOpenCompany, onRequestS
                     <span className="text-xs font-medium">{c.estimated_monthly_value != null ? formatCurrency(Number(c.estimated_monthly_value)) : "-"}</span>
                     <span className="truncate pr-2 text-[11px] text-muted-foreground">{ownerName(c.owner_id)}</span>
                     <div className="min-w-0 pr-2">
-                      <p className="truncate text-[11px]">{c.next_step ?? "Da impostare"}</p>
+                      <p className="truncate text-[11px]">{c.next_step ?? t("Da impostare")}</p>
                       {c.next_step_date && (
                         <p className={cn("mt-0.5 flex items-center gap-1 text-[9px]", isOverdue(c.next_step_date) ? "text-destructive" : "text-muted-foreground")}>
                           <CalendarClock className="h-2.5 w-2.5" /> {formatDateIt(c.next_step_date)}
@@ -157,15 +159,15 @@ export function PipelineKanban({ companies, ownerName, onOpenCompany, onRequestS
                                 className="h-6 px-1.5 text-[10px] text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                                 onClick={(e) => { e.stopPropagation(); onRequestStage(c, "perso"); }}
                               >
-                                Persa
+                                {t("Persa")}
                               </Button>
                               )}
                               {nextStage && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  aria-label="Passa alla fase successiva"
-                                  title="Passa alla fase successiva"
+                                  aria-label={t("Passa alla fase successiva")}
+                                  title={t("Passa alla fase successiva")}
                                   className="h-6 w-6 text-green-600 hover:bg-green-500/10 hover:text-green-700"
                                   onClick={(e) => { e.stopPropagation(); onRequestStage(c, nextStage); }}
                                 >
@@ -179,7 +181,7 @@ export function PipelineKanban({ companies, ownerName, onOpenCompany, onRequestS
                 </div>
               ))}
               {!stageItems.length && (
-                <p className="px-4 py-16 text-center text-xs text-muted-foreground">Nessuna lead in questa fase.</p>
+                <p className="px-4 py-16 text-center text-xs text-muted-foreground">{t("Nessuna lead in questa fase.")}</p>
               )}
             </div>
           </div>
