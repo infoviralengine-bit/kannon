@@ -1,4 +1,5 @@
 export const campaign: Record<string, string> = {
+  "Campagna": "Campaign",
   "Attiva": "Active",
   "In pausa": "Paused",
   "Conclusa": "Completed",

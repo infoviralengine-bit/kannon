@@ -268,8 +268,8 @@ export default function CampagnePage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>{t("Campagna")}</TableHead>
                   <TableHead>{t("Cliente")}</TableHead>
-                  <TableHead>{t("Referente")}</TableHead>
                   <TableHead>{t("Status")}</TableHead>
                   <TableHead className="text-right">{t("Views Totali")}</TableHead>
                   {!isTeam && <TableHead className="text-right">{t("Revenue Mese")}</TableHead>}
@@ -280,13 +280,13 @@ export default function CampagnePage() {
               <TableBody>
                 {filtered.map((c) => (
                   <TableRow key={c.id}>
+                    <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <CompanyLogo name={c.companyName ?? c.name} logoUrl={c.companyLogoUrl} className="h-8 w-8" />
-                        <span className="font-medium">{c.companyName ?? c.name}</span>
+                        <span>{c.companyName ?? c.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{c.client_name || "-"}</TableCell>
                     <TableCell>
                       <Badge className={statusColor[c.status] ?? ""}>{t(statusLabel[c.status] ?? c.status)}</Badge>
                     </TableCell>
