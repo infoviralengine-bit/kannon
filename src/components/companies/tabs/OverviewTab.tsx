@@ -63,7 +63,7 @@ export function OverviewTab({ company, contacts, ownerName }: Props) {
       <Card>
         <CardHeader><CardTitle className="text-base">{t("Azienda")}</CardTitle></CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <Row label={t("Ragione sociale")} value={company.legal_name} />
+          <Row label={t("Referente")} value={company.legal_name} />
           <Row label={t("App")} value={company.app_name} />
           <Row label={t("Settore")} value={company.sector} />
           <Row label={t("Paese")} value={company.country} />
