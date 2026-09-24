@@ -14,6 +14,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
+import { useI18n, t } from "@/i18n";
 import { useChangeBriefStatus } from "@/hooks/useContentCalendar";
 import { STATUS_META, formatDateIt } from "@/components/content-calendar/_helpers";
 import type { PortalBrief } from "@/hooks/useClientBriefs";
@@ -27,15 +28,16 @@ export function ClientBriefCard({
   onComment: (b: PortalBrief) => void;
   onChangeRequest: (b: PortalBrief) => void;
 }) {
+  const { t } = useI18n();
   const changeStatus = useChangeBriefStatus();
   const meta = STATUS_META[brief.status];
 
   const approve = async () => {
     try {
       await changeStatus.mutateAsync({ id: brief.id, status: "approved" });
-      toast({ title: "Contenuto approvato", description: "Lo staff e i creator sono stati notificati." });
+      toast({ title: t("Contenuto approvato"), description: t("Lo staff e i creator sono stati notificati.") });
     } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     }
   };
 
@@ -44,8 +46,8 @@ export function ClientBriefCard({
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
-            <Badge className={meta.badge}>{meta.label}</Badge>
-            {brief.has_pending_cr && <Badge className="bg-red-500/15 text-red-600">Modifica richiesta</Badge>}
+            <Badge className={meta.badge}>{t(meta.label)}</Badge>
+            {brief.has_pending_cr && <Badge className="bg-red-500/15 text-red-600">{t("Modifica richiesta")}</Badge>}
           </div>
           <span className="text-sm text-muted-foreground">
             {formatDateIt(brief.planned_publish_date, { day: "numeric", month: "long" })}
@@ -53,10 +55,10 @@ export function ClientBriefCard({
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-base font-semibold leading-tight">{brief.title || "Brief"}</h3>
+          <h3 className="text-base font-semibold leading-tight">{brief.title || t("Brief")}</h3>
           <div className="flex flex-wrap gap-1">
             {brief.format_name && <Badge variant="secondary">{brief.format_name}</Badge>}
-            {brief.topic_names.map((t) => <Badge key={t} variant="outline">{t}</Badge>)}
+            {brief.topic_names.map((topic) => <Badge key={topic} variant="outline">{topic}</Badge>)}
           </div>
         </div>
 
@@ -71,10 +73,10 @@ export function ClientBriefCard({
         )}
 
         <div className="space-y-2 text-sm">
-          <Field label="Copy" value={brief.copy_text} />
-          {brief.caption && <Field label="Caption" value={brief.caption} />}
-          {brief.hashtags.length > 0 && <Field label="Hashtag" value={brief.hashtags.map((h) => `#${h}`).join(" ")} />}
-          {brief.visual_note && <Field label="Note visuali" value={brief.visual_note} />}
+          <Field label={t("Copy")} value={brief.copy_text} />
+          {brief.caption && <Field label={t("Caption")} value={brief.caption} />}
+          {brief.hashtags.length > 0 && <Field label={t("Hashtag")} value={brief.hashtags.map((h) => `#${h}`).join(" ")} />}
+          {brief.visual_note && <Field label={t("Note visuali")} value={brief.visual_note} />}
         </div>
 
         <div className="flex flex-wrap gap-2 pt-1">
@@ -82,27 +84,27 @@ export function ClientBriefCard({
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button size="sm" disabled={changeStatus.isPending}>
-                  <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Approva
+                  <CheckCircle2 className="h-3.5 w-3.5 mr-1" />{t("Approva")}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Approvare questo contenuto?</AlertDialogTitle>
-                  <AlertDialogDescription>I creator potranno procedere con la pubblicazione.</AlertDialogDescription>
+                  <AlertDialogTitle>{t("Approvare questo contenuto?")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("I creator potranno procedere con la pubblicazione.")}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Annulla</AlertDialogCancel>
-                  <AlertDialogAction onClick={approve}>Approva</AlertDialogAction>
+                  <AlertDialogCancel>{t("Annulla")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={approve}>{t("Approva")}</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           )}
           <Button size="sm" variant="outline" onClick={() => onComment(brief)}>
-            <MessageSquare className="h-3.5 w-3.5 mr-1" />Lascia commento
+            <MessageSquare className="h-3.5 w-3.5 mr-1" />{t("Lascia commento")}
           </Button>
           {brief.status !== "archived" && (
             <Button size="sm" variant="outline" onClick={() => onChangeRequest(brief)}>
-              <Pencil className="h-3.5 w-3.5 mr-1" />Richiedi modifica
+              <Pencil className="h-3.5 w-3.5 mr-1" />{t("Richiedi modifica")}
             </Button>
           )}
         </div>

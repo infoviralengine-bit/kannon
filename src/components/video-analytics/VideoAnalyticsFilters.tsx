@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useCampaignsLite, useCreatorsLite } from "@/hooks/useFilterOptions";
 import type { VideoAnalyticsFilters as Filters } from "@/hooks/useVideoAnalytics";
+import { useI18n } from "@/i18n";
 
 type Preset = "7d" | "30d" | "90d" | "ytd" | "custom";
 
@@ -32,6 +33,7 @@ export function VideoAnalyticsFilters({
   value: Filters;
   onChange: (next: Filters) => void;
 }) {
+  const { t } = useI18n();
   const [preset, setPreset] = useState<Preset>("30d");
   const { data: campaigns } = useCampaignsLite();
   const { data: creators } = useCreatorsLite();
@@ -72,14 +74,14 @@ export function VideoAnalyticsFilters({
             }`}
           >
             {p === "7d"
-              ? "7 giorni"
+              ? t("7 giorni")
               : p === "30d"
-              ? "30 giorni"
+              ? t("30 giorni")
               : p === "90d"
-              ? "90 giorni"
+              ? t("90 giorni")
               : p === "ytd"
               ? "YTD"
-              : "Custom"}
+              : t("Custom")}
           </button>
         ))}
       </div>
@@ -106,7 +108,7 @@ export function VideoAnalyticsFilters({
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <Filter className="h-4 w-4" />
-            Campagne
+            {t("Campagne")}
             {value.campaignIds && value.campaignIds.length > 0 && (
               <Badge variant="secondary" className="ml-1">
                 {value.campaignIds.length}
@@ -134,7 +136,7 @@ export function VideoAnalyticsFilters({
               );
             })}
             {(campaigns ?? []).length === 0 && (
-              <p className="text-sm text-muted-foreground p-2">Nessuna campagna</p>
+              <p className="text-sm text-muted-foreground p-2">{t("Nessuna campagna")}</p>
             )}
           </ScrollArea>
         </PopoverContent>
@@ -144,7 +146,7 @@ export function VideoAnalyticsFilters({
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <Filter className="h-4 w-4" />
-            Creator
+            {t("Creator")}
             {value.creatorIds && value.creatorIds.length > 0 && (
               <Badge variant="secondary" className="ml-1">
                 {value.creatorIds.length}
@@ -172,7 +174,7 @@ export function VideoAnalyticsFilters({
               );
             })}
             {(creators ?? []).length === 0 && (
-              <p className="text-sm text-muted-foreground p-2">Nessun creator</p>
+              <p className="text-sm text-muted-foreground p-2">{t("Nessun creator")}</p>
             )}
           </ScrollArea>
         </PopoverContent>
@@ -186,7 +188,7 @@ export function VideoAnalyticsFilters({
           className="gap-1"
         >
           <X className="h-3.5 w-3.5" />
-          Reset
+          {t("Reset")}
         </Button>
       )}
     </div>

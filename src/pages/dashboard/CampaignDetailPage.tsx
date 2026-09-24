@@ -991,6 +991,7 @@ export default function CampaignDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const { role } = useAuth();
   const isTeam = role === "team";
@@ -1014,7 +1015,7 @@ export default function CampaignDetailPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Status aggiornato" });
+      toast({ title: t("Status aggiornato") });
       qc.invalidateQueries({ queryKey: ["campaign-detail", campaignId] });
       qc.invalidateQueries({ queryKey: ["campaign-table"] });
     },
@@ -1033,7 +1034,7 @@ export default function CampaignDetailPage() {
   }
 
   if (!campaign) {
-    return <p className="text-muted-foreground py-8">Campagna non trovata.</p>;
+    return <p className="text-muted-foreground py-8">{t("Campagna non trovata.")}</p>;
   }
 
   const isCompleted = campaign.status === "completed";
@@ -1062,7 +1063,7 @@ export default function CampaignDetailPage() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink href="/dashboard/campaigns" onClick={(e) => { e.preventDefault(); navigate("/dashboard/campaigns"); }}>
-              Campagne
+              {t("Campagne")}
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator><ChevronRight className="h-4 w-4" /></BreadcrumbSeparator>
@@ -1074,7 +1075,7 @@ export default function CampaignDetailPage() {
       {isCompleted && (
         <Card className="border-warning/30 bg-warning/5">
           <CardContent className="py-3">
-            <p className="text-sm text-warning">Campagna conclusa — dati in sola lettura</p>
+            <p className="text-sm text-warning">{t("Campagna conclusa — dati in sola lettura")}</p>
           </CardContent>
         </Card>
       )}
@@ -1091,17 +1092,17 @@ export default function CampaignDetailPage() {
         <div className="flex items-center gap-2">
           {!isCompleted && (
             <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-              <Pencil className="mr-2 h-4 w-4" /> Modifica
+              <Pencil className="mr-2 h-4 w-4" /> {t("Modifica")}
             </Button>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">Cambia Status</Button>
+              <Button variant="outline" size="sm">{t("Cambia Status")}</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               {["active", "paused", "completed"].map((s) => (
                 <DropdownMenuItem key={s} onClick={() => statusMutation.mutate(s)}>
-                  {statusLabel[s]}
+                  {t(statusLabel[s])}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -1118,7 +1119,7 @@ export default function CampaignDetailPage() {
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-            <CardTitle className="text-base font-semibold">Condizioni</CardTitle>
+            <CardTitle className="text-base font-semibold">{t("Condizioni")}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -1129,12 +1130,12 @@ export default function CampaignDetailPage() {
           ) : (
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-                {!isTeam && <StatItem label="CPM Cliente" value={formatCurrency(campaign.client_cpm ?? 0)} sub="per 1.000 views" />}
-                {!isTeam && <StatItem label="Fisso mensile" value={formatCurrency(campaign.client_fixed ?? 0)} sub="totale campagna" />}
-                <StatItem label="Video minimi/mese" value={String(campAny.min_monthly_videos ?? 0)} />
-                <StatItem label="Durata" value={`${format(new Date(campaign.start_date), "dd/MM/yy")} → ${campaign.end_date ? format(new Date(campaign.end_date), "dd/MM/yy") : "∞"}`} />
-                <StatItem label="Cap per video" value={videoViewsCap != null ? `${formatViews(videoViewsCap)}` : "—"} sub={videoViewsCap != null ? "views max" : "nessun limite"} />
-                {!isTeam && <StatItem label="Cap di spesa" value={monthlySpendCap != null ? formatCurrency(monthlySpendCap) : "—"} sub={monthlySpendCap != null ? "per ciclo" : "nessun limite"} />}
+                {!isTeam && <StatItem label={t("CPM Cliente")} value={formatCurrency(campaign.client_cpm ?? 0)} sub={t("per 1.000 views")} />}
+                {!isTeam && <StatItem label={t("Fisso mensile")} value={formatCurrency(campaign.client_fixed ?? 0)} sub={t("totale campagna")} />}
+                <StatItem label={t("Video minimi/mese")} value={String(campAny.min_monthly_videos ?? 0)} />
+                <StatItem label={t("Durata")} value={`${format(new Date(campaign.start_date), "dd/MM/yy")} → ${campaign.end_date ? format(new Date(campaign.end_date), "dd/MM/yy") : "∞"}`} />
+                <StatItem label={t("Cap per video")} value={videoViewsCap != null ? `${formatViews(videoViewsCap)}` : "—"} sub={videoViewsCap != null ? t("views max") : t("nessun limite")} />
+                {!isTeam && <StatItem label={t("Cap di spesa")} value={monthlySpendCap != null ? formatCurrency(monthlySpendCap) : "—"} sub={monthlySpendCap != null ? t("per ciclo") : t("nessun limite")} />}
               </div>
 
               {/* Spend progress bar */}
@@ -1144,12 +1145,12 @@ export default function CampaignDetailPage() {
                     <div key={idx} className={cn("rounded-lg p-4", cycle.isCurrent ? "bg-secondary/50" : "bg-secondary/30")}>
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          {cycle.isCurrent ? "Spesa ciclo corrente" : cycle.label}
+                          {cycle.isCurrent ? t("Spesa ciclo corrente") : t(cycle.label)}
                         </p>
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-bold">{formatCurrency(cycle.spend)}</span>
                           <span className="text-xs text-muted-foreground">/ {formatCurrency(monthlySpendCap)}</span>
-                          {cycle.percent >= 100 && <Badge variant="destructive" className="text-xs">CAP</Badge>}
+                          {cycle.percent >= 100 && <Badge variant="destructive" className="text-xs">{t("CAP")}</Badge>}
                         </div>
                       </div>
                       <Progress
@@ -1174,7 +1175,7 @@ export default function CampaignDetailPage() {
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-success" />
-            <CardTitle className="text-base font-semibold">Stato</CardTitle>
+            <CardTitle className="text-base font-semibold">{t("Stato")}</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -1184,19 +1185,19 @@ export default function CampaignDetailPage() {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6">
-              <StatItem label="Views totali" value={formatViews(kpi.data?.totalViews ?? 0)} accent />
+              <StatItem label={t("Views totali")} value={formatViews(kpi.data?.totalViews ?? 0)} accent />
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center">
-                  Views contate {videoViewsCap != null && <CappedBadge variant="icon" />}
+                  {t("Views contate")} {videoViewsCap != null && <CappedBadge variant="icon" />}
                 </p>
                 <p className="text-lg font-bold">{formatViews(kpi.data?.monthViews ?? 0)}</p>
-                <p className="text-xs text-muted-foreground">{videoViewsCap != null ? `cap ${formatViews(videoViewsCap)}/video` : "senza cap"}</p>
+                <p className="text-xs text-muted-foreground">{videoViewsCap != null ? t("cap {v}/video", { v: formatViews(videoViewsCap) }) : t("senza cap")}</p>
               </div>
-              <StatItem label="Video / mese" value={String(kpi.data?.monthVideoCount ?? 0)} />
-              <StatItem label="Video totali" value={String(kpi.data?.totalVideoCount ?? 0)} />
-              {!isTeam && <StatItem label="Entrata CPM" value={formatCurrency(margin.data?.cpmRevenue ?? 0)} accent />}
-              {!isTeam && <StatItem label="Margine CPM" value={formatCurrency(margin.data?.cpmMargin ?? 0)} sub={`costo: ${formatCurrency(margin.data?.cpmCost ?? 0)}`} />}
-              <StatItem label="Creator attivi" value={String(kpi.data?.creatorCount ?? 0)} />
+              <StatItem label={t("Video / mese")} value={String(kpi.data?.monthVideoCount ?? 0)} />
+              <StatItem label={t("Video totali")} value={String(kpi.data?.totalVideoCount ?? 0)} />
+              {!isTeam && <StatItem label={t("Entrata CPM")} value={formatCurrency(margin.data?.cpmRevenue ?? 0)} accent />}
+              {!isTeam && <StatItem label={t("Margine CPM")} value={formatCurrency(margin.data?.cpmMargin ?? 0)} sub={t("costo: {c}", { c: formatCurrency(margin.data?.cpmCost ?? 0) })} />}
+              <StatItem label={t("Creator attivi")} value={String(kpi.data?.creatorCount ?? 0)} />
             </div>
           )}
         </CardContent>
@@ -1217,21 +1218,21 @@ export default function CampaignDetailPage() {
       {/* Account Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Account</CardTitle>
+          <CardTitle className="text-lg">{t("Account")}</CardTitle>
         </CardHeader>
         <CardContent>
           {accounts.isLoading ? (
             <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
           ) : !accounts.data?.length ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Nessun account associato.</p>
+            <p className="text-sm text-muted-foreground text-center py-6">{t("Nessun account associato.")}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Creator</TableHead>
-                  <TableHead className="text-right">Video Oggi</TableHead>
-                  <TableHead className="text-right">Views Totali</TableHead>
+                  <TableHead>{t("Username")}</TableHead>
+                  <TableHead>{t("Creator")}</TableHead>
+                  <TableHead className="text-right">{t("Video Oggi")}</TableHead>
+                  <TableHead className="text-right">{t("Views Totali")}</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -1245,7 +1246,7 @@ export default function CampaignDetailPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.accountId}`)}>
-                          Apri
+                          {t("Apri")}
                         </Button>
                         {!isCompleted && (
                           <RemoveAccountButton accountId={a.accountId} campaignId={campaignId} />
@@ -1272,11 +1273,11 @@ export default function CampaignDetailPage() {
         <Card className="border-destructive/30">
           <CardContent className="flex items-center justify-between py-4">
             <div>
-              <p className="text-sm font-medium">Zona pericolosa</p>
-              <p className="text-xs text-muted-foreground">Elimina questa campagna e tutti i dati collegati</p>
+              <p className="text-sm font-medium">{t("Zona pericolosa")}</p>
+              <p className="text-xs text-muted-foreground">{t("Elimina questa campagna e tutti i dati collegati")}</p>
             </div>
             <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
-              <Trash2 className="mr-2 h-4 w-4" /> Elimina Campagna
+              <Trash2 className="mr-2 h-4 w-4" /> {t("Elimina Campagna")}
             </Button>
           </CardContent>
         </Card>

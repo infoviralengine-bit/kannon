@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { formatViews } from "@/lib/format";
+import { useI18n } from "@/i18n";
 
 export function TopBreakdownChart({
   title,
@@ -13,6 +14,7 @@ export function TopBreakdownChart({
   nameKey: string;
   limit?: number;
 }) {
+  const { t } = useI18n();
   const top = data.slice(0, limit).map((d) => ({
     ...d,
     _name: d[nameKey] ?? "—",
@@ -26,7 +28,7 @@ export function TopBreakdownChart({
       <CardContent style={{ height: 280 }}>
         {top.length === 0 ? (
           <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-            Nessun dato
+            {t("Nessun dato")}
           </div>
         ) : (
           <ResponsiveContainer>
@@ -38,7 +40,7 @@ export function TopBreakdownChart({
                 formatter={(v: any) => formatViews(Number(v))}
                 contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
               />
-              <Bar dataKey="total_views" name="Views" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="total_views" name={t("Views")} fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}

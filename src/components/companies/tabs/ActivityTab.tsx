@@ -12,10 +12,12 @@ import {
   type ActivityDirection, type ActivityType,
 } from "@/lib/companies";
 import { useAddActivity, type CompanyActivity } from "@/hooks/useCompanies";
+import { useI18n } from "@/i18n";
 
 const NONE = "__none__";
 
 export function ActivityTab({ companyId, activities, types = MANUAL_ACTIVITY_TYPES }: { companyId: string; activities: CompanyActivity[]; types?: ActivityType[] }) {
+  const { t } = useI18n();
   const addActivity = useAddActivity();
   const [type, setType] = useState<ActivityType>(types[0]);
   const [direction, setDirection] = useState(NONE);
@@ -50,51 +52,51 @@ export function ActivityTab({ companyId, activities, types = MANUAL_ACTIVITY_TYP
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader><CardTitle className="text-base">Registra attività</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t("Registra attività")}</CardTitle></CardHeader>
         <CardContent className="grid gap-3">
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="grid gap-1.5">
-              <Label>Tipo</Label>
+              <Label>{t("Tipo")}</Label>
               <Select value={type} onValueChange={(v) => setType(v as ActivityType)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {types.map((t) => (
-                    <SelectItem key={t} value={t}>{ACTIVITY_TYPE_LABEL[t]}</SelectItem>
+                  {types.map((at) => (
+                    <SelectItem key={at} value={at}>{t(ACTIVITY_TYPE_LABEL[at])}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             {showDirection && (
               <div className="grid gap-1.5">
-                <Label>Direzione</Label>
+                <Label>{t("Direzione")}</Label>
                 <Select value={direction} onValueChange={setDirection}>
-                  <SelectTrigger><SelectValue placeholder="Non indicata" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("Non indicata")} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={NONE}>Non indicata</SelectItem>
+                    <SelectItem value={NONE}>{t("Non indicata")}</SelectItem>
                     {ACTIVITY_DIRECTIONS.map((d) => (
-                      <SelectItem key={d} value={d}>{ACTIVITY_DIRECTION_LABEL[d]}</SelectItem>
+                      <SelectItem key={d} value={d}>{t(ACTIVITY_DIRECTION_LABEL[d])}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             )}
             <div className="grid gap-1.5">
-              <Label>Quando</Label>
+              <Label>{t("Quando")}</Label>
               <Input type="datetime-local" value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} />
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label>Riassunto *</Label>
+            <Label>{t("Riassunto *")}</Label>
             <Input value={summary} onChange={(e) => setSummary(e.target.value)}
-              placeholder="Es. call di presentazione, molto interessati" />
+              placeholder={t("Es. call di presentazione, molto interessati")} />
           </div>
           <div className="grid gap-1.5">
-            <Label>Testo completo</Label>
+            <Label>{t("Testo completo")}</Label>
             <Textarea rows={3} value={fullText} onChange={(e) => setFullText(e.target.value)}
-              placeholder="Opzionale: testo dell'email o appunti della call" />
+              placeholder={t("Opzionale: testo dell'email o appunti della call")} />
           </div>
           <div className="flex justify-end">
-            <Button onClick={submit} disabled={!summary.trim() || addActivity.isPending}>Registra</Button>
+            <Button onClick={submit} disabled={!summary.trim() || addActivity.isPending}>{t("Registra")}</Button>
           </div>
         </CardContent>
       </Card>
@@ -107,11 +109,11 @@ export function ActivityTab({ companyId, activities, types = MANUAL_ACTIVITY_TYP
             <div key={a.id} className="rounded-md border border-border p-3">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className="text-[10px]">
-                  {ACTIVITY_TYPE_LABEL[a.type as ActivityType] ?? a.type}
+                  {t(ACTIVITY_TYPE_LABEL[a.type as ActivityType] ?? a.type)}
                 </Badge>
                 {a.direction && (
                   <Badge variant="outline" className="text-[10px]">
-                    {ACTIVITY_DIRECTION_LABEL[a.direction as ActivityDirection]}
+                    {t(ACTIVITY_DIRECTION_LABEL[a.direction as ActivityDirection])}
                   </Badge>
                 )}
                 <span className="text-xs text-muted-foreground">{formatDateTimeIt(a.occurred_at)}</span>
@@ -121,7 +123,7 @@ export function ActivityTab({ companyId, activities, types = MANUAL_ACTIVITY_TYP
                 <>
                   <button className="mt-1 text-xs text-primary"
                     onClick={() => setExpanded(open ? null : a.id)}>
-                    {open ? "Nascondi testo" : "Mostra testo completo"}
+                    {open ? t("Nascondi testo") : t("Mostra testo completo")}
                   </button>
                   {open && (
                     <p className="mt-2 whitespace-pre-wrap rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
@@ -133,7 +135,7 @@ export function ActivityTab({ companyId, activities, types = MANUAL_ACTIVITY_TYP
             </div>
           );
         })}
-        {!activities.length && <p className="text-sm text-muted-foreground">Nessuna attività registrata.</p>}
+        {!activities.length && <p className="text-sm text-muted-foreground">{t("Nessuna attività registrata.")}</p>}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import { CheckCircle, AlertTriangle, Flame } from "lucide-react";
 import { WarmupAccount, useCompleteWarmupDay } from "@/hooks/useCreatorPortal";
 import { toast } from "sonner";
 import { TikTokLink } from "@/components/TikTokLink";
+import { useI18n } from "@/i18n";
 
 const CHECKLIST = [
   "Ho seguito almeno 40 creator della mia nicchia",
@@ -25,6 +26,7 @@ interface Props {
 }
 
 function WarmupCard({ account }: { account: WarmupAccount }) {
+  const { t } = useI18n();
   const [checked, setChecked] = useState<boolean[]>(new Array(CHECKLIST.length).fill(false));
   const allChecked = checked.every(Boolean);
   const completeDay = useCompleteWarmupDay();
@@ -36,7 +38,7 @@ function WarmupCard({ account }: { account: WarmupAccount }) {
           <CheckCircle className="h-6 w-6 text-green-500 shrink-0" />
           <div>
             <TikTokLink username={account.username} className="font-semibold" />
-            <p className="text-sm text-green-400">Account pronto ✅</p>
+            <p className="text-sm text-green-400">{t("Account pronto")} ✅</p>
             <p className="text-xs text-muted-foreground">{account.campaignName}</p>
           </div>
         </CardContent>
@@ -54,8 +56,8 @@ function WarmupCard({ account }: { account: WarmupAccount }) {
           </div>
           <p className="text-xs text-muted-foreground">{account.campaignName}</p>
           <p className="text-sm text-warning">
-            Hai completato i 3 giorni ma hai ancora pochi following ({account.followingCount}/40). 
-            Continua a seguire creator della tua nicchia — ci siamo quasi!
+            {t("Hai completato i 3 giorni ma hai ancora pochi following ({n}/40).", { n: account.followingCount })}{" "}
+            {t("Continua a seguire creator della tua nicchia, ci siamo quasi!")}
           </p>
         </CardContent>
       </Card>
@@ -71,9 +73,9 @@ function WarmupCard({ account }: { account: WarmupAccount }) {
       {
         onSuccess: (newDay) => {
           if (newDay >= 3) {
-            toast.success("Warmup completato! 🎉");
+            toast.success(t("Warmup completato! 🎉"));
           } else {
-            toast.success(`Ottimo! Torna domani per il Giorno ${newDay + 1} 💪`);
+            toast.success(t("Ottimo! Torna domani per il Giorno {n} 💪", { n: newDay + 1 }));
           }
           setChecked(new Array(CHECKLIST.length).fill(false));
         },
@@ -91,13 +93,13 @@ function WarmupCard({ account }: { account: WarmupAccount }) {
           </div>
           <Badge variant="secondary" className="gap-1">
             <Flame className="h-3 w-3" />
-            Giorno {Math.min(day + 1, 3)} di 3
+            {t("Giorno {n} di 3", { n: Math.min(day + 1, 3) })}
           </Badge>
         </div>
         <Progress value={progress} className="h-2 mt-2" />
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground font-medium">Checklist di oggi:</p>
+        <p className="text-sm text-muted-foreground font-medium">{t("Checklist di oggi:")}</p>
         {CHECKLIST.map((item, i) => (
           <label key={i} className="flex items-start gap-3 cursor-pointer group">
             <Checkbox
@@ -110,7 +112,7 @@ function WarmupCard({ account }: { account: WarmupAccount }) {
               className="mt-0.5"
             />
             <span className="text-sm text-foreground/80 group-hover:text-foreground transition-colors">
-              {item}
+              {t(item)}
             </span>
           </label>
         ))}
@@ -119,7 +121,7 @@ function WarmupCard({ account }: { account: WarmupAccount }) {
           disabled={!allChecked || completeDay.isPending}
           onClick={handleComplete}
         >
-          {completeDay.isPending ? "Salvataggio..." : "Ho completato le attività di oggi ✓"}
+          {completeDay.isPending ? t("Salvataggio...") : t("Ho completato le attività di oggi") + " ✓"}
         </Button>
       </CardContent>
     </Card>
@@ -127,14 +129,15 @@ function WarmupCard({ account }: { account: WarmupAccount }) {
 }
 
 export default function CreatorWarmup({ accounts, allDone, creatorName, creatorId }: Props) {
+  const { t } = useI18n();
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2">
-          <Flame className="h-5 w-5 text-primary" /> Warmup
+          <Flame className="h-5 w-5 text-primary" /> {t("Warmup")}
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Prepara i tuoi account TikTok prima di iniziare a pubblicare
+          {t("Prepara i tuoi account TikTok prima di iniziare a pubblicare")}
         </p>
       </div>
 
@@ -142,10 +145,10 @@ export default function CreatorWarmup({ accounts, allDone, creatorName, creatorI
         <Card className="border-green-500/30 bg-green-500/5">
           <CardContent className="p-5 text-center space-y-1">
             <p className="text-lg font-bold text-green-400">
-              🚀 Tutti i tuoi account sono pronti!
+              🚀 {t("Tutti i tuoi account sono pronti!")}
             </p>
             <p className="text-sm text-muted-foreground">
-              Le sezioni Contenuti, Calendario e Guadagni sono ora disponibili.
+              {t("Le sezioni Contenuti, Calendario e Guadagni sono ora disponibili.")}
             </p>
           </CardContent>
         </Card>

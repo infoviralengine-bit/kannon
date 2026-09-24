@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, Film, BarChart3, Heart, Clock } from "lucide-react";
 import { formatViews } from "@/lib/format";
 import type { VideoAnalyticsKPI, WindowStats } from "@/hooks/useVideoAnalytics";
+import { useI18n } from "@/i18n";
 
 export function VideoAnalyticsKPIs({
   kpi,
@@ -10,36 +11,37 @@ export function VideoAnalyticsKPIs({
   kpi: VideoAnalyticsKPI;
   windowStats: WindowStats;
 }) {
+  const { t } = useI18n();
   const cards = [
     {
       icon: Eye,
-      label: "Views totali",
+      label: t("Views totali"),
       value: formatViews(kpi.total_views),
-      hint: `${formatViews(kpi.total_raw_views)} raw`,
+      hint: t("{n} raw", { n: formatViews(kpi.total_raw_views) }),
     },
     {
       icon: Film,
-      label: "Video totali",
+      label: t("Video totali"),
       value: kpi.total_videos.toLocaleString("it-IT"),
-      hint: "nel periodo",
+      hint: t("nel periodo"),
     },
     {
       icon: BarChart3,
-      label: "Avg views/video",
+      label: t("Avg views/video"),
       value: formatViews(kpi.avg_views_per_video),
-      hint: "media per video",
+      hint: t("media per video"),
     },
     {
       icon: Heart,
-      label: "Engagement",
+      label: t("Engagement"),
       value: `${Number(kpi.avg_engagement_pct).toFixed(2)}%`,
-      hint: `${formatViews(kpi.total_likes)} like · ${formatViews(kpi.total_comments)} commenti`,
+      hint: t("{likes} like · {comments} commenti", { likes: formatViews(kpi.total_likes), comments: formatViews(kpi.total_comments) }),
     },
     {
       icon: Clock,
-      label: "Finestre aperte",
+      label: t("Finestre aperte"),
       value: (windowStats.open_count + windowStats.closing_count).toLocaleString("it-IT"),
-      hint: `${windowStats.closing_count} in chiusura · ${windowStats.closed_count} chiuse`,
+      hint: t("{closing} in chiusura · {closed} chiuse", { closing: windowStats.closing_count, closed: windowStats.closed_count }),
     },
   ];
   return (

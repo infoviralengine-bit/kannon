@@ -11,8 +11,10 @@ import {
 } from "recharts";
 import { formatViews } from "@/lib/format";
 import type { DayBreakdown } from "@/hooks/useVideoAnalytics";
+import { useI18n } from "@/i18n";
 
 export function VideoTimeSeriesChart({ data }: { data: DayBreakdown[] }) {
+  const { t } = useI18n();
   const chartData = data.map((d) => ({
     label: new Date(d.day).toLocaleDateString("it-IT", { day: "2-digit", month: "short" }),
     views: Number(d.total_views),
@@ -21,12 +23,12 @@ export function VideoTimeSeriesChart({ data }: { data: DayBreakdown[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Andamento views per giorno</CardTitle>
+        <CardTitle>{t("Andamento views per giorno")}</CardTitle>
       </CardHeader>
       <CardContent style={{ height: 320 }}>
         {chartData.length === 0 ? (
           <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-            Nessun dato nel periodo
+            {t("Nessun dato nel periodo")}
           </div>
         ) : (
           <ResponsiveContainer>
@@ -36,12 +38,12 @@ export function VideoTimeSeriesChart({ data }: { data: DayBreakdown[] }) {
               <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => formatViews(Number(v))} />
               <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" fontSize={12} />
               <Tooltip
-                formatter={(v: any, name) => (name === "Views" ? formatViews(Number(v)) : v)}
+                formatter={(v: any, name) => (name === t("Views") ? formatViews(Number(v)) : v)}
                 contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
               />
               <Legend />
-              <Line yAxisId="left" type="monotone" dataKey="views" name="Views" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-              <Line yAxisId="right" type="monotone" dataKey="videos" name="Video" stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} dot={false} strokeDasharray="3 3" />
+              <Line yAxisId="left" type="monotone" dataKey="views" name={t("Views")} stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+              <Line yAxisId="right" type="monotone" dataKey="videos" name={t("Video")} stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} dot={false} strokeDasharray="3 3" />
             </LineChart>
           </ResponsiveContainer>
         )}
