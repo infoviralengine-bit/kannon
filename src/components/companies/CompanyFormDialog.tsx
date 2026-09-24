@@ -6,8 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSaveCompany, useStaffProfiles, type Company } from "@/hooks/useCompanies";
-import {
 import { useI18n } from "@/i18n";
+import {
   COMPANY_STAGES, STAGE_LABEL, COMPANY_STATUSES, STATUS_LABEL,
   TEMPERATURES, TEMPERATURE_LABEL, DEAL_TYPES, DEAL_TYPE_LABEL,
   GROWTH_STAGES, GROWTH_STAGE_LABEL,
