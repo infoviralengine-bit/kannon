@@ -131,7 +131,6 @@ export default function CreatorPage() {
       }
       await supabase.from("contract_signatures").delete().eq("creator_id", creatorId);
       await supabase.from("contract_creators").delete().eq("creator_id", creatorId);
-      await supabase.from("onboarding_links").update({ creator_id: null }).eq("creator_id", creatorId);
       await supabase.from("creator_calendar").delete().eq("creator_id", creatorId);
       await supabase.from("creator_content").delete().eq("creator_id", creatorId);
       await supabase.from("campaign_creators").delete().eq("creator_id", creatorId);

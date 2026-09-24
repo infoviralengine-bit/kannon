@@ -33,11 +33,9 @@ function useCreatorTimeline(creatorId: string) {
       // Fetch related data in parallel
       const [
         { data: accounts },
-        { data: onboardingLinks },
         { data: signatures },
       ] = await Promise.all([
         supabase.from("tiktok_accounts").select("warmup_day, warmup_started_at, following_count").eq("creator_id", creatorId),
-        supabase.from("onboarding_links").select("created_at, completed_at, status").eq("creator_id", creatorId).order("created_at", { ascending: false }).limit(1),
         supabase.from("contract_signatures").select("signed_at").eq("creator_id", creatorId).order("signed_at", { ascending: true }).limit(1),
       ]);
 
@@ -52,7 +50,6 @@ function useCreatorTimeline(creatorId: string) {
         if (profile) profileCreatedAt = profile.created_at;
       }
 
-      const link = onboardingLinks?.[0] ?? null;
       const sig = signatures?.[0] ?? null;
       const allAccounts = accounts ?? [];
       const allWarmupDone = allAccounts.length > 0 && allAccounts.every(a => a.warmup_day >= 3 && a.following_count >= 40);
@@ -74,14 +71,8 @@ function useCreatorTimeline(creatorId: string) {
       // Build milestones
       const milestones: Milestone[] = [
         {
-          label: "Link onboarding inviato",
-          description: link ? "Link di onboarding generato e inviato" : "Link non ancora inviato",
-          date: link?.created_at ?? null,
-          status: link ? "completed" : "pending",
-        },
-        {
           label: "Dati personali inseriti",
-          description: creator.created_at ? "Profilo creator creato durante l'onboarding" : "Dati non ancora inseriti",
+          description: creator.created_at ? "Profilo creator creato" : "Dati non ancora inseriti",
           date: creator.created_at ?? null,
           status: creator.created_at ? "completed" : "pending",
         },
@@ -93,7 +84,7 @@ function useCreatorTimeline(creatorId: string) {
         },
         {
           label: "Account creato",
-          description: profileCreatedAt ? "Account utente creato — onboarding completato" : "Account non ancora creato",
+          description: profileCreatedAt ? "Account utente creato" : "Account non ancora creato",
           date: profileCreatedAt ?? null,
           status: profileCreatedAt ? "completed" : "pending",
         },

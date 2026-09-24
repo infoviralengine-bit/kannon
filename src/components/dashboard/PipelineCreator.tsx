@@ -1,13 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserPlus, Flame, Rocket, BarChart3 } from "lucide-react";
+import { Users, Flame, Rocket, BarChart3 } from "lucide-react";
 
-export type PipelinePhase = "lead" | "onboarding" | "warmup" | "operativi" | "totale" | null;
+export type PipelinePhase = "warmup" | "operativi" | "totale" | null;
 
 interface PipelineData {
-  lead: number;
-  onboarding: number;
   warmup: number;
   operativi: number;
   totale: number;
@@ -20,22 +18,13 @@ export function usePipelineData() {
       const [
         { data: creators },
         { data: accounts },
-        { data: onboardingLinks },
       ] = await Promise.all([
         supabase.from("creators").select("id, profile_id, status"),
         supabase.from("tiktok_accounts").select("creator_id, warmup_day, following_count"),
-        supabase.from("onboarding_links").select("creator_id, completed_at, status"),
       ]);
 
       const allCreators = creators ?? [];
       const allAccounts = accounts ?? [];
-      const allLinks = onboardingLinks ?? [];
-
-      // Creator IDs that completed onboarding (have profile_id)
-      const onboardedCreatorIds = new Set(allCreators.filter(c => c.profile_id).map(c => c.id));
-
-      // Creator IDs linked in onboarding_links
-      const linkedCreatorIds = new Set(allLinks.filter(l => l.creator_id).map(l => l.creator_id));
 
       // Warmup status per creator
       const creatorWarmupDone = new Map<string, boolean>();
@@ -45,18 +34,8 @@ export function usePipelineData() {
         creatorWarmupDone.set(c.id, done);
       });
 
-      // Lead: pending onboarding links not yet converted into a creator
-      const pendingLinks = allLinks.filter(l => !l.creator_id && !l.completed_at);
-
-      // Onboarding: have an onboarding link with creator but no profile_id (or link not completed)
-      const onboarding = allCreators.filter(c => {
-        if (c.profile_id) return false; // already onboarded
-        return linkedCreatorIds.has(c.id);
-      });
-
-      // Warmup: onboarded (have profile_id) but warmup not complete
+      // Warmup: has account but warmup not complete (have profile_id) but warmup not complete
       const warmup = allCreators.filter(c => {
-        if (!c.profile_id) return false;
         return !creatorWarmupDone.get(c.id);
       });
 
@@ -64,8 +43,6 @@ export function usePipelineData() {
       const operativi = allCreators.filter(c => creatorWarmupDone.get(c.id));
 
       return {
-        lead: pendingLinks.length,
-        onboarding: onboarding.length,
         warmup: warmup.length,
         operativi: operativi.length,
         totale: allCreators.length,
@@ -76,8 +53,6 @@ export function usePipelineData() {
 }
 
 const phases: { key: PipelinePhase; label: string; icon: React.ElementType; color: string; bg: string }[] = [
-  { key: "lead", label: "Lead", icon: UserPlus, color: "text-blue-400", bg: "bg-blue-400/10" },
-  { key: "onboarding", label: "Onboarding", icon: Users, color: "text-amber-400", bg: "bg-amber-400/10" },
   { key: "warmup", label: "Warmup", icon: Flame, color: "text-orange-400", bg: "bg-orange-400/10" },
   { key: "operativi", label: "Operativi", icon: Rocket, color: "text-emerald-400", bg: "bg-emerald-400/10" },
   { key: "totale", label: "Totale", icon: BarChart3, color: "text-muted-foreground", bg: "bg-muted" },
@@ -101,7 +76,7 @@ export default function PipelineCreator({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {phases.map(p => {
             const count = data?.[p.key as keyof PipelineData] ?? 0;
             const isSelected = selected === p.key;
