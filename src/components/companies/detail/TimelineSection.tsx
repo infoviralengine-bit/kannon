@@ -104,7 +104,7 @@ function SortableTimelineItem({ item, canDrag, isOpen, onToggle, onDelete }: {
       <div className="flex items-start gap-2">
         {canDrag && (
           <Button type="button" size="icon" variant="ghost" className="h-8 w-8 shrink-0 cursor-grab touch-none active:cursor-grabbing"
-            aria-label={t("Trascina per riordinare")} {...attributes} {...listeners}>
+            aria-label={t("Trascina per riordinare")} title={t("Trascina per riordinare")} {...attributes} {...listeners}>
             <GripVertical className="h-4 w-4" />
           </Button>
         )}
@@ -127,7 +127,7 @@ function SortableTimelineItem({ item, canDrag, isOpen, onToggle, onDelete }: {
         </div>
         <Button type="button" size="icon" variant="ghost"
           className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-          aria-label={t("Elimina dalla cronologia")} onClick={onDelete}>
+          aria-label={t("Elimina dalla cronologia")} title={t("Elimina dalla cronologia")} onClick={onDelete}>
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
@@ -219,13 +219,14 @@ export function TimelineSection({ companyId, activities, documents, tasks, notes
     const oldIndex = orderedIds.indexOf(String(active.id));
     const newIndex = orderedIds.indexOf(String(over.id));
     if (oldIndex < 0 || newIndex < 0) return;
+    const previousIds = orderedIds;
     const nextIds = arrayMove(orderedIds, oldIndex, newIndex);
     setOrderedIds(nextIds);
     const nextItems = nextIds.map((id) => itemById.get(id)).filter((item): item is Item => Boolean(item));
     saveOrder.mutate({
       companyId,
       items: nextItems.map((item) => ({ itemType: item.itemType, itemId: item.sourceId })),
-    });
+    }, { onError: () => setOrderedIds(previousIds) });
   };
 
   const confirmDelete = () => {
