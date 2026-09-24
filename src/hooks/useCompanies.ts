@@ -248,11 +248,11 @@ export function useAgendaTasks() {
     queryFn: async () => {
       const { data, error } = await db
         .from("company_tasks")
-        .select("*, companies(id, name)")
+        .select("*, companies(id, name, logo_url)")
         .eq("is_done", false)
         .order("due_date", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as (CompanyTask & { companies: { id: string; name: string } | null })[];
+      return (data ?? []) as (CompanyTask & { companies: { id: string; name: string; logo_url: string | null } | null })[];
     },
   });
 }
