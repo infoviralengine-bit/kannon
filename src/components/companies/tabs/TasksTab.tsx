@@ -11,10 +11,12 @@ import { TASK_TYPES, TASK_TYPE_LABEL, formatDateIt, isOverdue, type TaskType } f
 import {
   useDeleteTask, useSaveTask, useToggleTask, useStaffProfiles, type CompanyTask,
 } from "@/hooks/useCompanies";
+import { useI18n } from "@/i18n";
 
 const NONE = "__none__";
 
 export function TasksTab({ companyId, tasks }: { companyId: string; tasks: CompanyTask[] }) {
+  const { t } = useI18n();
   const saveTask = useSaveTask();
   const toggleTask = useToggleTask();
   const deleteTask = useDeleteTask();
@@ -47,49 +49,49 @@ export function TasksTab({ companyId, tasks }: { companyId: string; tasks: Compa
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader><CardTitle className="text-base">Nuova cosa da fare</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t("Nuova cosa da fare")}</CardTitle></CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-5 sm:items-end">
           <div className="grid gap-1.5 sm:col-span-2">
-            <Label>Titolo *</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Es. richiamare Marco" />
+            <Label>{t("Titolo *")}</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("Es. richiamare Marco")} />
           </div>
           <div className="grid gap-1.5">
-            <Label>Tipo</Label>
+            <Label>{t("Tipo")}</Label>
             <Select value={type} onValueChange={(v) => setType(v as TaskType)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {TASK_TYPES.map((t) => <SelectItem key={t} value={t}>{TASK_TYPE_LABEL[t]}</SelectItem>)}
+                {TASK_TYPES.map((tt) => <SelectItem key={tt} value={tt}>{t(TASK_TYPE_LABEL[tt])}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="grid gap-1.5">
-            <Label>Scadenza</Label>
+            <Label>{t("Scadenza")}</Label>
             <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </div>
           <div className="grid gap-1.5">
-            <Label>Assegnata a</Label>
+            <Label>{t("Assegnata a")}</Label>
             <Select value={assignee} onValueChange={setAssignee}>
-              <SelectTrigger><SelectValue placeholder="Nessuno" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t("Nessuno")} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={NONE}>Nessuno</SelectItem>
-                {staff.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name ?? "Senza nome"}</SelectItem>)}
+                <SelectItem value={NONE}>{t("Nessuno")}</SelectItem>
+                {staff.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name ?? t("Senza nome")}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div className="sm:col-span-5 flex justify-end">
-            <Button onClick={submit} disabled={!title.trim() || saveTask.isPending}>Aggiungi</Button>
+            <Button onClick={submit} disabled={!title.trim() || saveTask.isPending}>{t("Aggiungi")}</Button>
           </div>
         </CardContent>
       </Card>
 
       <div className="space-y-2">
         {open.map((t) => <TaskRow key={t.id} task={t} onToggle={toggleTask.mutate} onDelete={deleteTask.mutate} />)}
-        {!open.length && <p className="text-sm text-muted-foreground">Niente da fare al momento.</p>}
+        {!open.length && <p className="text-sm text-muted-foreground">{t("Niente da fare al momento.")}</p>}
       </div>
 
       {done.length > 0 && (
         <div className="space-y-2 pt-2">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Completate</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{t("Completate")}</p>
           {done.map((t) => <TaskRow key={t.id} task={t} onToggle={toggleTask.mutate} onDelete={deleteTask.mutate} />)}
         </div>
       )}

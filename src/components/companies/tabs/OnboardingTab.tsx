@@ -3,22 +3,24 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { formatDateIt, isOverdue } from "@/lib/companies";
 import { useToggleOnboardingStep, type CompanyOnboardingStep } from "@/hooks/useCompanies";
+import { useI18n } from "@/i18n";
 
 export function OnboardingTab({ companyId, steps }: { companyId: string; steps: CompanyOnboardingStep[] }) {
+  const { t } = useI18n();
   const toggle = useToggleOnboardingStep();
   const done = steps.filter((s) => s.is_done).length;
   const pct = steps.length ? Math.round((done / steps.length) * 100) : 0;
 
   if (!steps.length) {
-    return <p className="text-sm text-muted-foreground">La checklist parte quando la trattativa viene vinta.</p>;
+    return <p className="text-sm text-muted-foreground">{t("La checklist parte quando la trattativa viene vinta.")}</p>;
   }
 
   return (
     <div className="space-y-4">
       <div>
         <div className="mb-2 flex justify-between text-sm">
-          <span className="text-muted-foreground">Avanzamento</span>
-          <span>{done} di {steps.length}</span>
+          <span className="text-muted-foreground">{t("Avanzamento")}</span>
+          <span>{t("{done} di {total}", { done, total: steps.length })}</span>
         </div>
         <Progress value={pct} />
       </div>
