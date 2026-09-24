@@ -152,7 +152,7 @@ export function useCompanyOptions() {
         .select("id, name, status, logo_url, legal_name")
         .order("name");
       if (error) throw error;
-      return (data ?? []) as Pick<Company, "id" | "name" | "status" | "logo_url">[];
+      return (data ?? []) as Pick<Company, "id" | "name" | "status" | "logo_url" | "legal_name">[];
     },
   });
 }
