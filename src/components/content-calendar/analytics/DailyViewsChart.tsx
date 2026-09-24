@@ -11,8 +11,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatViews } from "@/lib/format";
 import { arr } from "./_shared";
+import { useI18n } from "@/i18n";
 
 export function DailyViewsChart({ data }: { data: any }) {
+  const { t } = useI18n();
   const points = useMemo(() => {
     return arr<Record<string, unknown>>(data?.dailyViews).map((row) => {
       let total = 0;
@@ -25,10 +27,10 @@ export function DailyViewsChart({ data }: { data: any }) {
 
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">Views pubblicate per giorno</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="text-base">{t("Views pubblicate per giorno")}</CardTitle></CardHeader>
       <CardContent>
         {points.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nessun dato.</p>
+          <p className="text-sm text-muted-foreground">{t("Nessun dato.")}</p>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={points} margin={{ left: 4, right: 8, top: 8 }}>
@@ -46,7 +48,7 @@ export function DailyViewsChart({ data }: { data: any }) {
               />
               <YAxis tickFormatter={(v) => formatViews(Number(v))} fontSize={11} width={56} />
               <Tooltip
-                formatter={(v) => [formatViews(Number(v)), "Views"]}
+                formatter={(v) => [formatViews(Number(v)), t("Views")]}
                 labelFormatter={(v) => new Date(v).toLocaleDateString("it-IT")}
               />
               <Area type="monotone" dataKey="total" stroke="hsl(var(--primary))" fill="url(#viewsGradientCC)" strokeWidth={2} />

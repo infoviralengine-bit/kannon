@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useI18n, t } from "@/i18n";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +34,7 @@ export default function SettingsPage() {
   const { role, session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useI18n();
 
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<AppUser[]>([]);
@@ -58,7 +60,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (role !== null && role !== "admin") {
-      toast({ title: "Accesso non autorizzato", variant: "destructive" });
+      toast({ title: t("Accesso non autorizzato"), variant: "destructive" });
       navigate("/dashboard");
     }
   }, [role]);
@@ -95,25 +97,25 @@ export default function SettingsPage() {
       setCreators(creatorsRes.data || []);
       setCampaigns(campaignsRes.data || []);
     } catch (e: any) {
-      toast({ title: "Errore caricamento", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore caricamento"), description: e.message, variant: "destructive" });
     }
     setLoading(false);
   }
 
   async function handleCreateUser() {
     if (!newUser.full_name || !newUser.email || !newUser.password) {
-      toast({ title: "Compila tutti i campi obbligatori", variant: "destructive" });
+      toast({ title: t("Compila tutti i campi obbligatori"), variant: "destructive" });
       return;
     }
     setCreating(true);
     try {
       await callManageUsers({ action: "create_user", ...newUser });
-      toast({ title: "Utente creato con successo" });
+      toast({ title: t("Utente creato con successo") });
       setShowNewUser(false);
       setNewUser({ full_name: "", email: "", password: "", role: "team", creator_id: "", campaign_id: "" });
       loadAll();
     } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     }
     setCreating(false);
   }
@@ -128,21 +130,21 @@ export default function SettingsPage() {
         creator_id: editRole === "creator" ? editCreatorId : undefined,
         campaign_id: editRole === "client" ? editCampaignId : undefined,
       });
-      toast({ title: "Ruolo aggiornato" });
+      toast({ title: t("Ruolo aggiornato") });
       setEditingUser(null);
       loadAll();
     } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     }
   }
 
   async function handleDisable(userId: string) {
     try {
       await callManageUsers({ action: "disable_user", user_id: userId });
-      toast({ title: "Utente disabilitato" });
+      toast({ title: t("Utente disabilitato") });
       loadAll();
     } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     }
   }
 
@@ -150,31 +152,31 @@ export default function SettingsPage() {
     if (!deletingUser) return;
     try {
       await callManageUsers({ action: "delete_user", user_id: deletingUser.id });
-      toast({ title: "Utente eliminato definitivamente" });
+      toast({ title: t("Utente eliminato definitivamente") });
       setDeletingUser(null);
       loadAll();
     } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
       setDeletingUser(null);
     }
   }
 
   async function saveSetting(key: string, value: string) {
     const trimmed = value.trim();
-    if (!trimmed) throw new Error("Il valore non può essere vuoto");
+    if (!trimmed) throw new Error(t("Il valore non può essere vuoto"));
     
     // Validate based on setting type
     const numericKeys = ["client_cpm_default", "creator_cpm_default", "creator_fixed_default", "creator_monthly_fixed_default"];
     if (numericKeys.includes(key)) {
       const num = parseFloat(trimmed);
-      if (isNaN(num) || num < 0) throw new Error("Il valore deve essere un numero positivo");
+      if (isNaN(num) || num < 0) throw new Error(t("Il valore deve essere un numero positivo"));
     }
     if (key === "creator_min_videos_default") {
       const num = parseInt(trimmed);
-      if (isNaN(num) || num < 0 || num > 100) throw new Error("Min video deve essere tra 0 e 100");
+      if (isNaN(num) || num < 0 || num > 100) throw new Error(t("Min video deve essere tra 0 e 100"));
     }
     if (key === "apify_api_key" && trimmed.length < 10) {
-      throw new Error("La chiave API sembra troppo corta");
+      throw new Error(t("La chiave API sembra troppo corta"));
     }
     
     await supabase.from("settings").update({ value: trimmed, updated_at: new Date().toISOString() }).eq("key", key);
@@ -184,9 +186,9 @@ export default function SettingsPage() {
     setSavingApify(true);
     try {
       await saveSetting("apify_frequency", settings.apify_frequency || "every_2_hours");
-      toast({ title: "Configurazione Apify salvata" });
+      toast({ title: t("Configurazione Apify salvata") });
     } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     }
     setSavingApify(false);
   }
@@ -206,7 +208,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8 p-6">
-      <h1 className="text-2xl font-bold">Impostazioni</h1>
+      <h1 className="text-2xl font-bold">{t("Impostazioni")}</h1>
 
       {/* SECTION 1 — USER MANAGEMENT */}
       <Card>
@@ -214,23 +216,23 @@ export default function SettingsPage() {
           <div className="flex items-center gap-3">
             <Users className="h-5 w-5 text-primary" />
             <div>
-              <CardTitle className="text-lg">Gestione Utenti</CardTitle>
-              <CardDescription>Crea, modifica e disabilita utenti della piattaforma</CardDescription>
+              <CardTitle className="text-lg">{t("Gestione Utenti")}</CardTitle>
+              <CardDescription>{t("Crea, modifica e disabilita utenti della piattaforma")}</CardDescription>
             </div>
           </div>
           <Button onClick={() => setShowNewUser(true)} size="sm">
-            <Plus className="h-4 w-4 mr-1" /> Nuovo Utente
+            <Plus className="h-4 w-4 mr-1" /> {t("Nuovo Utente")}
           </Button>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Ruolo</TableHead>
-                <TableHead>Data creazione</TableHead>
-                <TableHead>Azioni</TableHead>
+                <TableHead>{t("Nome")}</TableHead>
+                <TableHead>{t("Email")}</TableHead>
+                <TableHead>{t("Ruolo")}</TableHead>
+                <TableHead>{t("Data creazione")}</TableHead>
+                <TableHead>{t("Azioni")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -257,10 +259,10 @@ export default function SettingsPage() {
                         setEditCampaignId("");
                       }}
                     >
-                      Modifica ruolo
+                      {t("Modifica ruolo")}
                     </Button>
                     <Button variant="destructive" size="sm" onClick={() => handleDisable(u.id)}>
-                      Disabilita
+                      {t("Disabilita")}
                     </Button>
                     <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeletingUser(u)}>
                       <Trash2 className="h-4 w-4" />
@@ -279,8 +281,8 @@ export default function SettingsPage() {
           <div className="flex items-center gap-3">
             <Cpu className="h-5 w-5 text-primary" />
             <div>
-              <CardTitle className="text-lg">Configurazione Apify</CardTitle>
-              <CardDescription>Configura l'integrazione per lo scraping automatico dei dati TikTok.</CardDescription>
+              <CardTitle className="text-lg">{t("Configurazione Apify")}</CardTitle>
+              <CardDescription>{t("Configura l'integrazione per lo scraping automatico dei dati TikTok.")}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -289,17 +291,17 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label>Apify API Key</Label>
               <div className="rounded-md border border-border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-                Gestita tramite Supabase Secrets
+                {t("Gestita tramite Supabase Secrets")}
               </div>
               <p className="text-xs text-muted-foreground">
-                La chiave è configurata come variabile d'ambiente sicura. Per modificarla, vai nelle{" "}
+                {t("La chiave è configurata come variabile d'ambiente sicura. Per modificarla, vai nelle")}{" "}
                 <a href={`https://supabase.com/dashboard/project/ceknjgwzxexxzckcqjmq/settings/functions`} target="_blank" rel="noopener noreferrer" className="underline text-primary">
-                  impostazioni Edge Functions
-                </a> di Supabase.
+                  {t("impostazioni Edge Functions")}
+                </a> {t("di Supabase.")}
               </p>
             </div>
             <div className="space-y-2">
-              <Label>Frequenza aggiornamento</Label>
+              <Label>{t("Frequenza aggiornamento")}</Label>
               <Select
                 value={settings.apify_frequency || "every_2_hours"}
                 onValueChange={(v) => setSettings({ ...settings, apify_frequency: v })}
@@ -308,27 +310,27 @@ export default function SettingsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="every_2_hours">Ogni 2 ore</SelectItem>
-                  <SelectItem value="every_6_hours">Ogni 6 ore</SelectItem>
-                  <SelectItem value="every_12_hours">Ogni 12 ore</SelectItem>
-                  <SelectItem value="every_24_hours">Ogni 24 ore</SelectItem>
+                  <SelectItem value="every_2_hours">{t("Ogni 2 ore")}</SelectItem>
+                  <SelectItem value="every_6_hours">{t("Ogni 6 ore")}</SelectItem>
+                  <SelectItem value="every_12_hours">{t("Ogni 12 ore")}</SelectItem>
+                  <SelectItem value="every_24_hours">{t("Ogni 24 ore")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="mt-6 flex gap-3">
             <Button onClick={handleSaveApify} disabled={savingApify}>
-              {savingApify ? "Salvataggio..." : "Salva Configurazione"}
+              {savingApify ? t("Salvataggio...") : t("Salva Configurazione")}
             </Button>
             <Button
               variant="outline"
-              onClick={() => toast({ title: "Configurazione salvata", description: "La connessione verrà attivata nella prossima fase di sviluppo." })}
+              onClick={() => toast({ title: t("Configurazione salvata"), description: t("La connessione verrà attivata nella prossima fase di sviluppo.") })}
             >
-              Testa Connessione
+              {t("Testa Connessione")}
             </Button>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
-            L'integrazione Apify verrà attivata nella fase successiva. Per ora puoi salvare la tua API key.
+            {t("L'integrazione Apify verrà attivata nella fase successiva. Per ora puoi salvare la tua API key.")}
           </p>
         </CardContent>
       </Card>
@@ -346,24 +348,24 @@ export default function SettingsPage() {
       <Dialog open={showNewUser} onOpenChange={setShowNewUser}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nuovo Utente</DialogTitle>
-            <DialogDescription>Crea un nuovo utente nella piattaforma</DialogDescription>
+            <DialogTitle>{t("Nuovo Utente")}</DialogTitle>
+            <DialogDescription>{t("Crea un nuovo utente nella piattaforma")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Nome completo *</Label>
+              <Label>{t("Nome completo *")}</Label>
               <Input value={newUser.full_name} onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Email *</Label>
+              <Label>{t("Email *")}</Label>
               <Input type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Password temporanea *</Label>
+              <Label>{t("Password temporanea *")}</Label>
               <Input type="text" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Ruolo</Label>
+              <Label>{t("Ruolo")}</Label>
               <Select value={newUser.role} onValueChange={(v) => setNewUser({ ...newUser, role: v, creator_id: "", campaign_id: "" })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -378,9 +380,9 @@ export default function SettingsPage() {
             </div>
             {newUser.role === "creator" && (
               <div className="space-y-2">
-                <Label>Collega a Creator</Label>
+                <Label>{t("Collega a Creator")}</Label>
                 <Select value={newUser.creator_id} onValueChange={(v) => setNewUser({ ...newUser, creator_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Seleziona creator..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("Seleziona creator...")} /></SelectTrigger>
                   <SelectContent>
                     {creators.map((c) => (
                       <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -391,9 +393,9 @@ export default function SettingsPage() {
             )}
             {newUser.role === "client" && (
               <div className="space-y-2">
-                <Label>Collega a Campagna</Label>
+                <Label>{t("Collega a Campagna")}</Label>
                 <Select value={newUser.campaign_id} onValueChange={(v) => setNewUser({ ...newUser, campaign_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Seleziona campagna..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("Seleziona campagna...")} /></SelectTrigger>
                   <SelectContent>
                     {campaigns.map((c) => (
                       <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -404,9 +406,9 @@ export default function SettingsPage() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewUser(false)}>Annulla</Button>
+            <Button variant="outline" onClick={() => setShowNewUser(false)}>{t("Annulla")}</Button>
             <Button onClick={handleCreateUser} disabled={creating}>
-              {creating ? "Creazione..." : "Crea Utente"}
+              {creating ? t("Creazione...") : t("Crea Utente")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -416,12 +418,12 @@ export default function SettingsPage() {
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifica Ruolo</DialogTitle>
-            <DialogDescription>Cambia il ruolo di {editingUser?.full_name}</DialogDescription>
+            <DialogTitle>{t("Modifica Ruolo")}</DialogTitle>
+            <DialogDescription>{t("Cambia il ruolo di")} {editingUser?.full_name}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Nuovo ruolo</Label>
+              <Label>{t("Nuovo ruolo")}</Label>
               <Select value={editRole} onValueChange={(v) => { setEditRole(v); setEditCreatorId(""); setEditCampaignId(""); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -436,9 +438,9 @@ export default function SettingsPage() {
             </div>
             {editRole === "creator" && (
               <div className="space-y-2">
-                <Label>Collega a Creator</Label>
+                <Label>{t("Collega a Creator")}</Label>
                 <Select value={editCreatorId} onValueChange={setEditCreatorId}>
-                  <SelectTrigger><SelectValue placeholder="Seleziona..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("Seleziona...")} /></SelectTrigger>
                   <SelectContent>
                     {creators.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
@@ -447,9 +449,9 @@ export default function SettingsPage() {
             )}
             {editRole === "client" && (
               <div className="space-y-2">
-                <Label>Collega a Campagna</Label>
+                <Label>{t("Collega a Campagna")}</Label>
                 <Select value={editCampaignId} onValueChange={setEditCampaignId}>
-                  <SelectTrigger><SelectValue placeholder="Seleziona..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("Seleziona...")} /></SelectTrigger>
                   <SelectContent>
                     {campaigns.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
@@ -458,8 +460,8 @@ export default function SettingsPage() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingUser(null)}>Annulla</Button>
-            <Button onClick={handleUpdateRole}>Salva</Button>
+            <Button variant="outline" onClick={() => setEditingUser(null)}>{t("Annulla")}</Button>
+            <Button onClick={handleUpdateRole}>{t("Salva")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -467,16 +469,16 @@ export default function SettingsPage() {
       <AlertDialog open={!!deletingUser} onOpenChange={() => setDeletingUser(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Eliminare questo utente?</AlertDialogTitle>
+            <AlertDialogTitle>{t("Eliminare questo utente?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Stai per eliminare definitivamente <strong>{deletingUser?.full_name}</strong> ({deletingUser?.email}).
-              Questa azione è irreversibile: verranno rimossi profilo, ruolo e account di autenticazione.
+              {t("Stai per eliminare definitivamente")} <strong>{deletingUser?.full_name}</strong> ({deletingUser?.email}).
+              {t("Questa azione è irreversibile: verranno rimossi profilo, ruolo e account di autenticazione.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogCancel>{t("Annulla")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Elimina definitivamente
+              {t("Elimina definitivamente")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

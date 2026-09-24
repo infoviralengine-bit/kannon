@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useI18n } from "@/i18n";
 import { useAuth } from "@/contexts/AuthContext";
 import PipelineCreator from "@/components/dashboard/PipelineCreator";
 import { useNavigate } from "react-router-dom";
@@ -41,6 +42,7 @@ function KpiFinancialCard({
   accentClass: string;
   loading: boolean;
 }) {
+  const { t } = useI18n();
   const animated = useCountUp(value, 1400, !loading);
   const diff = prevValue !== undefined ? value - prevValue : undefined;
   const diffPct = prevValue && prevValue > 0 ? ((diff ?? 0) / prevValue) * 100 : undefined;
@@ -75,7 +77,7 @@ function KpiFinancialCard({
                 <span className={`text-xs font-medium ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
                   {isPositive ? "+" : ""}{diffPct?.toFixed(1)}%
                 </span>
-                <span className="text-xs text-muted-foreground">vs mese scorso</span>
+                <span className="text-xs text-muted-foreground">{t("vs mese scorso")}</span>
               </div>
             )}
           </>
@@ -98,6 +100,7 @@ function ChartTooltip({ active, payload, label }: any) {
 
 /* ─── Period Selector ─── */
 function PeriodSelector({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const { t } = useI18n();
   const options = [
     { label: "7gg", value: 7 },
     { label: "30gg", value: 30 },
@@ -115,7 +118,7 @@ function PeriodSelector({ value, onChange }: { value: number; onChange: (v: numb
               : "text-muted-foreground hover:text-muted-foreground"
           }`}
         >
-          {o.label}
+          {t(o.label)}
         </button>
       ))}
     </div>
@@ -124,6 +127,7 @@ function PeriodSelector({ value, onChange }: { value: number; onChange: (v: numb
 
 /* ─── KPI Period Selector ─── */
 function KpiPeriodSelector({ value, onChange }: { value: number | undefined; onChange: (v: number | undefined) => void }) {
+  const { t } = useI18n();
   const options: { label: string; value: number | undefined }[] = [
     { label: "30gg", value: 30 },
     { label: "90gg", value: 90 },
@@ -141,7 +145,7 @@ function KpiPeriodSelector({ value, onChange }: { value: number | undefined; onC
               : "text-muted-foreground hover:text-muted-foreground"
           }`}
         >
-          {o.label}
+          {t(o.label)}
         </button>
       ))}
     </div>
@@ -150,6 +154,7 @@ function KpiPeriodSelector({ value, onChange }: { value: number | undefined; onC
 
 /* ─── Main Page ─── */
 export default function GeneralePage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { role } = useAuth();
   const isTeam = role === "team";
@@ -172,12 +177,12 @@ export default function GeneralePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Panoramica in tempo reale</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">{t("Dashboard")}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t("Panoramica in tempo reale")}</p>
         </div>
         <Badge variant="outline" className="border-border text-muted-foreground text-xs gap-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          Aggiornamento automatico
+          {t("Aggiornamento automatico")}
         </Badge>
       </div>
 
@@ -185,33 +190,33 @@ export default function GeneralePage() {
       {!isTeam && (
         <>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">KPI Finanziari</span>
+            <span className="text-sm font-medium text-muted-foreground">{t("KPI Finanziari")}</span>
             <KpiPeriodSelector value={kpiPeriod} onChange={setKpiPeriod} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiFinancialCard
-              label="Entrate Fisse"
+              label={t("Entrate Fisse")}
               icon={TrendingUp}
               value={kpi?.fixedIncome ?? 0}
               accentClass="text-emerald-400"
               loading={kpiLoading}
             />
             <KpiFinancialCard
-              label="Uscite Fisse"
+              label={t("Uscite Fisse")}
               icon={TrendingDown}
               value={kpi?.fixedExpense ?? 0}
               accentClass="text-red-400"
               loading={kpiLoading}
             />
             <KpiFinancialCard
-              label="Margine CPM"
+              label={t("Margine CPM")}
               icon={DollarSign}
               value={kpi?.cpmMargin ?? 0}
               accentClass="text-primary"
               loading={kpiLoading}
             />
             <KpiFinancialCard
-              label="Margine Totale"
+              label={t("Margine Totale")}
               icon={DollarSign}
               value={(kpi?.fixedIncome ?? 0) - (kpi?.fixedExpense ?? 0) + (kpi?.cpmMargin ?? 0)}
               accentClass="text-amber-400"
@@ -245,10 +250,10 @@ export default function GeneralePage() {
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <div>
             <CardTitle className="text-base font-semibold text-foreground">
-              Performance Views
+              {t("Performance Views")}
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {formatViews(totalChartViews)} views totali nel periodo
+              {t("{views} views totali nel periodo", { views: formatViews(totalChartViews) })}
             </p>
           </div>
           <PeriodSelector value={chartDays} onChange={setChartDays} />
@@ -299,7 +304,7 @@ export default function GeneralePage() {
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <Zap className="h-4 w-4 text-primary" />
-          Campagne Attive
+          {t("Campagne Attive")}
         </h2>
         {campaignCards.isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -309,9 +314,9 @@ export default function GeneralePage() {
           <Card className="border-border bg-card">
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <Zap className="h-10 w-10 text-muted mb-3" />
-              <p className="text-sm text-muted-foreground mb-4">Nessuna campagna attiva</p>
+              <p className="text-sm text-muted-foreground mb-4">{t("Nessuna campagna attiva")}</p>
               <Button onClick={() => navigate("/dashboard/campaigns")} size="sm">
-                Crea la tua prima campagna
+                {t("Crea la tua prima campagna")}
               </Button>
             </CardContent>
           </Card>
@@ -341,12 +346,12 @@ export default function GeneralePage() {
                       <div className="flex gap-1.5">
                         {capReached && (
                           <Badge className="bg-red-500/15 text-red-400 border-red-500/30 text-[10px]">
-                            🔴 Cap raggiunto
+                            {t("🔴 Cap raggiunto")}
                           </Badge>
                         )}
                         {capWarning && !capReached && (
                           <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30 text-[10px]">
-                            ⚠️ Cap vicino
+                            {t("⚠️ Cap vicino")}
                           </Badge>
                         )}
                       </div>
@@ -356,8 +361,8 @@ export default function GeneralePage() {
                       <div className="mb-3">
                         {!isTeam && (
                           <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                            <span>Spesa {formatCurrency(c.revenueMonth)}</span>
-                            <span>Cap {formatCurrency(c.spendCap)}</span>
+                            <span>{t("Spesa {amount}", { amount: formatCurrency(c.revenueMonth) })}</span>
+                            <span>{t("Cap {amount}", { amount: formatCurrency(c.spendCap) })}</span>
                           </div>
                         )}
                         <div className="h-1.5 rounded-full bg-muted overflow-hidden">
@@ -373,17 +378,17 @@ export default function GeneralePage() {
 
                     <div className={`grid ${isTeam ? 'grid-cols-2' : 'grid-cols-3'} gap-3 pt-2 border-t border-border`}>
                       <div>
-                        <p className="text-[10px] text-muted-foreground uppercase">Views</p>
+                        <p className="text-[10px] text-muted-foreground uppercase">{t("Views")}</p>
                         <p className="text-sm font-semibold text-foreground">{formatViews(c.viewsMonth)}</p>
                       </div>
                       {!isTeam && (
                         <div>
-                          <p className="text-[10px] text-muted-foreground uppercase">Entrata</p>
+                          <p className="text-[10px] text-muted-foreground uppercase">{t("Entrata")}</p>
                           <p className="text-sm font-semibold text-emerald-400">{formatCurrency(c.revenueMonth)}</p>
                         </div>
                       )}
                       <div>
-                        <p className="text-[10px] text-muted-foreground uppercase">Creator</p>
+                        <p className="text-[10px] text-muted-foreground uppercase">{t("Creator")}</p>
                         <p className="text-sm font-semibold text-foreground">{c.creatorCount}</p>
                       </div>
                     </div>
@@ -403,7 +408,7 @@ export default function GeneralePage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Zap className="h-4 w-4 text-muted-foreground" />
-              Alert Sistema
+              {t("Alert Sistema")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -412,7 +417,7 @@ export default function GeneralePage() {
             ) : !deadlines.data?.systemAlerts.length ? (
               <div className="flex items-center gap-2 py-4 px-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
                 <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                <span className="text-sm text-emerald-400">Nessun problema rilevato ✓</span>
+                <span className="text-sm text-emerald-400">{t("Nessun problema rilevato ✓")}</span>
               </div>
             ) : (
               <div className="space-y-2">
@@ -446,7 +451,7 @@ export default function GeneralePage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Trophy className="h-4 w-4 text-amber-400" />
-              Top Performer del Mese
+              {t("Top Performer del Mese")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -455,7 +460,7 @@ export default function GeneralePage() {
                 {[1, 2, 3].map((i) => <Shimmer key={i} className="h-14" />)}
               </div>
             ) : !creatorStatus.data?.topPerformers.length ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nessun dato disponibile</p>
+              <p className="text-sm text-muted-foreground text-center py-8">{t("Nessun dato disponibile")}</p>
             ) : (
               <div className="space-y-2">
                 {creatorStatus.data.topPerformers.map((p, i) => {
@@ -491,19 +496,19 @@ export default function GeneralePage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                Scadenze Pagamenti
+                {t("Scadenze Pagamenti")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Da Ricevere (Clienti) */}
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold mb-2">Da Ricevere (Clienti)</p>
+                <p className="text-[10px] uppercase tracking-wider text-emerald-400 font-semibold mb-2">{t("Da Ricevere (Clienti)")}</p>
                 {deadlines.isLoading ? (
                   <div className="space-y-2">
                     {[1, 2].map((i) => <Shimmer key={i} className="h-10" />)}
                   </div>
                 ) : !deadlines.data?.deadlines.length ? (
-                  <p className="text-[11px] text-muted-foreground py-2">Nessuna scadenza clienti in arrivo</p>
+                  <p className="text-[11px] text-muted-foreground py-2">{t("Nessuna scadenza clienti in arrivo")}</p>
                 ) : (
                   <div className="space-y-2">
                     {deadlines.data.deadlines.map((d, i) => (
@@ -526,7 +531,7 @@ export default function GeneralePage() {
                                   : "bg-muted text-muted-foreground border-border"
                             }`}
                           >
-                            {d.isOverdue ? "Scaduto" : `${d.daysUntil}gg`}
+                            {d.isOverdue ? t("Scaduto") : t("{n}gg", { n: d.daysUntil })}
                           </Badge>
                         </div>
                       </div>
@@ -537,13 +542,13 @@ export default function GeneralePage() {
 
               {/* Da Pagare (Creator) */}
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold mb-2">Da Pagare (Creator)</p>
+                <p className="text-[10px] uppercase tracking-wider text-amber-400 font-semibold mb-2">{t("Da Pagare (Creator)")}</p>
                 {deadlines.isLoading ? (
                   <div className="space-y-2">
                     {[1, 2].map((i) => <Shimmer key={`cr-${i}`} className="h-10" />)}
                   </div>
                 ) : !deadlines.data?.creatorDeadlines?.filter((d) => !d.isPaid).length ? (
-                  <p className="text-[11px] text-muted-foreground py-2">Nessun pagamento creator in sospeso</p>
+                  <p className="text-[11px] text-muted-foreground py-2">{t("Nessun pagamento creator in sospeso")}</p>
                 ) : (
                   <div className="space-y-2">
                     {deadlines.data.creatorDeadlines.filter((d) => !d.isPaid).map((d, i) => (

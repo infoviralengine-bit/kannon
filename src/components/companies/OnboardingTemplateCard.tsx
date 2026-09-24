@@ -8,9 +8,11 @@ import { Trash2, Plus } from "lucide-react";
 import {
   useDeleteTemplateStep, useOnboardingTemplate, useSaveTemplateStep,
 } from "@/hooks/useCompanies";
+import { useI18n } from "@/i18n";
 
 /** Modello della checklist di onboarding cliente, modificabile dall'admin. */
 export function OnboardingTemplateCard() {
+  const { t } = useI18n();
   const { data: steps = [] } = useOnboardingTemplate();
   const saveStep = useSaveTemplateStep();
   const deleteStep = useDeleteTemplateStep();
@@ -35,9 +37,9 @@ export function OnboardingTemplateCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Modello di onboarding</CardTitle>
+        <CardTitle className="text-lg">{t("Modello di onboarding")}</CardTitle>
         <CardDescription>
-          I passaggi che vengono creati quando una trattativa viene vinta. Le modifiche valgono solo per i clienti nuovi.
+          {t("I passaggi che vengono creati quando una trattativa viene vinta. Le modifiche valgono solo per i clienti nuovi.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -49,7 +51,7 @@ export function OnboardingTemplateCard() {
                 if (v && v !== s.title) saveStep.mutate({ id: s.id, values: { title: v } });
               }} />
             <div className="flex items-center gap-2">
-              <Label className="text-xs text-muted-foreground">Entro giorni</Label>
+              <Label className="text-xs text-muted-foreground">{t("Entro giorni")}</Label>
               <Input type="number" className="w-20" defaultValue={s.due_days}
                 onBlur={(e) => {
                   const v = Number(e.target.value);
@@ -66,15 +68,15 @@ export function OnboardingTemplateCard() {
 
         <div className="flex flex-wrap items-end gap-2 pt-2">
           <div className="grid min-w-[200px] flex-1 gap-1.5">
-            <Label>Nuovo passaggio</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Es. kickoff call fatta" />
+            <Label>{t("Nuovo passaggio")}</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("Es. kickoff call fatta")} />
           </div>
           <div className="grid gap-1.5">
-            <Label>Entro giorni</Label>
+            <Label>{t("Entro giorni")}</Label>
             <Input type="number" className="w-24" value={dueDays} onChange={(e) => setDueDays(e.target.value)} />
           </div>
           <Button onClick={add} disabled={!title.trim() || saveStep.isPending}>
-            <Plus className="mr-1 h-4 w-4" /> Aggiungi
+            <Plus className="mr-1 h-4 w-4" /> {t("Aggiungi")}
           </Button>
         </div>
       </CardContent>

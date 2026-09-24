@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useI18n } from "@/i18n";
 import { ClientBriefCard } from "./ClientBriefCard";
 import { ClientCommentsDrawer } from "./ClientCommentsDrawer";
 import { ClientChangeRequestDialog } from "./ClientChangeRequestDialog";
@@ -17,6 +18,7 @@ function mondayOf(d: Date): Date {
 }
 
 export function ClientBriefsList() {
+  const { t } = useI18n();
   const { data, isLoading } = useClientCampaignBriefs();
   const [commentBrief, setCommentBrief] = useState<PortalBrief | null>(null);
   const [crBrief, setCrBrief] = useState<PortalBrief | null>(null);
@@ -43,7 +45,7 @@ export function ClientBriefsList() {
   if (weeks.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-        Nessun contenuto da revisionare al momento.
+        {t("Nessun contenuto da revisionare al momento.")}
       </div>
     );
   }
@@ -55,7 +57,7 @@ export function ClientBriefsList() {
         return (
           <div key={weekStart} className="space-y-2">
             <h3 className="text-sm font-semibold">
-              Settimana del {formatDateIt(start)} {" - "} {formatDateIt(addDays(start, 6))}
+              {t("Settimana del")} {formatDateIt(start)} {" - "} {formatDateIt(addDays(start, 6))}
             </h3>
             <div className="space-y-3">
               {briefs.map((b) => (

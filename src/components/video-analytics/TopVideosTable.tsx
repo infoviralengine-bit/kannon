@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpDown, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { useTopVideos, type TopVideosSortBy, type VideoAnalyticsFilters } from "@/hooks/useVideoAnalytics";
 import { formatViews } from "@/lib/format";
+import { useI18n } from "@/i18n";
 
 const PAGE_SIZE = 25;
 
@@ -17,6 +18,7 @@ const WINDOW_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
 };
 
 export function TopVideosTable({ filters }: { filters: VideoAnalyticsFilters }) {
+  const { t } = useI18n();
   const [sortBy, setSortBy] = useState<TopVideosSortBy>("views");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(0);
@@ -49,22 +51,22 @@ export function TopVideosTable({ filters }: { filters: VideoAnalyticsFilters }) 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Top video</CardTitle>
+        <CardTitle>{t("Top video")}</CardTitle>
         <p className="text-sm text-muted-foreground">
-          {totalCount.toLocaleString("it-IT")} video totali
+          {t("{n} video totali", { n: totalCount.toLocaleString("it-IT") })}
         </p>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Account / Creator / Campagna</TableHead>
-              <TableHead>{sortBtn("Pubblicato", "published")}</TableHead>
+              <TableHead>{t("Account / Creator / Campagna")}</TableHead>
+              <TableHead>{sortBtn(t("Pubblicato"), "published")}</TableHead>
               <TableHead className="text-right">{sortBtn("Views", "views")}</TableHead>
-              <TableHead className="text-right">{sortBtn("Like", "likes")}</TableHead>
-              <TableHead className="text-right">{sortBtn("Commenti", "comments")}</TableHead>
+              <TableHead className="text-right">{sortBtn(t("Like"), "likes")}</TableHead>
+              <TableHead className="text-right">{sortBtn(t("Commenti"), "comments")}</TableHead>
               <TableHead className="text-right">{sortBtn("ER%", "engagement")}</TableHead>
-              <TableHead>Finestra</TableHead>
+              <TableHead>{t("Finestra")}</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
@@ -72,14 +74,14 @@ export function TopVideosTable({ filters }: { filters: VideoAnalyticsFilters }) 
             {isLoading && (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  Caricamento...
+                  {t("Caricamento...")}
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && (data?.rows.length ?? 0) === 0 && (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  Nessun video nel periodo selezionato
+                  {t("Nessun video nel periodo selezionato")}
                 </TableCell>
               </TableRow>
             )}
@@ -100,12 +102,12 @@ export function TopVideosTable({ filters }: { filters: VideoAnalyticsFilters }) 
                 <TableCell className="text-right">{Number(v.engagement_pct).toFixed(2)}%</TableCell>
                 <TableCell>
                   <Badge variant={WINDOW_VARIANT[v.window_status] ?? "outline"}>
-                    {WINDOW_LABEL[v.window_status] ?? v.window_status}
+                    {t(WINDOW_LABEL[v.window_status] ?? v.window_status)}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <Button variant="ghost" size="icon" asChild>
-                    <a href={v.tiktok_url} target="_blank" rel="noopener" aria-label="Apri su TikTok">
+                    <a href={v.tiktok_url} target="_blank" rel="noopener" aria-label={t("Apri su TikTok")}>
                       <ExternalLink className="h-4 w-4" />
                     </a>
                   </Button>
@@ -117,7 +119,7 @@ export function TopVideosTable({ filters }: { filters: VideoAnalyticsFilters }) 
 
         <div className="flex items-center justify-between mt-4">
           <p className="text-sm text-muted-foreground">
-            Pagina {page + 1} di {totalPages}
+            {t("Pagina {page} di {total}", { page: page + 1, total: totalPages })}
           </p>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="icon" disabled={page === 0} onClick={() => setPage(page - 1)}>

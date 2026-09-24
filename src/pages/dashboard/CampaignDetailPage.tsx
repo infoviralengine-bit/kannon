@@ -8,6 +8,7 @@ import {
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { cn, cleanUsername } from "@/lib/utils";
+import { useI18n, t } from "@/i18n";
 import { TikTokLink } from "@/components/TikTokLink";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -99,6 +100,7 @@ function EditCampaignModal({
   };
 }) {
   const { toast } = useToast();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [name, setName] = useState(campaign.name);
   const [clientName, setClientName] = useState(campaign.client_name);
@@ -113,7 +115,7 @@ function EditCampaignModal({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!name || !clientName || !startDate) throw new Error("Compila i campi obbligatori");
+      if (!name || !clientName || !startDate) throw new Error(t("Compila i campi obbligatori"));
       const parsedCpm = parseFloat(clientCpm);
       const newCpm = isNaN(parsedCpm) ? 0 : parsedCpm;
       const parsedFixed = parseFloat(clientFixed);
@@ -178,7 +180,7 @@ function EditCampaignModal({
       }
     },
     onSuccess: () => {
-      toast({ title: "Campagna aggiornata", description: "Cicli di pagamento ricalcolati" });
+      toast({ title: t("Campagna aggiornata"), description: t("Cicli di pagamento ricalcolati") });
       qc.invalidateQueries({ queryKey: ["campaign-detail", campaign.id] });
       qc.invalidateQueries({ queryKey: ["campaign-table"] });
       qc.invalidateQueries({ queryKey: ["campaign-cycles", campaign.id] });
@@ -186,41 +188,41 @@ function EditCampaignModal({
       onOpenChange(false);
     },
     onError: (e: Error) => {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     },
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Modifica Campagna</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("Modifica Campagna")}</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-1.5">
-            <Label>Nome campagna *</Label>
+            <Label>{t("Nome campagna *")}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="grid gap-1.5">
-            <Label>Nome cliente *</Label>
+            <Label>{t("Nome cliente *")}</Label>
             <Input value={clientName} onChange={(e) => setClientName(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
-              <Label>CPM Cliente (€)</Label>
+              <Label>{t("CPM Cliente (€)")}</Label>
               <Input type="number" step="0.01" value={clientCpm} onChange={(e) => setClientCpm(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Fisso mensile (€, totale campagna)</Label>
+              <Label>{t("Fisso mensile (€, totale campagna)")}</Label>
               <Input type="number" step="0.01" value={clientFixed} onChange={(e) => setClientFixed(e.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
-              <Label>Data inizio *</Label>
+              <Label>{t("Data inizio *")}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "dd/MM/yyyy") : "Seleziona"}
+                    {startDate ? format(startDate, "dd/MM/yyyy") : t("Seleziona")}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -229,12 +231,12 @@ function EditCampaignModal({
               </Popover>
             </div>
             <div className="grid gap-1.5">
-              <Label>Data fine</Label>
+              <Label>{t("Data fine")}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, "dd/MM/yyyy") : "Opzionale"}
+                    {endDate ? format(endDate, "dd/MM/yyyy") : t("Opzionale")}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -244,27 +246,27 @@ function EditCampaignModal({
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label>Video minimi al mese</Label>
+            <Label>{t("Video minimi al mese")}</Label>
             <Input type="number" min="0" step="1" value={minMonthlyVideos} onChange={(e) => setMinMonthlyVideos(e.target.value)} />
           </div>
           <Separator />
-          <p className="text-sm font-medium text-muted-foreground">Cap (opzionali)</p>
+          <p className="text-sm font-medium text-muted-foreground">{t("Cap (opzionali)")}</p>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
-              <Label>Cap views per video</Label>
-              <Input type="number" min="0" step="1" value={videoViewsCap} onChange={(e) => setVideoViewsCap(e.target.value)} placeholder="es. 100000 — vuoto = nessun cap" />
+              <Label>{t("Cap views per video")}</Label>
+              <Input type="number" min="0" step="1" value={videoViewsCap} onChange={(e) => setVideoViewsCap(e.target.value)} placeholder={t("es. 100000 — vuoto = nessun cap")} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Cap di spesa per ciclo (€)</Label>
-              <Input type="number" min="0" step="0.01" value={monthlySpendCap} onChange={(e) => setMonthlySpendCap(e.target.value)} placeholder="es. 5000 — vuoto = nessun cap" />
+              <Label>{t("Cap di spesa per ciclo (€)")}</Label>
+              <Input type="number" min="0" step="0.01" value={monthlySpendCap} onChange={(e) => setMonthlySpendCap(e.target.value)} placeholder={t("es. 5000 — vuoto = nessun cap")} />
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label>Note</Label>
+            <Label>{t("Note")}</Label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
-            {mutation.isPending ? "Salvataggio..." : "Salva Modifiche"}
+            {mutation.isPending ? t("Salvataggio...") : t("Salva Modifiche")}
           </Button>
         </div>
       </DialogContent>
@@ -276,13 +278,14 @@ function AddCreatorModal({ open, onOpenChange, campaignId }: {
   open: boolean; onOpenChange: (v: boolean) => void; campaignId: string;
 }) {
   const { toast } = useToast();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const { data: creators } = useAllCreatorsForSelect();
   const [selectedId, setSelectedId] = useState("");
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!selectedId) throw new Error("Seleziona un creator");
+      if (!selectedId) throw new Error(t("Seleziona un creator"));
       const { error } = await supabase.from("campaign_creators").insert({
         campaign_id: campaignId,
         creator_id: selectedId,
@@ -290,7 +293,7 @@ function AddCreatorModal({ open, onOpenChange, campaignId }: {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Creator aggiunto alla campagna" });
+      toast({ title: t("Creator aggiunto alla campagna") });
       qc.invalidateQueries({ queryKey: ["campaign-creators", campaignId] });
       qc.invalidateQueries({ queryKey: ["campaign-kpi", campaignId] });
       qc.invalidateQueries({ queryKey: ["campaign-margin", campaignId] });
@@ -298,17 +301,17 @@ function AddCreatorModal({ open, onOpenChange, campaignId }: {
       setSelectedId("");
     },
     onError: (e: Error) => {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     },
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
-        <DialogHeader><DialogTitle>Aggiungi Creator</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("Aggiungi Creator")}</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
           <Select value={selectedId} onValueChange={setSelectedId}>
-            <SelectTrigger><SelectValue placeholder="Seleziona creator" /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder={t("Seleziona creator")} /></SelectTrigger>
             <SelectContent>
               {(creators ?? []).map((c) => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -316,7 +319,7 @@ function AddCreatorModal({ open, onOpenChange, campaignId }: {
             </SelectContent>
           </Select>
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
-            {mutation.isPending ? "Aggiunta..." : "Aggiungi"}
+            {mutation.isPending ? t("Aggiunta...") : t("Aggiungi")}
           </Button>
         </div>
       </DialogContent>
@@ -330,6 +333,7 @@ function SpendCapBanner({ campaign, campaignId }: {
   campaignId: string;
 }) {
   const { toast } = useToast();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [newCap, setNewCap] = useState("");
@@ -339,7 +343,7 @@ function SpendCapBanner({ campaign, campaignId }: {
   const resumeMutation = useMutation({
     mutationFn: async () => {
       const parsedCap = parseFloat(newCap);
-      if (isNaN(parsedCap) || parsedCap <= 0) throw new Error("Inserisci un cap valido");
+      if (isNaN(parsedCap) || parsedCap <= 0) throw new Error(t("Inserisci un cap valido"));
       const { error } = await supabase.from("campaigns").update({
         monthly_spend_cap: parsedCap,
         status: "active",
@@ -347,7 +351,7 @@ function SpendCapBanner({ campaign, campaignId }: {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Campagna riattivata", description: `Nuovo cap: €${newCap}` });
+      toast({ title: t("Campagna riattivata"), description: t("Nuovo cap: {cap}", { cap: `€${newCap}` }) });
       qc.invalidateQueries({ queryKey: ["campaign-detail", campaignId] });
       qc.invalidateQueries({ queryKey: ["campaign-table"] });
       setShowModal(false);
@@ -364,30 +368,30 @@ function SpendCapBanner({ campaign, campaignId }: {
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-warning" />
             <span className="text-sm">
-              ⚠️ Cap di spesa raggiunto ({formatCurrency(campaign.monthly_spend_cap)}) — Campagna in pausa.
+              {t("⚠️ Cap di spesa raggiunto ({amount}) — Campagna in pausa.", { amount: formatCurrency(campaign.monthly_spend_cap) })}
             </span>
           </div>
           <div className="flex gap-2">
             <Button size="sm" onClick={() => { setNewCap(String(campaign.monthly_spend_cap * 1.5)); setShowModal(true); }}>
-              Aumenta cap e riprendi
+              {t("Aumenta cap e riprendi")}
             </Button>
             <Button size="sm" variant="outline">
-              Mantieni in pausa
+              {t("Mantieni in pausa")}
             </Button>
           </div>
         </CardContent>
       </Card>
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Aumenta Cap di Spesa</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("Aumenta Cap di Spesa")}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
-            <p className="text-sm text-muted-foreground">Cap attuale: {formatCurrency(campaign.monthly_spend_cap)}</p>
+            <p className="text-sm text-muted-foreground">{t("Cap attuale: {amount}", { amount: formatCurrency(campaign.monthly_spend_cap) })}</p>
             <div className="grid gap-1.5">
-              <Label>Nuovo cap (€)</Label>
+              <Label>{t("Nuovo cap (€)")}</Label>
               <Input type="number" step="0.01" value={newCap} onChange={(e) => setNewCap(e.target.value)} />
             </div>
             <Button onClick={() => resumeMutation.mutate()} disabled={resumeMutation.isPending}>
-              {resumeMutation.isPending ? "Salvataggio..." : "Salva e Riattiva"}
+              {resumeMutation.isPending ? t("Salvataggio...") : t("Salva e Riattiva")}
             </Button>
           </div>
         </DialogContent>
@@ -405,6 +409,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
   const { role } = useAuth();
   const isTeam = role === "team";
   const { toast } = useToast();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [generating, setGenerating] = useState(false);
 
@@ -513,7 +518,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
           (crs ?? []).forEach(c => { if (c.profile_id) userIds.add(c.profile_id); });
         }
 
-        const message = `Cap di spesa raggiunto per "${campFull?.name ?? "campagna"}" (${formatCurrency(spendCap)}). Campagna in pausa.`;
+        const message = t('Cap di spesa raggiunto per "{name}" ({amount}). Campagna in pausa.', { name: campFull?.name ?? t("campagna"), amount: formatCurrency(spendCap) });
         const notifs = Array.from(userIds).map(uid => ({
           campaign_id: campaignId,
           type: "spend_cap_reached",
@@ -524,16 +529,16 @@ function CyclesSection({ campaignId, campaign, cycles }: {
           await supabase.from("notifications").insert(notifs);
         }
 
-        toast({ title: `Ciclo ${nextNumber} generato — CAP DI SPESA RAGGIUNTO`, description: `Campagna in pausa. Totale cappato a ${formatCurrency(spendCap)}`, variant: "destructive" });
+        toast({ title: t("Ciclo {n} generato — CAP DI SPESA RAGGIUNTO", { n: nextNumber }), description: t("Campagna in pausa. Totale cappato a {amount}", { amount: formatCurrency(spendCap) }), variant: "destructive" });
       } else {
-        toast({ title: `Ciclo ${nextNumber} generato`, description: `Da ricevere: ${formatCurrency(totalAmount)}` });
+        toast({ title: t("Ciclo {n} generato", { n: nextNumber }), description: t("Da ricevere: {amount}", { amount: formatCurrency(totalAmount) }) });
       }
 
       qc.invalidateQueries({ queryKey: ["campaign-cycles", campaignId] });
       qc.invalidateQueries({ queryKey: ["campaign-detail", campaignId] });
       qc.invalidateQueries({ queryKey: ["client-payments"] });
     } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     } finally {
       setGenerating(false);
     }
@@ -542,36 +547,36 @@ function CyclesSection({ campaignId, campaign, cycles }: {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Cicli di Pagamento</CardTitle>
+        <CardTitle className="text-lg">{t("Cicli di Pagamento")}</CardTitle>
         <Button size="sm" onClick={handleGenerateNextCycle} disabled={generating}>
           <RefreshCw className={`mr-2 h-4 w-4 ${generating ? "animate-spin" : ""}`} />
-          {generating ? "Generazione..." : "Genera Prossimo Ciclo"}
+          {generating ? t("Generazione...") : t("Genera Prossimo Ciclo")}
         </Button>
       </CardHeader>
       <CardContent>
         {cycles.isLoading ? (
           <Skeleton className="h-24" />
         ) : !(cycles.data ?? []).length ? (
-          <p className="text-sm text-muted-foreground text-center py-6">Nessun ciclo di pagamento generato.</p>
+          <p className="text-sm text-muted-foreground text-center py-6">{t("Nessun ciclo di pagamento generato.")}</p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Ciclo</TableHead>
-                <TableHead>Periodo</TableHead>
-                {!isTeam && <TableHead className="text-right">Fisso (€)</TableHead>}
-                <TableHead className="text-right">Views <CappedBadge /></TableHead>
-                {!isTeam && <TableHead className="text-right">CPM (€)</TableHead>}
-                {!isTeam && <TableHead className="text-right">Totale (€)</TableHead>}
-                <TableHead>Status</TableHead>
+                <TableHead>{t("Ciclo")}</TableHead>
+                <TableHead>{t("Periodo")}</TableHead>
+                {!isTeam && <TableHead className="text-right">{t("Fisso (€)")}</TableHead>}
+                <TableHead className="text-right">{t("Views")} <CappedBadge /></TableHead>
+                {!isTeam && <TableHead className="text-right">{t("CPM (€)")}</TableHead>}
+                {!isTeam && <TableHead className="text-right">{t("Totale (€)")}</TableHead>}
+                <TableHead>{t("Status")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {(cycles.data ?? []).map((c) => (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium">
-                    Ciclo {c.cycleNumber}
-                    {c.isLastCycle && <Badge variant="secondary" className="ml-2 text-xs">Post-campagna</Badge>}
+                    {t("Ciclo {n}", { n: c.cycleNumber })}
+                    {c.isLastCycle && <Badge variant="secondary" className="ml-2 text-xs">{t("Post-campagna")}</Badge>}
                   </TableCell>
                   <TableCell>
                     {new Date(c.startDate).toLocaleDateString("it-IT")} — {new Date(c.endDate).toLocaleDateString("it-IT")}
@@ -583,11 +588,11 @@ function CyclesSection({ campaignId, campaign, cycles }: {
                   <TableCell>
                     {c.payment ? (
                       c.payment.isPaid ? (
-                        <Badge className="bg-success/20 text-success border-success/30">✅ Pagato</Badge>
+                        <Badge className="bg-success/20 text-success border-success/30">✅ {t("Pagato")}</Badge>
                       ) : c.payment.isOverdue ? (
-                        <Badge variant="destructive">🔴 Scaduto</Badge>
+                        <Badge variant="destructive">🔴 {t("Scaduto")}</Badge>
                       ) : (
-                        <Badge variant="secondary">⏳ In attesa</Badge>
+                        <Badge variant="secondary">⏳ {t("In attesa")}</Badge>
                       )
                     ) : (
                       <span className="text-muted-foreground text-sm">—</span>
@@ -609,6 +614,7 @@ function PaymentTermsSection({ campaignId, campaign }: {
   campaign: any;
 }) {
   const { toast } = useToast();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [terms, setTerms] = useState<PaymentTerms>(parsePaymentTerms(campaign?.payment_terms));
   const [saving, setSaving] = useState(false);
@@ -630,17 +636,17 @@ function PaymentTermsSection({ campaignId, campaign }: {
         body: { campaign_id: campaignId },
       });
       if (error) throw error;
-      if (data && data.ok === false) throw new Error(data.error || "Errore rigenerazione");
+      if (data && data.ok === false) throw new Error(data.error || t("Errore rigenerazione"));
 
       toast({
-        title: "Scadenzario rigenerato",
-        description: `${data?.generated ?? 0} pagamenti generati. Quelli già pagati sono stati preservati.`,
+        title: t("Scadenzario rigenerato"),
+        description: t("{n} pagamenti generati. Quelli già pagati sono stati preservati.", { n: data?.generated ?? 0 }),
       });
       qc.invalidateQueries({ queryKey: ["client-payments"] });
       qc.invalidateQueries({ queryKey: ["campaign-cycles", campaignId] });
       qc.invalidateQueries({ queryKey: ["campaign-detail", campaignId] });
     } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -649,11 +655,11 @@ function PaymentTermsSection({ campaignId, campaign }: {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Termini di pagamento</CardTitle>
+        <CardTitle className="text-lg">{t("Termini di pagamento")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-1.5">
-          <Label>Tipo di regola</Label>
+          <Label>{t("Tipo di regola")}</Label>
           <Select
             value={terms.type}
             onValueChange={(v) =>
@@ -662,8 +668,8 @@ function PaymentTermsSection({ campaignId, campaign }: {
           >
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="standard_lagged">Standard mensile (fisso + CPM laggato)</SelectItem>
-              <SelectItem value="tot_split">ToT split (fisso 50/50 + CPM finale)</SelectItem>
+              <SelectItem value="standard_lagged">{t("Standard mensile (fisso + CPM laggato)")}</SelectItem>
+              <SelectItem value="tot_split">{t("ToT split (fisso 50/50 + CPM finale)")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -671,21 +677,21 @@ function PaymentTermsSection({ campaignId, campaign }: {
         {terms.type === "standard_lagged" && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="grid gap-1.5">
-              <Label>Giorno scadenza fisso</Label>
+              <Label>{t("Giorno scadenza fisso")}</Label>
               <Input
                 type="number" min={1} max={28} value={terms.fixedDueDay}
                 onChange={(e) => setTerms({ ...terms, fixedDueDay: Number(e.target.value) })}
               />
             </div>
             <div className="grid gap-1.5">
-              <Label>Lag CPM (mesi)</Label>
+              <Label>{t("Lag CPM (mesi)")}</Label>
               <Input
                 type="number" min={0} max={3} value={terms.cpmLagMonths}
                 onChange={(e) => setTerms({ ...terms, cpmLagMonths: Number(e.target.value) })}
               />
             </div>
             <div className="grid gap-1.5">
-              <Label>Ritardo CPM finale (giorni)</Label>
+              <Label>{t("Ritardo CPM finale (giorni)")}</Label>
               <Input
                 type="number" min={0} value={terms.finalCpmDelayDays}
                 onChange={(e) => setTerms({ ...terms, finalCpmDelayDays: Number(e.target.value) })}
@@ -698,21 +704,21 @@ function PaymentTermsSection({ campaignId, campaign }: {
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="grid gap-1.5">
-                <Label>Giorno 1ª metà (del cycle)</Label>
+                <Label>{t("Giorno 1ª metà (del cycle)")}</Label>
                 <Input
                   type="number" min={1} max={28} value={terms.firstHalfDay}
                   onChange={(e) => setTerms({ ...terms, firstHalfDay: Number(e.target.value) })}
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label>Giorno 2ª metà (del cycle)</Label>
+                <Label>{t("Giorno 2ª metà (del cycle)")}</Label>
                 <Input
                   type="number" min={2} max={28} value={terms.secondHalfDay}
                   onChange={(e) => setTerms({ ...terms, secondHalfDay: Number(e.target.value) })}
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label>Ritardo CPM finale (giorni dopo end_date)</Label>
+                <Label>{t("Ritardo CPM finale (giorni dopo end_date)")}</Label>
                 <Input
                   type="number" min={0} value={terms.cpmPayoutDelayDays}
                   onChange={(e) => setTerms({ ...terms, cpmPayoutDelayDays: Number(e.target.value) })}
@@ -720,32 +726,32 @@ function PaymentTermsSection({ campaignId, campaign }: {
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              Nota: i cycle ToT sono ancorati alla data di start della campagna (mese 1 = start → start+30 giorni). Il "giorno 1" della 1ª metà = primo giorno del cycle.
+              {t('Nota: i cycle ToT sono ancorati alla data di start della campagna (mese 1 = start → start+30 giorni). Il "giorno 1" della 1ª metà = primo giorno del cycle.')}
             </p>
           </div>
         )}
 
         <div className="flex items-center justify-between pt-2 border-t">
           <p className="text-sm text-muted-foreground">
-            Anteprima: <span className="font-medium text-foreground">{paymentTermsLabel(terms)}</span>
+            {t("Anteprima:")} <span className="font-medium text-foreground">{paymentTermsLabel(terms)}</span>
           </p>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button disabled={saving}>
-                {saving ? "Salvando..." : "Salva e rigenera scadenzario"}
+                {saving ? t("Salvando...") : t("Salva e rigenera scadenzario")}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Confermi rigenerazione?</AlertDialogTitle>
+                <AlertDialogTitle>{t("Confermi rigenerazione?")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Vengono cancellati i pagamenti non ancora ricevuti e ricreati secondo la nuova regola. I pagamenti già marcati come "Pagato" restano intoccati.
+                  {t('Vengono cancellati i pagamenti non ancora ricevuti e ricreati secondo la nuova regola. I pagamenti già marcati come "Pagato" restano intoccati.')}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Annulla</AlertDialogCancel>
+                <AlertDialogCancel>{t("Annulla")}</AlertDialogCancel>
                 <AlertDialogAction onClick={handleSaveAndRegenerate}>
-                  Sì, rigenera
+                  {t("Sì, rigenera")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -762,6 +768,7 @@ function DeleteCampaignModal({ open, onOpenChange, campaign }: {
   campaign: { id: string; name: string };
 }) {
   const { toast } = useToast();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [confirmed, setConfirmed] = useState(false);
@@ -785,34 +792,34 @@ function DeleteCampaignModal({ open, onOpenChange, campaign }: {
       if (e5) throw e5;
     },
     onSuccess: () => {
-      toast({ title: "Campagna eliminata" });
+      toast({ title: t("Campagna eliminata") });
       qc.invalidateQueries({ queryKey: ["campaign-table"] });
       qc.invalidateQueries({ queryKey: ["active-campaigns-count"] });
       navigate("/dashboard/campaigns");
     },
     onError: (e: Error) => {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     },
   });
 
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) { setConfirmed(false); setNameInput(""); } }}>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle className="text-destructive">Elimina Campagna</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="text-destructive">{t("Elimina Campagna")}</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
           <p className="text-sm text-muted-foreground">
-            Sei sicuro di voler eliminare la campagna <strong>{campaign.name}</strong>? Questa azione è irreversibile e cancellerà i cicli di pagamento e scollegherà creator e account dalla campagna.
+            {t("Sei sicuro di voler eliminare la campagna {name}? Questa azione è irreversibile e cancellerà i cicli di pagamento e scollegherà creator e account dalla campagna.", { name: campaign.name })}
           </p>
           <div className="flex items-center gap-2">
             <Checkbox id="confirm-delete" checked={confirmed} onCheckedChange={(v) => setConfirmed(v === true)} />
-            <label htmlFor="confirm-delete" className="text-sm">Ho capito che questa azione è irreversibile</label>
+            <label htmlFor="confirm-delete" className="text-sm">{t("Ho capito che questa azione è irreversibile")}</label>
           </div>
           <div className="grid gap-1.5">
-            <Label>Scrivi "<strong>{campaign.name}</strong>" per confermare</Label>
+            <Label>{t('Scrivi "{name}" per confermare', { name: campaign.name })}</Label>
             <Input value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder={campaign.name} />
           </div>
           <Button variant="destructive" onClick={() => mutation.mutate()} disabled={!canDelete || mutation.isPending}>
-            {mutation.isPending ? "Eliminazione..." : "Elimina definitivamente"}
+            {mutation.isPending ? t("Eliminazione...") : t("Elimina definitivamente")}
           </Button>
         </div>
       </DialogContent>
@@ -829,6 +836,7 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
   navigate: ReturnType<typeof useNavigate>;
 }) {
   const { toast } = useToast();
+  const { t } = useI18n();
   const qc = useQueryClient();
 
   const removeCreatorMutation = useMutation({
@@ -841,7 +849,7 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Creator rimosso dalla campagna" });
+      toast({ title: t("Creator rimosso dalla campagna") });
       qc.invalidateQueries({ queryKey: ["campaign-creators", campaignId] });
       qc.invalidateQueries({ queryKey: ["campaign-kpi", campaignId] });
     },
@@ -873,27 +881,27 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Creator</CardTitle>
+        <CardTitle className="text-lg">{t("Creator")}</CardTitle>
         {!isCompleted && (
-          <Button size="sm" onClick={onAddCreator}>+ Aggiungi Creator</Button>
+          <Button size="sm" onClick={onAddCreator}>{t("+ Aggiungi Creator")}</Button>
         )}
       </CardHeader>
       <CardContent>
         {creators.isLoading ? (
           <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
         ) : !creators.data?.length ? (
-          <p className="text-sm text-muted-foreground text-center py-6">Nessun creator associato.</p>
+          <p className="text-sm text-muted-foreground text-center py-6">{t("Nessun creator associato.")}</p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Contratto</TableHead>
-                <TableHead>Account</TableHead>
-                <TableHead className="text-right">Oggi</TableHead>
-                <TableHead className="text-right">Settimana</TableHead>
-                <TableHead className="text-right">Mese</TableHead>
-                <TableHead className="text-right">Views Totali</TableHead>
+                <TableHead>{t("Nome")}</TableHead>
+                <TableHead>{t("Contratto")}</TableHead>
+                <TableHead>{t("Account")}</TableHead>
+                <TableHead className="text-right">{t("Oggi")}</TableHead>
+                <TableHead className="text-right">{t("Settimana")}</TableHead>
+                <TableHead className="text-right">{t("Mese")}</TableHead>
+                <TableHead className="text-right">{t("Views Totali")}</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
@@ -920,7 +928,7 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.creatorId}`)}>
-                          Apri
+                          {t("Apri")}
                         </Button>
                         {!isCompleted && (
                           <Button
@@ -949,6 +957,7 @@ function CreatorTableWithContracts({ campaignId, creators, isCompleted, onAddCre
 /* ── Remove Account Button ── */
 function RemoveAccountButton({ accountId, campaignId }: { accountId: string; campaignId: string }) {
   const { toast } = useToast();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const mutation = useMutation({
     mutationFn: async () => {
@@ -959,7 +968,7 @@ function RemoveAccountButton({ accountId, campaignId }: { accountId: string; cam
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Account rimosso dalla campagna" });
+      toast({ title: t("Account rimosso dalla campagna") });
       qc.invalidateQueries({ queryKey: ["campaign-accounts", campaignId] });
       qc.invalidateQueries({ queryKey: ["campaign-kpi", campaignId] });
     },
@@ -982,6 +991,7 @@ export default function CampaignDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const { role } = useAuth();
   const isTeam = role === "team";
@@ -1005,12 +1015,12 @@ export default function CampaignDetailPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Status aggiornato" });
+      toast({ title: t("Status aggiornato") });
       qc.invalidateQueries({ queryKey: ["campaign-detail", campaignId] });
       qc.invalidateQueries({ queryKey: ["campaign-table"] });
     },
     onError: (e: Error) => {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     },
   });
 
@@ -1024,7 +1034,7 @@ export default function CampaignDetailPage() {
   }
 
   if (!campaign) {
-    return <p className="text-muted-foreground py-8">Campagna non trovata.</p>;
+    return <p className="text-muted-foreground py-8">{t("Campagna non trovata.")}</p>;
   }
 
   const isCompleted = campaign.status === "completed";
@@ -1053,7 +1063,7 @@ export default function CampaignDetailPage() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink href="/dashboard/campaigns" onClick={(e) => { e.preventDefault(); navigate("/dashboard/campaigns"); }}>
-              Campagne
+              {t("Campagne")}
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator><ChevronRight className="h-4 w-4" /></BreadcrumbSeparator>
@@ -1065,7 +1075,7 @@ export default function CampaignDetailPage() {
       {isCompleted && (
         <Card className="border-warning/30 bg-warning/5">
           <CardContent className="py-3">
-            <p className="text-sm text-warning">Campagna conclusa — dati in sola lettura</p>
+            <p className="text-sm text-warning">{t("Campagna conclusa — dati in sola lettura")}</p>
           </CardContent>
         </Card>
       )}
@@ -1082,17 +1092,17 @@ export default function CampaignDetailPage() {
         <div className="flex items-center gap-2">
           {!isCompleted && (
             <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-              <Pencil className="mr-2 h-4 w-4" /> Modifica
+              <Pencil className="mr-2 h-4 w-4" /> {t("Modifica")}
             </Button>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">Cambia Status</Button>
+              <Button variant="outline" size="sm">{t("Cambia Status")}</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               {["active", "paused", "completed"].map((s) => (
                 <DropdownMenuItem key={s} onClick={() => statusMutation.mutate(s)}>
-                  {statusLabel[s]}
+                  {t(statusLabel[s])}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -1109,7 +1119,7 @@ export default function CampaignDetailPage() {
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-            <CardTitle className="text-base font-semibold">Condizioni</CardTitle>
+            <CardTitle className="text-base font-semibold">{t("Condizioni")}</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -1120,12 +1130,12 @@ export default function CampaignDetailPage() {
           ) : (
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-                {!isTeam && <StatItem label="CPM Cliente" value={formatCurrency(campaign.client_cpm ?? 0)} sub="per 1.000 views" />}
-                {!isTeam && <StatItem label="Fisso mensile" value={formatCurrency(campaign.client_fixed ?? 0)} sub="totale campagna" />}
-                <StatItem label="Video minimi/mese" value={String(campAny.min_monthly_videos ?? 0)} />
-                <StatItem label="Durata" value={`${format(new Date(campaign.start_date), "dd/MM/yy")} → ${campaign.end_date ? format(new Date(campaign.end_date), "dd/MM/yy") : "∞"}`} />
-                <StatItem label="Cap per video" value={videoViewsCap != null ? `${formatViews(videoViewsCap)}` : "—"} sub={videoViewsCap != null ? "views max" : "nessun limite"} />
-                {!isTeam && <StatItem label="Cap di spesa" value={monthlySpendCap != null ? formatCurrency(monthlySpendCap) : "—"} sub={monthlySpendCap != null ? "per ciclo" : "nessun limite"} />}
+                {!isTeam && <StatItem label={t("CPM Cliente")} value={formatCurrency(campaign.client_cpm ?? 0)} sub={t("per 1.000 views")} />}
+                {!isTeam && <StatItem label={t("Fisso mensile")} value={formatCurrency(campaign.client_fixed ?? 0)} sub={t("totale campagna")} />}
+                <StatItem label={t("Video minimi/mese")} value={String(campAny.min_monthly_videos ?? 0)} />
+                <StatItem label={t("Durata")} value={`${format(new Date(campaign.start_date), "dd/MM/yy")} → ${campaign.end_date ? format(new Date(campaign.end_date), "dd/MM/yy") : "∞"}`} />
+                <StatItem label={t("Cap per video")} value={videoViewsCap != null ? `${formatViews(videoViewsCap)}` : "—"} sub={videoViewsCap != null ? t("views max") : t("nessun limite")} />
+                {!isTeam && <StatItem label={t("Cap di spesa")} value={monthlySpendCap != null ? formatCurrency(monthlySpendCap) : "—"} sub={monthlySpendCap != null ? t("per ciclo") : t("nessun limite")} />}
               </div>
 
               {/* Spend progress bar */}
@@ -1135,12 +1145,12 @@ export default function CampaignDetailPage() {
                     <div key={idx} className={cn("rounded-lg p-4", cycle.isCurrent ? "bg-secondary/50" : "bg-secondary/30")}>
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          {cycle.isCurrent ? "Spesa ciclo corrente" : cycle.label}
+                          {cycle.isCurrent ? t("Spesa ciclo corrente") : t(cycle.label)}
                         </p>
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-bold">{formatCurrency(cycle.spend)}</span>
                           <span className="text-xs text-muted-foreground">/ {formatCurrency(monthlySpendCap)}</span>
-                          {cycle.percent >= 100 && <Badge variant="destructive" className="text-xs">CAP</Badge>}
+                          {cycle.percent >= 100 && <Badge variant="destructive" className="text-xs">{t("CAP")}</Badge>}
                         </div>
                       </div>
                       <Progress
@@ -1165,7 +1175,7 @@ export default function CampaignDetailPage() {
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
             <div className="h-1.5 w-1.5 rounded-full bg-success" />
-            <CardTitle className="text-base font-semibold">Stato</CardTitle>
+            <CardTitle className="text-base font-semibold">{t("Stato")}</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -1175,19 +1185,19 @@ export default function CampaignDetailPage() {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6">
-              <StatItem label="Views totali" value={formatViews(kpi.data?.totalViews ?? 0)} accent />
+              <StatItem label={t("Views totali")} value={formatViews(kpi.data?.totalViews ?? 0)} accent />
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center">
-                  Views contate {videoViewsCap != null && <CappedBadge variant="icon" />}
+                  {t("Views contate")} {videoViewsCap != null && <CappedBadge variant="icon" />}
                 </p>
                 <p className="text-lg font-bold">{formatViews(kpi.data?.monthViews ?? 0)}</p>
-                <p className="text-xs text-muted-foreground">{videoViewsCap != null ? `cap ${formatViews(videoViewsCap)}/video` : "senza cap"}</p>
+                <p className="text-xs text-muted-foreground">{videoViewsCap != null ? t("cap {v}/video", { v: formatViews(videoViewsCap) }) : t("senza cap")}</p>
               </div>
-              <StatItem label="Video / mese" value={String(kpi.data?.monthVideoCount ?? 0)} />
-              <StatItem label="Video totali" value={String(kpi.data?.totalVideoCount ?? 0)} />
-              {!isTeam && <StatItem label="Entrata CPM" value={formatCurrency(margin.data?.cpmRevenue ?? 0)} accent />}
-              {!isTeam && <StatItem label="Margine CPM" value={formatCurrency(margin.data?.cpmMargin ?? 0)} sub={`costo: ${formatCurrency(margin.data?.cpmCost ?? 0)}`} />}
-              <StatItem label="Creator attivi" value={String(kpi.data?.creatorCount ?? 0)} />
+              <StatItem label={t("Video / mese")} value={String(kpi.data?.monthVideoCount ?? 0)} />
+              <StatItem label={t("Video totali")} value={String(kpi.data?.totalVideoCount ?? 0)} />
+              {!isTeam && <StatItem label={t("Entrata CPM")} value={formatCurrency(margin.data?.cpmRevenue ?? 0)} accent />}
+              {!isTeam && <StatItem label={t("Margine CPM")} value={formatCurrency(margin.data?.cpmMargin ?? 0)} sub={t("costo: {c}", { c: formatCurrency(margin.data?.cpmCost ?? 0) })} />}
+              <StatItem label={t("Creator attivi")} value={String(kpi.data?.creatorCount ?? 0)} />
             </div>
           )}
         </CardContent>
@@ -1208,21 +1218,21 @@ export default function CampaignDetailPage() {
       {/* Account Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Account</CardTitle>
+          <CardTitle className="text-lg">{t("Account")}</CardTitle>
         </CardHeader>
         <CardContent>
           {accounts.isLoading ? (
             <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
           ) : !accounts.data?.length ? (
-            <p className="text-sm text-muted-foreground text-center py-6">Nessun account associato.</p>
+            <p className="text-sm text-muted-foreground text-center py-6">{t("Nessun account associato.")}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Creator</TableHead>
-                  <TableHead className="text-right">Video Oggi</TableHead>
-                  <TableHead className="text-right">Views Totali</TableHead>
+                  <TableHead>{t("Username")}</TableHead>
+                  <TableHead>{t("Creator")}</TableHead>
+                  <TableHead className="text-right">{t("Video Oggi")}</TableHead>
+                  <TableHead className="text-right">{t("Views Totali")}</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -1236,7 +1246,7 @@ export default function CampaignDetailPage() {
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.accountId}`)}>
-                          Apri
+                          {t("Apri")}
                         </Button>
                         {!isCompleted && (
                           <RemoveAccountButton accountId={a.accountId} campaignId={campaignId} />
@@ -1263,11 +1273,11 @@ export default function CampaignDetailPage() {
         <Card className="border-destructive/30">
           <CardContent className="flex items-center justify-between py-4">
             <div>
-              <p className="text-sm font-medium">Zona pericolosa</p>
-              <p className="text-xs text-muted-foreground">Elimina questa campagna e tutti i dati collegati</p>
+              <p className="text-sm font-medium">{t("Zona pericolosa")}</p>
+              <p className="text-xs text-muted-foreground">{t("Elimina questa campagna e tutti i dati collegati")}</p>
             </div>
             <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
-              <Trash2 className="mr-2 h-4 w-4" /> Elimina Campagna
+              <Trash2 className="mr-2 h-4 w-4" /> {t("Elimina Campagna")}
             </Button>
           </CardContent>
         </Card>

@@ -1,8 +1,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { useI18n } from "@/i18n";
 import { CreatorBriefCard } from "./CreatorBriefCard";
 import { useCreatorAssignedBriefs } from "@/hooks/useCreatorBriefs";
 
 export function CreatorBriefsList() {
+  const { t } = useI18n();
   const { data, isLoading } = useCreatorAssignedBriefs();
 
   if (isLoading) {
@@ -18,7 +20,7 @@ export function CreatorBriefsList() {
   if (briefs.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-        Nessun contenuto assegnato al momento.
+        {t("Nessun contenuto assegnato al momento.")}
       </div>
     );
   }

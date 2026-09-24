@@ -6,6 +6,8 @@ import { clients } from "./dict/clients";
 import { finance } from "./dict/finance";
 import { content } from "./dict/content";
 import { portals } from "./dict/portals";
+import { campaign } from "./dict/campaign";
+import { settings } from "./dict/settings";
 
 const shell: Record<string, string> = {
   // Shell / navigation
@@ -30,5 +32,5 @@ const shell: Record<string, string> = {
 };
 
 export const en: Record<string, string> = {
-  ...core, ...creators, ...clients, ...finance, ...content, ...portals, ...shell,
+  ...core, ...creators, ...clients, ...finance, ...content, ...portals, ...settings, ...shell,
 };

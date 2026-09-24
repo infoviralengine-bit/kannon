@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { PIPELINE_STAGES, STAGE_LABEL, type CompanyStage } from "@/lib/companies";
 import { formatCurrency } from "@/lib/format";
 import type { Company } from "@/hooks/useCompanies";
+import { useI18n } from "@/i18n";
 
 interface Props {
   companies: Company[];
@@ -35,6 +36,7 @@ function displayName(c: Company) {
 }
 
 export function PipelineRadar({ companies, onOpenCompany }: Props) {
+  const { t } = useI18n();
   const [hover, setHover] = useState<string | null>(null);
   const active = companies.filter((c) => c.stage !== "perso" && c.stage !== "vinto");
   const hidden = companies.length - active.length;
@@ -64,15 +66,15 @@ export function PipelineRadar({ companies, onOpenCompany }: Props) {
       {/* Header */}
       <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
         <p className="text-xs text-muted-foreground">
-          Più una lead è vicina al centro, più è vicina alla chiusura.
-          {hidden > 0 && <span className="block">{hidden} lead vinte o perse non mostrate</span>}
+          {t("Più una lead è vicina al centro, più è vicina alla chiusura.")}
+          {hidden > 0 && <span className="block">{t("{n} lead vinte o perse non mostrate", { n: hidden })}</span>}
         </p>
         <div className="flex gap-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full" style={{ background: "rgb(59 130 246)" }} /> Nuove
+            <span className="h-2 w-2 rounded-full" style={{ background: "rgb(59 130 246)" }} /> {t("Nuove")}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-accent" /> In chiusura
+            <span className="h-2 w-2 rounded-full bg-accent" /> {t("In chiusura")}
           </span>
         </div>
       </div>
@@ -146,9 +148,9 @@ export function PipelineRadar({ companies, onOpenCompany }: Props) {
                 {isHover && (
                   <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2">
                     <div className="whitespace-nowrap rounded bg-black px-3 py-2 text-[11px] text-white shadow-xl">
-                      <p className="font-bold uppercase">{STAGE_LABEL[c.stage as CompanyStage]}</p>
+                      <p className="font-bold uppercase">{t(STAGE_LABEL[c.stage as CompanyStage])}</p>
                       <p className="opacity-80">
-                        Valore: {formatCurrency(Number(c.estimated_monthly_value ?? 0))}
+                        {t("Valore: {value}", { value: formatCurrency(Number(c.estimated_monthly_value ?? 0)) })}
                       </p>
                     </div>
                     <div className="mx-auto -mt-1 h-2 w-2 rotate-45 bg-black" />
@@ -164,14 +166,14 @@ export function PipelineRadar({ companies, onOpenCompany }: Props) {
       <div className="mx-auto mt-4 flex w-full max-w-[800px] items-center justify-center gap-8 rounded-2xl border border-border/40 bg-surface px-10 py-4">
         <div className="px-4 text-center">
           <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-            Valore totale
+            {t("Valore totale")}
           </span>
           <span className="text-2xl font-light tracking-tight">{formatCurrency(totalValue)}</span>
         </div>
         <div className="h-10 w-px bg-border" />
         <div className="px-4 text-center">
           <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-            Lead attive
+            {t("Lead attive")}
           </span>
           <span className="text-2xl font-light tracking-tight">{active.length}</span>
         </div>

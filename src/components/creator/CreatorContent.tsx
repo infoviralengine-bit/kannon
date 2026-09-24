@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, Link as LinkIcon, Calendar, Lock } from "lucide-react";
 import { CreatorContentItem, useUpdateContentStatus } from "@/hooks/useCreatorPortal";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n";
 
 interface Props {
   content: CreatorContentItem[];
@@ -17,6 +18,7 @@ const typeBadgeMap: Record<string, { label: string; variant: "default" | "second
 };
 
 export default function CreatorContent({ content, locked }: Props) {
+  const { t } = useI18n();
   const updateStatus = useUpdateContentStatus();
 
   if (locked) {
@@ -24,9 +26,9 @@ export default function CreatorContent({ content, locked }: Props) {
       <Card className="border-border/40">
         <CardContent className="py-12 text-center space-y-2">
           <Lock className="h-8 w-8 text-muted-foreground mx-auto" />
-          <p className="font-semibold">🔒 Disponibile dopo il warmup</p>
+          <p className="font-semibold">🔒 {t("Disponibile dopo il warmup")}</p>
           <p className="text-sm text-muted-foreground">
-            Completa il warmup di almeno un account per sbloccare i tuoi contenuti.
+            {t("Completa il warmup di almeno un account per sbloccare i tuoi contenuti.")}
           </p>
         </CardContent>
       </Card>
@@ -37,17 +39,17 @@ export default function CreatorContent({ content, locked }: Props) {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2">
-          <FileText className="h-5 w-5 text-primary" /> I tuoi contenuti
+          <FileText className="h-5 w-5 text-primary" /> {t("I tuoi contenuti")}
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Qui trovi tutto quello che devi realizzare. Leggi bene ogni brief prima di girare.
+          {t("Qui trovi tutto quello che devi realizzare. Leggi bene ogni brief prima di girare.")}
         </p>
       </div>
 
       {!content.length ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            Nessun contenuto assegnato al momento. Torna presto!
+            {t("Nessun contenuto assegnato al momento. Torna presto!")}
           </CardContent>
         </Card>
       ) : (
@@ -60,9 +62,9 @@ export default function CreatorContent({ content, locked }: Props) {
                   <div className="flex items-center justify-between gap-2">
                     <CardTitle className="text-base">{item.title}</CardTitle>
                     <div className="flex items-center gap-2 shrink-0">
-                      <Badge variant={badge.variant}>{badge.label}</Badge>
+                      <Badge variant={badge.variant}>{t(badge.label)}</Badge>
                       {item.status === "completato" && (
-                        <Badge variant="outline" className="border-green-500/30 text-green-400">Completato</Badge>
+                        <Badge variant="outline" className="border-green-500/30 text-green-400">{t("Completato")}</Badge>
                       )}
                     </div>
                   </div>
@@ -75,12 +77,12 @@ export default function CreatorContent({ content, locked }: Props) {
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     {item.file_url && (
                       <a href={item.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-primary hover:underline">
-                        <LinkIcon className="h-3 w-3" /> Apri file
+                        <LinkIcon className="h-3 w-3" /> {t("Apri file")}
                       </a>
                     )}
                     {item.due_date && (
                       <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" /> Consegna: {new Date(item.due_date).toLocaleDateString("it-IT")}
+                        <Calendar className="h-3 w-3" /> {t("Consegna")}: {new Date(item.due_date).toLocaleDateString("it-IT")}
                       </span>
                     )}
                   </div>
@@ -92,11 +94,11 @@ export default function CreatorContent({ content, locked }: Props) {
                       onClick={() => {
                         updateStatus.mutate(
                           { contentId: item.id, status: "completato" },
-                          { onSuccess: () => toast.success("Contenuto segnato come completato!") }
+                          { onSuccess: () => toast.success(t("Contenuto segnato come completato!")) }
                         );
                       }}
                     >
-                      Segna come completato ✓
+                      {t("Segna come completato")} ✓
                     </Button>
                   )}
                 </CardContent>

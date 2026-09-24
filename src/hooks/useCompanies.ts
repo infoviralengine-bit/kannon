@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { t } from "@/i18n";
 import type { CompanyStage, CompanyStatus, DealType } from "@/lib/companies";
 
 const db = supabase as any;
@@ -308,9 +309,9 @@ export function useSaveCompany() {
     },
     onSuccess: (id, vars) => {
       invalidate(id);
-      toast({ title: vars.id ? "Azienda aggiornata" : "Azienda creata" });
+      toast({ title: vars.id ? t("Azienda aggiornata") : t("Azienda creata") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -343,9 +344,9 @@ export function useUpdateCompanyStage() {
     },
     onSuccess: (_d, vars) => {
       invalidate(vars.id);
-      toast({ title: "Stadio aggiornato" });
+      toast({ title: t("Stadio aggiornato") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -380,9 +381,9 @@ export function useCompleteNextStep() {
     },
     onSuccess: (companyId) => {
       invalidate(companyId);
-      toast({ title: "Prossimo passo aggiornato" });
+      toast({ title: t("Prossimo passo aggiornato") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -396,9 +397,9 @@ export function useDeleteCompany() {
     },
     onSuccess: () => {
       invalidate();
-      toast({ title: "Azienda eliminata" });
+      toast({ title: t("Azienda eliminata") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -418,9 +419,9 @@ export function useSaveContact() {
     },
     onSuccess: (companyId) => {
       invalidate(companyId);
-      toast({ title: "Contatto salvato" });
+      toast({ title: t("Contatto salvato") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -435,9 +436,9 @@ export function useDeleteContact() {
     },
     onSuccess: (companyId) => {
       invalidate(companyId);
-      toast({ title: "Contatto eliminato" });
+      toast({ title: t("Contatto eliminato") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -470,9 +471,9 @@ export function useAddActivity() {
     },
     onSuccess: (companyId) => {
       invalidate(companyId);
-      toast({ title: "Attività registrata" });
+      toast({ title: t("Attività registrata") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -496,9 +497,9 @@ export function useSaveTask() {
     },
     onSuccess: (companyId) => {
       invalidate(companyId);
-      toast({ title: "Cosa da fare salvata" });
+      toast({ title: t("Cosa da fare salvata") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -515,7 +516,7 @@ export function useToggleTask() {
       return companyId;
     },
     onSuccess: (companyId) => invalidate(companyId),
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -530,9 +531,9 @@ export function useDeleteTask() {
     },
     onSuccess: (companyId) => {
       invalidate(companyId);
-      toast({ title: "Cosa da fare eliminata" });
+      toast({ title: t("Cosa da fare eliminata") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -549,7 +550,7 @@ export function useToggleOnboardingStep() {
       return companyId;
     },
     onSuccess: (companyId) => invalidate(companyId),
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -577,9 +578,9 @@ export function useSaveDocument() {
     },
     onSuccess: (companyId) => {
       invalidate(companyId);
-      toast({ title: "Documento salvato" });
+      toast({ title: t("Documento salvato") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -624,9 +625,9 @@ export function useUploadDocument() {
     },
     onSuccess: (companyId) => {
       invalidate(companyId);
-      toast({ title: "File caricato" });
+      toast({ title: t("File caricato") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -642,9 +643,9 @@ export function useDeleteDocument() {
     },
     onSuccess: (companyId) => {
       invalidate(companyId);
-      toast({ title: "Documento eliminato" });
+      toast({ title: t("Documento eliminato") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -685,9 +686,9 @@ export function useSaveTemplateStep() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["onboarding-template"] });
-      toast({ title: "Modello aggiornato" });
+      toast({ title: t("Modello aggiornato") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }
 
@@ -701,8 +702,8 @@ export function useDeleteTemplateStep() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["onboarding-template"] });
-      toast({ title: "Passaggio eliminato" });
+      toast({ title: t("Passaggio eliminato") });
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 }

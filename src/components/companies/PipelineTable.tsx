@@ -8,6 +8,7 @@ import {
 } from "@/lib/companies";
 import type { Company } from "@/hooks/useCompanies";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n";
 
 type Props = {
   companies: Company[];
@@ -16,19 +17,20 @@ type Props = {
 };
 
 export function PipelineTable({ companies, ownerName, onOpenCompany }: Props) {
+  const { t } = useI18n();
   return (
     <Card>
       <CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Azienda</TableHead>
-              <TableHead>Stadio</TableHead>
-              <TableHead>Temperatura</TableHead>
-              <TableHead>Responsabile</TableHead>
-              <TableHead>Valore mensile</TableHead>
-              <TableHead>Prossimo passo</TableHead>
-              <TableHead>Ferma da</TableHead>
+              <TableHead>{t("Azienda")}</TableHead>
+              <TableHead>{t("Stadio")}</TableHead>
+              <TableHead>{t("Temperatura")}</TableHead>
+              <TableHead>{t("Responsabile")}</TableHead>
+              <TableHead>{t("Valore mensile")}</TableHead>
+              <TableHead>{t("Prossimo passo")}</TableHead>
+              <TableHead>{t("Ferma da")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -37,11 +39,11 @@ export function PipelineTable({ companies, ownerName, onOpenCompany }: Props) {
               return (
                 <TableRow key={c.id} className="cursor-pointer" onClick={() => onOpenCompany(c.id)}>
                   <TableCell className="font-medium">{c.name}</TableCell>
-                  <TableCell>{c.status === "cliente" ? "-" : STAGE_LABEL[c.stage as CompanyStage]}</TableCell>
+                  <TableCell>{c.status === "cliente" ? "-" : t(STAGE_LABEL[c.stage as CompanyStage])}</TableCell>
                   <TableCell>
                     {c.temperature && c.status !== "cliente" ? (
                       <Badge variant="outline" className={cn("text-[10px]", TEMPERATURE_BADGE[c.temperature as Temperature])}>
-                        {TEMPERATURE_LABEL[c.temperature as Temperature]}
+                        {t(TEMPERATURE_LABEL[c.temperature as Temperature])}
                       </Badge>
                     ) : "-"}
                   </TableCell>
@@ -54,16 +56,16 @@ export function PipelineTable({ companies, ownerName, onOpenCompany }: Props) {
                       <span className={cn(isOverdue(c.next_step_date) && "text-destructive")}>
                         {c.next_step}{c.next_step_date ? ` (${formatDateIt(c.next_step_date)})` : ""}
                       </span>
-                    ) : <span className="text-destructive">Da impostare</span>}
+                    ) : <span className="text-destructive">{t("Da impostare")}</span>}
                   </TableCell>
-                  <TableCell>{idle != null ? `${idle} giorni` : "-"}</TableCell>
+                  <TableCell>{idle != null ? t("{n} giorni", { n: idle }) : "-"}</TableCell>
                 </TableRow>
               );
             })}
             {!companies.length && (
               <TableRow>
                 <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
-                  Nessuna lead con questi filtri.
+                  {t("Nessuna lead con questi filtri.")}
                 </TableCell>
               </TableRow>
             )}

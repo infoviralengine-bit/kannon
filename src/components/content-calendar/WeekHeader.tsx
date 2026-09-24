@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { addDays, formatDateIt, toISODate } from "./_helpers";
 import { useBulkLoadWeek, type Brief } from "@/hooks/useContentCalendar";
+import { useI18n } from "@/i18n";
 
 export function WeekHeader({
   weekStart,
@@ -13,6 +14,7 @@ export function WeekHeader({
   briefs: Brief[];
   campaignId: string;
 }) {
+  const { t } = useI18n();
   const bulkLoad = useBulkLoadWeek();
   const draftCount = briefs.filter((b) => b.status === "draft").length;
   const start = new Date(weekStart);
@@ -25,16 +27,16 @@ export function WeekHeader({
         weekStart,
         weekEnd: toISODate(end),
       });
-      toast({ title: `Settimana caricata`, description: `${n} brief in revisione, creator e cliente notificati.` });
+      toast({ title: t("Settimana caricata"), description: t("{n} brief in revisione, creator e cliente notificati.", { n }) });
     } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     }
   };
 
   return (
     <div className="flex items-center justify-between pb-1">
       <h3 className="text-sm font-semibold text-foreground">
-        Settimana del {formatDateIt(start)} {" - "} {formatDateIt(end)}
+        {t("Settimana del {start} - {end}", { start: formatDateIt(start), end: formatDateIt(end) })}
       </h3>
       <Button
         size="sm"
@@ -43,7 +45,7 @@ export function WeekHeader({
         onClick={onLoad}
       >
         <Upload className="h-3.5 w-3.5 mr-1" />
-        Carica settimana ({draftCount} bozze)
+        {t("Carica settimana ({n} bozze)", { n: draftCount })}
       </Button>
     </div>
   );

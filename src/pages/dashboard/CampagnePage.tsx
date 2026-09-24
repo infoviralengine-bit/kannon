@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useI18n } from "@/i18n";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { Plus, CalendarIcon } from "lucide-react";
@@ -42,6 +43,7 @@ const statusLabel: Record<string, string> = {
 };
 
 function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const { t } = useI18n();
   const { toast } = useToast();
   const qc = useQueryClient();
   const [name, setName] = useState("");
@@ -59,7 +61,7 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!name || !companyId || !startDate) throw new Error("Compila i campi obbligatori");
+      if (!name || !companyId || !startDate) throw new Error(t("Compila i campi obbligatori"));
       const startStr = format(startDate, "yyyy-MM-dd");
       const parsedViewsCap = videoViewsCap.trim() ? parseInt(videoViewsCap) : null;
       const parsedSpendCap = monthlySpendCap.trim() ? parseFloat(monthlySpendCap) : null;
@@ -106,7 +108,7 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
       return newCamp;
     },
     onSuccess: () => {
-      toast({ title: "Campagna creata", description: "Ciclo 1 generato automaticamente." });
+      toast({ title: t("Campagna creata"), description: t("Ciclo 1 generato automaticamente.") });
       qc.invalidateQueries({ queryKey: ["campaign-table"] });
       qc.invalidateQueries({ queryKey: ["active-campaigns-count"] });
       onOpenChange(false);
@@ -115,7 +117,7 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
       setVideoViewsCap(""); setMonthlySpendCap("");
     },
     onError: (e: Error) => {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     },
   });
 
@@ -123,18 +125,18 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Nuova Campagna</DialogTitle>
+          <DialogTitle>{t("Nuova Campagna")}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-1.5">
-            <Label>Nome campagna *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Es. Campagna Estate" />
+            <Label>{t("Nome campagna *")}</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Es. Campagna Estate")} />
           </div>
           <div className="grid gap-1.5">
-            <Label>Cliente *</Label>
+            <Label>{t("Cliente *")}</Label>
             <Select value={companyId} onValueChange={setCompanyId}>
               <SelectTrigger>
-                <SelectValue placeholder="Seleziona un cliente" />
+                <SelectValue placeholder={t("Seleziona un cliente")} />
               </SelectTrigger>
               <SelectContent>
                 {companyOptions.map((c) => (
@@ -143,27 +145,27 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              I clienti si creano nella sezione Clienti.
+              {t("I clienti si creano nella sezione Clienti.")}
             </p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
-              <Label>CPM Cliente (€)</Label>
+              <Label>{t("CPM Cliente (€)")}</Label>
               <Input type="number" step="0.01" value={clientCpm} onChange={(e) => setClientCpm(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Fisso mensile (€, totale campagna)</Label>
+              <Label>{t("Fisso mensile (€, totale campagna)")}</Label>
               <Input type="number" step="0.01" value={clientFixed} onChange={(e) => setClientFixed(e.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
-              <Label>Data inizio *</Label>
+              <Label>{t("Data inizio *")}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "dd/MM/yyyy") : "Seleziona"}
+                    {startDate ? format(startDate, "dd/MM/yyyy") : t("Seleziona")}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -172,12 +174,12 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
               </Popover>
             </div>
             <div className="grid gap-1.5">
-              <Label>Data fine</Label>
+              <Label>{t("Data fine")}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, "dd/MM/yyyy") : "Opzionale"}
+                    {endDate ? format(endDate, "dd/MM/yyyy") : t("Opzionale")}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -187,25 +189,25 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label>Video minimi al mese</Label>
+            <Label>{t("Video minimi al mese")}</Label>
             <Input type="number" min="0" step="1" value={minMonthlyVideos} onChange={(e) => setMinMonthlyVideos(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
-              <Label>Cap views per video</Label>
-              <Input type="number" min="0" step="1" value={videoViewsCap} onChange={(e) => setVideoViewsCap(e.target.value)} placeholder="es. 100000 — vuoto = nessun cap" />
+              <Label>{t("Cap views per video")}</Label>
+              <Input type="number" min="0" step="1" value={videoViewsCap} onChange={(e) => setVideoViewsCap(e.target.value)} placeholder={t("es. 100000 — vuoto = nessun cap")} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Cap di spesa per ciclo (€)</Label>
-              <Input type="number" min="0" step="0.01" value={monthlySpendCap} onChange={(e) => setMonthlySpendCap(e.target.value)} placeholder="es. 5000 — vuoto = nessun cap" />
+              <Label>{t("Cap di spesa per ciclo (€)")}</Label>
+              <Input type="number" min="0" step="0.01" value={monthlySpendCap} onChange={(e) => setMonthlySpendCap(e.target.value)} placeholder={t("es. 5000 — vuoto = nessun cap")} />
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label>Note</Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Note opzionali..." />
+            <Label>{t("Note")}</Label>
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("Note opzionali...")} />
           </div>
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
-            {mutation.isPending ? "Creazione..." : "Crea Campagna"}
+            {mutation.isPending ? t("Creazione...") : t("Crea Campagna")}
           </Button>
         </div>
       </DialogContent>
@@ -214,6 +216,7 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
 }
 
 export default function CampagnePage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { data: campaigns, isLoading } = useCampaignTable();
   const { role } = useAuth();
@@ -229,9 +232,9 @@ export default function CampagnePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Campagne</h1>
+        <h1 className="text-2xl font-bold">{t("Campagne")}</h1>
         <Button onClick={() => setModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Nuova Campagna
+          <Plus className="mr-2 h-4 w-4" /> {t("Nuova Campagna")}
         </Button>
       </div>
 
@@ -239,10 +242,10 @@ export default function CampagnePage() {
 
       <Tabs value={filter} onValueChange={setFilter}>
         <TabsList>
-          <TabsTrigger value="all">Tutte</TabsTrigger>
-          <TabsTrigger value="active">Attive</TabsTrigger>
-          <TabsTrigger value="paused">In pausa</TabsTrigger>
-          <TabsTrigger value="completed">Concluse</TabsTrigger>
+          <TabsTrigger value="all">{t("Tutte")}</TabsTrigger>
+          <TabsTrigger value="active">{t("Attive")}</TabsTrigger>
+          <TabsTrigger value="paused">{t("In pausa")}</TabsTrigger>
+          <TabsTrigger value="completed">{t("Concluse")}</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -254,18 +257,18 @@ export default function CampagnePage() {
             </div>
           ) : !filtered.length ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              {filter === "all" ? "Nessuna campagna trovata." : `Nessuna campagna ${statusLabel[filter]?.toLowerCase() ?? ""}.`}
+              {filter === "all" ? t("Nessuna campagna trovata.") : t("Nessuna campagna {status}.", { status: t(statusLabel[filter] ?? "").toLowerCase() })}
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Views Totali</TableHead>
-                  {!isTeam && <TableHead className="text-right">Revenue Mese</TableHead>}
-                  <TableHead className="text-right">Creator</TableHead>
+                  <TableHead>{t("Nome")}</TableHead>
+                  <TableHead>{t("Cliente")}</TableHead>
+                  <TableHead>{t("Status")}</TableHead>
+                  <TableHead className="text-right">{t("Views Totali")}</TableHead>
+                  {!isTeam && <TableHead className="text-right">{t("Revenue Mese")}</TableHead>}
+                  <TableHead className="text-right">{t("Creator")}</TableHead>
                   <TableHead />
                 </TableRow>
               </TableHeader>
@@ -275,14 +278,14 @@ export default function CampagnePage() {
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{c.client_name}</TableCell>
                     <TableCell>
-                      <Badge className={statusColor[c.status] ?? ""}>{statusLabel[c.status] ?? c.status}</Badge>
+                      <Badge className={statusColor[c.status] ?? ""}>{t(statusLabel[c.status] ?? c.status)}</Badge>
                     </TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
                     {!isTeam && <TableCell className="text-right">{formatCurrency(c.revenue)}</TableCell>}
                     <TableCell className="text-right">{c.creatorCount}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/campaigns/${c.id}`)}>
-                        Apri
+                        {t("Apri")}
                       </Button>
                     </TableCell>
                   </TableRow>

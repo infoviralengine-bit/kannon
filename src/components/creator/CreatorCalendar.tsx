@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Lock, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { CalendarEntry } from "@/hooks/useCreatorPortal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useI18n } from "@/i18n";
 
 interface Props {
   calendar: CalendarEntry[];
@@ -13,8 +14,10 @@ interface Props {
 
 const DAYS = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 const MONTHS = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+const PUBBLICAZIONE = "Pubblicazione";
 
 export default function CreatorCalendar({ calendar, locked }: Props) {
+  const { t } = useI18n();
   const [month, setMonth] = useState(() => {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
@@ -52,9 +55,9 @@ export default function CreatorCalendar({ calendar, locked }: Props) {
       <Card className="border-border/40">
         <CardContent className="py-12 text-center space-y-2">
           <Lock className="h-8 w-8 text-muted-foreground mx-auto" />
-          <p className="font-semibold">🔒 Disponibile dopo il warmup</p>
+          <p className="font-semibold">🔒 {t("Disponibile dopo il warmup")}</p>
           <p className="text-sm text-muted-foreground">
-            Il tuo calendario di pubblicazione sarà visibile qui una volta completato il warmup.
+            {t("Il tuo calendario di pubblicazione sarà visibile qui una volta completato il warmup.")}
           </p>
         </CardContent>
       </Card>
@@ -68,10 +71,10 @@ export default function CreatorCalendar({ calendar, locked }: Props) {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2">
-          <CalendarDays className="h-5 w-5 text-primary" /> Quando pubblicare
+          <CalendarDays className="h-5 w-5 text-primary" /> {t("Quando pubblicare")}
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Rispetta le date — la costanza è la chiave per crescere.
+          {t("Rispetta le date: la costanza è la chiave per crescere.")}
         </p>
       </div>
 
@@ -79,12 +82,12 @@ export default function CreatorCalendar({ calendar, locked }: Props) {
         <CardContent className="p-4 space-y-3">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="icon" onClick={prevMonth}><ChevronLeft className="h-4 w-4" /></Button>
-            <span className="font-semibold">{MONTHS[month.month]} {month.year}</span>
+            <span className="font-semibold">{t(MONTHS[month.month])} {month.year}</span>
             <Button variant="ghost" size="icon" onClick={nextMonth}><ChevronRight className="h-4 w-4" /></Button>
           </div>
           <div className="grid grid-cols-7 gap-px">
             {DAYS.map((d) => (
-              <div key={d} className="text-center text-xs font-medium text-muted-foreground py-2">{d}</div>
+              <div key={d} className="text-center text-xs font-medium text-muted-foreground py-2">{t(d)}</div>
             ))}
             {grid.map((day, i) => {
               const entries = day ? entriesByDay.get(day) ?? [] : [];
@@ -106,7 +109,7 @@ export default function CreatorCalendar({ calendar, locked }: Props) {
                             className="w-full text-left truncate rounded px-1 py-0.5 text-[10px] font-medium bg-primary/15 text-primary hover:bg-primary/25 transition-colors"
                             onClick={() => setSelected(e)}
                           >
-                            {e.contentTitle ?? "Pubblicazione"}
+                            {e.contentTitle ?? t(PUBBLICAZIONE)}
                           </button>
                         ))}
                       </div>
@@ -122,12 +125,12 @@ export default function CreatorCalendar({ calendar, locked }: Props) {
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{selected?.contentTitle ?? "Pubblicazione"}</DialogTitle>
+            <DialogTitle>{selected?.contentTitle ?? t(PUBBLICAZIONE)}</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 text-sm">
-            <p><span className="text-muted-foreground">Data:</span> {selected?.scheduled_for ? new Date(selected.scheduled_for).toLocaleDateString("it-IT") : "—"}</p>
-            {selected?.accountUsername && <p><span className="text-muted-foreground">Account:</span> @{selected.accountUsername}</p>}
-            <p><span className="text-muted-foreground">Stato:</span> <Badge variant="outline">{selected?.status}</Badge></p>
+            <p><span className="text-muted-foreground">{t("Data")}:</span> {selected?.scheduled_for ? new Date(selected.scheduled_for).toLocaleDateString("it-IT") : "—"}</p>
+            {selected?.accountUsername && <p><span className="text-muted-foreground">{t("Account")}:</span> @{selected.accountUsername}</p>}
+            <p><span className="text-muted-foreground">{t("Stato")}:</span> <Badge variant="outline">{selected?.status}</Badge></p>
           </div>
         </DialogContent>
       </Dialog>
