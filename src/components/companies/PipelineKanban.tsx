@@ -10,6 +10,7 @@ import {
 import type { Company } from "@/hooks/useCompanies";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n";
+import { CompanyLogo } from "@/components/companies/CompanyLogo";
 
 type Props = {
   companies: Company[];
@@ -119,7 +120,9 @@ export function PipelineKanban({ companies, ownerName, onOpenCompany, onRequestS
                       dragId === c.id && "opacity-50",
                     )}
                   >
-                    <div className="min-w-0 pr-2">
+                    <div className="flex min-w-0 items-center gap-2 pr-2">
+                      <CompanyLogo name={c.name} logoUrl={c.logo_url} className="h-8 w-8" />
+                      <div className="min-w-0">
                       <p className="truncate text-[13px] font-semibold">{c.app_name || c.legal_name || c.name}</p>
                       <div className="mt-0.5 flex items-center gap-2">
                         {(c.app_name || c.legal_name) && c.name !== (c.app_name || c.legal_name) && (
@@ -134,6 +137,7 @@ export function PipelineKanban({ companies, ownerName, onOpenCompany, onRequestS
                           {t(TEMPERATURE_LABEL[c.temperature as Temperature])}
                         </Badge>
                       )}
+                      </div>
                       </div>
                     </div>
                     <span className="text-xs font-medium">{c.estimated_monthly_value != null ? formatCurrency(Number(c.estimated_monthly_value)) : "-"}</span>

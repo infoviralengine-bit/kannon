@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSaveCompany, useStaffProfiles, type Company } from "@/hooks/useCompanies";
 import { useI18n } from "@/i18n";
+import { CompanyLogo } from "@/components/companies/CompanyLogo";
 import {
   COMPANY_STAGES, STAGE_LABEL, COMPANY_STATUSES, STATUS_LABEL,
   TEMPERATURES, TEMPERATURE_LABEL, DEAL_TYPES, DEAL_TYPE_LABEL,
@@ -37,6 +38,7 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
   const [ownerId, setOwnerId] = useState(NONE);
   const [sector, setSector] = useState("");
   const [website, setWebsite] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
   const [appName, setAppName] = useState("");
   const [appStoreUrl, setAppStoreUrl] = useState("");
   const [playStoreUrl, setPlayStoreUrl] = useState("");
@@ -65,6 +67,7 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
     setOwnerId(company?.owner_id ?? NONE);
     setSector(company?.sector ?? "");
     setWebsite(company?.website ?? "");
+    setLogoUrl(company?.logo_url ?? "");
     setAppName(company?.app_name ?? "");
     setAppStoreUrl(company?.app_store_url ?? "");
     setPlayStoreUrl(company?.play_store_url ?? "");
@@ -107,6 +110,7 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
           owner_id: opt(ownerId),
           sector: sector.trim() || null,
           website: website.trim() || null,
+          logo_url: logoUrl.trim() || null,
           app_name: appName.trim() || null,
           app_store_url: appStoreUrl.trim() || null,
           play_store_url: playStoreUrl.trim() || null,
@@ -145,6 +149,18 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
             <div className="grid gap-1.5">
               <Label>{t("Ragione sociale")}</Label>
               <Input value={legalName} onChange={(e) => setLegalName(e.target.value)} placeholder={t("Opzionale")} />
+            </div>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label>{t("Logo azienda")}</Label>
+            <div className="flex items-center gap-3">
+              <CompanyLogo name={name || t("Azienda")} logoUrl={logoUrl} className="h-12 w-12" />
+              <Input
+                value={logoUrl}
+                onChange={(event) => setLogoUrl(event.target.value)}
+                placeholder={t("Incolla il link del logo")}
+              />
             </div>
           </div>
 

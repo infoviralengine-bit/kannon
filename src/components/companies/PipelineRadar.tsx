@@ -5,6 +5,7 @@ import { PIPELINE_STAGES, STAGE_LABEL, type CompanyStage } from "@/lib/companies
 import { formatCurrency } from "@/lib/format";
 import type { Company } from "@/hooks/useCompanies";
 import { useI18n } from "@/i18n";
+import { CompanyLogo } from "@/components/companies/CompanyLogo";
 
 interface Props {
   companies: Company[];
@@ -131,15 +132,11 @@ export function PipelineRadar({ companies, onOpenCompany }: Props) {
                   onClick={() => onOpenCompany(c.id)}
                   className="flex cursor-pointer flex-col items-center gap-1.5 transition-transform hover:scale-110 active:scale-95"
                 >
-                  <span
-                    className="block h-7 w-7 rounded-full border-2 transition-shadow"
-                    style={{
-                      background: color,
-                      borderColor: "rgba(255,255,255,0.9)",
-                      boxShadow: isHover
-                        ? `0 0 0 3px white, 0 4px 18px ${color}60`
-                        : `0 0 10px ${color}50`,
-                    }}
+                  <CompanyLogo
+                    name={displayName(c)}
+                    logoUrl={c.logo_url}
+                    className="h-8 w-8 rounded-full border-2 transition-shadow"
+                    imageClassName="rounded-full"
                   />
                   <span className="block text-center text-[11px] font-semibold uppercase leading-none tracking-wider text-black/70">
                     {displayName(c)}

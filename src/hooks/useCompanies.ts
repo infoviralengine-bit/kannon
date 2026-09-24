@@ -29,6 +29,7 @@ export type Company = {
   lost_note: string | null;
   lost_at: string | null;
   website: string | null;
+  logo_url: string | null;
   sector: string | null;
   app_name: string | null;
   app_store_url: string | null;
@@ -148,10 +149,10 @@ export function useCompanyOptions() {
     queryFn: async () => {
       const { data, error } = await db
         .from("companies")
-        .select("id, name, status")
+        .select("id, name, status, logo_url")
         .order("name");
       if (error) throw error;
-      return (data ?? []) as Pick<Company, "id" | "name" | "status">[];
+      return (data ?? []) as Pick<Company, "id" | "name" | "status" | "logo_url">[];
     },
   });
 }
