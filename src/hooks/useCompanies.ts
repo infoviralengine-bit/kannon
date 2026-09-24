@@ -149,7 +149,7 @@ export function useCompanyOptions() {
     queryFn: async () => {
       const { data, error } = await db
         .from("companies")
-        .select("id, name, status, logo_url")
+        .select("id, name, status, logo_url, legal_name")
         .order("name");
       if (error) throw error;
       return (data ?? []) as Pick<Company, "id" | "name" | "status" | "logo_url">[];
