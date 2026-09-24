@@ -44,6 +44,7 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
   const [logoUrl, setLogoUrl] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [savedCompanyId, setSavedCompanyId] = useState<string | null>(null);
   const [appName, setAppName] = useState("");
   const [appStoreUrl, setAppStoreUrl] = useState("");
   const [playStoreUrl, setPlayStoreUrl] = useState("");
@@ -75,6 +76,7 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
     setLogoUrl(company?.logo_url ?? "");
     setLogoFile(null);
     setLogoPreview(null);
+    setSavedCompanyId(company?.id ?? null);
     setAppName(company?.app_name ?? "");
     setAppStoreUrl(company?.app_store_url ?? "");
     setPlayStoreUrl(company?.play_store_url ?? "");
@@ -112,7 +114,7 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
     if (!canSave) return;
     try {
       const companyId = await save.mutateAsync({
-        id: company?.id,
+        id: savedCompanyId ?? company?.id,
         values: {
           name: name.trim(),
           legal_name: legalName.trim() || null,
@@ -142,6 +144,7 @@ export function CompanyFormDialog({ open, onOpenChange, company }: Props) {
           notes: notes.trim() || null,
         } as Partial<Company>,
       });
+      setSavedCompanyId(companyId);
       if (logoFile) {
         await uploadLogo.mutateAsync({ companyId, file: logoFile, previousLogoUrl: company?.logo_url });
       }
