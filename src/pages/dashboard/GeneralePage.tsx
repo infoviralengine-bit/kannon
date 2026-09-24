@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { CompanyLogo } from "@/components/companies/CompanyLogo";
 import { formatViews, formatCurrency } from "@/lib/format";
 import { useCountUp } from "@/hooks/useCountUp";
 import {
@@ -339,9 +340,12 @@ export default function GeneralePage() {
                 >
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="font-semibold text-foreground text-sm">{c.name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{c.clientName}</p>
+                       <div className="flex min-w-0 items-center gap-2.5">
+                         <CompanyLogo name={c.clientName} logoUrl={c.companyLogoUrl} className="h-9 w-9" />
+                         <div className="min-w-0">
+                           <p className="truncate font-semibold text-foreground text-sm">{c.name}</p>
+                           <p className="mt-0.5 truncate text-xs text-muted-foreground">{c.clientName}</p>
+                         </div>
                       </div>
                       <div className="flex gap-1.5">
                         {capReached && (

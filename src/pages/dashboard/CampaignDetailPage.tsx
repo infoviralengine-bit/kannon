@@ -22,6 +22,7 @@ import {
 } from "@/hooks/useCampaignData";
 import { useCampaignCycles, type ClientPaymentRow } from "@/hooks/usePaymentsData";
 import { useCompanyOptions } from "@/hooks/useCompanies";
+import { CompanyLogo } from "@/components/companies/CompanyLogo";
 import {
   type PaymentTerms,
   DEFAULT_STANDARD, DEFAULT_TOT_SPLIT,
@@ -214,7 +215,12 @@ function EditCampaignModal({
               </SelectTrigger>
               <SelectContent>
                 {companyOptions.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  <SelectItem key={c.id} value={c.id}>
+                    <span className="flex items-center gap-2">
+                      <CompanyLogo name={c.name} logoUrl={c.logo_url} className="h-6 w-6" />
+                      {c.name}
+                    </span>
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -1018,6 +1024,7 @@ export default function CampaignDetailPage() {
   const accounts = useCampaignAccounts(campaignId);
   
   const cycles = useCampaignCycles(campaignId);
+  const { data: companyOptions = [] } = useCompanyOptions();
 
   const [editOpen, setEditOpen] = useState(false);
   const [addCreatorOpen, setAddCreatorOpen] = useState(false);
@@ -1054,6 +1061,7 @@ export default function CampaignDetailPage() {
   const isCompleted = campaign.status === "completed";
   const kpiLoading = kpi.isLoading || margin.isLoading;
   const campAny = campaign as any;
+  const campaignCompany = companyOptions.find((company) => company.id === campAny.company_id);
   const videoViewsCap = campAny.video_views_cap as number | null;
   const monthlySpendCap = campAny.monthly_spend_cap as number | null;
 
@@ -1100,6 +1108,7 @@ export default function CampaignDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
+          <CompanyLogo name={campaign.client_name} logoUrl={campaignCompany?.logo_url} className="h-11 w-11" />
           <h1 className="text-2xl font-bold">{campaign.name}</h1>
           <Badge className={statusColor[campaign.status] ?? ""}>{statusLabel[campaign.status] ?? campaign.status}</Badge>
         </div>

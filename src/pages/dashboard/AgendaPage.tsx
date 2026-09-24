@@ -29,6 +29,7 @@ import { useAgendaTasks, useCompanies, useSaveTask, useStaffProfiles, useToggleT
 import { isOverdue, type TaskType } from "@/lib/companies";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n";
+import { CompanyLogo } from "@/components/companies/CompanyLogo";
 
 const ALL = "__all__";
 const NONE = "__none__";
@@ -254,7 +255,8 @@ export default function AgendaPage() {
                         {task.due_time && <span className="flex items-center gap-1"><Clock3 className="h-3 w-3" />{task.due_time.slice(0, 5)}</span>}
                       </div>
                       {company && (
-                        <Button variant="link" className="mt-1 h-auto p-0 text-xs" onClick={() => navigate(`/dashboard/clients/${company.id}`)}>
+                        <Button variant="link" className="mt-1 h-auto gap-1.5 p-0 text-xs" onClick={() => navigate(`/dashboard/clients/${company.id}`)}>
+                          <CompanyLogo name={company.name} logoUrl={company.logo_url} className="h-5 w-5" />
                           {company.name}
                         </Button>
                       )}
@@ -322,7 +324,14 @@ export default function AgendaPage() {
                 <SelectTrigger><SelectValue placeholder={t("Nessuna")} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NONE}>{t("Nessuna")}</SelectItem>
-                  {companies.map((company) => <SelectItem key={company.id} value={company.id}>{company.name}</SelectItem>)}
+                  {companies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      <span className="flex items-center gap-2">
+                        <CompanyLogo name={company.name} logoUrl={company.logo_url} className="h-6 w-6" />
+                        {company.name}
+                      </span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

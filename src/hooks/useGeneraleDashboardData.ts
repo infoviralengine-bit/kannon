@@ -203,6 +203,7 @@ export interface CampaignCardData {
   id: string;
   name: string;
   clientName: string;
+  companyLogoUrl: string | null;
   status: string;
   viewsMonth: number;
   viewsCap: number | null;
@@ -227,6 +228,7 @@ export function useActiveCampaignCards() {
         { data: accounts },
         { data: videos },
         { data: clientPayments },
+        { data: companies },
       ] = await Promise.all([
         supabase.from("campaigns").select("*").eq("status", "active"),
         supabase.from("campaign_creators").select("campaign_id, creator_id"),
@@ -234,7 +236,9 @@ export function useActiveCampaignCards() {
         supabase.from("videos").select("tiktok_account_id, views, published_at")
           .gte("published_at", mStart).lt("published_at", mEnd),
         supabase.from("client_payments").select("campaign_id, total_amount, cpm_amount, is_paid"),
+        supabase.from("companies").select("id, logo_url"),
       ]);
+      const companyLogoMap = new Map((companies ?? []).map((company) => [company.id, company.logo_url]));
 
       const accountsByCampaign = new Map<string, string[]>();
       (accounts ?? []).forEach((a) => {
@@ -266,6 +270,7 @@ export function useActiveCampaignCards() {
           id: c.id,
           name: c.name,
           clientName: c.client_name,
+          companyLogoUrl: c.company_id ? companyLogoMap.get(c.company_id) ?? null : null,
           status: c.status,
           viewsMonth,
           viewsCap,

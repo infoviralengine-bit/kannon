@@ -141,7 +141,12 @@ function CreateCampaignModal({ open, onOpenChange }: { open: boolean; onOpenChan
               </SelectTrigger>
               <SelectContent>
                 {companyOptions.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  <SelectItem key={c.id} value={c.id}>
+                    <span className="flex items-center gap-2">
+                      <CompanyLogo name={c.name} logoUrl={c.logo_url} className="h-6 w-6" />
+                      {c.name}
+                    </span>
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
