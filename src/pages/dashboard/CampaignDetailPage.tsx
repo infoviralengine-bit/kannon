@@ -207,8 +207,17 @@ function EditCampaignModal({
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="grid gap-1.5">
-            <Label>{t("Nome cliente *")}</Label>
-            <Input value={clientName} onChange={(e) => setClientName(e.target.value)} />
+            <Label>{t("Cliente *")}</Label>
+            <Select value={companyId} onValueChange={setCompanyId}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("Seleziona un cliente")} />
+              </SelectTrigger>
+              <SelectContent>
+                {companyOptions.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-1.5">
