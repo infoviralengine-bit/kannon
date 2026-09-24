@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Download, ExternalLink, Plus, Trash2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  DOC_DIRECTION_LABEL, DOC_TYPES, DOC_TYPE_LABEL, formatDateIt, isOverdue,
+  DOC_DIRECTION_LABEL, DOC_TYPES, DOC_TYPE_LABEL,
   type DocDirection, type DocType,
 } from "@/lib/companies";
 import {
@@ -24,12 +24,11 @@ export function DocumentsTab({ companyId, documents }: { companyId: string; docu
   const [dialogFor, setDialogFor] = useState<DocDirection | null>(null);
   const [name, setName] = useState("");
   const [docType, setDocType] = useState<DocType>("altro");
-  const [dueDate, setDueDate] = useState("");
   const [occurredAt, setOccurredAt] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
 
   const openDialog = (direction: DocDirection) => {
-    setName(""); setDocType("altro"); setDueDate(""); setOccurredAt(""); setLinkUrl("");
+    setName(""); setDocType("altro"); setOccurredAt(""); setLinkUrl("");
     setDialogFor(direction);
   };
 
@@ -42,7 +41,7 @@ export function DocumentsTab({ companyId, documents }: { companyId: string; docu
           name: name.trim(),
           direction: dialogFor,
           doc_type: docType,
-          due_date: dueDate || null,
+          due_date: null,
           occurred_at: new Date(occurredAt).toISOString(),
           link_url: linkUrl.trim() || null,
           status: "in_attesa",
@@ -83,24 +82,18 @@ export function DocumentsTab({ companyId, documents }: { companyId: string; docu
               <Label>{t("Nome *")}</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Es. contratto firmato")} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="grid gap-1.5">
-                <Label>{t("Tipo")}</Label>
-                <Select value={docType} onValueChange={(v) => setDocType(v as DocType)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {DOC_TYPES.map((t) => <SelectItem key={t} value={t}>{DOC_TYPE_LABEL[t]}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-1.5">
-                <Label>{t("Scadenza")}</Label>
-                <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-              </div>
+            <div className="grid gap-1.5">
+              <Label>{t("Tipo")}</Label>
+              <Select value={docType} onValueChange={(v) => setDocType(v as DocType)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {DOC_TYPES.map((t) => <SelectItem key={t} value={t}>{DOC_TYPE_LABEL[t]}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-1.5">
               <Label>{t("Data di invio o ricezione *")}</Label>
-              <Input type="datetime-local" value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} />
+              <Input type="date" value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
               <Label>{t("Link")}</Label>
@@ -126,20 +119,13 @@ function DocumentRow({ doc, companyId }: { doc: CompanyDocument; companyId: stri
   const inputRef = useRef<HTMLInputElement>(null);
   const storagePath = doc.storage_path;
 
-  const overdue = doc.status === "in_attesa" && isOverdue(doc.due_date);
-
   return (
-    <div className={cn("rounded-md border border-border p-3", overdue && "border-destructive/50")}>
+    <div className="rounded-md border border-border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{doc.name}</p>
           <p className="text-xs text-muted-foreground">
-            {doc.due_date
-              ? t("{type} · entro {date}", {
-                  type: t(DOC_TYPE_LABEL[doc.doc_type as DocType] ?? doc.doc_type),
-                  date: formatDateIt(doc.due_date),
-                })
-              : t(DOC_TYPE_LABEL[doc.doc_type as DocType] ?? doc.doc_type)}
+            {t(DOC_TYPE_LABEL[doc.doc_type as DocType] ?? doc.doc_type)}
           </p>
         </div>
         <Badge variant="outline" className={cn("text-[10px]",
