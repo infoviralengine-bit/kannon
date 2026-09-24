@@ -317,6 +317,49 @@ export function useSaveCompany() {
   });
 }
 
+const COMPANY_LOGOS_BUCKET = "company-logos";
+const COMPANY_LOGOS_PREFIX = `${COMPANY_LOGOS_BUCKET}/`;
+
+export function useUploadCompanyLogo() {
+  const { toast } = useToast();
+  const invalidate = useInvalidateCompanies();
+  return useMutation({
+    mutationFn: async ({ companyId, file, previousLogoUrl }: {
+      companyId: string;
+      file: File;
+      previousLogoUrl?: string | null;
+    }) => {
+      if (!file.type.startsWith("image/")) throw new Error(t("Seleziona un file immagine."));
+      if (file.size > 5 * 1024 * 1024) throw new Error(t("Il logo non può superare 5 MB."));
+
+      const extension = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "png";
+      const storagePath = `${companyId}/${crypto.randomUUID()}.${extension}`;
+      const { error: uploadError } = await supabase.storage
+        .from(COMPANY_LOGOS_BUCKET)
+        .upload(storagePath, file, { contentType: file.type, upsert: false });
+      if (uploadError) throw uploadError;
+
+      const logoUrl = `${COMPANY_LOGOS_PREFIX}${storagePath}`;
+      const { error: updateError } = await db.from("companies").update({ logo_url: logoUrl }).eq("id", companyId);
+      if (updateError) {
+        await supabase.storage.from(COMPANY_LOGOS_BUCKET).remove([storagePath]);
+        throw updateError;
+      }
+
+      if (previousLogoUrl?.startsWith(COMPANY_LOGOS_PREFIX)) {
+        const previousPath = previousLogoUrl.slice(COMPANY_LOGOS_PREFIX.length);
+        if (previousPath) await supabase.storage.from(COMPANY_LOGOS_BUCKET).remove([previousPath]);
+      }
+      return companyId;
+    },
+    onSuccess: (companyId) => {
+      invalidate(companyId);
+      toast({ title: t("Logo caricato") });
+    },
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
+  });
+}
+
 export function useUpdateCompanyStage() {
   const { toast } = useToast();
   const invalidate = useInvalidateCompanies();

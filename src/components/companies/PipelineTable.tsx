@@ -42,16 +42,19 @@ export function PipelineTable({ companies, ownerName, onOpenCompany }: Props) {
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <CompanyLogo name={c.name} logoUrl={c.logo_url} className="h-8 w-8" />
-                      <span>{c.app_name || c.name}</span>
+                      <div className="min-w-0">
+                        <p className="truncate">{c.name}</p>
+                        {c.temperature && c.status !== "cliente" && (
+                          <Badge variant="outline" className={cn("mt-1 text-[10px]", TEMPERATURE_BADGE[c.temperature as Temperature])}>
+                            {t(TEMPERATURE_LABEL[c.temperature as Temperature])}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>{c.status === "cliente" ? "-" : t(STAGE_LABEL[c.stage as CompanyStage])}</TableCell>
                   <TableCell>
-                    {c.temperature && c.status !== "cliente" ? (
-                      <Badge variant="outline" className={cn("text-[10px]", TEMPERATURE_BADGE[c.temperature as Temperature])}>
-                        {t(TEMPERATURE_LABEL[c.temperature as Temperature])}
-                      </Badge>
-                    ) : "-"}
+                    {c.temperature && c.status !== "cliente" ? t(TEMPERATURE_LABEL[c.temperature as Temperature]) : "-"}
                   </TableCell>
                   <TableCell>{ownerName(c.owner_id)}</TableCell>
                   <TableCell>
