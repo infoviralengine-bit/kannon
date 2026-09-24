@@ -12,6 +12,7 @@ import { STATUS_BADGE, STATUS_LABEL, formatDateIt, type CompanyStatus } from "@/
 import { useClientsOverview } from "@/hooks/useCompanies";
 import { CompanyFormDialog } from "@/components/companies/CompanyFormDialog";
 import { useI18n } from "@/i18n";
+import { CompanyLogo } from "@/components/companies/CompanyLogo";
 
 export default function ClientiPage() {
   const { t } = useI18n();
@@ -73,9 +74,12 @@ export default function ClientiPage() {
                 onClick={() => navigate(`/dashboard/clients/${c.id}`)}>
                 <CardContent className="space-y-3 p-4">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-medium">{c.name}</p>
-                      {c.app_name && <p className="text-xs text-muted-foreground">{c.app_name}</p>}
+                    <div className="flex min-w-0 items-center gap-3">
+                      <CompanyLogo name={c.name} logoUrl={c.logo_url} className="h-11 w-11" />
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{c.name}</p>
+                        {c.app_name && <p className="truncate text-xs text-muted-foreground">{c.app_name}</p>}
+                      </div>
                     </div>
                     <Badge variant="outline" className={STATUS_BADGE[c.status as CompanyStatus]}>
                       {t(STATUS_LABEL[c.status as CompanyStatus])}

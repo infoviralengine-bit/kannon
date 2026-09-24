@@ -9,6 +9,7 @@ import {
 import type { Company } from "@/hooks/useCompanies";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n";
+import { CompanyLogo } from "@/components/companies/CompanyLogo";
 
 type Props = {
   companies: Company[];
@@ -38,7 +39,12 @@ export function PipelineTable({ companies, ownerName, onOpenCompany }: Props) {
               const idle = daysSince(c.last_contact_at ?? c.updated_at);
               return (
                 <TableRow key={c.id} className="cursor-pointer" onClick={() => onOpenCompany(c.id)}>
-                  <TableCell className="font-medium">{c.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <CompanyLogo name={c.name} logoUrl={c.logo_url} className="h-8 w-8" />
+                      <span>{c.app_name || c.name}</span>
+                    </div>
+                  </TableCell>
                   <TableCell>{c.status === "cliente" ? "-" : t(STAGE_LABEL[c.stage as CompanyStage])}</TableCell>
                   <TableCell>
                     {c.temperature && c.status !== "cliente" ? (

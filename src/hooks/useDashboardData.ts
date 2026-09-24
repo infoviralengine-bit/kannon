@@ -86,6 +86,7 @@ export interface CampaignRow {
   id: string;
   name: string;
   client_name: string;
+  companyLogoUrl: string | null;
   status: string;
   client_cpm: number | null;
   client_fixed: number | null;
@@ -111,12 +112,15 @@ export function useCampaignTable() {
         { data: creators },
         { data: accounts },
         { data: totalViewsData },
+        { data: companyRows },
       ] = await Promise.all([
         supabase.from("campaign_creators").select("campaign_id, creator_id"),
         supabase.from("creators").select("id, status"),
         supabase.from("tiktok_accounts").select("id, campaign_id"),
         supabase.rpc("get_campaign_total_views", { p_campaign_ids: campaignIds }),
+        supabase.from("companies").select("id, logo_url"),
       ]);
+      const companyLogoMap = new Map((companyRows ?? []).map((company) => [company.id, company.logo_url]));
 
       // Build a map of campaign_id -> total views from server-side RPC (no 1000-row limit)
       const totalViewsMap = new Map<string, number>();
@@ -180,6 +184,7 @@ export function useCampaignTable() {
           id: c.id,
           name: c.name,
           client_name: c.client_name,
+          companyLogoUrl: c.company_id ? companyLogoMap.get(c.company_id) ?? null : null,
           status: c.status,
           client_cpm: c.client_cpm,
           client_fixed: c.client_fixed,

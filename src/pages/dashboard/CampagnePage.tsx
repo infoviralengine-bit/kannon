@@ -30,6 +30,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCompanyOptions } from "@/hooks/useCompanies";
+import { CompanyLogo } from "@/components/companies/CompanyLogo";
 
 const statusColor: Record<string, string> = {
   active: "bg-success/20 text-success border-success/30",
@@ -276,7 +277,12 @@ export default function CampagnePage() {
                 {filtered.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.name}</TableCell>
-                    <TableCell>{c.client_name}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <CompanyLogo name={c.client_name} logoUrl={c.companyLogoUrl} className="h-8 w-8" />
+                        <span>{c.client_name}</span>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <Badge className={statusColor[c.status] ?? ""}>{t(statusLabel[c.status] ?? c.status)}</Badge>
                     </TableCell>

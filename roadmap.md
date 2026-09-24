@@ -11,3 +11,4 @@ Numeri/valute/date restano it-IT. Stringhe avvolte in t("testo italiano"), dizio
 - [x] Verifica finale: compilazione, test, controllo visivo in EN
 - [x] Scheda lead/clienti: rimossa sezione comunicazioni, timeline ampliata e documenti ordinati per data dichiarata
 - [x] Timeline lead/clienti: riordino manuale persistente e cancellazione con conferma
+- [x] Loghi lead/clienti: campo azienda, Unflat e Robin Health, viste pipeline, clienti, campagne e dettaglio

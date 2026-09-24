@@ -181,6 +181,8 @@ export const clients: Record<string, string> = {
   "Nome azienda *": "Company name *",
   "Es. Unflat": "E.g. Unflat",
   "Ragione sociale": "Legal name",
+  "Logo azienda": "Company logo",
+  "Incolla il link del logo": "Paste the logo link",
   "Opzionale": "Optional",
   "Stato": "Status",
   "Stadio": "Stage",

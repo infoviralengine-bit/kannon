@@ -26,6 +26,7 @@ import { TimelineSection } from "@/components/companies/detail/TimelineSection";
 import { CallNotesSection } from "@/components/companies/detail/CallNotesSection";
 import { NotesSection } from "@/components/companies/detail/NotesSection";
 import { useI18n } from "@/i18n";
+import { CompanyLogo } from "@/components/companies/CompanyLogo";
 
 const go = (id: string) => setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }), 50);
 
@@ -69,6 +70,7 @@ export default function CompanyDetailPage() {
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)} aria-label={t("Indietro")}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
+            <CompanyLogo name={displayName} logoUrl={company.logo_url} className="h-14 w-14" />
             <div>
               <h1 className="font-display text-2xl font-semibold">{displayName}</h1>
               <div className="mt-1 flex flex-wrap items-center gap-2">
