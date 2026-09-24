@@ -129,9 +129,7 @@ function DocumentRow({ doc, companyId }: { doc: CompanyDocument; companyId: stri
           </p>
         </div>
         <Badge variant="outline" className={cn("text-[10px]",
-          doc.status === "fatto"
-            ? "bg-success/20 text-success border-success/30"
-            : overdue ? "bg-destructive/20 text-destructive border-destructive/30" : "")}>
+          doc.status === "fatto" && "bg-success/20 text-success border-success/30")}>
           {doc.status === "fatto" ? t("Completato") : t("In attesa")}
         </Badge>
       </div>
