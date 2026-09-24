@@ -28,12 +28,14 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import CreatorTimeline from "@/components/creator/CreatorTimeline";
+import { useI18n, t } from "@/i18n";
 
 /* ── Edit Modal ── */
 function EditCreatorModal({ open, onOpenChange, creator }: {
   open: boolean; onOpenChange: (v: boolean) => void;
   creator: { id: string; name: string; email: string | null; phone: string | null };
 }) {
+  const { t } = useI18n();
   const { toast } = useToast();
   const qc = useQueryClient();
   const [name, setName] = useState(creator.name);
@@ -48,30 +50,30 @@ function EditCreatorModal({ open, onOpenChange, creator }: {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Creator aggiornato" });
+      toast({ title: t("Creator aggiornato") });
       qc.invalidateQueries({ queryKey: ["creator-detail", creator.id] });
       qc.invalidateQueries({ queryKey: ["creator-kpi", creator.id] });
       qc.invalidateQueries({ queryKey: ["creator-payoff"] });
       onOpenChange(false);
     },
-    onError: (e: Error) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: t("Errore"), description: e.message, variant: "destructive" }),
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
-        <DialogHeader><DialogTitle>Modifica Creator</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("Modifica Creator")}</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-1.5">
-            <Label>Nome *</Label>
+            <Label>{t("Nome *")}</Label>
             <Input value={name} onChange={e => setName(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-1.5"><Label>Email</Label><Input value={email} onChange={e => setEmail(e.target.value)} /></div>
-            <div className="grid gap-1.5"><Label>Telefono</Label><Input value={phone} onChange={e => setPhone(e.target.value)} /></div>
+            <div className="grid gap-1.5"><Label>{t("Email")}</Label><Input value={email} onChange={e => setEmail(e.target.value)} /></div>
+            <div className="grid gap-1.5"><Label>{t("Telefono")}</Label><Input value={phone} onChange={e => setPhone(e.target.value)} /></div>
           </div>
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
-            {mutation.isPending ? "Salvataggio..." : "Salva Modifiche"}
+            {mutation.isPending ? t("Salvataggio...") : t("Salva Modifiche")}
           </Button>
         </div>
       </DialogContent>
@@ -81,6 +83,7 @@ function EditCreatorModal({ open, onOpenChange, creator }: {
 
 /* ── Detail Page ── */
 export default function CreatorDetailPage() {
+  const { t } = useI18n();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -105,25 +108,25 @@ export default function CreatorDetailPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Status aggiornato" });
+      toast({ title: t("Status aggiornato") });
       qc.invalidateQueries({ queryKey: ["creator-detail", id] });
     },
   });
 
   if (isLoading) return <div className="space-y-4">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}</div>;
-  if (!creator) return <p className="text-muted-foreground">Creator non trovato.</p>;
+  if (!creator) return <p className="text-muted-foreground">{t("Creator non trovato.")}</p>;
 
   const statusBadge = creator.status === "active"
     ? "bg-success/20 text-success border-success/30"
     : "bg-muted text-muted-foreground border-border";
 
-  const months = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+  const monthsIt = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
 
   return (
     <div className="space-y-6">
       {/* Breadcrumb & header */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <button onClick={() => navigate("/dashboard/creators")} className="hover:text-foreground transition-colors">Creator</button>
+        <button onClick={() => navigate("/dashboard/creators")} className="hover:text-foreground transition-colors">{t("Creator")}</button>
         <span>/</span>
         <span className="text-foreground">{creator.name}</span>
       </div>
@@ -134,17 +137,17 @@ export default function CreatorDetailPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-2xl font-bold">{creator.name}</h1>
-          <Badge className={statusBadge}>{creator.status === "active" ? "Attivo" : "Inattivo"}</Badge>
+          <Badge className={statusBadge}>{creator.status === "active" ? t("Attivo") : t("Inattivo")}</Badge>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-            <Pencil className="mr-2 h-4 w-4" /> Modifica
+            <Pencil className="mr-2 h-4 w-4" /> {t("Modifica")}
           </Button>
           <Select value={creator.status} onValueChange={v => statusMutation.mutate(v)}>
             <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">Attivo</SelectItem>
-              <SelectItem value="inactive">Inattivo</SelectItem>
+              <SelectItem value="active">{t("Attivo")}</SelectItem>
+              <SelectItem value="inactive">{t("Inattivo")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -164,7 +167,7 @@ export default function CreatorDetailPage() {
         ].map(k => (
           <Card key={k.label}>
             <CardContent className="pt-4 pb-3 px-4">
-              <p className="text-xs text-muted-foreground">{k.label}</p>
+              <p className="text-xs text-muted-foreground">{t(k.label)}</p>
               <p className="text-xl font-bold mt-1">{k.value}</p>
             </CardContent>
           </Card>
@@ -174,9 +177,9 @@ export default function CreatorDetailPage() {
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Panoramica</TabsTrigger>
-          <TabsTrigger value="videos">Video ({videos?.length ?? 0})</TabsTrigger>
-          <TabsTrigger value="percorso">Percorso</TabsTrigger>
+          <TabsTrigger value="overview">{t("Panoramica")}</TabsTrigger>
+          <TabsTrigger value="videos">{t("Video")} ({videos?.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="percorso">{t("Percorso")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -184,12 +187,12 @@ export default function CreatorDetailPage() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Payoff Mese</CardTitle>
+                <CardTitle className="text-base">{t("Payoff Mese")}</CardTitle>
                 <div className="flex gap-2">
                   <Select value={String(payoffMonth)} onValueChange={v => setPayoffMonth(parseInt(v))}>
                     <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {months.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}
+                      {monthsIt.map((m, i) => <SelectItem key={i} value={String(i)}>{t(m)}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <Select value={String(payoffYear)} onValueChange={v => setPayoffYear(parseInt(v))}>
@@ -204,7 +207,7 @@ export default function CreatorDetailPage() {
             <CardContent className="space-y-3">
               {payoff ? (
                 !payoff.contracts?.length ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">Nessun contratto assegnato a questo creator.</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">{t("Nessun contratto assegnato a questo creator.")}</p>
                 ) : (
                   <>
                     {payoff.contracts.map((pc) => (
@@ -213,37 +216,37 @@ export default function CreatorDetailPage() {
                           <span className="text-sm font-semibold">{pc.contractName}</span>
                           <div className="flex items-center gap-2">
                             {pc.rateMissing && (
-                              <Badge className="bg-destructive/20 text-destructive border-destructive/30">⚠️ Tariffa mancante</Badge>
+                              <Badge className="bg-destructive/20 text-destructive border-destructive/30">⚠️ {t("Tariffa mancante")}</Badge>
                             )}
                             {pc.fixedEarned ? (
-                              <Badge className="bg-success/20 text-success border-success/30">✅ Fisso maturato</Badge>
+                              <Badge className="bg-success/20 text-success border-success/30">✅ {t("Fisso maturato")}</Badge>
                             ) : (
-                              <Badge className="bg-muted text-muted-foreground border-border">Fisso non maturato</Badge>
+                              <Badge className="bg-muted text-muted-foreground border-border">{t("Fisso non maturato")}</Badge>
                             )}
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-xs">Fisso</span>
+                          <span className="text-xs">{t("Fisso")}</span>
                           <span className="text-sm font-semibold">{formatCurrency(pc.creatorFixed)}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-xs">CPM maturato</span>
+                          <span className="text-xs">{t("CPM maturato")}</span>
                           <span className="text-sm font-semibold">{formatCurrency(pc.cpmAmount)}</span>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {formatViews(pc.monthViews)} views × {formatCurrency(pc.creatorCpm)} / 1.000 = {formatCurrency(pc.cpmAmount)}
+                          {formatViews(pc.monthViews)} {t("views")} × {formatCurrency(pc.creatorCpm)} / 1.000 = {formatCurrency(pc.cpmAmount)}
                         </p>
                         <p className="text-xs text-muted-foreground italic">
-                          {pc.windowOpen} video finestra aperta — {pc.windowClosed} finestra chiusa
+                          {t("{n} video finestra aperta", { n: pc.windowOpen })} — {t("{n} finestra chiusa", { n: pc.windowClosed })}
                         </p>
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold">Subtotale</span>
+                          <span className="text-xs font-semibold">{t("Subtotale")}</span>
                           <span className="text-sm font-bold">{formatCurrency(pc.total)}</span>
                         </div>
                       </div>
                     ))}
                     <div className="flex items-center justify-between border-t border-border pt-3">
-                      <span className="text-sm font-semibold">Totale mese</span>
+                      <span className="text-sm font-semibold">{t("Totale mese")}</span>
                       <span className="text-lg font-bold">{formatCurrency(payoff.grandTotal)}</span>
                     </div>
                   </>
@@ -257,22 +260,22 @@ export default function CreatorDetailPage() {
           {/* Accounts */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Account</CardTitle>
+              <CardTitle className="text-base">{t("Account")}</CardTitle>
             </CardHeader>
             <CardContent>
               {!accounts ? (
                 <Skeleton className="h-16 w-full" />
               ) : !accounts.length ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Nessun account collegato.</p>
+                <p className="text-sm text-muted-foreground text-center py-4">{t("Nessun account collegato.")}</p>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Username</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Campagna</TableHead>
-                      <TableHead className="text-right">Video oggi</TableHead>
-                      <TableHead className="text-right">Views totali</TableHead>
+                      <TableHead>{t("Username")}</TableHead>
+                      <TableHead>{t("Tipo")}</TableHead>
+                      <TableHead>{t("Campagna")}</TableHead>
+                      <TableHead className="text-right">{t("Video oggi")}</TableHead>
+                      <TableHead className="text-right">{t("Views totali")}</TableHead>
                       <TableHead />
                     </TableRow>
                   </TableHeader>
@@ -280,12 +283,12 @@ export default function CreatorDetailPage() {
                     {accounts.map(a => (
                       <TableRow key={a.accountId}>
                         <TableCell className="font-medium"><TikTokLink username={a.username} /></TableCell>
-                        <TableCell><Badge variant="outline">Creator</Badge></TableCell>
+                        <TableCell><Badge variant="outline">{t("Creator")}</Badge></TableCell>
                         <TableCell>{a.campaignName}</TableCell>
                         <TableCell className="text-right">{a.todayVideos}</TableCell>
                         <TableCell className="text-right">{formatViews(a.totalViews)}</TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.accountId}`)}>Apri</Button>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/accounts/${a.accountId}`)}>{t("Apri")}</Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -298,21 +301,21 @@ export default function CreatorDetailPage() {
           {/* Campaigns */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Campagne collegate</CardTitle>
+              <CardTitle className="text-base">{t("Campagne collegate")}</CardTitle>
             </CardHeader>
             <CardContent>
               {!campaigns ? (
                 <Skeleton className="h-16 w-full" />
               ) : !campaigns.length ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Nessuna campagna collegata.</p>
+                <p className="text-sm text-muted-foreground text-center py-4">{t("Nessuna campagna collegata.")}</p>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Campagna</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Data inizio</TableHead>
-                      <TableHead className="text-right">Views</TableHead>
+                      <TableHead>{t("Campagna")}</TableHead>
+                      <TableHead>{t("Cliente")}</TableHead>
+                      <TableHead>{t("Data inizio")}</TableHead>
+                      <TableHead className="text-right">{t("Views")}</TableHead>
                       <TableHead />
                     </TableRow>
                   </TableHeader>
@@ -324,7 +327,7 @@ export default function CreatorDetailPage() {
                         <TableCell>{c.startDate}</TableCell>
                         <TableCell className="text-right">{formatViews(c.views)}</TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/campaigns/${c.campaignId}`)}>Apri</Button>
+                          <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/campaigns/${c.campaignId}`)}>{t("Apri")}</Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -338,25 +341,25 @@ export default function CreatorDetailPage() {
         <TabsContent value="videos" className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Tutti i video pubblicati</CardTitle>
+              <CardTitle className="text-base">{t("Tutti i video pubblicati")}</CardTitle>
             </CardHeader>
             <CardContent>
               {!videos ? (
                 <Skeleton className="h-32 w-full" />
               ) : !videos.length ? (
-                <p className="text-sm text-muted-foreground text-center py-4">Nessun video pubblicato.</p>
+                <p className="text-sm text-muted-foreground text-center py-4">{t("Nessun video pubblicato.")}</p>
               ) : (
                 <div className="relative w-full overflow-auto max-h-[600px]">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Account</TableHead>
-                        <TableHead>Campagna</TableHead>
-                        <TableHead className="text-right">Views</TableHead>
-                        <TableHead className="text-right">Likes</TableHead>
-                        <TableHead className="text-right">Commenti</TableHead>
-                        <TableHead>Finestra</TableHead>
+                        <TableHead>{t("Data")}</TableHead>
+                        <TableHead>{t("Account")}</TableHead>
+                        <TableHead>{t("Campagna")}</TableHead>
+                        <TableHead className="text-right">{t("Views")}</TableHead>
+                        <TableHead className="text-right">{t("Likes")}</TableHead>
+                        <TableHead className="text-right">{t("Commenti")}</TableHead>
+                        <TableHead>{t("Finestra")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -390,7 +393,7 @@ export default function CreatorDetailPage() {
                             <TableCell className="text-right font-medium">{effectiveViews.toLocaleString("it-IT")}</TableCell>
                             <TableCell className="text-right">{v.likes.toLocaleString("it-IT")}</TableCell>
                             <TableCell className="text-right">{v.comments.toLocaleString("it-IT")}</TableCell>
-                            <TableCell><Badge className={windowClass}>{windowLabel}</Badge></TableCell>
+                            <TableCell><Badge className={windowClass}>{t(windowLabel)}</Badge></TableCell>
                           </TableRow>
                         );
                       })}
@@ -405,8 +408,8 @@ export default function CreatorDetailPage() {
         <TabsContent value="percorso">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Percorso del Creator</CardTitle>
-              <p className="text-xs text-muted-foreground mt-1">Timeline del percorso dal lead all'operatività</p>
+              <CardTitle className="text-base">{t("Percorso del Creator")}</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">{t("Timeline del percorso dal lead all\'operatività")}</p>
             </CardHeader>
             <CardContent>
               <CreatorTimeline creatorId={id!} />

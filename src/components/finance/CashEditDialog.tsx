@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUpdateCash } from "@/hooks/useFinanceData";
 import { toast } from "@/hooks/use-toast";
+import { useI18n } from "@/i18n";
 
 export function CashEditDialog({ current, trigger }: { current: number | null; trigger: React.ReactNode }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string>(current?.toString() ?? "");
   const { mutateAsync, isPending } = useUpdateCash();
@@ -15,15 +17,15 @@ export function CashEditDialog({ current, trigger }: { current: number | null; t
     e.preventDefault();
     const n = Number(value);
     if (!isFinite(n) || n < 0) {
-      toast({ title: "Importo non valido", variant: "destructive" });
+      toast({ title: t("Importo non valido"), variant: "destructive" });
       return;
     }
     try {
       await mutateAsync(n);
-      toast({ title: "Cash aggiornato" });
+      toast({ title: t("Cash aggiornato") });
       setOpen(false);
     } catch (err: any) {
-      toast({ title: "Errore", description: err?.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: err?.message, variant: "destructive" });
     }
   };
 
@@ -31,15 +33,15 @@ export function CashEditDialog({ current, trigger }: { current: number | null; t
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Aggiorna Cash in bank</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("Aggiorna Cash in bank")}</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label>Importo corrente (€)</Label>
+            <Label>{t("Importo corrente (€)")}</Label>
             <Input type="number" step="0.01" value={value} onChange={(e) => setValue(e.target.value)} autoFocus />
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annulla</Button>
-            <Button type="submit" disabled={isPending}>{isPending ? "..." : "Salva"}</Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t("Annulla")}</Button>
+            <Button type="submit" disabled={isPending}>{isPending ? "..." : t("Salva")}</Button>
           </div>
         </form>
       </DialogContent>

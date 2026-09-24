@@ -28,6 +28,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAgendaTasks, useCompanies, useSaveTask, useStaffProfiles, useToggleTask } from "@/hooks/useCompanies";
 import { isOverdue, type TaskType } from "@/lib/companies";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/i18n";
 
 const ALL = "__all__";
 const NONE = "__none__";
@@ -41,6 +42,7 @@ const TASK_LABEL: Record<string, string> = {
 };
 
 export default function AgendaPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: tasks = [] } = useAgendaTasks();
@@ -119,40 +121,40 @@ export default function AgendaPage() {
     <div className="flex min-h-[calc(100vh-7rem)] flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Agenda</h1>
-          <p className="text-sm text-muted-foreground">Tutte le azioni commerciali, organizzate per giorno.</p>
+          <h1 className="text-2xl font-semibold">{t("Agenda")}</h1>
+          <p className="text-sm text-muted-foreground">{t("Tutte le azioni commerciali, organizzate per giorno.")}</p>
         </div>
         <div className="flex gap-2">
           <Select value={assignee} onValueChange={setAssignee}>
             <SelectTrigger className="w-[190px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {user?.id && <SelectItem value={user.id}>Le mie attività</SelectItem>}
-              <SelectItem value={ALL}>Tutto il team</SelectItem>
+              {user?.id && <SelectItem value={user.id}>{t("Le mie attività")}</SelectItem>}
+              <SelectItem value={ALL}>{t("Tutto il team")}</SelectItem>
               {staff.filter((person) => person.id !== user?.id).map((person) => (
-                <SelectItem key={person.id} value={person.id}>{person.full_name ?? "Senza nome"}</SelectItem>
+                <SelectItem key={person.id} value={person.id}>{person.full_name ?? t("Senza nome")}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={() => openNewTask()}><Plus className="mr-2 h-4 w-4" /> Nuova attività</Button>
+          <Button onClick={() => openNewTask()}><Plus className="mr-2 h-4 w-4" /> {t("Nuova attività")}</Button>
         </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-y py-3">
         <div className="flex items-center gap-1">
-          <Button variant="outline" size="icon" aria-label="Mese precedente" onClick={() => setMonth(subMonths(month, 1))}>
+          <Button variant="outline" size="icon" aria-label={t("Mese precedente")} onClick={() => setMonth(subMonths(month, 1))}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" aria-label="Mese successivo" onClick={() => setMonth(addMonths(month, 1))}>
+          <Button variant="outline" size="icon" aria-label={t("Mese successivo")} onClick={() => setMonth(addMonths(month, 1))}>
             <ChevronRight className="h-4 w-4" />
           </Button>
           <Button variant="outline" className="ml-2" onClick={() => { setMonth(startOfMonth(new Date())); setSelectedDate(new Date()); }}>
-            Oggi
+            {t("Oggi")}
           </Button>
         </div>
         <h2 className="text-lg font-semibold capitalize">{format(month, "MMMM yyyy", { locale: it })}</h2>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-destructive" />Scaduta</span>
-          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" />Pianificata</span>
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-destructive" />{t("Scaduta")}</span>
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-primary" />{t("Pianificata")}</span>
         </div>
       </div>
 
@@ -160,7 +162,7 @@ export default function AgendaPage() {
         <div className="min-w-0 overflow-x-auto border bg-card">
           <div className="grid min-w-[760px] grid-cols-7 border-b bg-muted/40">
             {["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((day) => (
-              <div key={day} className="px-3 py-2 text-xs font-medium uppercase text-muted-foreground">{day}</div>
+              <div key={day} className="px-3 py-2 text-xs font-medium uppercase text-muted-foreground">{t(day)}</div>
             ))}
           </div>
           <div className="grid min-w-[760px] grid-cols-7">
@@ -195,7 +197,7 @@ export default function AgendaPage() {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 opacity-0 group-hover:opacity-100"
-                      aria-label={`Aggiungi attività il ${format(day, "d MMMM", { locale: it })}`}
+                      aria-label={t("Aggiungi attività il {date}", { date: format(day, "d MMMM", { locale: it }) })}
                       onClick={(event) => { event.stopPropagation(); openNewTask(day); }}
                     >
                       <Plus className="h-3.5 w-3.5" />
@@ -216,7 +218,7 @@ export default function AgendaPage() {
                         {task.due_time ? task.due_time.slice(0, 5) : ""} {task.title}
                       </button>
                     ))}
-                    {dayTasks.length > 3 && <p className="px-2 text-[10px] text-muted-foreground">+{dayTasks.length - 3} altre</p>}
+                    {dayTasks.length > 3 && <p className="px-2 text-[10px] text-muted-foreground">{t("+{n} altre", { n: dayTasks.length - 3 })}</p>}
                   </div>
                 </div>
               );
@@ -227,10 +229,10 @@ export default function AgendaPage() {
         <aside className="border bg-card p-4">
           <div className="mb-4 flex items-start justify-between gap-2">
             <div>
-              <p className="text-xs uppercase text-muted-foreground">Dettaglio giorno</p>
+              <p className="text-xs uppercase text-muted-foreground">{t("Dettaglio giorno")}</p>
               <h3 className="mt-1 font-semibold capitalize">{format(selectedDate, "EEEE d MMMM", { locale: it })}</h3>
             </div>
-            <Button size="icon" variant="outline" aria-label="Aggiungi attività" onClick={() => openNewTask(selectedDate)}>
+            <Button size="icon" variant="outline" aria-label={t("Aggiungi attività")} onClick={() => openNewTask(selectedDate)}>
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -248,7 +250,7 @@ export default function AgendaPage() {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium leading-tight">{task.title}</p>
                       <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                        <span>{TASK_LABEL[task.task_type ?? "altro"] ?? "Attività"}</span>
+                        <span>{t(TASK_LABEL[task.task_type ?? "altro"] ?? "Attività")}</span>
                         {task.due_time && <span className="flex items-center gap-1"><Clock3 className="h-3 w-3" />{task.due_time.slice(0, 5)}</span>}
                       </div>
                       {company && (
@@ -264,13 +266,13 @@ export default function AgendaPage() {
             {!selectedTasks.length && (
               <div className="py-10 text-center text-sm text-muted-foreground">
                 <CalendarIcon className="mx-auto mb-2 h-5 w-5" />
-                Nessuna attività pianificata.
+                {t("Nessuna attività pianificata.")}
               </div>
             )}
           </div>
           {withoutDate.length > 0 && (
             <div className="mt-6 border-t pt-4">
-              <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">Da pianificare ({withoutDate.length})</p>
+              <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">{t("Da pianificare ({n})", { n: withoutDate.length })}</p>
               {withoutDate.slice(0, 4).map((task) => <p key={task.id} className="truncate py-1 text-xs">{task.title}</p>)}
             </div>
           )}
@@ -279,34 +281,34 @@ export default function AgendaPage() {
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Nuova attività</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("Nuova attività")}</DialogTitle></DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label>Titolo *</Label>
-              <Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Es. Follow-up proposta" />
+              <Label>{t("Titolo *")}</Label>
+              <Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder={t("Es. Follow-up proposta")} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-1.5">
-                <Label>Tipo</Label>
+                <Label>{t("Tipo")}</Label>
                 <Select value={taskType} onValueChange={(value) => setTaskType(value as TaskType)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {Object.entries(TASK_LABEL).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}
+                    {Object.entries(TASK_LABEL).map(([value, label]) => <SelectItem key={value} value={value}>{t(label)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Orario</Label>
+                <Label>{t("Orario")}</Label>
                 <Input type="time" value={dueTime} onChange={(event) => setDueTime(event.target.value)} />
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label>Data</Label>
+              <Label>{t("Data")}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("justify-start text-left font-normal", !dueDate && "text-muted-foreground")}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dueDate ? format(dueDate, "d MMMM yyyy", { locale: it }) : "Seleziona una data"}
+                    {dueDate ? format(dueDate, "d MMMM yyyy", { locale: it }) : t("Seleziona una data")}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -315,20 +317,20 @@ export default function AgendaPage() {
               </Popover>
             </div>
             <div className="grid gap-1.5">
-              <Label>Azienda</Label>
+              <Label>{t("Azienda")}</Label>
               <Select value={companyId} onValueChange={setCompanyId}>
-                <SelectTrigger><SelectValue placeholder="Nessuna" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("Nessuna")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE}>Nessuna</SelectItem>
+                  <SelectItem value={NONE}>{t("Nessuna")}</SelectItem>
                   {companies.map((company) => <SelectItem key={company.id} value={company.id}>{company.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFormOpen(false)}>Annulla</Button>
+            <Button variant="outline" onClick={() => setFormOpen(false)}>{t("Annulla")}</Button>
             <Button onClick={submit} disabled={!title.trim() || saveTask.isPending}>
-              <Check className="mr-2 h-4 w-4" /> Salva
+              <Check className="mr-2 h-4 w-4" /> {t("Salva")}
             </Button>
           </DialogFooter>
         </DialogContent>

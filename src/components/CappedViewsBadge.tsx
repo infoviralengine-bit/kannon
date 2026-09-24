@@ -1,11 +1,13 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ShieldCheck } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 /**
  * Small inline badge indicating views are capped for CPM calculation.
  * Variant "inline" = subtle pill badge, "icon" = shield icon with tooltip.
  */
 export function CappedBadge({ variant = "inline" }: { variant?: "inline" | "icon" }) {
+  const { t } = useI18n();
   if (variant === "icon") {
     return (
       <TooltipProvider delayDuration={200}>
@@ -16,7 +18,7 @@ export function CappedBadge({ variant = "inline" }: { variant?: "inline" | "icon
             </span>
           </TooltipTrigger>
           <TooltipContent side="top" className="text-xs max-w-[220px]">
-            Views conteggiate entro il cap video per il calcolo CPM
+            {t("Views conteggiate entro il cap video per il calcolo CPM")}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -33,7 +35,7 @@ export function CappedBadge({ variant = "inline" }: { variant?: "inline" | "icon
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" className="text-xs max-w-[220px]">
-          Visualizzazioni limitate dal cap video per il calcolo CPM
+          {t("Visualizzazioni limitate dal cap video per il calcolo CPM")}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

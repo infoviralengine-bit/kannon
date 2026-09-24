@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useI18n } from "@/i18n";
 import { useCreateEntry, FinancialEntryInput } from "@/hooks/useFinanceData";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,6 +28,7 @@ const schema = z.object({
 });
 
 export function AddEntryDialog({ defaultType }: { defaultType?: FinancialEntryInput["type"] }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<FinancialEntryInput["type"]>(defaultType ?? "revenue");
   const [category, setCategory] = useState("");
@@ -67,10 +69,10 @@ export function AddEntryDialog({ defaultType }: { defaultType?: FinancialEntryIn
         brand_name: brand || null, invoice_number: invoiceNumber || null, notes: notes || null,
       });
       await mutateAsync(parsed as FinancialEntryInput);
-      toast({ title: "Voce aggiunta", description: "La voce è stata registrata." });
+      toast({ title: t("Voce aggiunta"), description: t("La voce è stata registrata.") });
       reset(); setOpen(false);
     } catch (err: any) {
-      toast({ title: "Errore", description: err?.message ?? "Impossibile salvare", variant: "destructive" });
+      toast({ title: t("Errore"), description: err?.message ? t(err.message) : t("Impossibile salvare"), variant: "destructive" });
     }
   };
 
@@ -79,105 +81,105 @@ export function AddEntryDialog({ defaultType }: { defaultType?: FinancialEntryIn
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button><Plus className="h-4 w-4" />Aggiungi</Button>
+        <Button><Plus className="h-4 w-4" />{t("Aggiungi")}</Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Nuova voce</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("Nuova voce")}</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Tipo</Label>
+              <Label>{t("Tipo")}</Label>
               <Select value={type} onValueChange={(v) => setType(v as any)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="revenue">Entrata</SelectItem>
-                  <SelectItem value="cost">Uscita</SelectItem>
-                  <SelectItem value="invoice_out">Fattura emessa</SelectItem>
-                  <SelectItem value="invoice_in">Fattura ricevuta</SelectItem>
+                  <SelectItem value="revenue">{t("Entrata")}</SelectItem>
+                  <SelectItem value="cost">{t("Uscita")}</SelectItem>
+                  <SelectItem value="invoice_out">{t("Fattura emessa")}</SelectItem>
+                  <SelectItem value="invoice_in">{t("Fattura ricevuta")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Status</Label>
+              <Label>{t("Status")}</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as any)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="expected">Previsto</SelectItem>
-                  <SelectItem value="confirmed">Confermato</SelectItem>
-                  <SelectItem value="received">Ricevuto</SelectItem>
-                  <SelectItem value="paid">Pagato</SelectItem>
+                  <SelectItem value="expected">{t("Previsto")}</SelectItem>
+                  <SelectItem value="confirmed">{t("Confermato")}</SelectItem>
+                  <SelectItem value="received">{t("Ricevuto")}</SelectItem>
+                  <SelectItem value="paid">{t("Pagato")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Importo (€)</Label>
+              <Label>{t("Importo (€)")}</Label>
               <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required />
             </div>
             <div>
-              <Label>Categoria</Label>
+              <Label>{t("Categoria")}</Label>
               <Select value={category || "_none"} onValueChange={(v) => setCategory(v === "_none" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Nessuna" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("Nessuna")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">Nessuna</SelectItem>
-                  <SelectItem value="creator_pay">Pagamento creator</SelectItem>
-                  <SelectItem value="operator_pay">Pagamento operator</SelectItem>
-                  <SelectItem value="tool">Tool</SelectItem>
-                  <SelectItem value="software">Software</SelectItem>
-                  <SelectItem value="brand_fee">Brand fee</SelectItem>
-                  <SelectItem value="other">Altro</SelectItem>
+                  <SelectItem value="_none">{t("Nessuna")}</SelectItem>
+                  <SelectItem value="creator_pay">{t("Pagamento creator")}</SelectItem>
+                  <SelectItem value="operator_pay">{t("Pagamento operator")}</SelectItem>
+                  <SelectItem value="tool">{t("Tool")}</SelectItem>
+                  <SelectItem value="software">{t("Software")}</SelectItem>
+                  <SelectItem value="brand_fee">{t("Brand fee")}</SelectItem>
+                  <SelectItem value="other">{t("Altro")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Data</Label>
+              <Label>{t("Data")}</Label>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
             </div>
             <div>
-              <Label>Scadenza</Label>
+              <Label>{t("Scadenza")}</Label>
               <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </div>
             <div className="col-span-2">
-              <Label>Descrizione</Label>
+              <Label>{t("Descrizione")}</Label>
               <Input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={300} />
             </div>
             <div>
-              <Label>Campagna</Label>
+              <Label>{t("Campagna")}</Label>
               <Select value={campaignId || "_none"} onValueChange={(v) => setCampaignId(v === "_none" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Nessuna" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("Nessuna")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">Nessuna</SelectItem>
+                  <SelectItem value="_none">{t("Nessuna")}</SelectItem>
                   {campaigns.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Creator</Label>
+              <Label>{t("Creator")}</Label>
               <Select value={creatorId || "_none"} onValueChange={(v) => setCreatorId(v === "_none" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Nessuno" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("Nessuno")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">Nessuno</SelectItem>
+                  <SelectItem value="_none">{t("Nessuno")}</SelectItem>
                   {creators.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Brand</Label>
+              <Label>{t("Brand")}</Label>
               <Input value={brand} onChange={(e) => setBrand(e.target.value)} maxLength={100} />
             </div>
             {isInvoice && (
               <div>
-                <Label>N. fattura</Label>
+                <Label>{t("N. fattura")}</Label>
                 <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} maxLength={50} />
               </div>
             )}
             <div className="col-span-2">
-              <Label>Note</Label>
+              <Label>{t("Note")}</Label>
               <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={500} />
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annulla</Button>
-            <Button type="submit" disabled={isPending}>{isPending ? "Salvataggio..." : "Salva"}</Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>{t("Annulla")}</Button>
+            <Button type="submit" disabled={isPending}>{isPending ? t("Salvataggio...") : t("Salva")}</Button>
           </div>
         </form>
       </DialogContent>

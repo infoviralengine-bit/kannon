@@ -28,6 +28,7 @@ import {
   type ParsedBrief,
 } from "@/hooks/useContentCalendar";
 import { useVideoFormats, useContentTopics } from "@/hooks/useContentCatalog";
+import { useI18n } from "@/i18n";
 
 const REFERENCE_TYPES = ["video", "audio", "video_audio", "format_audio", "format"];
 
@@ -46,6 +47,7 @@ export function BriefImportDialog({
   campaignId: string;
   campaignName?: string | null;
 }) {
+  const { t } = useI18n();
   const [mode, setMode] = useState<"paste" | "preview">("paste");
   const [rawText, setRawText] = useState("");
   const [briefs, setBriefs] = useState<ParsedBrief[]>([]);
@@ -69,13 +71,13 @@ export function BriefImportDialog({
     try {
       const result = await parse.mutateAsync({ raw_text: rawText, campaign_name: campaignName ?? undefined });
       if (result.length === 0) {
-        toast({ title: "Nessun brief estratto", description: "Controlla il testo incollato.", variant: "destructive" });
+        toast({ title: t("Nessun brief estratto"), description: t("Controlla il testo incollato."), variant: "destructive" });
         return;
       }
       setBriefs(result);
       setMode("preview");
     } catch (e: any) {
-      toast({ title: "Errore analisi", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore analisi"), description: e.message, variant: "destructive" });
     }
   };
 
@@ -91,10 +93,10 @@ export function BriefImportDialog({
   const create = async () => {
     try {
       const created = await bulkCreate.mutateAsync({ campaign_id: campaignId, briefs });
-      toast({ title: `${created.length} brief creati`, description: "Aggiunti come bozze nel calendario." });
+      toast({ title: t("{n} brief creati", { n: created.length }), description: t("Aggiunti come bozze nel calendario.") });
       close();
     } catch (e: any) {
-      toast({ title: "Errore creazione", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore creazione"), description: e.message, variant: "destructive" });
     }
   };
 
@@ -104,9 +106,9 @@ export function BriefImportDialog({
         {mode === "paste" ? (
           <>
             <DialogHeader>
-              <DialogTitle>Importa da Google Doc</DialogTitle>
+              <DialogTitle>{t("Importa da Google Doc")}</DialogTitle>
               <DialogDescription>
-                Incolla la tabella settimanale dei brief. L'AI estrae i singoli brief che potrai rivedere prima di crearli.
+                {t("Incolla la tabella settimanale dei brief. L\'AI estrae i singoli brief che potrai rivedere prima di crearli.")}
               </DialogDescription>
             </DialogHeader>
             <Textarea
@@ -114,39 +116,39 @@ export function BriefImportDialog({
               onChange={(e) => setRawText(e.target.value)}
               rows={14}
               className="font-mono text-xs"
-              placeholder="Incolla qui il testo della tabella (Cmd+V)..."
+              placeholder={t("Incolla qui il testo della tabella (Cmd+V)...")}
             />
             <DialogFooter>
-              <Button variant="ghost" onClick={close}>Annulla</Button>
+              <Button variant="ghost" onClick={close}>{t("Annulla")}</Button>
               <Button onClick={analyze} disabled={rawText.trim().length < 20 || parse.isPending}>
                 {parse.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Analizza
+                {t("Analizza")}
               </Button>
             </DialogFooter>
           </>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Anteprima: {briefs.length} brief estratti</DialogTitle>
-              <DialogDescription>Rivedi e correggi prima di creare. Verranno salvati come bozze.</DialogDescription>
+              <DialogTitle>{t("Anteprima: {n} brief estratti", { n: briefs.length })}</DialogTitle>
+              <DialogDescription>{t("Rivedi e correggi prima di creare. Verranno salvati come bozze.")}</DialogDescription>
             </DialogHeader>
             <Button variant="ghost" size="sm" className="self-start" onClick={() => setMode("paste")}>
-              <ArrowLeft className="h-4 w-4 mr-1" /> Torna a incolla
+              <ArrowLeft className="h-4 w-4 mr-1" /> {t("Torna a incolla")}
             </Button>
 
             <div className="space-y-4">
               {briefs.map((b, i) => (
                 <div key={i} className="rounded-md border border-border p-3 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-muted-foreground">Brief {i + 1}</span>
+                    <span className="text-xs font-medium text-muted-foreground">{t("Brief {n}", { n: i + 1 })}</span>
                     <Button variant="ghost" size="sm" className="text-red-500" onClick={() => removeBrief(i)}>
-                      <Trash2 className="h-3.5 w-3.5 mr-1" /> Rimuovi
+                      <Trash2 className="h-3.5 w-3.5 mr-1" /> {t("Rimuovi")}
                     </Button>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <Label className="text-xs">Data</Label>
+                      <Label className="text-xs">{t("Data")}</Label>
                       <Input
                         type="date"
                         value={b.planned_publish_date}
@@ -154,7 +156,7 @@ export function BriefImportDialog({
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Tipo riferimento</Label>
+                      <Label className="text-xs">{t("Tipo riferimento")}</Label>
                       <Select value={b.reference_type} onValueChange={(v) => update(i, { reference_type: v as ParsedBrief["reference_type"] })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -165,12 +167,12 @@ export function BriefImportDialog({
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs">Titolo</Label>
+                    <Label className="text-xs">{t("Titolo")}</Label>
                     <Input value={b.title} onChange={(e) => update(i, { title: e.target.value })} />
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs">Link di riferimento</Label>
+                    <Label className="text-xs">{t("Link di riferimento")}</Label>
                     {b.reference_links.map((l, li) => (
                       <div key={li} className="flex gap-2">
                         <Input
@@ -194,17 +196,17 @@ export function BriefImportDialog({
                       </div>
                     ))}
                     <Button variant="outline" size="sm" onClick={() => update(i, { reference_links: [...b.reference_links, { label: "Link", url: "" }] })}>
-                      <Plus className="h-3.5 w-3.5 mr-1" /> Aggiungi link
+                      <Plus className="h-3.5 w-3.5 mr-1" /> {t("Aggiungi link")}
                     </Button>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <Label className="text-xs">Format</Label>
+                      <Label className="text-xs">{t("Format")}</Label>
                       <Select value={b.format_id ?? "__none__"} onValueChange={(v) => update(i, { format_id: v === "__none__" ? null : v })}>
-                        <SelectTrigger><SelectValue placeholder="Nessuno" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder={t("Nessuno")} /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="__none__">Nessuno</SelectItem>
+                          <SelectItem value="__none__">{t("Nessuno")}</SelectItem>
                           {(formats ?? []).filter((f) => f.is_active).map((f) => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
@@ -212,7 +214,7 @@ export function BriefImportDialog({
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs">Topic</Label>
+                    <Label className="text-xs">{t("Topic")}</Label>
                     <div className="flex flex-wrap gap-1.5">
                       {(topics ?? []).filter((t) => t.is_active).map((t) => (
                         <Badge
@@ -230,19 +232,19 @@ export function BriefImportDialog({
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs">Copy *</Label>
+                    <Label className="text-xs">{t("Copy *")}</Label>
                     <Textarea value={b.copy_text} onChange={(e) => update(i, { copy_text: e.target.value })} rows={4} />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Caption</Label>
+                    <Label className="text-xs">{t("Caption")}</Label>
                     <Textarea value={b.caption ?? ""} onChange={(e) => update(i, { caption: e.target.value || null })} rows={2} />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Hashtag</Label>
-                    <ChipsInput value={b.hashtags} onChange={(v) => update(i, { hashtags: v })} stripHash placeholder="Invio o virgola" />
+                    <Label className="text-xs">{t("Hashtag")}</Label>
+                    <ChipsInput value={b.hashtags} onChange={(v) => update(i, { hashtags: v })} stripHash placeholder={t("Invio o virgola")} />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Note visuali</Label>
+                    <Label className="text-xs">{t("Note visuali")}</Label>
                     <Textarea value={b.visual_note ?? ""} onChange={(e) => update(i, { visual_note: e.target.value || null })} rows={2} />
                   </div>
                 </div>
@@ -250,10 +252,10 @@ export function BriefImportDialog({
             </div>
 
             <DialogFooter>
-              <Button variant="ghost" onClick={close}>Annulla</Button>
+              <Button variant="ghost" onClick={close}>{t("Annulla")}</Button>
               <Button onClick={create} disabled={!valid || bulkCreate.isPending}>
                 {bulkCreate.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Crea {briefs.length} brief
+                {t("Crea {n} brief", { n: briefs.length })}
               </Button>
             </DialogFooter>
           </>

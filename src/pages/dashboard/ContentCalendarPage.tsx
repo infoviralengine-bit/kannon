@@ -21,12 +21,14 @@ import CatalogTab from "@/components/content-calendar/CatalogTab";
 import CampaignAnalyticsTab from "@/components/content-calendar/analytics/CampaignAnalyticsTab";
 import { useCampaignOptions } from "@/hooks/useContentCalendar";
 import { ScrapingStatusBanner } from "@/components/scraping/ScrapingStatusBanner";
+import { useI18n } from "@/i18n";
 
 const STORAGE_KEY = "content-calendar:campaign";
 const TABS = ["calendario", "analytics", "insights", "catalog"] as const;
 type TabKey = (typeof TABS)[number];
 
 export default function ContentCalendarPage() {
+  const { t } = useI18n();
   const [params, setParams] = useSearchParams();
   const tabParam = params.get("tab") as TabKey | null;
   const tab: TabKey = tabParam && TABS.includes(tabParam) ? tabParam : "calendario";
@@ -67,11 +69,11 @@ export default function ContentCalendarPage() {
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <CalendarDays className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-semibold">Calendario Contenuti</h1>
+          <h1 className="text-xl font-semibold">{t("Calendario Contenuti")}</h1>
         </div>
         <Select value={campaignId ?? undefined} onValueChange={setCampaignId}>
           <SelectTrigger className="w-[220px]">
-            <SelectValue placeholder="Seleziona campagna" />
+            <SelectValue placeholder={t("Seleziona campagna")} />
           </SelectTrigger>
           <SelectContent>
             {(campaigns ?? []).map((c) => (
@@ -83,7 +85,7 @@ export default function ContentCalendarPage() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="calendario">Calendario</TabsTrigger>
+          <TabsTrigger value="calendario">{t("Calendario")}</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="insights">Insights</TabsTrigger>
           <TabsTrigger value="catalog">Catalog</TabsTrigger>
@@ -94,8 +96,8 @@ export default function ContentCalendarPage() {
             <Card>
               <CardContent className="p-10 text-center text-sm text-muted-foreground">
                 {campaignName === null && (campaigns?.length ?? 0) === 0
-                  ? "Nessuna campagna disponibile."
-                  : "Seleziona una campagna per continuare."}
+                  ? t("Nessuna campagna disponibile.")
+                  : t("Seleziona una campagna per continuare.")}
               </CardContent>
             </Card>
           ) : (

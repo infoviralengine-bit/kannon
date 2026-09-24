@@ -56,6 +56,7 @@ function ClientHeader() {
 function StatCard({ icon: Icon, label, value, color = "text-primary", prefix = "" }: {
   icon: React.ElementType; label: string; value: number; color?: string; prefix?: string;
 }) {
+  const { t } = useI18n();
   const animated = useCountUp(value);
   return (
     <Card className="group hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 border-border/40">
@@ -64,7 +65,7 @@ function StatCard({ icon: Icon, label, value, color = "text-primary", prefix = "
           <Icon className="h-5 w-5" />
         </div>
         <p className="text-3xl font-bold tabular-nums">{prefix}{formatViews(animated)}</p>
-        <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
+        <p className="text-xs text-muted-foreground uppercase tracking-wider">{t(label)}</p>
       </CardContent>
     </Card>
   );
@@ -74,6 +75,7 @@ function StatCard({ icon: Icon, label, value, color = "text-primary", prefix = "
 type ChartMode = "daily" | "weekly" | "monthly";
 
 function ViewsChart() {
+  const { t } = useI18n();
   const [mode, setMode] = useState<ChartMode>("daily");
   const days = mode === "daily" ? 30 : mode === "weekly" ? 90 : 365;
   const { data: rawData, isLoading } = useClientDailyViews(days);
@@ -96,7 +98,7 @@ function ViewsChart() {
         const totalViews = chunk.reduce((s, d) => s + d.views, 0);
         const totalVids = chunk.reduce((s, d) => s + d.videos_published, 0);
         const startLabel = new Date(chunk[0].day).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" });
-        weeks.push({ label: `Sett. ${startLabel}`, views: totalViews, videos: totalVids });
+        weeks.push({ label: `${t("Sett.")} ${startLabel}`, views: totalViews, videos: totalVids });
       }
       return weeks;
     }
@@ -140,19 +142,19 @@ function ViewsChart() {
     <Card className="border-border/40">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-base flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary" /> Andamento Views
+          <BarChart3 className="h-5 w-5 text-primary" /> {t("Andamento Views")}
         </CardTitle>
         <Tabs value={mode} onValueChange={(v) => setMode(v as ChartMode)}>
           <TabsList className="h-8">
-            <TabsTrigger value="daily" className="text-xs px-3 h-6">Giorno</TabsTrigger>
-            <TabsTrigger value="weekly" className="text-xs px-3 h-6">Settimana</TabsTrigger>
-            <TabsTrigger value="monthly" className="text-xs px-3 h-6">Mese</TabsTrigger>
+            <TabsTrigger value="daily" className="text-xs px-3 h-6">{t("Giorno")}</TabsTrigger>
+            <TabsTrigger value="weekly" className="text-xs px-3 h-6">{t("Settimana")}</TabsTrigger>
+            <TabsTrigger value="monthly" className="text-xs px-3 h-6">{t("Mese")}</TabsTrigger>
           </TabsList>
         </Tabs>
       </CardHeader>
       <CardContent>
         {finalData.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-12">Nessun dato disponibile</p>
+          <p className="text-sm text-muted-foreground text-center py-12">{t("Nessun dato disponibile")}</p>
         ) : (
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={finalData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
@@ -180,7 +182,7 @@ function ViewsChart() {
                 }}
                 formatter={(value: number, name: string) => [
                   formatViews(value),
-                  name === "views" ? "Views" : "Video",
+                  name === "views" ? t("Views") : t("Video"),
                 ]}
               />
               <Bar dataKey="views" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={32} />
@@ -195,6 +197,7 @@ function ViewsChart() {
 
 /* ── Spend Progress ─────────────────────────────── */
 function SpendProgress({ data }: { data: NonNullable<ReturnType<typeof useClientAreaData>["data"]> }) {
+  const { t } = useI18n();
   const { campaign, active_creators, views_30d } = data;
   const cap = campaign.monthly_spend_cap;
   if (!cap) return null;
@@ -208,14 +211,14 @@ function SpendProgress({ data }: { data: NonNullable<ReturnType<typeof useClient
     <Card className="border-border/40">
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <Wallet className="h-5 w-5 text-primary" /> Budget Mensile
+          <Wallet className="h-5 w-5 text-primary" /> {t("Budget Mensile")}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex justify-between items-end">
           <div>
             <p className="text-2xl font-bold">{formatCurrency(totalSpend)}</p>
-            <p className="text-xs text-muted-foreground">di {formatCurrency(Number(cap))}</p>
+            <p className="text-xs text-muted-foreground">{t("di")} {formatCurrency(Number(cap))}</p>
           </div>
           <span className={`text-sm font-semibold ${pct >= 90 ? "text-destructive" : pct >= 70 ? "text-yellow-500" : "text-green-500"}`}>
             {pct.toFixed(0)}%
@@ -227,11 +230,11 @@ function SpendProgress({ data }: { data: NonNullable<ReturnType<typeof useClient
         />
         <div className="grid grid-cols-2 gap-4 pt-2 text-sm">
           <div>
-            <p className="text-muted-foreground text-xs">Fisso</p>
+            <p className="text-muted-foreground text-xs">{t("Fisso")}</p>
             <p className="font-medium">{formatCurrency(fixedSpend)}</p>
           </div>
           <div>
-            <p className="text-muted-foreground text-xs">CPM</p>
+            <p className="text-muted-foreground text-xs">{t("CPM")}</p>
             <p className="font-medium">{formatCurrency(cpmSpend)}</p>
           </div>
         </div>
@@ -242,6 +245,7 @@ function SpendProgress({ data }: { data: NonNullable<ReturnType<typeof useClient
 
 /* ── Main ───────────────────────────────────────── */
 function TopVideosSection() {
+  const { t } = useI18n();
   const { data, isLoading } = useClientTopVideos(5);
   if (isLoading) return <Skeleton className="h-72 w-full rounded-xl" />;
   if (!data || ((data.top_views?.length ?? 0) === 0 && (data.top_comments?.length ?? 0) === 0)) return null;
@@ -251,9 +255,9 @@ function TopVideosSection() {
       <TableHeader>
         <TableRow>
           <TableHead className="w-8">#</TableHead>
-          <TableHead>Account</TableHead>
-          <TableHead className="text-right">{metric === "views" ? "Views" : "Commenti"}</TableHead>
-          <TableHead className="text-right hidden sm:table-cell">{metric === "views" ? "Commenti" : "Views"}</TableHead>
+          <TableHead>{t("Account")}</TableHead>
+          <TableHead className="text-right">{metric === "views" ? t("Views") : t("Commenti")}</TableHead>
+          <TableHead className="text-right hidden sm:table-cell">{metric === "views" ? t("Commenti") : t("Views")}</TableHead>
           <TableHead className="text-right"></TableHead>
         </TableRow>
       </TableHeader>
@@ -282,7 +286,7 @@ function TopVideosSection() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                 >
-                  Apri <ExternalLink className="h-3 w-3" />
+                  {t("Apri")} <ExternalLink className="h-3 w-3" />
                 </a>
               </TableCell>
             </TableRow>
@@ -297,24 +301,24 @@ function TopVideosSection() {
       <Card className="border-border/40">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" /> Top 5 Video — Views
+            <TrendingUp className="h-5 w-5 text-primary" /> {t("Top 5 Video: Views")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {data.top_views.length === 0
-            ? <p className="text-sm text-muted-foreground text-center py-6">Nessun video</p>
+            ? <p className="text-sm text-muted-foreground text-center py-6">{t("Nessun video")}</p>
             : renderTable(data.top_views, "views")}
         </CardContent>
       </Card>
       <Card className="border-border/40">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-sky-500" /> Top 5 Video — Commenti
+            <Trophy className="h-5 w-5 text-sky-500" /> {t("Top 5 Video: Commenti")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {data.top_comments.length === 0
-            ? <p className="text-sm text-muted-foreground text-center py-6">Nessun video con commenti</p>
+            ? <p className="text-sm text-muted-foreground text-center py-6">{t("Nessun video con commenti")}</p>
             : renderTable(data.top_comments, "comments")}
         </CardContent>
       </Card>
@@ -323,6 +327,7 @@ function TopVideosSection() {
 }
 
 export default function ClientArea() {
+  const { t } = useI18n();
   const { data, isLoading } = useClientAreaData();
   const [period, setPeriod] = useState<Period>("30d");
   const [topTab, setTopTab] = useState<"performance" | "calendario">("performance");
@@ -348,8 +353,8 @@ export default function ClientArea() {
         <ClientHeader />
         <div className="flex-1 flex items-center justify-center p-6 text-center">
           <div>
-            <h2 className="text-xl font-semibold mb-2">Nessuna campagna collegata</h2>
-            <p className="text-muted-foreground">Contatta l'agenzia per collegare la tua campagna.</p>
+            <h2 className="text-xl font-semibold mb-2">{t("Nessuna campagna collegata")}</h2>
+            <p className="text-muted-foreground">{t("Contatta l'agenzia per collegare la tua campagna.")}</p>
           </div>
         </div>
       </div>
@@ -372,15 +377,15 @@ export default function ClientArea() {
             <p className="text-sm text-muted-foreground mt-1">{data.campaign.client_name}</p>
           </div>
           <span className={`text-xs font-medium px-3 py-1.5 rounded-full ${data.campaign.status === "active" ? "bg-green-500/10 text-green-500 ring-1 ring-green-500/20" : "bg-muted text-muted-foreground"}`}>
-            {data.campaign.status === "active" ? "● Attiva" : data.campaign.status}
+            {data.campaign.status === "active" ? `● ${t("Attiva")}` : data.campaign.status}
           </span>
         </div>
 
         {/* Top-level sections */}
         <Tabs value={topTab} onValueChange={(v) => setTopTab(v as "performance" | "calendario")}>
           <TabsList>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="calendario">Calendario Contenuti</TabsTrigger>
+            <TabsTrigger value="performance">{t("Performance")}</TabsTrigger>
+            <TabsTrigger value="calendario">{t("Calendario Contenuti")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="performance" className="space-y-8 mt-6">
@@ -389,7 +394,7 @@ export default function ClientArea() {
         <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
           <TabsList>
             {(Object.keys(periodLabels) as Period[]).map((p) => (
-              <TabsTrigger key={p} value={p}>{periodLabels[p]}</TabsTrigger>
+              <TabsTrigger key={p} value={p}>{t(periodLabels[p])}</TabsTrigger>
             ))}
           </TabsList>
         </Tabs>
@@ -422,20 +427,20 @@ export default function ClientArea() {
           <CardContent className="flex flex-wrap items-center justify-between gap-6 py-4 px-6 text-sm">
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-primary" />
-              <span className="text-muted-foreground">Inizio</span>
+              <span className="text-muted-foreground">{t("Inizio")}</span>
               <span className="font-medium">{new Date(data.campaign.start_date).toLocaleDateString("it-IT")}</span>
             </div>
             {data.campaign.end_date && (
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4 text-primary" />
-                <span className="text-muted-foreground">Fine</span>
+                <span className="text-muted-foreground">{t("Fine")}</span>
                 <span className="font-medium">{new Date(data.campaign.end_date).toLocaleDateString("it-IT")}</span>
               </div>
             )}
             {data.campaign.video_views_cap != null && (
               <div className="flex items-center gap-2">
                 <Eye className="h-4 w-4 text-primary" />
-                <span className="text-muted-foreground">Cap Views</span>
+                <span className="text-muted-foreground">{t("Cap Views")}</span>
                 <span className="font-medium">{formatViews(data.campaign.video_views_cap)}</span>
               </div>
             )}
@@ -447,17 +452,17 @@ export default function ClientArea() {
           <Card className="border-border/40">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
-                <AtSign className="h-5 w-5 text-primary" /> Account TikTok
+                <AtSign className="h-5 w-5 text-primary" /> {t("Account TikTok")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Username</TableHead>
-                    <TableHead className="text-right">Views 30gg</TableHead>
-                    <TableHead className="text-right">Video Totali</TableHead>
-                    <TableHead className="text-right">Video Oggi</TableHead>
+                    <TableHead>{t("Username")}</TableHead>
+                    <TableHead className="text-right">{t("Views 30gg")}</TableHead>
+                    <TableHead className="text-right">{t("Video Totali")}</TableHead>
+                    <TableHead className="text-right">{t("Video Oggi")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -479,7 +484,7 @@ export default function ClientArea() {
           </Card>
         )}
 
-        <p className="text-xs text-muted-foreground text-center pb-4">Dati aggiornati ogni 2 ore</p>
+        <p className="text-xs text-muted-foreground text-center pb-4">{t("Dati aggiornati ogni 2 ore")}</p>
           </TabsContent>
 
           <TabsContent value="calendario" className="mt-6">
@@ -489,7 +494,7 @@ export default function ClientArea() {
       </div>
 
       <footer className="border-t border-border/40 py-4 text-center">
-        <p className="text-xs text-muted-foreground">Powered by Kannon</p>
+        <p className="text-xs text-muted-foreground">{t("Powered by Kannon")}</p>
       </footer>
     </div>
   );

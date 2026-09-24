@@ -3,10 +3,12 @@ import { cn } from "@/lib/utils";
 import { formatViews } from "@/lib/format";
 import { STATUS_META, formatDateIt } from "./_helpers";
 import type { Brief } from "@/hooks/useContentCalendar";
+import { useI18n } from "@/i18n";
 
 export function BriefCard({ brief, onClick }: { brief: Brief; onClick: () => void }) {
+  const { t } = useI18n();
   const meta = STATUS_META[brief.status];
-  const heading = brief.title || (brief.copy_text ? brief.copy_text.split("\n")[0] : "Brief");
+  const heading = brief.title || (brief.copy_text ? brief.copy_text.split("\n")[0] : t("Brief"));
   return (
     <button
       type="button"
@@ -15,7 +17,7 @@ export function BriefCard({ brief, onClick }: { brief: Brief; onClick: () => voi
     >
       <div className="flex items-center justify-between gap-1">
         <span className="text-[10px] text-muted-foreground">{formatDateIt(brief.planned_publish_date)}</span>
-        <span className={cn("h-2 w-2 rounded-full shrink-0", meta.dot)} title={meta.label} />
+        <span className={cn("h-2 w-2 rounded-full shrink-0", meta.dot)} title={t(meta.label)} />
       </div>
       <p className="text-xs font-medium leading-tight line-clamp-2">{heading}</p>
       <div className="flex flex-wrap items-center gap-1">

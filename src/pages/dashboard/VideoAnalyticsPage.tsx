@@ -25,6 +25,7 @@ import { VideoTimeSeriesChart } from "@/components/video-analytics/VideoTimeSeri
 import { TopBreakdownChart } from "@/components/video-analytics/TopBreakdownChart";
 import { TopVideosTable } from "@/components/video-analytics/TopVideosTable";
 import { isStaff, ROLES } from "@/lib/roles";
+import { useI18n } from "@/i18n";
 
 function defaultFilters(): Filters {
   const today = new Date();
@@ -35,6 +36,7 @@ function defaultFilters(): Filters {
 }
 
 export default function VideoAnalyticsPage() {
+  const { t } = useI18n();
   const { role } = useAuth();
   const [filters, setFilters] = useState<Filters>(defaultFilters());
   const { data, isLoading, error } = useVideoAnalytics(filters);
@@ -54,17 +56,17 @@ export default function VideoAnalyticsPage() {
     try {
       await startScraping.mutateAsync(null);
       toast({
-        title: "Refresh avviato",
-        description: "Lo scraping TikTok è partito. Lo stato si aggiorna in tempo reale qui sopra.",
+        title: t("Refresh avviato"),
+        description: t("Lo scraping TikTok è partito. Lo stato si aggiorna in tempo reale qui sopra."),
       });
     } catch (e: any) {
-      toast({ title: "Errore refresh", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore refresh"), description: e.message, variant: "destructive" });
     }
   };
 
   const lastScrapeLabel = lastLog?.run_at
-    ? `Ultimo refresh ${new Date(lastLog.run_at).toLocaleString("it-IT")} (${lastLog.status})`
-    : "Nessun refresh registrato";
+    ? t("Ultimo refresh {when} ({status})", { when: new Date(lastLog.run_at).toLocaleString("it-IT"), status: lastLog.status })
+    : t("Nessun refresh registrato");
 
   return (
     <div className="space-y-6">
@@ -84,21 +86,20 @@ export default function VideoAnalyticsPage() {
                 ) : (
                   <RefreshCw className="h-4 w-4" />
                 )}
-                {isRunning ? "Scraping in corso..." : "Refresh dati"}
+                {isRunning ? t("Scraping in corso...") : t("Refresh dati")}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Avviare il refresh dei dati TikTok?</AlertDialogTitle>
+                <AlertDialogTitle>{t("Avviare il refresh dei dati TikTok?")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Lo scraping completo di tutti gli account creator attivi può richiedere alcuni minuti
-                  e consuma quota Apify. Procedere solo se è davvero necessario aggiornare ora.
+                  {t("Lo scraping completo di tutti gli account creator attivi può richiedere alcuni minuti e consuma quota Apify. Procedere solo se è davvero necessario aggiornare ora.")}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Annulla</AlertDialogCancel>
+                <AlertDialogCancel>{t("Annulla")}</AlertDialogCancel>
                 <AlertDialogAction onClick={handleRefresh}>
-                  Sì, avvia refresh
+                  {t("Sì, avvia refresh")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -109,7 +110,7 @@ export default function VideoAnalyticsPage() {
       {error && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Errore</AlertTitle>
+          <AlertTitle>{t("Errore")}</AlertTitle>
           <AlertDescription>{(error as Error).message}</AlertDescription>
         </Alert>
       )}
@@ -132,8 +133,8 @@ export default function VideoAnalyticsPage() {
           <VideoAnalyticsKPIs kpi={data.kpi} windowStats={data.window_stats} />
           <VideoTimeSeriesChart data={data.by_day} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <TopBreakdownChart title="Top campagne" data={data.by_campaign as any} nameKey="campaign_name" />
-            <TopBreakdownChart title="Top creator" data={data.by_creator as any} nameKey="creator_name" />
+            <TopBreakdownChart title={t("Top campagne")} data={data.by_campaign as any} nameKey="campaign_name" />
+            <TopBreakdownChart title={t("Top creator")} data={data.by_creator as any} nameKey="creator_name" />
           </div>
           <TopVideosTable filters={filters} />
         </>

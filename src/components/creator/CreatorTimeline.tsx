@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle2, Circle, Loader2 } from "lucide-react";
+import { useI18n, t } from "@/i18n";
 
 interface Milestone {
   label: string;
@@ -72,37 +73,37 @@ function useCreatorTimeline(creatorId: string) {
       const milestones: Milestone[] = [
         {
           label: "Dati personali inseriti",
-          description: creator.created_at ? "Profilo creator creato" : "Dati non ancora inseriti",
+          description: creator.created_at ? t("Profilo creator creato") : t("Dati non ancora inseriti"),
           date: creator.created_at ?? null,
           status: creator.created_at ? "completed" : "pending",
         },
         {
           label: "Contratto firmato",
-          description: sig ? "Contratto firmato digitalmente" : "In attesa della firma",
+          description: sig ? t("Contratto firmato digitalmente") : t("In attesa della firma"),
           date: sig?.signed_at ?? null,
           status: sig ? "completed" : "pending",
         },
         {
           label: "Account creato",
-          description: profileCreatedAt ? "Account utente creato" : "Account non ancora creato",
+          description: profileCreatedAt ? t("Account utente creato") : t("Account non ancora creato"),
           date: profileCreatedAt ?? null,
           status: profileCreatedAt ? "completed" : "pending",
         },
         {
           label: "Warmup iniziato",
-          description: anyWarmupStarted ? "Warmup degli account TikTok avviato" : "Warmup non ancora iniziato",
+          description: anyWarmupStarted ? t("Warmup degli account TikTok avviato") : t("Warmup non ancora iniziato"),
           date: earliestWarmupStart,
           status: anyWarmupStarted ? "completed" : "pending",
         },
         {
           label: "Warmup completato",
-          description: allWarmupDone ? "Tutti gli account hanno completato il warmup" : "Warmup in corso",
+          description: allWarmupDone ? t("Tutti gli account hanno completato il warmup") : t("Warmup in corso"),
           date: warmupCompletedAt,
           status: allWarmupDone ? "completed" : anyWarmupStarted ? "active" : "pending",
         },
         {
           label: "Operativo",
-          description: allWarmupDone ? "Il creator è operativo e pronto a pubblicare" : "Non ancora operativo",
+          description: allWarmupDone ? t("Il creator è operativo e pronto a pubblicare") : t("Non ancora operativo"),
           date: null,
           status: allWarmupDone ? "active" : "pending",
         },
@@ -127,10 +128,11 @@ function useCreatorTimeline(creatorId: string) {
 }
 
 export default function CreatorTimeline({ creatorId }: { creatorId: string }) {
+  const { t } = useI18n();
   const { data: milestones, isLoading } = useCreatorTimeline(creatorId);
 
   if (isLoading) return <div className="space-y-4 py-4">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>;
-  if (!milestones?.length) return <p className="text-sm text-muted-foreground py-8 text-center">Nessun dato disponibile per il percorso.</p>;
+  if (!milestones?.length) return <p className="text-sm text-muted-foreground py-8 text-center">{t("Nessun dato disponibile per il percorso.")}</p>;
 
   return (
     <div className="relative py-4 pl-8">
@@ -159,13 +161,13 @@ export default function CreatorTimeline({ creatorId }: { creatorId: string }) {
                   m.status === "active" ? "text-blue-400" :
                   "text-muted-foreground"
                 }`}>
-                  {m.label}
+                  {t(m.label)}
                 </span>
                 {m.status === "active" && m.label === "Operativo" && (
-                  <span className="text-xs font-medium text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded-full">In corso</span>
+                  <span className="text-xs font-medium text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded-full">{t("In corso")}</span>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">{m.description}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t(m.description)}</p>
               {m.date && (
                 <p className="text-xs text-muted-foreground/70 mt-0.5">{formatItalianDate(m.date)}</p>
               )}

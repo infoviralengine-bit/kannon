@@ -7,6 +7,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useRecurringExpenses, useDeleteRecurringExpense, useUpdateRecurringExpense, type RecurringExpense } from "@/hooks/useFinanceData";
 import { formatCurrency } from "@/lib/format";
 import { RecurringExpenseDialog } from "./RecurringExpenseDialog";
+import { useI18n } from "@/i18n";
 
 function nextDueDate(dueDay: number, startDate: string, endDate?: string | null): Date | null {
   const today = new Date();
@@ -24,6 +25,7 @@ function nextDueDate(dueDay: number, startDate: string, endDate?: string | null)
 }
 
 export function RecurringExpensesCard() {
+  const { t } = useI18n();
   const { data, isLoading } = useRecurringExpenses();
   const update = useUpdateRecurringExpense();
   const del = useDeleteRecurringExpense();
@@ -35,27 +37,27 @@ export function RecurringExpensesCard() {
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Spese ricorrenti</CardTitle>
+          <CardTitle>{t("Spese ricorrenti")}</CardTitle>
           <Button size="sm" onClick={() => setEditing("new")}>
-            <Plus className="h-3.5 w-3.5 mr-1" />Aggiungi
+            <Plus className="h-3.5 w-3.5 mr-1" />{t("Aggiungi")}
           </Button>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead className="text-right">Importo</TableHead>
-                <TableHead>Giorno scadenza</TableHead>
-                <TableHead>Prossima scadenza</TableHead>
-                <TableHead>Attiva</TableHead>
+                <TableHead>{t("Nome")}</TableHead>
+                <TableHead>{t("Categoria")}</TableHead>
+                <TableHead className="text-right">{t("Importo")}</TableHead>
+                <TableHead>{t("Giorno scadenza")}</TableHead>
+                <TableHead>{t("Prossima scadenza")}</TableHead>
+                <TableHead>{t("Attiva")}</TableHead>
                 <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">Caricamento...</TableCell></TableRow>}
-              {!isLoading && (data?.length ?? 0) === 0 && <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">Nessuna spesa ricorrente. Aggiungine una per iniziare.</TableCell></TableRow>}
+              {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">{t("Caricamento...")}</TableCell></TableRow>}
+              {!isLoading && (data?.length ?? 0) === 0 && <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">{t("Nessuna spesa ricorrente. Aggiungine una per iniziare.")}</TableCell></TableRow>}
               {data?.map((r) => {
                 const next = nextDueDate(r.due_day, r.start_date, r.end_date);
                 return (
@@ -66,7 +68,7 @@ export function RecurringExpensesCard() {
                     </TableCell>
                     <TableCell className="capitalize text-sm">{r.category.replace("_", " ")}</TableCell>
                     <TableCell className="text-right font-mono">{formatCurrency(Number(r.amount))}</TableCell>
-                    <TableCell>Giorno {r.due_day}</TableCell>
+                    <TableCell>{t("Giorno {n}", { n: r.due_day })}</TableCell>
                     <TableCell>{next ? next.toLocaleDateString("it-IT") : "—"}</TableCell>
                     <TableCell>
                       <Switch checked={r.is_active} onCheckedChange={(v) => update.mutate({ id: r.id, patch: { is_active: v } })} />
@@ -74,7 +76,7 @@ export function RecurringExpensesCard() {
                     <TableCell>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="icon" onClick={() => setEditing(r)}><Pencil className="h-3.5 w-3.5" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Eliminare "${r.name}"?`)) del.mutate(r.id); }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => { if (confirm(t("Eliminare \"{name}\"?", { name: r.name }))) del.mutate(r.id); }}><Trash2 className="h-3.5 w-3.5" /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -82,7 +84,7 @@ export function RecurringExpensesCard() {
               })}
               {(data?.length ?? 0) > 0 && (
                 <TableRow className="font-semibold bg-muted/30">
-                  <TableCell colSpan={2}>Totale mensile attive</TableCell>
+                  <TableCell colSpan={2}>{t("Totale mensile attive")}</TableCell>
                   <TableCell className="text-right font-mono">{formatCurrency(activeTotal)}</TableCell>
                   <TableCell colSpan={4}></TableCell>
                 </TableRow>

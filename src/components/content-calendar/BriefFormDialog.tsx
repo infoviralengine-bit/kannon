@@ -39,6 +39,7 @@ import {
   useContentTopics,
   useCreateTopic,
 } from "@/hooks/useContentCatalog";
+import { useI18n } from "@/i18n";
 
 const REFERENCE_TYPES = [
   { value: "video", label: "Video" },
@@ -132,6 +133,7 @@ export function BriefFormDialog({
   brief?: Brief | null;
   template?: Partial<BriefInput> | null;
 }) {
+  const { t } = useI18n();
   const isEdit = !!brief;
   const [state, setState] = useState<FormState>(emptyState());
   const { data: formats } = useVideoFormats();
@@ -153,7 +155,7 @@ export function BriefFormDialog({
 
   const buildInput = (status: "draft" | "in_review"): BriefInput | null => {
     if (!state.copy_text.trim()) {
-      toast({ title: "Copy mancante", description: "Il testo da dire è obbligatorio.", variant: "destructive" });
+      toast({ title: t("Copy mancante"), description: t("Il testo da dire è obbligatorio."), variant: "destructive" });
       return null;
     }
     return {
@@ -184,22 +186,22 @@ export function BriefFormDialog({
     try {
       if (isEdit && brief) {
         await updateBrief.mutateAsync({ id: brief.id, input });
-        toast({ title: "Brief aggiornato" });
+        toast({ title: t("Brief aggiornato") });
       } else {
         await createBrief.mutateAsync(input);
-        toast({ title: status === "in_review" ? "Brief caricato" : "Brief salvato come bozza" });
+        toast({ title: status === "in_review" ? t("Brief caricato") : t("Brief salvato come bozza") });
       }
       if (keepOpen) setState(emptyState());
       else onOpenChange(false);
     } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     }
   };
 
   const addLink = () => {
     if (!newLink.url.trim()) return;
     if (!newLink.url.includes("tiktok.com")) {
-      toast({ title: "URL non valido", description: "Inserisci un link TikTok.", variant: "destructive" });
+      toast({ title: t("URL non valido"), description: t("Inserisci un link TikTok."), variant: "destructive" });
       return;
     }
     set("reference_links", [...state.reference_links, { label: newLink.label.trim() || "Link", url: newLink.url.trim() }]);
@@ -214,7 +216,7 @@ export function BriefFormDialog({
       const created = await createTopic.mutateAsync(name);
       if (created?.id) toggleTopic(created.id);
     } catch (e: any) {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     }
   };
 
@@ -224,13 +226,13 @@ export function BriefFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto sm:rounded-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Modifica brief" : "Nuovo brief"}</DialogTitle>
+          <DialogTitle>{isEdit ? t("Modifica brief") : t("Nuovo brief")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Data prevista</Label>
+              <Label>{t("Data prevista")}</Label>
               <Input
                 type="date"
                 value={state.planned_publish_date}
@@ -238,7 +240,7 @@ export function BriefFormDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Tipo riferimento</Label>
+              <Label>{t("Tipo riferimento")}</Label>
               <Select value={state.reference_type} onValueChange={(v) => set("reference_type", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -251,7 +253,7 @@ export function BriefFormDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Link di riferimento</Label>
+            <Label>{t("Link di riferimento")}</Label>
             <div className="flex flex-wrap gap-1.5">
               {state.reference_links.map((l, i) => (
                 <Badge key={i} variant="secondary" className="gap-1">
@@ -263,44 +265,44 @@ export function BriefFormDialog({
               ))}
             </div>
             <div className="flex gap-2">
-              <Input placeholder="Etichetta" value={newLink.label} onChange={(e) => setNewLink({ ...newLink, label: e.target.value })} className="w-32" />
+              <Input placeholder={t("Etichetta")} value={newLink.label} onChange={(e) => setNewLink({ ...newLink, label: e.target.value })} className="w-32" />
               <Input placeholder="https://www.tiktok.com/..." value={newLink.url} onChange={(e) => setNewLink({ ...newLink, url: e.target.value })} className="flex-1" />
               <Button type="button" variant="outline" size="icon" onClick={addLink}><Plus className="h-4 w-4" /></Button>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label>Titolo</Label>
-            <Input value={state.title} onChange={(e) => set("title", e.target.value)} placeholder="es. POV: apri l'app" />
+            <Label>{t("Titolo")}</Label>
+            <Input value={state.title} onChange={(e) => set("title", e.target.value)} placeholder={t("es. POV: apri l'app")} />
           </div>
 
           <div className="space-y-1.5">
-            <Label>Copy (testo da dire) *</Label>
+            <Label>{t("Copy (testo da dire) *")}</Label>
             <Textarea value={state.copy_text} onChange={(e) => set("copy_text", e.target.value)} rows={5} />
           </div>
 
           <div className="space-y-1.5">
-            <Label>Caption</Label>
+            <Label>{t("Caption")}</Label>
             <Textarea value={state.caption} onChange={(e) => set("caption", e.target.value)} rows={2} />
           </div>
 
           <div className="space-y-1.5">
-            <Label>Hashtag</Label>
-            <ChipsInput value={state.hashtags} onChange={(v) => set("hashtags", v)} placeholder="Invio o virgola per aggiungere" stripHash />
+            <Label>{t("Hashtag")}</Label>
+            <ChipsInput value={state.hashtags} onChange={(v) => set("hashtags", v)} placeholder={t("Invio o virgola per aggiungere")} stripHash />
           </div>
 
           <div className="space-y-1.5">
-            <Label>Note visuali</Label>
+            <Label>{t("Note visuali")}</Label>
             <Textarea value={state.visual_note} onChange={(e) => set("visual_note", e.target.value)} rows={2} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Format</Label>
+              <Label>{t("Format")}</Label>
               <Select value={state.format_id || "__none__"} onValueChange={(v) => set("format_id", v === "__none__" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Nessuno" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("Nessuno")} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">Nessuno</SelectItem>
+                  <SelectItem value="__none__">{t("Nessuno")}</SelectItem>
                   {(formats ?? []).filter((f) => f.is_active).map((f) => (
                     <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
                   ))}
@@ -308,13 +310,13 @@ export function BriefFormDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Audio ID (opzionale)</Label>
-              <Input value={state.audio_id} onChange={(e) => set("audio_id", e.target.value)} placeholder="musicId TikTok" />
+              <Label>{t("Audio ID (opzionale)")}</Label>
+              <Input value={state.audio_id} onChange={(e) => set("audio_id", e.target.value)} placeholder={t("musicId TikTok")} />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label>Topic</Label>
+            <Label>{t("Topic")}</Label>
             <div className="flex flex-wrap gap-1.5">
               {(topics ?? []).filter((t) => t.is_active).map((t) => (
                 <Badge
@@ -331,21 +333,21 @@ export function BriefFormDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Keyword caption attese (per il matching)</Label>
-            <ChipsInput value={state.expected_caption_keywords} onChange={(v) => set("expected_caption_keywords", v)} placeholder="Invio o virgola per aggiungere" />
+            <Label>{t("Keyword caption attese (per il matching)")}</Label>
+            <ChipsInput value={state.expected_caption_keywords} onChange={(v) => set("expected_caption_keywords", v)} placeholder={t("Invio o virgola per aggiungere")} />
           </div>
 
           <Accordion type="single" collapsible>
             <AccordionItem value="thresholds">
-              <AccordionTrigger className="text-sm">Soglie performance (override)</AccordionTrigger>
+              <AccordionTrigger className="text-sm">{t("Soglie performance (override)")}</AccordionTrigger>
               <AccordionContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   <div className="space-y-1.5">
-                    <Label>Soglia views</Label>
+                    <Label>{t("Soglia views")}</Label>
                     <Input type="number" value={state.threshold_views_override} onChange={(e) => set("threshold_views_override", e.target.value)} />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Soglia engagement %</Label>
+                    <Label>{t("Soglia engagement %")}</Label>
                     <Input type="number" step="0.1" value={state.threshold_engagement_override} onChange={(e) => set("threshold_engagement_override", e.target.value)} />
                   </div>
                 </div>
@@ -355,12 +357,12 @@ export function BriefFormDialog({
         </div>
 
         <DialogFooter className="flex-col gap-2 sm:flex-row">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>Annulla</Button>
-          <Button variant="outline" onClick={() => save("draft")} disabled={busy}>Salva come bozza</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={busy}>{t("Annulla")}</Button>
+          <Button variant="outline" onClick={() => save("draft")} disabled={busy}>{t("Salva come bozza")}</Button>
           {!isEdit && (
-            <Button variant="outline" onClick={() => save("draft", true)} disabled={busy}>Salva e aggiungi un altro</Button>
+            <Button variant="outline" onClick={() => save("draft", true)} disabled={busy}>{t("Salva e aggiungi un altro")}</Button>
           )}
-          <Button onClick={() => save("in_review")} disabled={busy}>Salva e carica</Button>
+          <Button onClick={() => save("in_review")} disabled={busy}>{t("Salva e carica")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -368,13 +370,14 @@ export function BriefFormDialog({
 }
 
 function InlineTopicCreator({ onCreate }: { onCreate: (name: string) => void }) {
+  const { t } = useI18n();
   const [name, setName] = useState("");
   return (
     <div className="flex gap-2 pt-1">
       <Input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Crea nuovo topic"
+        placeholder={t("Crea nuovo topic")}
         className="h-8"
         onKeyDown={(e) => {
           if (e.key === "Enter" && name.trim()) {
@@ -395,7 +398,7 @@ function InlineTopicCreator({ onCreate }: { onCreate: (name: string) => void }) 
           }
         }}
       >
-        Aggiungi
+        {t("Aggiungi")}
       </Button>
     </div>
   );

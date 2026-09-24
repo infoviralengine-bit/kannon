@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Rocket, Flame, Video, Eye, Coins } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 interface Props {
   creatorName: string;
@@ -15,6 +16,7 @@ const steps = [
 ];
 
 export default function CreatorWelcome({ creatorName, onStart }: Props) {
+  const { t } = useI18n();
   return (
     <div className="min-h-[70vh] flex items-center justify-center">
       <div className="max-w-lg w-full space-y-8 text-center animate-fade-in">
@@ -23,10 +25,10 @@ export default function CreatorWelcome({ creatorName, onStart }: Props) {
             <Rocket className="h-8 w-8 text-primary" />
           </div>
           <h1 className="text-3xl font-bold">
-            Benvenuto in Kannon, {creatorName}! 🎉
+            {t("Benvenuto in Kannon, {name}! 🎉", { name: creatorName })}
           </h1>
           <p className="text-muted-foreground">
-            Ecco cosa ti aspetta per iniziare a guadagnare
+            {t("Ecco cosa ti aspetta per iniziare a guadagnare")}
           </p>
         </div>
 
@@ -37,15 +39,15 @@ export default function CreatorWelcome({ creatorName, onStart }: Props) {
                 <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
                   <step.icon className="h-5 w-5 text-primary" />
                 </div>
-                <p className="font-semibold text-sm">{step.label}</p>
-                <p className="text-xs text-muted-foreground">{step.desc}</p>
+                <p className="font-semibold text-sm">{t(step.label)}</p>
+                <p className="text-xs text-muted-foreground">{t(step.desc)}</p>
               </CardContent>
             </Card>
           ))}
         </div>
 
         <Button size="lg" className="w-full text-base" onClick={onStart}>
-          Inizia 🚀
+          {t("Inizia")} 🚀
         </Button>
       </div>
     </div>

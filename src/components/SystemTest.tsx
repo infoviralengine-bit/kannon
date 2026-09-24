@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useI18n, t as t_ } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -1111,6 +1112,7 @@ async function seedCapScenario(onProgress: (msg: string) => void): Promise<strin
 }
 
 export default function SystemTest() {
+  const { t } = useI18n();
   const [running, setRunning] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState<ModuleResult[]>([]);
@@ -1154,23 +1156,23 @@ export default function SystemTest() {
     setRunning(true);
     setResults([]);
     setShowResults(false);
-    setProgress("🧹 Pulizia dati precedenti...");
+    setProgress(`🧹 ${t_("Pulizia dati precedenti...")}`);
     const start = Date.now();
 
     try { await doCleanup(); } catch (e: any) { console.warn("Legacy cleanup:", e.message); }
 
     const skip = keepData;
     const modules: { name: string; fn: () => Promise<TestLog[]> }[] = [
-      { name: "M1 — Cicli con fisso cliente", fn: () => runModule1(skip) },
-      { name: "M2 — Views cumulative e delta", fn: () => runModule2(skip) },
-      { name: "M3 — Multi-video multi-creator", fn: () => runModule3(skip) },
-      { name: "M4 — Fisso creator + margine", fn: () => runModule4(skip) },
-      { name: "M5 — Finestra 30gg (views_final)", fn: () => runModule5(skip) },
-      { name: "M6 — Campagna completa con fisso", fn: () => runModule6(skip) },
-      { name: "M7 — client_fixed & valori zero", fn: () => runModule7(skip) },
-      { name: "M8 — Simulazione E2E margine", fn: () => runModule8(skip) },
-      { name: "M9 — Finestra chiusa tra cicli", fn: () => runModule9(skip) },
-      { name: "M10 — Cap video e cap di spesa", fn: () => runModule10(skip) },
+      { name: `M1: ${t_("Cicli con fisso cliente")}`, fn: () => runModule1(skip) },
+      { name: `M2: ${t_("Views cumulative e delta")}`, fn: () => runModule2(skip) },
+      { name: `M3: ${t_("Multi-video multi-creator")}`, fn: () => runModule3(skip) },
+      { name: `M4: ${t_("Fisso creator + margine")}`, fn: () => runModule4(skip) },
+      { name: `M5: ${t_("Finestra 30gg (views_final)")}`, fn: () => runModule5(skip) },
+      { name: `M6: ${t_("Campagna completa con fisso")}`, fn: () => runModule6(skip) },
+      { name: `M7: ${t_("client_fixed & valori zero")}`, fn: () => runModule7(skip) },
+      { name: `M8: ${t_("Simulazione E2E margine")}`, fn: () => runModule8(skip) },
+      { name: `M9: ${t_("Finestra chiusa tra cicli")}`, fn: () => runModule9(skip) },
+      { name: `M10: ${t_("Cap video e cap di spesa")}`, fn: () => runModule10(skip) },
     ];
 
     const moduleResults: ModuleResult[] = [];
@@ -1182,8 +1184,8 @@ export default function SystemTest() {
     }
 
     moduleResults.push({
-      name: "Stato dati",
-      logs: [{ step: skip ? "ℹ️ Dati di test mantenuti per verifica manuale" : "🧹 Cleanup completato", ok: true }],
+      name: t_("Stato dati"),
+      logs: [{ step: skip ? `ℹ️ ${t_("Dati di test mantenuti per verifica manuale")}` : `🧹 ${t_("Cleanup completato")}`, ok: true }],
       passed: 1, total: 1,
     });
 
@@ -1207,10 +1209,10 @@ export default function SystemTest() {
       // Cleanup previous seed
       await doCleanup();
       const id = await seedCapScenario(setProgress);
-      setSeedResult({ id, ok: true, msg: `Scenario creato! Vai alla campagna per verificare.` });
+      setSeedResult({ id, ok: true, msg: t_("Scenario creato! Vai alla campagna per verificare.") });
       setProgress("");
     } catch (e: any) {
-      setSeedResult({ id: "", ok: false, msg: `Errore: ${e.message}` });
+      setSeedResult({ id: "", ok: false, msg: `${t_("Errore")}: ${e.message}` });
       setProgress("");
     }
     setSeeding(false);
@@ -1245,9 +1247,9 @@ export default function SystemTest() {
           <div className="flex items-center gap-3">
             <FlaskConical className="h-5 w-5 text-primary" />
             <div>
-              <CardTitle className="text-lg">Test Completo Sistema</CardTitle>
+              <CardTitle className="text-lg">{t("Test Completo Sistema")}</CardTitle>
               <CardDescription>
-                10 moduli: cicli con fisso cliente, views cumulative, multi-video, fisso creator, finestra 30gg, campagna completa, client_fixed, simulazione E2E margine, finestra tra cicli, cap video e cap di spesa.
+                {t("10 moduli: cicli con fisso cliente, views cumulative, multi-video, fisso creator, finestra 30gg, campagna completa, client_fixed, simulazione E2E margine, finestra tra cicli, cap video e cap di spesa.")}
               </CardDescription>
             </div>
           </div>
@@ -1255,19 +1257,19 @@ export default function SystemTest() {
         <CardContent className="space-y-3">
           <div className="flex items-center gap-4">
             <Button onClick={handleRun} disabled={running || cleaning} variant="outline">
-              {running ? "⏳ Test in esecuzione..." : "🧪 Test Completo Sistema"}
+              {running ? `⏳ ${t("Test in esecuzione...")}` : `🧪 ${t("Test Completo Sistema")}`}
             </Button>
             <Button onClick={handleCleanup} disabled={running || cleaning} variant="outline" size="sm">
-              {cleaning ? "⏳ Pulizia..." : <><Trash2 className="h-4 w-4 mr-1" /> Pulisci dati test</>}
+              {cleaning ? `⏳ ${t("Pulizia...")}` : <><Trash2 className="h-4 w-4 mr-1" /> {t("Pulisci dati test")}</>}
             </Button>
             <Button onClick={handleSeedCap} disabled={running || cleaning || seeding} variant="outline" size="sm">
-              {seeding ? "⏳ Creazione scenario..." : "🌱 Seed Scenario Cap (100k views / 5000€)"}
+              {seeding ? `⏳ ${t("Creazione scenario...")}` : `🌱 ${t("Seed Scenario Cap (100k views / 5000€)")}`}
             </Button>
           </div>
           <div className="flex items-center gap-2">
             <Checkbox id="keep-data" checked={keepData} onCheckedChange={(v) => setKeepData(!!v)} />
             <label htmlFor="keep-data" className="text-sm text-muted-foreground cursor-pointer">
-              Mantieni dati di test per verifica manuale
+              {t("Mantieni dati di test per verifica manuale")}
             </label>
           </div>
           {seedResult && (
@@ -1275,7 +1277,7 @@ export default function SystemTest() {
               {seedResult.ok ? "✅" : "❌"} {seedResult.msg}
               {seedResult.ok && (
                 <a href={`/dashboard/campaigns/${seedResult.id}`} className="ml-2 underline font-semibold">
-                  Apri campagna →
+                  {t("Apri campagna")} →
                 </a>
               )}
             </div>
@@ -1290,19 +1292,19 @@ export default function SystemTest() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {pct === 100 ? "✅ Tutti i test superati" : "❌ Test con errori"}
+              {pct === 100 ? `✅ ${t("Tutti i test superati")}` : `❌ ${t("Test con errori")}`}
             </DialogTitle>
           </DialogHeader>
 
           <div className={`rounded-md p-3 text-sm font-semibold flex items-center justify-between ${bannerColor}`}>
-            <span>{totalPassed}/{totalTests} verifiche superate ({pct}%)</span>
+            <span>{t("{a}/{b} verifiche superate ({pct}%)", { a: totalPassed, b: totalTests, pct })}</span>
             <span className="text-xs opacity-75">⏱ {elapsed}s</span>
           </div>
 
           <div className="grid grid-cols-3 gap-2 text-sm">
-            {results.filter(r => r.name !== "Stato dati").map((r, i) => (
+            {results.filter(r => r.name !== t("Stato dati")).map((r, i) => (
               <div key={i} className={`rounded px-2 py-1 ${r.passed === r.total ? "bg-green-500/10 text-green-400" : "bg-destructive/10 text-destructive"}`}>
-                {r.passed === r.total ? "✅" : "❌"} {r.name.split("—")[0].trim()}: {r.passed}/{r.total}
+                {r.passed === r.total ? "✅" : "❌"} {r.name.split(":")[0].trim()}: {r.passed}/{r.total}
               </div>
             ))}
           </div>
@@ -1330,7 +1332,7 @@ export default function SystemTest() {
           </ScrollArea>
 
           <Button variant="outline" size="sm" onClick={exportReport} className="w-full">
-            {copied ? <><Check className="h-4 w-4 mr-1" /> Copiato!</> : <><Copy className="h-4 w-4 mr-1" /> Esporta Report</>}
+            {copied ? <><Check className="h-4 w-4 mr-1" /> {t("Copiato!")}</> : <><Copy className="h-4 w-4 mr-1" /> {t("Esporta Report")}</>}
           </Button>
         </DialogContent>
       </Dialog>

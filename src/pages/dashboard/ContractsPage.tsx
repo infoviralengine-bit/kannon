@@ -23,6 +23,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useI18n, t } from "@/i18n";
 
 const typeLabel: Record<string, string> = {
   solo_cpm: "Solo CPM",
@@ -31,6 +32,7 @@ const typeLabel: Record<string, string> = {
 };
 
 function NewContractModal({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const { t } = useI18n();
   const { toast } = useToast();
   const qc = useQueryClient();
   const { data: campaigns } = useActiveCampaignsForSelect();
@@ -49,7 +51,7 @@ function NewContractModal({ open, onOpenChange }: { open: boolean; onOpenChange:
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!name.trim()) throw new Error("Inserisci il nome del contratto");
+      if (!name.trim()) throw new Error(t("Inserisci il nome del contratto"));
       const { data: contract, error } = await supabase
         .from("contracts" as any)
         .insert({
@@ -73,42 +75,42 @@ function NewContractModal({ open, onOpenChange }: { open: boolean; onOpenChange:
       }
     },
     onSuccess: () => {
-      toast({ title: "Contratto creato" });
+      toast({ title: t("Contratto creato") });
       qc.invalidateQueries({ queryKey: ["contract-list"] });
       onOpenChange(false);
       setName(""); setFixed("0"); setCpm("0.50"); setMinVpd("5"); setSelectedCampaigns([]);
     },
     onError: (e: Error) => {
-      toast({ title: "Errore", description: e.message, variant: "destructive" });
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     },
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Nuovo Contratto</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t("Nuovo Contratto")}</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid gap-1.5">
-            <Label>Nome contratto *</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder='es. "Contratto FZ"' />
+            <Label>{t("Nome contratto *")}</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t(`es. "Contratto FZ"`)} />
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="grid gap-1.5">
-              <Label>Fisso mensile (€)</Label>
+              <Label>{t("Fisso mensile (€)")}</Label>
               <Input type="number" step="0.01" value={fixed} onChange={(e) => setFixed(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
-              <Label>CPM (€)</Label>
+              <Label>{t("CPM (€)")}</Label>
               <Input type="number" step="0.01" value={cpm} onChange={(e) => setCpm(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
-              <Label>Min video/giorno</Label>
+              <Label>{t("Min video/giorno")}</Label>
               <Input type="number" min="1" value={minVpd} onChange={(e) => setMinVpd(e.target.value)} />
             </div>
           </div>
           {(campaigns ?? []).length > 0 && (
             <div className="grid gap-1.5">
-              <Label>Campagne incluse</Label>
+              <Label>{t("Campagne incluse")}</Label>
               <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
                 {(campaigns ?? []).map((c) => (
                   <div key={c.id} className="flex items-center gap-2">
@@ -123,7 +125,7 @@ function NewContractModal({ open, onOpenChange }: { open: boolean; onOpenChange:
             </div>
           )}
           <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
-            {mutation.isPending ? "Creazione..." : "Crea Contratto"}
+            {mutation.isPending ? t("Creazione...") : t("Crea Contratto")}
           </Button>
         </div>
       </DialogContent>
@@ -132,6 +134,7 @@ function NewContractModal({ open, onOpenChange }: { open: boolean; onOpenChange:
 }
 
 export default function ContractsPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { data, isLoading } = useContractList();
   const [newOpen, setNewOpen] = useState(false);
@@ -141,10 +144,10 @@ export default function ContractsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <FileText className="h-7 w-7 text-primary" />
-          <h1 className="text-2xl font-bold">Contratti</h1>
+          <h1 className="text-2xl font-bold">{t("Contratti")}</h1>
         </div>
         <Button onClick={() => setNewOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Nuovo Contratto
+          <Plus className="mr-2 h-4 w-4" /> {t("Nuovo Contratto")}
         </Button>
       </div>
 
@@ -153,7 +156,7 @@ export default function ContractsPage() {
       ) : !data?.length ? (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            Nessun contratto creato
+            {t("Nessun contratto creato")}
           </CardContent>
         </Card>
       ) : (
@@ -161,14 +164,14 @@ export default function ContractsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead className="text-right">Campagne</TableHead>
-                <TableHead className="text-right">Creator</TableHead>
-                <TableHead className="text-right">Fisso (€)</TableHead>
-                <TableHead className="text-right">CPM (€)</TableHead>
-                <TableHead className="text-right">Min video/g</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t("Nome")}</TableHead>
+                <TableHead>{t("Tipo")}</TableHead>
+                <TableHead className="text-right">{t("Campagne")}</TableHead>
+                <TableHead className="text-right">{t("Creator")}</TableHead>
+                <TableHead className="text-right">{t("Fisso (€)")}</TableHead>
+                <TableHead className="text-right">{t("CPM (€)")}</TableHead>
+                <TableHead className="text-right">{t("Min video/g")}</TableHead>
+                <TableHead>{t("Status")}</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
@@ -177,7 +180,7 @@ export default function ContractsPage() {
                 <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/dashboard/contracts/${c.id}`)}>
                   <TableCell className="font-medium">{c.name}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{typeLabel[c.type] ?? c.type}</Badge>
+                    <Badge variant="secondary">{t(typeLabel[c.type] ?? c.type)}</Badge>
                   </TableCell>
                   <TableCell className="text-right">{c.campaignCount}</TableCell>
                   <TableCell className="text-right">{c.creatorCount}</TableCell>
@@ -186,11 +189,11 @@ export default function ContractsPage() {
                   <TableCell className="text-right">{c.minVideosPerDay}</TableCell>
                   <TableCell>
                     <Badge variant={c.isActive ? "default" : "secondary"}>
-                      {c.isActive ? "Attivo" : "Inattivo"}
+                      {c.isActive ? t("Attivo") : t("Inattivo")}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm">Apri</Button>
+                    <Button variant="ghost" size="sm">{t("Apri")}</Button>
                   </TableCell>
                 </TableRow>
               ))}

@@ -11,8 +11,10 @@ import { formatCurrency } from "@/lib/format";
 import { STATUS_BADGE, STATUS_LABEL, formatDateIt, type CompanyStatus } from "@/lib/companies";
 import { useClientsOverview } from "@/hooks/useCompanies";
 import { CompanyFormDialog } from "@/components/companies/CompanyFormDialog";
+import { useI18n } from "@/i18n";
 
 export default function ClientiPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { data = [], isLoading } = useClientsOverview();
   const [search, setSearch] = useState("");
@@ -37,24 +39,24 @@ export default function ClientiPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Clienti</h1>
+          <h1 className="text-2xl font-semibold">{t("Clienti")}</h1>
           <p className="text-sm text-muted-foreground">
-            {activeCount} clienti attivi, {formatCurrency(totalValue)} al mese stimati.
+            {t("{n} clienti attivi, {value} al mese stimati.", { n: activeCount, value: formatCurrency(totalValue) })}
           </p>
         </div>
         <Button onClick={() => setFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Nuovo cliente
+          <Plus className="mr-2 h-4 w-4" /> {t("Nuovo cliente")}
         </Button>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <div className="relative min-w-[220px] flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Cerca cliente" value={search}
+          <Input className="pl-9" placeholder={t("Cerca cliente")} value={search}
             onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Button variant={showFormer ? "default" : "outline"} onClick={() => setShowFormer(!showFormer)}>
-          Mostra anche gli ex
+          {t("Mostra anche gli ex")}
         </Button>
       </div>
 
@@ -76,20 +78,20 @@ export default function ClientiPage() {
                       {c.app_name && <p className="text-xs text-muted-foreground">{c.app_name}</p>}
                     </div>
                     <Badge variant="outline" className={STATUS_BADGE[c.status as CompanyStatus]}>
-                      {STATUS_LABEL[c.status as CompanyStatus]}
+                      {t(STATUS_LABEL[c.status as CompanyStatus])}
                     </Badge>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                    <Metric icon={<Megaphone className="h-3 w-3" />} value={row.activeCampaigns} label="campagne" />
-                    <Metric icon={<CheckSquare className="h-3 w-3" />} value={row.openTasks} label="da fare" />
-                    <Metric icon={<FileWarning className="h-3 w-3" />} value={row.pendingDocs} label="documenti" />
+                    <Metric icon={<Megaphone className="h-3 w-3" />} value={row.activeCampaigns} label={t("campagne")} />
+                    <Metric icon={<CheckSquare className="h-3 w-3" />} value={row.openTasks} label={t("da fare")} />
+                    <Metric icon={<FileWarning className="h-3 w-3" />} value={row.pendingDocs} label={t("documenti")} />
                   </div>
 
                   {row.onboardingTotal > 0 && pct < 100 && (
                     <div>
                       <p className="mb-1 text-xs text-muted-foreground">
-                        Onboarding {row.onboardingDone} di {row.onboardingTotal}
+                        {t("Onboarding {done} di {total}", { done: row.onboardingDone, total: row.onboardingTotal })}
                       </p>
                       <Progress value={pct} />
                     </div>
@@ -98,10 +100,10 @@ export default function ClientiPage() {
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>
                       {c.estimated_monthly_value != null
-                        ? `${formatCurrency(Number(c.estimated_monthly_value))} / mese` : "Valore non indicato"}
+                        ? t("{value} / mese", { value: formatCurrency(Number(c.estimated_monthly_value)) }) : t("Valore non indicato")}
                     </span>
                     <span>
-                      {c.last_contact_at ? `Ultimo contatto ${formatDateIt(c.last_contact_at)}` : "Mai contattato"}
+                      {c.last_contact_at ? t("Ultimo contatto {date}", { date: formatDateIt(c.last_contact_at) }) : t("Mai contattato")}
                     </span>
                   </div>
                 </CardContent>
@@ -112,7 +114,7 @@ export default function ClientiPage() {
             <Card className="md:col-span-2 xl:col-span-3">
               <CardContent className="py-10 text-center text-sm text-muted-foreground">
                 <Building2 className="mx-auto mb-2 h-6 w-6" />
-                Nessun cliente da mostrare.
+                {t("Nessun cliente da mostrare.")}
               </CardContent>
             </Card>
           )}

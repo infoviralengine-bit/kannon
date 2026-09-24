@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Flame, Rocket, BarChart3 } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 export type PipelinePhase = "warmup" | "operativi" | "totale" | null;
 
@@ -65,6 +66,7 @@ export default function PipelineCreator({
   selected: PipelinePhase;
   onSelect: (phase: PipelinePhase) => void;
 }) {
+  const { t } = useI18n();
   const { data, isLoading } = usePipelineData();
 
   return (
@@ -72,7 +74,7 @@ export default function PipelineCreator({
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
           <Users className="h-4 w-4 text-primary" />
-          Pipeline Creator
+          {t("Pipeline Creator")}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -98,7 +100,7 @@ export default function PipelineCreator({
                 ) : (
                   <span className="text-xl font-bold text-foreground">{count}</span>
                 )}
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{p.label}</span>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{t(p.label)}</span>
               </button>
             );
           })}
