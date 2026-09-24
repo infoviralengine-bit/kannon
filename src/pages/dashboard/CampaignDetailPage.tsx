@@ -131,6 +131,7 @@ function EditCampaignModal({
 
       const { error } = await supabase.from("campaigns").update({
         name,
+        company_id: companyId,
         client_name: clientName,
         client_cpm: newCpm,
         client_fixed: newFixed,
