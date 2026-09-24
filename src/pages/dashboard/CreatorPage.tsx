@@ -236,7 +236,7 @@ export default function CreatorPage() {
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
                     <TableCell>
                       {isOperator ? (
-                        <Badge className={statusColor[c.status]}>{statusLabel[c.status] ?? c.status}</Badge>
+                        <Badge className={statusColor[c.status]}>{t(statusLabel[c.status] ?? c.status)}</Badge>
                       ) : (
                         <div className="flex items-center gap-2">
                           <Switch
