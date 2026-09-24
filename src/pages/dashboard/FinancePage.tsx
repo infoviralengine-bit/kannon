@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, Pencil, Trash2, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
+import { useI18n } from "@/i18n";
 import { AddEntryDialog } from "@/components/finance/AddEntryDialog";
 import { CashEditDialog } from "@/components/finance/CashEditDialog";
 import { MovementsTable } from "@/components/finance/MovementsTable";
