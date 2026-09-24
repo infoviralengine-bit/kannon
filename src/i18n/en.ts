@@ -1,5 +1,13 @@
 // English dictionary, keyed by the Italian source string.
-export const en: Record<string, string> = {
+// Each area has its own file in ./dict to avoid edit conflicts.
+import { core } from "./dict/core";
+import { creators } from "./dict/creators";
+import { clients } from "./dict/clients";
+import { finance } from "./dict/finance";
+import { content } from "./dict/content";
+import { portals } from "./dict/portals";
+
+const shell: Record<string, string> = {
   // Shell / navigation
   "Campagne": "Campaigns",
   "Calendario Contenuti": "Content Calendar",
@@ -19,4 +27,8 @@ export const en: Record<string, string> = {
   "Mai": "Never",
   "Aggiornato {when}": "Updated {when}",
   "Ultimo scraping: {when}": "Last scrape: {when}",
+};
+
+export const en: Record<string, string> = {
+  ...core, ...creators, ...clients, ...finance, ...content, ...portals, ...shell,
 };
