@@ -391,6 +391,7 @@ export type Database = {
           id: string
           last_contact_at: string | null
           legal_name: string | null
+          logo_url: string | null
           lost_at: string | null
           lost_note: string | null
           lost_reason: string | null
@@ -427,6 +428,7 @@ export type Database = {
           id?: string
           last_contact_at?: string | null
           legal_name?: string | null
+          logo_url?: string | null
           lost_at?: string | null
           lost_note?: string | null
           lost_reason?: string | null
@@ -463,6 +465,7 @@ export type Database = {
           id?: string
           last_contact_at?: string | null
           legal_name?: string | null
+          logo_url?: string | null
           lost_at?: string | null
           lost_note?: string | null
           lost_reason?: string | null
