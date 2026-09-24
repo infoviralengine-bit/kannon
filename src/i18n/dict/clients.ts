@@ -329,7 +329,6 @@ export const clients: Record<string, string> = {
   // DocumentsTab
   "Nome *": "Name *",
   "Es. contratto firmato": "E.g. signed contract",
-  "Scadenza": "Due date",
   "Link": "Link",
   "Niente in lista.": "Nothing in the list.",
   "{type} · entro {date}": "{type}, due {date}",
@@ -354,7 +353,6 @@ export const clients: Record<string, string> = {
   "Accordo": "Deal",
   "Views stimate": "Estimated views",
   "Performance": "Performance",
-  "Conversione": "Conversion",
   "Valore mensile stimato": "Estimated monthly value",
   "Motivo della perdita": "Reason for loss",
   "Contatti": "Contacts",
@@ -363,8 +361,6 @@ export const clients: Record<string, string> = {
   "Nessun recapito": "No contact info",
   "Nessun contatto.": "No contacts.",
   "Modifica contatto": "Edit contact",
-  "Nuovo contatto": "New contact",
-  "Nome *": "Name *",
   "Ruolo": "Role",
   "Telefono": "Phone",
 
