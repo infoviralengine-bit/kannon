@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useI18n } from "@/i18n";
-import { Badge } from "@/components/ui/badge";
 import OperationalStatusBar from "@/components/dashboard/OperationalStatusBar";
 import CampaignTimeline from "@/components/dashboard/CampaignTimeline";
 import ViewsPerformancePanel from "@/components/dashboard/ViewsPerformancePanel";
