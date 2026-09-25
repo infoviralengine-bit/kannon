@@ -14,4 +14,5 @@ Numeri/valute/date restano it-IT. Stringhe avvolte in t("testo italiano"), dizio
 - [x] Loghi lead/clienti: campo azienda, Unflat e Robin Health, viste pipeline, clienti, campagne e dettaglio
 - [x] Upload logo da creazione/modifica lead e clienti, identità compatta nella lista pipeline
 - [x] Finance: KPI essenziali, selezione campagne non attive e mesi di riferimento sui periodi
-- [x] Cicli pagamento pre-generati + CPM aggiornato dallo scraping (attivazione sulle campagne esistenti in attesa di conferma)
+- [x] Cicli pagamento pre-generati + variabile aggiornata dallo scraping
+- [x] Cicli cliente: primo solo fisso, scadenze +7 giorni, finale dopo ultimo video, due cicli visibili in Da ricevere

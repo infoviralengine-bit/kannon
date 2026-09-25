@@ -243,4 +243,7 @@ export const finance: Record<string, string> = {
   "Cicli aggiornati": "Cycles updated",
   "Views e importi ricalcolati con gli ultimi dati.": "Views and amounts recalculated with the latest data.",
   "Cicli di pagamento generati automaticamente.": "Payment cycles generated automatically.",
+  "ciclo": "cycle",
+  "cicli": "cycles",
+  "Il primo ciclo comprende solo il fisso": "The first cycle includes only the fixed fee",
 };

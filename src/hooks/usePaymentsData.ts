@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViews, sumEffectiveViewsCapped, countByWindowStatus } from "@/lib/videoWindow";
 import { isFixedEarnedMonthly, getMonthlyTarget } from "@/lib/fixedEarned";
 import { computeCreatorPayableMonth, type ContractInput } from "@/lib/creatorPayable";
-import { formatPeriodMonthReference, parseContractStartDate } from "@/lib/contractPeriods";
+import { formatCycleMonthReference, formatPeriodMonthReference, parseContractStartDate } from "@/lib/contractPeriods";
 import { useI18n } from "@/i18n";
 
 /* ═══════════════════════════════════════════════
@@ -40,6 +40,7 @@ export interface ClientPaymentRow {
   invoiceSent: boolean;
   campaignStatus: string;
   viewsSnapshotAt: string | null;
+  showsVariable: boolean;
 }
 
 export function useClientPayments(filterMonth?: number, filterYear?: number) {
@@ -54,12 +55,17 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       if (error) throw error;
 
       const allCampIds = [...new Set((payments ?? []).map((p) => p.campaign_id))];
-      let campMap = new Map<string, { name: string; client_name: string; client_fixed: number; client_cpm: number; video_views_cap: number | null; monthly_spend_cap: number | null; status: string }>();
+      let campMap = new Map<string, { name: string; client_name: string; client_fixed: number; client_cpm: number; video_views_cap: number | null; monthly_spend_cap: number | null; status: string; company_id: string | null; deal_type: string | null }>();
 
       if (allCampIds.length) {
         const [{ data: camps }] = await Promise.all([
-          supabase.from("campaigns").select("id, name, client_name, client_fixed, client_cpm, video_views_cap, monthly_spend_cap, status").in("id", allCampIds),
+          supabase.from("campaigns").select("id, name, client_name, client_fixed, client_cpm, video_views_cap, monthly_spend_cap, status, company_id").in("id", allCampIds),
         ]);
+        const companyIds = [...new Set((camps ?? []).map((c) => c.company_id).filter((id): id is string => Boolean(id)))];
+        const { data: companies } = companyIds.length
+          ? await supabase.from("companies").select("id, deal_type").in("id", companyIds)
+          : { data: [] };
+        const dealTypeByCompany = new Map((companies ?? []).map((company) => [company.id, company.deal_type]));
         (camps ?? []).forEach((c) => campMap.set(c.id, {
           name: c.name, client_name: c.client_name,
           client_fixed: Number(c.client_fixed ?? 0),
@@ -67,6 +73,8 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           video_views_cap: (c as any).video_views_cap as number | null,
           monthly_spend_cap: (c as any).monthly_spend_cap as number | null,
           status: c.status,
+          company_id: c.company_id,
+          deal_type: c.company_id ? dealTypeByCompany.get(c.company_id) ?? null : null,
         }));
       }
       // Keep payments for paused/archived campaigns too: existing receivables remain collectible.
@@ -214,7 +222,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
         const cycle = p.cycle_id ? cycleMap.get(p.cycle_id) : undefined;
         const cycleStartDate = cycle?.cycle_start_date ?? dueDate;
         const cycleEndDate = cycle?.cycle_end_date ?? dueDate;
-        const monthLabel = formatPeriodMonthReference(
+        const monthLabel = formatCycleMonthReference(
           parseContractStartDate(cycleStartDate),
           parseContractStartDate(cycleEndDate),
           lang === "en" ? "en-GB" : "it-IT",
@@ -257,6 +265,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
             invoiceSent: (p as any).invoice_sent ?? false,
             campaignStatus: camp?.status ?? "completed",
             viewsSnapshotAt: (p as any).views_snapshot_at ?? null,
+          showsVariable: p.cycle_number > 1 && camp?.deal_type !== "fisso_performance" && camp?.deal_type !== "solo_fisso",
           };
       });
     },
@@ -676,6 +685,7 @@ export function useCampaignCycles(campaignId: string) {
             invoiceSent: (p as any).invoice_sent ?? false,
             campaignStatus: camp?.status ?? "completed",
             viewsSnapshotAt: (p as any).views_snapshot_at ?? null,
+            showsVariable: p.cycle_number > 1 && Number(camp?.client_cpm ?? 0) > 0,
           };
         }
 

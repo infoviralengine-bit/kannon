@@ -480,8 +480,8 @@ Da fare prima del passaggio in produzione: migrazione dati da `client_name` ad a
 ## 17. Cicli di pagamento automatici (25 set 2026)
 
 - Cicli di 30 giorni inclusivi dalla `start_date` (`start + 30*(n-1)` → `+29`). Un ciclo finale più corto di 30 giorni (clamp a `end_date`) è `is_last_cycle` e ha fisso 0.
-- `sync_campaign_cycles(uuid, apply)`: pre-genera/riallinea cicli e `client_payments` non pagati dopo l'ultimo ciclo pagato; senza `end_date` genera fino a oggi+30. Mai tocca righe pagate. Esclude `tot_split`.
-- `recalc_campaign_cycle_cpm(uuid)`: per ogni ciclo non pagato in ordine, views = views effettive dei video pubblicati `<= cycle_end_date` − (max `views_paid_cumulative` pagato + views dei cicli non pagati precedenti). Salva `cpm_views/cpm_amount/total_amount/views_paid_cumulative/views_snapshot_at`. Cap video + tetto mensile applicati; righe `amount_overridden` saltate.
+- `sync_campaign_cycles(uuid, apply)`: pre-genera/riallinea i cicli ordinari completi e i relativi `client_payments`; il ciclo 1 è solo fisso, le scadenze sono il riferimento mensile + 7 giorni. Il ciclo finale, solo variabile, nasce a campagna conclusa quando esiste un ultimo video ed arriva a 30 giorni dalla sua pubblicazione. Mai tocca righe pagate o override. Esclude `tot_split`.
+- `recalc_campaign_cycle_cpm(uuid)`: il ciclo 1 resta solo fisso. Per ogni ciclo successivo non pagato, views = views effettive maturate fino all'inizio del ciclo − cumulativo già attribuito; il ciclo finale usa la propria fine. Salva `cpm_views/cpm_amount/total_amount/views_paid_cumulative/views_snapshot_at`. Cap video + tetto mensile applicati; righe `amount_overridden` saltate.
 - Trigger: `campaigns_sync_cycles` (insert/update di date, tariffe, cap, payment_terms) e `client_payments_paid_recalc` (cambio `is_paid`).
 - `refresh_campaign_payments(uuid[], force_sync)`: chiamata da `scrape-tiktok` a fine ingestion e dal pulsante "Ricalcola cicli". Il sync da scraping avviene solo per campagne attive se `settings.auto_cycles_enabled = 'true'`.
 - Il frontend (`usePaymentsData`) legge gli importi salvati, non ricalcola più lato client.
