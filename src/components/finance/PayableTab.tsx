@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/format";
 import { useContractPayable, type CreatorInContract, type ContractPayableSection } from "@/hooks/useCreatorPayable";
 import {
-  getContractPeriod, parseContractStartDate, formatPeriodRange,
+  getContractPeriod, parseContractStartDate, formatPeriodRange, formatPeriodMonthReference,
 } from "@/lib/contractPeriods";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +33,7 @@ interface ConfirmData {
 }
 
 export function PayableTab() {
-  const { t } = useI18n();
+  const { lang, t } = useI18n();
   const navigate = useNavigate();
   const [periodOffset, setPeriodOffset] = useState<number>(0);
   const [showOnlyActive, setShowOnlyActive] = useState(true);
@@ -59,6 +59,18 @@ export function PayableTab() {
     const fps = firstPeriodStartStr ? parseContractStartDate(firstPeriodStartStr) : null;
     const { periodStart, periodEnd } = getContractPeriod(sd, periodNumber, fps, periodOverrides ?? null);
     return formatPeriodRange(periodStart, periodEnd);
+  }
+
+  function getPeriodMonthLabel(
+    startDate: string,
+    periodNumber: number,
+    firstPeriodStartStr?: string | null,
+    periodOverrides?: Record<string, { end?: string; start?: string }> | null,
+  ): string {
+    const sd = parseContractStartDate(startDate);
+    const fps = firstPeriodStartStr ? parseContractStartDate(firstPeriodStartStr) : null;
+    const { periodStart, periodEnd } = getContractPeriod(sd, periodNumber, fps, periodOverrides ?? null);
+    return formatPeriodMonthReference(periodStart, periodEnd, lang === "en" ? "en-GB" : "it-IT");
   }
 
   async function handleMarkPaid(data: ConfirmData) {
@@ -269,7 +281,7 @@ export function PayableTab() {
                                     {b.contractName}
                                   </span>
                                   <p className="text-[10px] text-muted-foreground">
-                                    {t("Periodo {n} ·", { n: b.periodNumber })} {getPeriodLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart, b.section.periodOverrides)}
+                                    {t("Periodo {n} ·", { n: b.periodNumber })} {getPeriodMonthLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart, b.section.periodOverrides)} · {getPeriodLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart, b.section.periodOverrides)}
                                   </p>
                                 </TableCell>
                                 <TableCell className="text-center text-muted-foreground text-sm">
@@ -334,7 +346,7 @@ export function PayableTab() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-medium text-foreground">{t("Periodo {n}", { n: pn })}</p>
+                      <p className="text-xs font-medium text-foreground">{t("Periodo {n} ·", { n: pn })} {getPeriodMonthLabel(section.startDate, pn, section.firstPeriodStart, section.periodOverrides)}</p>
                       <p className="text-[10px] text-muted-foreground">{getPeriodLabel(section.startDate, pn, section.firstPeriodStart, section.periodOverrides)}</p>
                     </div>
                   </div>
@@ -411,7 +423,7 @@ export function PayableTab() {
             <DialogTitle>{t("Conferma pagamento")}</DialogTitle>
             <DialogDescription>
               {t("Segna come pagato")} <strong>{confirm?.creator.creatorName}</strong> {t("per")}{" "}
-              {confirm?.section.contractName} {t("Periodo {n}?", { n: confirm?.periodNumber ?? 0 })}
+              {confirm?.section.contractName} {confirm ? `${t("Periodo {n} ·", { n: confirm.periodNumber })} ${getPeriodMonthLabel(confirm.section.startDate, confirm.periodNumber, confirm.section.firstPeriodStart, confirm.section.periodOverrides)}?` : ""}
             </DialogDescription>
           </DialogHeader>
           {confirm && (

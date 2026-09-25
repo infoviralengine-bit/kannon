@@ -13,3 +13,4 @@ Numeri/valute/date restano it-IT. Stringhe avvolte in t("testo italiano"), dizio
 - [x] Timeline lead/clienti: riordino manuale persistente e cancellazione con conferma
 - [x] Loghi lead/clienti: campo azienda, Unflat e Robin Health, viste pipeline, clienti, campagne e dettaglio
 - [x] Upload logo da creazione/modifica lead e clienti, identità compatta nella lista pipeline
+- [x] Finance: KPI essenziali, selezione campagne non attive e mesi di riferimento sui periodi

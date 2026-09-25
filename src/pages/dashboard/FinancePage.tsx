@@ -8,11 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, Pencil, Trash2, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, Trash2, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/format";
 import { useI18n } from "@/i18n";
 import { AddEntryDialog } from "@/components/finance/AddEntryDialog";
-import { CashEditDialog } from "@/components/finance/CashEditDialog";
 import { MovementsTable } from "@/components/finance/MovementsTable";
 import { RecurringExpensesCard } from "@/components/finance/RecurringExpensesCard";
 import { ReceivableTab } from "@/components/finance/ReceivableTab";
@@ -183,20 +182,8 @@ export default function FinancePage() {
 
           {/* CASH */}
           <TabsContent value="cash" className="space-y-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <KpiCard
-                label={t("Cash in bank")}
-                value={data.cash.in_bank == null ? <span className="text-base text-muted-foreground">{t("Non impostato")}</span> : formatCurrency(data.cash.in_bank)}
-                hint={data.cash.updated_at ? t("Aggiornato {when}", { when: fmtDate(data.cash.updated_at) }) : undefined}
-                action={<CashEditDialog current={data.cash.in_bank} trigger={<Button variant="ghost" size="icon" className="h-7 w-7"><Pencil className="h-3.5 w-3.5" /></Button>} />}
-              />
-              <KpiCard label={t("Burn mensile")} value={formatCurrency(data.cash.burn_monthly || 0)} hint={t("Costi del mese corrente")} />
-              <KpiCard
-                label={t("Runway")}
-                value={data.cash.runway_months == null ? "—" : t("{n} mesi", { n: data.cash.runway_months.toFixed(1) })}
-                hint={t("Cash / burn medio 3m")}
-                accent={data.cash.runway_months != null && data.cash.runway_months < 3 ? "negative" : undefined}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <KpiCard label={t("Costi fissi mensili")} value={formatCurrency(data.cash.burn_monthly || 0)} hint={t("Costi del mese corrente")} />
               <KpiCard label={t("Cash atteso")} value={formatCurrency(data.cash.cash_expected || 0)} hint={t("Fatture non pagate")} />
             </div>
 
