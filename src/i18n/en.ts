@@ -33,5 +33,6 @@ const shell: Record<string, string> = {
 };
 
 export const en: Record<string, string> = {
-  ...core, ...creators, ...clients, ...finance, ...content, ...portals, ...settings, ...shell,
+  ...core, ...creators, ...clients, ...finance, ...content, ...portals, ...campaign, ...settings,
+  ...dashboard, ...shell,
 };
