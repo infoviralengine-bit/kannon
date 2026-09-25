@@ -269,7 +269,11 @@ export function useCampaignViewsSeries(campaignId: string | null, days: number) 
         total,
         dailyAverage: Math.round(total / days),
         previousTotal,
-        capUsedPct: cap && cap > 0 ? Math.round((total / (cap * Math.max(1, rows.length))) * 100) : null,
+        // Media views per video rispetto al tetto per singolo video della campagna.
+        capUsedPct:
+          cap && cap > 0 && rows.length > 0
+            ? Math.min(100, Math.round((total / rows.length / cap) * 100))
+            : null,
       };
     },
     refetchInterval: 5 * 60 * 1000,
