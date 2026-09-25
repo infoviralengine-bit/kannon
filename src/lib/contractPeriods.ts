@@ -210,6 +210,23 @@ export function formatCycleMonthReference(
   return startMonth === endMonth ? startMonth : `${startMonth}–${endMonth}`;
 }
 
+/** Cycle date range with day and abbreviated month, e.g. "5 ott – 4 nov". */
+export function formatCycleDateRange(
+  periodStart: Date,
+  periodEnd: Date,
+  locale: "it-IT" | "en-GB" = "it-IT",
+): string {
+  const fmt = (date: Date) => date
+    .toLocaleDateString(locale, { day: "numeric", month: "short", timeZone: "UTC" })
+    .replace(".", "")
+    .toLocaleLowerCase(locale);
+  const endStr = fmt(periodEnd);
+  const sameMonth = periodStart.getUTCMonth() === periodEnd.getUTCMonth()
+    && periodStart.getUTCFullYear() === periodEnd.getUTCFullYear();
+  if (sameMonth) return `${periodStart.getUTCDate()}–${endStr}`;
+  return `${fmt(periodStart)} – ${endStr}`;
+}
+
 /**
  * Parse a date string (YYYY-MM-DD or ISO) to a UTC Date.
  */

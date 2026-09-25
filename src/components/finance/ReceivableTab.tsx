@@ -7,6 +7,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, formatViews } from "@/lib/format";
+import { formatCycleDateRange } from "@/lib/contractPeriods";
 import { CappedBadge } from "@/components/CappedViewsBadge";
 import {
   useClientPayments, type ClientPaymentRow,
@@ -299,13 +300,9 @@ export function ReceivableTab() {
                                 </TableCell>
                                 <TableCell>
                                    <span className="font-medium">{t("Ciclo {n}", { n: p.cycleNumber })}</span>
-                                   <span className="block text-xs text-muted-foreground capitalize">{p.monthLabel}</span>
-                                  {!p.isPaid && p.showsVariable && p.paymentKind === "standard" && !p.amountOverridden && (
-                                    <span className="block text-xs text-muted-foreground">
-                                      {t("Stima, si aggiorna con lo scraping")}
-                                      {p.viewsSnapshotAt && ` · ${new Date(p.viewsSnapshotAt).toLocaleDateString("it-IT")}`}
-                                    </span>
-                                  )}
+                                   <span className="block text-xs text-muted-foreground capitalize">
+                                     {formatCycleDateRange(new Date(p.cycleStartDate), new Date(p.cycleEndDate))}
+                                   </span>
                                   {p.paymentKind === "tot_fixed_first" && <Badge variant="secondary" className="ml-2">1ª metà</Badge>}
                                   {p.paymentKind === "tot_fixed_second" && <Badge variant="secondary" className="ml-2">2ª metà</Badge>}
                                   {p.paymentKind === "tot_final_cpm" && <Badge className="ml-2">CPM finale</Badge>}
@@ -367,6 +364,12 @@ export function ReceivableTab() {
                                            <span className="text-muted-foreground">{t("Ciclo")}</span>
                                            <span>{new Date(p.cycleStartDate).toLocaleDateString("it-IT")} - {new Date(p.cycleEndDate).toLocaleDateString("it-IT")}</span>
                                         </div>
+                                         {!p.isPaid && p.showsVariable && p.paymentKind === "standard" && !p.amountOverridden && (
+                                           <div className="flex justify-between">
+                                             <span className="text-muted-foreground">{t("Stima, si aggiorna con lo scraping")}</span>
+                                             <span>{p.viewsSnapshotAt ? new Date(p.viewsSnapshotAt).toLocaleDateString("it-IT") : "—"}</span>
+                                           </div>
+                                         )}
                                          {p.showsVariable && <div className="flex justify-between">
                                           <span className="text-muted-foreground">Fisso</span>
                                           <span>{formatCurrency(p.fixedAmount)}</span>

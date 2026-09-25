@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCycleMonthReference, formatPeriodMonthReference, getContractPeriod } from "../contractPeriods";
+import { formatCycleDateRange, formatCycleMonthReference, formatPeriodMonthReference, getContractPeriod } from "../contractPeriods";
 
 const utc = (y: number, m: number, d: number) => new Date(Date.UTC(y, m - 1, d));
 const iso = (d: Date) => d.toISOString().slice(0, 10);
@@ -98,5 +98,19 @@ describe("formatCycleMonthReference", () => {
 
   it("supports the English interface", () => {
     expect(formatCycleMonthReference(utc(2026, 10, 5), utc(2026, 11, 3), "en-GB")).toBe("oct–nov");
+  });
+});
+
+describe("formatCycleDateRange", () => {
+  it("shows day and abbreviated month for a cycle crossing months", () => {
+    expect(formatCycleDateRange(utc(2026, 10, 5), utc(2026, 11, 4))).toBe("5 ott – 4 nov");
+  });
+
+  it("omits the day on the start when the cycle stays within a month", () => {
+    expect(formatCycleDateRange(utc(2026, 10, 1), utc(2026, 10, 30))).toBe("1–30 ott");
+  });
+
+  it("supports the English interface", () => {
+    expect(formatCycleDateRange(utc(2026, 10, 5), utc(2026, 11, 4), "en-GB")).toBe("5 oct – 4 nov");
   });
 });
