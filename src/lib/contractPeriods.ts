@@ -218,7 +218,8 @@ export function formatCycleDateRange(
 ): string {
   const fmt = (date: Date) => date
     .toLocaleDateString(locale, { day: "numeric", month: "short", timeZone: "UTC" })
-    .replace(".", "");
+    .replace(".", "")
+    .toLocaleLowerCase(locale);
   const endStr = fmt(periodEnd);
   const sameMonth = periodStart.getUTCMonth() === periodEnd.getUTCMonth()
     && periodStart.getUTCFullYear() === periodEnd.getUTCFullYear();
