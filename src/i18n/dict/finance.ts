@@ -236,4 +236,5 @@ export const finance: Record<string, string> = {
   "{desc}. L'importo originale calcolato dal sistema viene preservato: salvi un override.": "{desc}. The original system-calculated amount is preserved: you are saving an override.",
   "{name} segnato come pagato.": "{name} marked as paid.",
   "{n} mesi": "{n} months",
+  "Archiviati (pagati)": "Archived (paid)",
 };
