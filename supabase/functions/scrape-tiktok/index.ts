@@ -739,6 +739,14 @@ async function runScraping(
     }
   }
 
+  // Update CPM of unpaid payment cycles with the fresh views (and pre-generate cycles when enabled).
+  const { data: refreshed, error: refreshErr } = await supabaseAdmin.rpc("refresh_campaign_payments", {
+    p_campaign_ids: campaignIds,
+    p_force_sync: false,
+  });
+  if (refreshErr) console.error("[cycles] refresh_campaign_payments failed:", refreshErr.message);
+  else console.log(`[cycles] refresh_campaign_payments ok, cycles recalculated: ${refreshed}`);
+
   return {
     accounts_processed: processedAccounts.size,
     videos_created: totalCreated,

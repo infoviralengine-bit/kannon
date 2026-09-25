@@ -292,6 +292,12 @@ export function ReceivableTab() {
                                 <TableCell>
                                    <span className="font-medium">{t("Periodo {n}", { n: p.cycleNumber })}</span>
                                    <span className="block text-xs text-muted-foreground capitalize">{p.monthLabel}</span>
+                                  {!p.isPaid && p.paymentKind === "standard" && !p.amountOverridden && (
+                                    <span className="block text-xs text-muted-foreground">
+                                      {t("Stima, si aggiorna con lo scraping")}
+                                      {p.viewsSnapshotAt && ` · ${new Date(p.viewsSnapshotAt).toLocaleDateString("it-IT")}`}
+                                    </span>
+                                  )}
                                   {p.paymentKind === "tot_fixed_first" && <Badge variant="secondary" className="ml-2">1ª metà</Badge>}
                                   {p.paymentKind === "tot_fixed_second" && <Badge variant="secondary" className="ml-2">2ª metà</Badge>}
                                   {p.paymentKind === "tot_final_cpm" && <Badge className="ml-2">CPM finale</Badge>}

@@ -237,4 +237,10 @@ export const finance: Record<string, string> = {
   "{name} segnato come pagato.": "{name} marked as paid.",
   "{n} mesi": "{n} months",
   "Archiviati (pagati)": "Archived (paid)",
+  "Stima, si aggiorna con lo scraping": "Estimate, updates with scraping",
+  "Ricalcola cicli": "Recalculate cycles",
+  "Aggiornamento...": "Updating...",
+  "Cicli aggiornati": "Cycles updated",
+  "Views e importi ricalcolati con gli ultimi dati.": "Views and amounts recalculated with the latest data.",
+  "Cicli di pagamento generati automaticamente.": "Payment cycles generated automatically.",
 };

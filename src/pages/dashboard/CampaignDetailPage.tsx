@@ -145,45 +145,7 @@ function EditCampaignModal({
       } as any).eq("id", campaign.id);
       if (error) throw error;
 
-      // Recalculate unpaid cycles
-      const { data: unpaidPayments } = await supabase
-        .from("client_payments")
-        .select("id, cycle_id, cpm_views")
-        .eq("campaign_id", campaign.id)
-        .eq("is_paid", false);
-
-      if (unpaidPayments && unpaidPayments.length > 0) {
-        // Skip orphaned payments without a cycle reference (data integrity guard).
-        const cycleIds = unpaidPayments
-          .map((p) => p.cycle_id)
-          .filter((id): id is string => id !== null);
-        const { data: cycles } = await supabase
-          .from("payment_cycles")
-          .select("id, is_last_cycle")
-          .in("id", cycleIds);
-        const cycleMap = new Map((cycles ?? []).map((c) => [c.id, c.is_last_cycle]));
-
-        const creatorCount = 1; // no longer multiplied
-
-        for (const p of unpaidPayments) {
-          // Orphaned payments (cycle_id=null) are treated as non-last-cycle.
-          const isLast = (p.cycle_id ? cycleMap.get(p.cycle_id) : undefined) ?? false;
-          const fixedAmount = isLast ? 0 : newFixed;
-          let cpmAmount = newCpm * (p.cpm_views / 1000);
-          
-          // Apply spend cap (only to CPM, fixed always added on top)
-          if (parsedSpendCap != null && cpmAmount > parsedSpendCap) {
-            cpmAmount = parsedSpendCap;
-          }
-          const totalAmount = fixedAmount + cpmAmount;
-
-          await supabase.from("client_payments").update({
-            fixed_amount: fixedAmount,
-            cpm_amount: cpmAmount,
-            total_amount: totalAmount,
-          }).eq("id", p.id);
-        }
-      }
+      // Cycles and unpaid amounts are realigned by the database trigger on campaigns.
     },
     onSuccess: () => {
       toast({ title: t("Campagna aggiornata"), description: t("Cicli di pagamento ricalcolati") });
@@ -436,124 +398,12 @@ function CyclesSection({ campaignId, campaign, cycles }: {
   async function handleGenerateNextCycle() {
     setGenerating(true);
     try {
-      const existingCycles = cycles.data ?? [];
-      const lastCycle = existingCycles[existingCycles.length - 1];
-      const nextNumber = lastCycle ? lastCycle.cycleNumber + 1 : 1;
-
-      let startDate: string;
-      if (lastCycle) {
-        startDate = lastCycle.endDate;
-      } else {
-        startDate = campaign.start_date;
-      }
-
-      const endD = new Date(startDate + "T00:00:00Z");
-      endD.setUTCDate(endD.getUTCDate() + 30);
-      const endDate = endD.toISOString().slice(0, 10);
-
-      const campEndDate = campaign.end_date;
-      const isLastCycle = campEndDate ? startDate >= campEndDate : false;
-
-      const { data: cycle, error: cycleErr } = await supabase.from("payment_cycles").insert({
-        campaign_id: campaignId,
-        cycle_number: nextNumber,
-        cycle_start_date: startDate,
-        cycle_end_date: endDate,
-        is_last_cycle: isLastCycle,
-      }).select().single();
-      if (cycleErr) throw cycleErr;
-
-      const { data: cc } = await supabase.from("campaign_creators").select("creator_id").eq("campaign_id", campaignId);
-      // No longer need planned_creators multiplication
-
-      let prevViewsPaidCumulative = 0;
-      if (lastCycle?.payment) {
-        prevViewsPaidCumulative = lastCycle.payment.viewsPaidCumulative ?? 0;
-      }
-
-      const { data: accounts } = await supabase.from("tiktok_accounts").select("id").eq("campaign_id", campaignId);
-      const accIds = (accounts ?? []).map((a) => a.id);
-
-      const cap = (campaign as any).video_views_cap as number | null;
-      let totalCurrentViews = 0;
-      if (accIds.length) {
-        const { data: videos } = await supabase.from("videos").select("views, views_final, window_closed").in("tiktok_account_id", accIds);
-        console.log(`[CycleGen] Campaign — ${accIds.length} accounts, ${(videos ?? []).length} videos found`);
-        totalCurrentViews = (videos ?? []).reduce((s, v) => {
-          let effectiveViews = v.window_closed ? (v.views_final ?? v.views ?? 0) : (v.views ?? 0);
-          if (cap != null && cap > 0) effectiveViews = Math.min(effectiveViews, cap);
-          return s + effectiveViews;
-        }, 0);
-        console.log(`[CycleGen] totalCurrentViews=${totalCurrentViews}, prevPaid=${prevViewsPaidCumulative}, cap=${cap}`);
-      } else {
-        console.log(`[CycleGen] Campaign — no accounts found`);
-      }
-
-      const newViews = Math.max(0, totalCurrentViews - prevViewsPaidCumulative);
-      const viewsPaidCumulative = prevViewsPaidCumulative + newViews;
-
-      const fixedAmount = isLastCycle ? 0 : (campaign.client_fixed ?? 0);
-      let cpmAmount = (campaign.client_cpm ?? 0) * (newViews / 1000);
-
-      // Apply spend cap (only to CPM, fixed is always added on top)
-      const spendCap = (campaign as any).monthly_spend_cap as number | null;
-      let capReached = false;
-      if (spendCap != null && cpmAmount >= spendCap) {
-        cpmAmount = spendCap;
-        capReached = true;
-      }
-      const totalAmount = fixedAmount + cpmAmount;
-
-      await supabase.from("client_payments").insert({
-        campaign_id: campaignId,
-        cycle_id: cycle.id,
-        cycle_number: nextNumber,
-        due_date: endDate,
-        fixed_amount: fixedAmount,
-        cpm_views: newViews,
-        cpm_amount: cpmAmount,
-        total_amount: totalAmount,
-        views_snapshot_at: new Date().toISOString(),
-        views_paid_cumulative: viewsPaidCumulative,
-      } as any);
-
-      // If spend cap reached, pause campaign and create notifications
-      // capReached can only be true when spendCap is non-null (see line above),
-      // but TS can't narrow across the assignment — re-check inline.
-      if (capReached && spendCap != null) {
-        await supabase.from("campaigns").update({ status: "paused" } as any).eq("id", campaignId);
-
-        // Create notifications for admin/team
-        const { data: roles } = await supabase.from("user_roles").select("user_id").in("role", ["admin", "team"]);
-        const userIds = new Set((roles ?? []).map(r => r.user_id));
-
-        // Add client
-        const { data: campFull } = await supabase.from("campaigns").select("client_profile_id, name").eq("id", campaignId).single();
-        if (campFull?.client_profile_id) userIds.add(campFull.client_profile_id);
-
-        // Add creators
-        const creatorProfileIds = (cc ?? []).map(r => r.creator_id);
-        if (creatorProfileIds.length) {
-          const { data: crs } = await supabase.from("creators").select("profile_id").in("id", creatorProfileIds);
-          (crs ?? []).forEach(c => { if (c.profile_id) userIds.add(c.profile_id); });
-        }
-
-        const message = t('Cap di spesa raggiunto per "{name}" ({amount}). Campagna in pausa.', { name: campFull?.name ?? t("campagna"), amount: formatCurrency(spendCap) });
-        const notifs = Array.from(userIds).map(uid => ({
-          campaign_id: campaignId,
-          type: "spend_cap_reached",
-          message,
-          user_id: uid,
-        }));
-        if (notifs.length) {
-          await supabase.from("notifications").insert(notifs);
-        }
-
-        toast({ title: t("Ciclo {n} generato — CAP DI SPESA RAGGIUNTO", { n: nextNumber }), description: t("Campagna in pausa. Totale cappato a {amount}", { amount: formatCurrency(spendCap) }), variant: "destructive" });
-      } else {
-        toast({ title: t("Ciclo {n} generato", { n: nextNumber }), description: t("Da ricevere: {amount}", { amount: formatCurrency(totalAmount) }) });
-      }
-
+      const { error } = await (supabase.rpc as any)("refresh_campaign_payments", {
+        p_campaign_ids: [campaignId],
+        p_force_sync: true,
+      });
+      if (error) throw error;
+      toast({ title: t("Cicli aggiornati"), description: t("Views e importi ricalcolati con gli ultimi dati.") });
       qc.invalidateQueries({ queryKey: ["campaign-cycles", campaignId] });
       qc.invalidateQueries({ queryKey: ["campaign-detail", campaignId] });
       qc.invalidateQueries({ queryKey: ["client-payments"] });
@@ -570,7 +420,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
         <CardTitle className="text-lg">{t("Cicli di Pagamento")}</CardTitle>
         <Button size="sm" onClick={handleGenerateNextCycle} disabled={generating}>
           <RefreshCw className={`mr-2 h-4 w-4 ${generating ? "animate-spin" : ""}`} />
-          {generating ? t("Generazione...") : t("Genera Prossimo Ciclo")}
+          {generating ? t("Aggiornamento...") : t("Ricalcola cicli")}
         </Button>
       </CardHeader>
       <CardContent>
@@ -612,7 +462,13 @@ function CyclesSection({ campaignId, campaign, cycles }: {
                       ) : c.payment.isOverdue ? (
                         <Badge variant="destructive">🔴 {t("Scaduto")}</Badge>
                       ) : (
-                        <Badge variant="secondary">⏳ {t("In attesa")}</Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="secondary">⏳ {t("In attesa")}</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {t("Stima, si aggiorna con lo scraping")}
+                            {c.payment.viewsSnapshotAt && ` · ${new Date(c.payment.viewsSnapshotAt).toLocaleDateString("it-IT")}`}
+                          </span>
+                        </div>
                       )
                     ) : (
                       <span className="text-muted-foreground text-sm">—</span>
@@ -657,6 +513,7 @@ function PaymentTermsSection({ campaignId, campaign }: {
       });
       if (error) throw error;
       if (data && data.ok === false) throw new Error(data.error || t("Errore rigenerazione"));
+      await (supabase.rpc as any)("refresh_campaign_payments", { p_campaign_ids: [campaignId], p_force_sync: true });
 
       toast({
         title: t("Scadenzario rigenerato"),
