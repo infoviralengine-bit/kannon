@@ -125,8 +125,9 @@ export function ReceivableTab() {
   );
 
   const filtered = visiblePayments.filter((p) => {
-    if (filter === "pending") return !p.isPaid && !p.isOverdue;
     if (filter === "paid") return p.isPaid;
+    if (p.isPaid) return false;
+    if (filter === "pending") return !p.isOverdue;
     if (filter === "overdue") return p.isOverdue;
     return true;
   });
@@ -226,10 +227,10 @@ export function ReceivableTab() {
         <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
           <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t("Tutti")}</SelectItem>
+            <SelectItem value="all">{t("Da incassare")}</SelectItem>
             <SelectItem value="pending">{t("In attesa")}</SelectItem>
-            <SelectItem value="paid">{t("Pagati")}</SelectItem>
             <SelectItem value="overdue">{t("Scaduti")}</SelectItem>
+            <SelectItem value="paid">{t("Archiviati (pagati)")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
