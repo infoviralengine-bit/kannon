@@ -36,7 +36,7 @@ export function CampaignTimeline({ selectedId, onSelect }: Props) {
     const ends = campaigns.map((c) =>
       c.endDate ? new Date(c.endDate).getTime() : today.getTime() + 45 * DAY,
     );
-    const min = Math.min(...starts, today.getTime() - 10 * DAY);
+    const min = Math.min(...starts, today.getTime() - 30 * DAY);
     const max = Math.max(...ends, today.getTime() + 20 * DAY);
     const span = Math.max(DAY, max - min);
 
