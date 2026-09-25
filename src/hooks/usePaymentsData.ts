@@ -36,6 +36,7 @@ export interface ClientPaymentRow {
   amountOverridden: boolean;
   notes: string | null;
   invoiceSent: boolean;
+  campaignStatus: string;
 }
 
 export function useClientPayments(filterMonth?: number, filterYear?: number) {
@@ -49,7 +50,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
       if (error) throw error;
 
       const allCampIds = [...new Set((payments ?? []).map((p) => p.campaign_id))];
-      let campMap = new Map<string, { name: string; client_name: string; client_fixed: number; client_cpm: number; video_views_cap: number | null; monthly_spend_cap: number | null }>();
+      let campMap = new Map<string, { name: string; client_name: string; client_fixed: number; client_cpm: number; video_views_cap: number | null; monthly_spend_cap: number | null; status: string }>();
 
       if (allCampIds.length) {
         const [{ data: camps }] = await Promise.all([
@@ -61,6 +62,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           client_cpm: Number(c.client_cpm ?? 0),
           video_views_cap: (c as any).video_views_cap as number | null,
           monthly_spend_cap: (c as any).monthly_spend_cap as number | null,
+          status: c.status,
         }));
       }
       // Keep payments for paused/archived campaigns too: existing receivables remain collectible.
@@ -268,6 +270,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
             amountOverridden: (p as any).amount_overridden ?? false,
             notes: (p as any).notes ?? null,
             invoiceSent: (p as any).invoice_sent ?? false,
+            campaignStatus: camp?.status ?? "completed",
           };
       });
     },
@@ -733,6 +736,7 @@ export function useCampaignCycles(campaignId: string) {
             amountOverridden: (p as any).amount_overridden ?? false,
             notes: (p as any).notes ?? null,
             invoiceSent: (p as any).invoice_sent ?? false,
+            campaignStatus: camp?.status ?? "completed",
           };
         }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getContractPeriod } from "../contractPeriods";
+import { formatPeriodMonthReference, getContractPeriod } from "../contractPeriods";
 
 const utc = (y: number, m: number, d: number) => new Date(Date.UTC(y, m - 1, d));
 const iso = (d: Date) => d.toISOString().slice(0, 10);
@@ -70,5 +70,19 @@ describe("getContractPeriod - with periodOverrides", () => {
     const p3 = getContractPeriod(start, 3, fps, overrides);
     expect(iso(p3.periodStart)).toBe("2025-01-21");
     expect(iso(p3.periodEnd)).toBe("2025-02-19");
+  });
+});
+
+describe("formatPeriodMonthReference", () => {
+  it("shows one month when the period stays within a month", () => {
+    expect(formatPeriodMonthReference(utc(2026, 9, 1), utc(2026, 9, 30))).toBe("settembre 2026");
+  });
+
+  it("shows both months when the period crosses a month boundary", () => {
+    expect(formatPeriodMonthReference(utc(2026, 9, 7), utc(2026, 10, 6))).toBe("settembre–ottobre 2026");
+  });
+
+  it("supports the English interface", () => {
+    expect(formatPeriodMonthReference(utc(2026, 9, 7), utc(2026, 10, 6), "en-GB")).toBe("September–October 2026");
   });
 });

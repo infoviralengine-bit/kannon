@@ -176,6 +176,26 @@ export function formatPeriodRange(periodStart: Date, periodEnd: Date): string {
 }
 
 /**
+ * Format the calendar month or months touched by a period.
+ * Examples: "settembre 2026", "settembre–ottobre 2026".
+ */
+export function formatPeriodMonthReference(
+  periodStart: Date,
+  periodEnd: Date,
+  locale: "it-IT" | "en-GB" = "it-IT",
+): string {
+  const month = (date: Date) => date.toLocaleDateString(locale, { month: "long", timeZone: "UTC" });
+  const startMonth = month(periodStart);
+  const endMonth = month(periodEnd);
+  const startYear = periodStart.getUTCFullYear();
+  const endYear = periodEnd.getUTCFullYear();
+
+  if (startMonth === endMonth && startYear === endYear) return `${startMonth} ${startYear}`;
+  if (startYear === endYear) return `${startMonth}–${endMonth} ${startYear}`;
+  return `${startMonth} ${startYear}–${endMonth} ${endYear}`;
+}
+
+/**
  * Parse a date string (YYYY-MM-DD or ISO) to a UTC Date.
  */
 export function parseContractStartDate(dateStr: string): Date {
