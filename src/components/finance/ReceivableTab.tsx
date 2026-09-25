@@ -25,7 +25,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useI18n } from "@/i18n";
-import { formatPeriodMonthReference, parseContractStartDate } from "@/lib/contractPeriods";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -35,7 +34,7 @@ import {
 } from "@/components/ui/accordion";
 
 export function ReceivableTab() {
-  const { lang, t } = useI18n();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { data, isLoading } = useClientPayments();
   const { toast } = useToast();
@@ -51,12 +50,6 @@ export function ReceivableTab() {
   const [actionSaving, setActionSaving] = useState(false);
   const [campaignPickerOpen, setCampaignPickerOpen] = useState(false);
   const [includedInactiveCampaigns, setIncludedInactiveCampaigns] = useState<string[]>([]);
-
-  const paymentMonthLabel = (payment: ClientPaymentRow) => formatPeriodMonthReference(
-    parseContractStartDate(payment.cycleStartDate),
-    parseContractStartDate(payment.cycleEndDate),
-    lang === "en" ? "en-GB" : "it-IT",
-  );
 
   function invalidateAll() {
     qc.invalidateQueries({ queryKey: ["client-payments"] });
@@ -297,7 +290,7 @@ export function ReceivableTab() {
                                 </TableCell>
                                 <TableCell>
                                    <span className="font-medium">{t("Periodo {n}", { n: p.cycleNumber })}</span>
-                                   <span className="block text-xs text-muted-foreground capitalize">{paymentMonthLabel(p)}</span>
+                                   <span className="block text-xs text-muted-foreground capitalize">{p.monthLabel}</span>
                                   {p.paymentKind === "tot_fixed_first" && <Badge variant="secondary" className="ml-2">1ª metà</Badge>}
                                   {p.paymentKind === "tot_fixed_second" && <Badge variant="secondary" className="ml-2">2ª metà</Badge>}
                                   {p.paymentKind === "tot_final_cpm" && <Badge className="ml-2">CPM finale</Badge>}
