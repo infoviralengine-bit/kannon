@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  Check, ChevronDown, ChevronRight, Info, Pencil, Trash2,
+  Check, ChevronDown, ChevronRight, Filter, Info, Pencil, Trash2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +21,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useI18n } from "@/i18n";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -31,6 +34,7 @@ import {
 } from "@/components/ui/accordion";
 
 export function ReceivableTab() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { data, isLoading } = useClientPayments();
   const { toast } = useToast();
@@ -44,6 +48,8 @@ export function ReceivableTab() {
   const [editForm, setEditForm] = useState({ fixed: 0, cpm: 0, dueDate: "", notes: "" });
   const [deleting, setDeleting] = useState<ClientPaymentRow | null>(null);
   const [actionSaving, setActionSaving] = useState(false);
+  const [campaignPickerOpen, setCampaignPickerOpen] = useState(false);
+  const [includedInactiveCampaigns, setIncludedInactiveCampaigns] = useState<string[]>([]);
 
   function invalidateAll() {
     qc.invalidateQueries({ queryKey: ["client-payments"] });
@@ -101,7 +107,24 @@ export function ReceivableTab() {
     }
   }
 
-  const filtered = (data ?? []).filter((p) => {
+  const availableInactiveCampaigns = Array.from(
+    (data ?? []).reduce((campaigns, payment) => {
+      if (payment.campaignStatus !== "active") {
+        campaigns.set(payment.campaignId, {
+          id: payment.campaignId,
+          name: payment.campaignName,
+          status: payment.campaignStatus,
+        });
+      }
+      return campaigns;
+    }, new Map<string, { id: string; name: string; status: string }>()),
+  ).map(([, campaign]) => campaign).sort((a, b) => a.name.localeCompare(b.name));
+
+  const visiblePayments = (data ?? []).filter((payment) =>
+    payment.campaignStatus === "active" || includedInactiveCampaigns.includes(payment.campaignId),
+  );
+
+  const filtered = visiblePayments.filter((p) => {
     if (filter === "pending") return !p.isPaid && !p.isOverdue;
     if (filter === "paid") return p.isPaid;
     if (filter === "overdue") return p.isOverdue;
@@ -130,7 +153,7 @@ export function ReceivableTab() {
   const now = new Date();
   const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const allUnpaid = (data ?? []).filter((p) => !p.isPaid);
+  const allUnpaid = visiblePayments.filter((p) => !p.isPaid);
   const thisMonthTotal = allUnpaid.filter((p) => p.dueDate.startsWith(currentMonthStr)).reduce((s, p) => s + p.totalAmount, 0);
   const futureTotal = allUnpaid.filter((p) => p.dueDate > `${currentMonthStr}-31`).reduce((s, p) => s + p.totalAmount, 0);
   const overdueTotal = allUnpaid.filter((p) => p.isOverdue).reduce((s, p) => s + p.totalAmount, 0);
@@ -183,7 +206,7 @@ export function ReceivableTab() {
         {summaryCards.map((c) => (
           <Card key={c.label}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{c.label}</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">{t(c.label)}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className={`text-2xl font-bold ${c.color}`}>{formatCurrency(c.value)}</p>
@@ -192,14 +215,21 @@ export function ReceivableTab() {
         ))}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={() => setCampaignPickerOpen(true)}>
+          <Filter className="mr-2 h-4 w-4" />
+          {t("Aggiungi campagne")}
+          {includedInactiveCampaigns.length > 0 && (
+            <Badge variant="secondary" className="ml-2">{includedInactiveCampaigns.length}</Badge>
+          )}
+        </Button>
         <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
           <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tutti</SelectItem>
-            <SelectItem value="pending">In attesa</SelectItem>
-            <SelectItem value="paid">Pagati</SelectItem>
-            <SelectItem value="overdue">Scaduti</SelectItem>
+            <SelectItem value="all">{t("Tutti")}</SelectItem>
+            <SelectItem value="pending">{t("In attesa")}</SelectItem>
+            <SelectItem value="paid">{t("Pagati")}</SelectItem>
+            <SelectItem value="overdue">{t("Scaduti")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -207,7 +237,7 @@ export function ReceivableTab() {
       {isLoading ? (
         <Skeleton className="h-48" />
       ) : !filtered.length ? (
-        <Card><CardContent className="py-8 text-center text-muted-foreground">Nessun pagamento cliente trovato</CardContent></Card>
+        <Card><CardContent className="py-8 text-center text-muted-foreground">{t("Nessun pagamento cliente trovato")}</CardContent></Card>
       ) : (
         <Accordion type="multiple" defaultValue={defaultExpanded} className="space-y-3">
           {groupKeys.map((campaignId) => {
@@ -259,7 +289,8 @@ export function ReceivableTab() {
                                   {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                                 </TableCell>
                                 <TableCell>
-                                  {p.monthLabel}
+                                   <span className="font-medium">{t("Periodo {n}", { n: p.cycleNumber })}</span>
+                                   <span className="block text-xs text-muted-foreground capitalize">{p.monthLabel}</span>
                                   {p.paymentKind === "tot_fixed_first" && <Badge variant="secondary" className="ml-2">1ª metà</Badge>}
                                   {p.paymentKind === "tot_fixed_second" && <Badge variant="secondary" className="ml-2">2ª metà</Badge>}
                                   {p.paymentKind === "tot_final_cpm" && <Badge className="ml-2">CPM finale</Badge>}
@@ -376,6 +407,39 @@ export function ReceivableTab() {
           })}
         </Accordion>
       )}
+
+      <Sheet open={campaignPickerOpen} onOpenChange={setCampaignPickerOpen}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>{t("Campagne in pausa o concluse")}</SheetTitle>
+            <SheetDescription>{t("Le campagne attive sono sempre visibili. Seleziona qui le altre campagne da aggiungere.")}</SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-2">
+            {!availableInactiveCampaigns.length ? (
+              <p className="text-sm text-muted-foreground">{t("Nessuna campagna non attiva con pagamenti.")}</p>
+            ) : availableInactiveCampaigns.map((campaign) => {
+              const checked = includedInactiveCampaigns.includes(campaign.id);
+              return (
+                <Label
+                  key={campaign.id}
+                  htmlFor={`campaign-${campaign.id}`}
+                  className="flex cursor-pointer items-center gap-3 rounded-md border border-border p-3 transition-colors hover:bg-muted/50"
+                >
+                  <Checkbox
+                    id={`campaign-${campaign.id}`}
+                    checked={checked}
+                    onCheckedChange={(next) => setIncludedInactiveCampaigns((current) =>
+                      next ? [...current, campaign.id] : current.filter((id) => id !== campaign.id),
+                    )}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{campaign.name}</span>
+                  <Badge variant="outline">{campaign.status === "paused" ? t("In pausa") : t("Conclusa")}</Badge>
+                </Label>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Dialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
         <DialogContent>
