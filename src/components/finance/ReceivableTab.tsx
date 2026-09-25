@@ -109,7 +109,7 @@ export function ReceivableTab() {
 
   const availableInactiveCampaigns = Array.from(
     (data ?? []).reduce((campaigns, payment) => {
-      if (payment.campaignStatus !== "active") {
+      if (payment.campaignStatus === "paused" || payment.campaignStatus === "completed") {
         campaigns.set(payment.campaignId, {
           id: payment.campaignId,
           name: payment.campaignName,
