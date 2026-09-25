@@ -2168,6 +2168,10 @@ export type Database = {
         Args: { p_ids: string[]; p_views: number[] }
         Returns: undefined
       }
+      campaign_effective_views_until: {
+        Args: { p_campaign_id: string; p_cap: number; p_until: string }
+        Returns: number
+      }
       generate_recurring_expense_entries: {
         Args: { p_months_ahead?: number }
         Returns: number
@@ -2283,12 +2287,24 @@ export type Database = {
         Args: { _account_id: string; _user_id: string }
         Returns: boolean
       }
+      recalc_campaign_cycle_cpm: {
+        Args: { p_campaign_id: string }
+        Returns: number
+      }
+      refresh_campaign_payments: {
+        Args: { p_campaign_ids: string[]; p_force_sync?: boolean }
+        Returns: number
+      }
       rematch_all_unmatched_videos: {
         Args: { p_days_back?: number }
         Returns: number
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      sync_campaign_cycles: {
+        Args: { p_apply?: boolean; p_campaign_id: string }
+        Returns: Json
+      }
       update_finance_cash: { Args: { p_amount: number }; Returns: undefined }
     }
     Enums: {
