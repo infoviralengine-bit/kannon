@@ -124,13 +124,20 @@ export function ReceivableTab() {
     payment.campaignStatus === "active" || includedInactiveCampaigns.includes(payment.campaignId),
   );
 
-  const filtered = visiblePayments.filter((p) => {
+  const statusFiltered = visiblePayments.filter((p) => {
     if (filter === "paid") return p.isPaid;
     if (p.isPaid) return false;
     if (filter === "pending") return !p.isOverdue;
     if (filter === "overdue") return p.isOverdue;
     return true;
   });
+
+  const filtered = filter === "paid"
+    ? statusFiltered
+    : Object.values(statusFiltered.reduce<Record<string, ClientPaymentRow[]>>((acc, payment) => {
+        (acc[payment.campaignId] = acc[payment.campaignId] ?? []).push(payment);
+        return acc;
+      }, {})).flatMap((rows) => rows.sort((a, b) => a.cycleNumber - b.cycleNumber).slice(0, 2));
 
   const grouped = filtered.reduce<Record<string, ClientPaymentRow[]>>((acc, p) => {
     (acc[p.campaignId] = acc[p.campaignId] ?? []).push(p);
@@ -245,6 +252,7 @@ export function ReceivableTab() {
             const rows = grouped[campaignId];
             const camp = rows[0];
             const sum = campaignSummary(rows);
+            const showVariableColumns = rows.some((payment) => payment.showsVariable);
             return (
               <AccordionItem key={campaignId} value={campaignId} className="border-0">
                 <Card>
@@ -253,13 +261,13 @@ export function ReceivableTab() {
                       <div className="text-left">
                         <div className="font-semibold text-base">{camp.campaignName}</div>
                         <div className="text-xs text-muted-foreground">
-                          {camp.clientName} · {sum.count} {sum.count === 1 ? "pagamento" : "pagamenti"}
+                           {camp.clientName} · {sum.count} {sum.count === 1 ? t("ciclo") : t("cicli")}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap justify-end">
                         <Button size="sm" variant="ghost" className="h-7 text-xs"
                           onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/campaigns/${campaignId}`); }}>
-                          Apri →
+                           {t("Apri")} →
                         </Button>
                       </div>
                     </div>
@@ -269,14 +277,14 @@ export function ReceivableTab() {
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-8"></TableHead>
-                          <TableHead>Mese</TableHead>
-                          <TableHead>Scadenza</TableHead>
-                          <TableHead className="text-right">Fisso (€)</TableHead>
-                          <TableHead className="text-right">Views nuove <CappedBadge /></TableHead>
-                          <TableHead className="text-right">CPM (€)</TableHead>
-                          <TableHead className="text-right">Totale (€)</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Azione</TableHead>
+                           <TableHead>{t("Ciclo")}</TableHead>
+                           <TableHead>{t("Scadenza")}</TableHead>
+                           <TableHead className="text-right">{t("Fisso (€)")}</TableHead>
+                           {showVariableColumns && <TableHead className="text-right">{t("Views nuove")} <CappedBadge /></TableHead>}
+                           {showVariableColumns && <TableHead className="text-right">{t("CPM (€)")}</TableHead>}
+                           <TableHead className="text-right">{t("Totale (€)")}</TableHead>
+                           <TableHead>{t("Status")}</TableHead>
+                           <TableHead className="text-right">{t("Azione")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -290,9 +298,9 @@ export function ReceivableTab() {
                                   {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                                 </TableCell>
                                 <TableCell>
-                                   <span className="font-medium">{t("Periodo {n}", { n: p.cycleNumber })}</span>
+                                   <span className="font-medium">{t("Ciclo {n}", { n: p.cycleNumber })}</span>
                                    <span className="block text-xs text-muted-foreground capitalize">{p.monthLabel}</span>
-                                  {!p.isPaid && p.paymentKind === "standard" && !p.amountOverridden && (
+                                  {!p.isPaid && p.showsVariable && p.paymentKind === "standard" && !p.amountOverridden && (
                                     <span className="block text-xs text-muted-foreground">
                                       {t("Stima, si aggiorna con lo scraping")}
                                       {p.viewsSnapshotAt && ` · ${new Date(p.viewsSnapshotAt).toLocaleDateString("it-IT")}`}
@@ -304,8 +312,8 @@ export function ReceivableTab() {
                                 </TableCell>
                                 <TableCell>{new Date(p.dueDate).toLocaleDateString("it-IT")}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(p.fixedAmount)}</TableCell>
-                                <TableCell className="text-right">{formatViews(p.cpmViews)}</TableCell>
-                                <TableCell className="text-right">{formatCurrency(p.cpmAmount)}</TableCell>
+                                 {showVariableColumns && <TableCell className="text-right">{p.showsVariable ? formatViews(p.cpmViews) : null}</TableCell>}
+                                 {showVariableColumns && <TableCell className="text-right">{p.showsVariable ? formatCurrency(p.cpmAmount) : null}</TableCell>}
                                 <TableCell className="text-right font-semibold">
                                   {formatCurrency(p.totalAmount)}
                                   {p.amountOverridden && (
@@ -352,29 +360,29 @@ export function ReceivableTab() {
                               </TableRow>
                               {isExpanded && (
                                 <TableRow key={`${p.id}-detail`}>
-                                  <TableCell colSpan={9} className="bg-muted/30 px-6 py-4">
+                                   <TableCell colSpan={showVariableColumns ? 9 : 7} className="bg-muted/30 px-6 py-4">
                                     <div className="grid gap-3 md:grid-cols-2 text-sm">
                                       <div className="space-y-2">
                                         <div className="flex justify-between">
-                                          <span className="text-muted-foreground">Periodo</span>
-                                          <span>{new Date(p.cycleStartDate).toLocaleDateString("it-IT")} — {new Date(p.cycleEndDate).toLocaleDateString("it-IT")}</span>
+                                           <span className="text-muted-foreground">{t("Ciclo")}</span>
+                                           <span>{new Date(p.cycleStartDate).toLocaleDateString("it-IT")} - {new Date(p.cycleEndDate).toLocaleDateString("it-IT")}</span>
                                         </div>
-                                        <div className="flex justify-between">
+                                         {p.showsVariable && <div className="flex justify-between">
                                           <span className="text-muted-foreground">Fisso</span>
                                           <span>{formatCurrency(p.fixedAmount)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
+                                         </div>}
+                                         {p.showsVariable && <div className="flex justify-between">
                                           <span className="text-muted-foreground">Views totali campagna</span>
                                           <span>{formatViews(p.viewsPaidCumulative)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
+                                         </div>}
+                                         {p.showsVariable && <div className="flex justify-between">
                                           <span className="text-muted-foreground">Views già pagate cicli precedenti</span>
                                           <span>{formatViews(Math.max(0, p.viewsPaidCumulative - p.cpmViews))}</span>
-                                        </div>
-                                        <div className="flex justify-between">
+                                         </div>}
+                                         {p.showsVariable && <div className="flex justify-between">
                                           <span className="text-muted-foreground">Views nuove questo ciclo <CappedBadge /></span>
                                           <span>{formatViews(p.cpmViews)}</span>
-                                        </div>
+                                         </div>}
                                         <div className="flex justify-between">
                                           <span className="text-muted-foreground">CPM</span>
                                           <span>{formatViews(p.cpmViews)} × €{p.clientCpm} / 1.000 = {formatCurrency(p.cpmAmount)}</span>
@@ -385,10 +393,10 @@ export function ReceivableTab() {
                                         </div>
                                       </div>
                                       <div className="space-y-2">
-                                        {p.isFirstCycle && (
+                                         {p.isFirstCycle && p.clientCpm > 0 && (
                                           <div className="flex items-start gap-2 rounded-md bg-primary/10 p-3 text-xs">
                                             <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                                            <span>Nessun CPM — le views verranno conteggiate dal prossimo ciclo</span>
+                                             <span>{t("Il primo ciclo comprende solo il fisso")}</span>
                                           </div>
                                         )}
                                         {p.isLastCycle && (

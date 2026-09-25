@@ -167,7 +167,7 @@ export function PayableTab() {
               const refPeriod = Math.max(1, maxCurrent + periodOffset);
               return (
                 <>
-                  <p className="text-xs font-medium text-foreground">{t("Periodo {n}", { n: refPeriod })}</p>
+                  <p className="text-xs font-medium text-foreground">{t("Ciclo {n}", { n: refPeriod })}</p>
                   <p className="text-[10px] text-muted-foreground">
                     {periodOffset === 0 ? t("Corrente") : t("Applicato a tutti i contratti")}
                   </p>
@@ -219,14 +219,14 @@ export function PayableTab() {
                 <div>
                   <CardTitle className="text-base text-foreground">{t("Totale per Creator")}</CardTitle>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {t("Somma di tutti i contratti nei periodi selezionati. Espandi per vedere il dettaglio.")}
+                    {t("Somma di tutti i contratti nei cicli selezionati. Espandi per vedere il dettaglio.")}
                   </p>
                 </div>
               </div>
             </CardHeader>
             {!creatorRollups.length ? (
               <CardContent className="py-8 text-center text-muted-foreground text-sm">
-                {t("Nessun creator con attività nei periodi selezionati.")}
+                {t("Nessun creator con attività nei cicli selezionati.")}
               </CardContent>
             ) : (
               <div className="divide-y divide-border">
@@ -281,7 +281,7 @@ export function PayableTab() {
                                     {b.contractName}
                                   </span>
                                   <p className="text-[10px] text-muted-foreground">
-                                    {t("Periodo {n} ·", { n: b.periodNumber })} {getPeriodMonthLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart, b.section.periodOverrides)} · {getPeriodLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart, b.section.periodOverrides)}
+                                    {t("Ciclo {n} ·", { n: b.periodNumber })} {getPeriodMonthLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart, b.section.periodOverrides)} · {getPeriodLabel(b.section.startDate, b.periodNumber, b.section.firstPeriodStart, b.section.periodOverrides)}
                                   </p>
                                 </TableCell>
                                 <TableCell className="text-center text-muted-foreground text-sm">
@@ -346,14 +346,14 @@ export function PayableTab() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-medium text-foreground">{t("Periodo {n} ·", { n: pn })} {getPeriodMonthLabel(section.startDate, pn, section.firstPeriodStart, section.periodOverrides)}</p>
+                       <p className="text-xs font-medium text-foreground">{t("Ciclo {n} ·", { n: pn })} {getPeriodMonthLabel(section.startDate, pn, section.firstPeriodStart, section.periodOverrides)}</p>
                       <p className="text-[10px] text-muted-foreground">{getPeriodLabel(section.startDate, pn, section.firstPeriodStart, section.periodOverrides)}</p>
                     </div>
                   </div>
                 </CardHeader>
                 {!filteredCreators.length ? (
                   <CardContent className="py-8 text-center text-muted-foreground text-sm">
-                    {showOnlyActive ? t("Nessun creator con attività per questo periodo.") : t("Nessun creator in questo contratto.")}
+                     {showOnlyActive ? t("Nessun creator con attività per questo ciclo.") : t("Nessun creator in questo contratto.")}
                   </CardContent>
                 ) : (
                   <Table>
@@ -423,7 +423,7 @@ export function PayableTab() {
             <DialogTitle>{t("Conferma pagamento")}</DialogTitle>
             <DialogDescription>
               {t("Segna come pagato")} <strong>{confirm?.creator.creatorName}</strong> {t("per")}{" "}
-              {confirm?.section.contractName} {confirm ? `${t("Periodo {n} ·", { n: confirm.periodNumber })} ${getPeriodMonthLabel(confirm.section.startDate, confirm.periodNumber, confirm.section.firstPeriodStart, confirm.section.periodOverrides)}?` : ""}
+               {confirm?.section.contractName} {confirm ? `${t("Ciclo {n} ·", { n: confirm.periodNumber })} ${getPeriodMonthLabel(confirm.section.startDate, confirm.periodNumber, confirm.section.firstPeriodStart, confirm.section.periodOverrides)}?` : ""}
             </DialogDescription>
           </DialogHeader>
           {confirm && (

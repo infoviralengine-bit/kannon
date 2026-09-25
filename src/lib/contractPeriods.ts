@@ -195,6 +195,21 @@ export function formatPeriodMonthReference(
   return `${startMonth} ${startYear}–${endMonth} ${endYear}`;
 }
 
+/** Compact month reference for payment-cycle lists, e.g. "ott–nov". */
+export function formatCycleMonthReference(
+  periodStart: Date,
+  periodEnd: Date,
+  locale: "it-IT" | "en-GB" = "it-IT",
+): string {
+  const month = (date: Date) => date
+    .toLocaleDateString(locale, { month: "short", timeZone: "UTC" })
+    .replace(".", "")
+    .toLocaleLowerCase(locale);
+  const startMonth = month(periodStart);
+  const endMonth = month(periodEnd);
+  return startMonth === endMonth ? startMonth : `${startMonth}–${endMonth}`;
+}
+
 /**
  * Parse a date string (YYYY-MM-DD or ISO) to a UTC Date.
  */
