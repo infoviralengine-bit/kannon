@@ -8,6 +8,7 @@ import { content } from "./dict/content";
 import { portals } from "./dict/portals";
 import { campaign } from "./dict/campaign";
 import { settings } from "./dict/settings";
+import { dashboard } from "./dict/dashboard";
 
 const shell: Record<string, string> = {
   // Shell / navigation
