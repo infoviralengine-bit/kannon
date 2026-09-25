@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { sumEffectiveViews, sumEffectiveViewsCapped, countByWindowStatus } from "@/lib/videoWindow";
 import { isFixedEarnedMonthly, getMonthlyTarget } from "@/lib/fixedEarned";
 import { computeCreatorPayableMonth, type ContractInput } from "@/lib/creatorPayable";
+import { formatPeriodMonthReference, parseContractStartDate } from "@/lib/contractPeriods";
+import { useI18n } from "@/i18n";
 
 /* ═══════════════════════════════════════════════
    Client Payments (Da Ricevere)
@@ -40,8 +42,9 @@ export interface ClientPaymentRow {
 }
 
 export function useClientPayments(filterMonth?: number, filterYear?: number) {
+  const { lang } = useI18n();
   return useQuery({
-    queryKey: ["client-payments", filterMonth, filterYear],
+    queryKey: ["client-payments", filterMonth, filterYear, lang],
     queryFn: async () => {
       const { data: payments, error } = await supabase
         .from("client_payments")
@@ -223,17 +226,18 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
 
       const now = new Date();
       const todayStr = now.toISOString().slice(0, 10);
-      const monthNamesFull = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
-      const monthNamesShort = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
-
       return activePayments.map((p): ClientPaymentRow => {
         const camp = campMap.get(p.campaign_id);
         const dueDate = p.due_date;
-        const dd = new Date(dueDate);
-        const monthIdx = dd.getMonth();
-        const yr = dd.getFullYear();
         // cycle_id can be null for orphaned/legacy rows; downstream uses cycle?.* safely.
         const cycle = p.cycle_id ? cycleMap.get(p.cycle_id) : undefined;
+        const cycleStartDate = cycle?.cycle_start_date ?? dueDate;
+        const cycleEndDate = cycle?.cycle_end_date ?? dueDate;
+        const monthLabel = formatPeriodMonthReference(
+          parseContractStartDate(cycleStartDate),
+          parseContractStartDate(cycleEndDate),
+          lang === "en" ? "en-GB" : "it-IT",
+        );
 
         // Use recalculated values for unpaid payments, stored values for paid ones
         const recalc = recalculated.get(p.id);
@@ -249,8 +253,8 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           campaignName: camp?.name ?? "—",
           clientName: camp?.client_name ?? "—",
           cycleNumber: p.cycle_number,
-          cycleLabel: `Ciclo ${p.cycle_number} — ${monthNamesShort[monthIdx]} ${yr}`,
-          monthLabel: `${monthNamesFull[monthIdx]} ${yr}`,
+          cycleLabel: `${lang === "en" ? "Cycle" : "Ciclo"} ${p.cycle_number} · ${monthLabel}`,
+          monthLabel,
           dueDate,
           fixedAmount,
           cpmViews,
@@ -260,8 +264,8 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
           paidAt: p.paid_at,
           isOverdue: !p.is_paid && dueDate < todayStr,
           viewsPaidCumulative,
-          cycleStartDate: cycle?.cycle_start_date ?? dueDate,
-          cycleEndDate: cycle?.cycle_end_date ?? dueDate,
+          cycleStartDate,
+          cycleEndDate,
           isLastCycle: cycle?.is_last_cycle ?? false,
           isFirstCycle: p.cycle_number === 1 && cpmViews === 0,
             clientFixed: camp?.client_fixed ?? 0,
@@ -617,8 +621,9 @@ export interface CampaignCycleRow {
 }
 
 export function useCampaignCycles(campaignId: string) {
+  const { lang } = useI18n();
   return useQuery({
-    queryKey: ["campaign-cycles", campaignId],
+    queryKey: ["campaign-cycles", campaignId, lang],
     queryFn: async () => {
       const { data: cycles } = await supabase
         .from("payment_cycles")
@@ -697,26 +702,25 @@ export function useCampaignCycles(campaignId: string) {
 
       const now = new Date();
       const todayStr = now.toISOString().slice(0, 10);
-      const monthNamesShort = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
-      const monthNamesFull = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
-
       return (cycles ?? []).map((c): CampaignCycleRow => {
         const p = (payments ?? []).find((p) => p.cycle_id === c.id);
         let payment: ClientPaymentRow | null = null;
         if (p) {
           const recalc = recalculated.get(p.id);
           const dueDate = p.due_date;
-          const dd = new Date(dueDate);
-          const monthIdx = dd.getMonth();
-          const yr = dd.getFullYear();
+          const monthLabel = formatPeriodMonthReference(
+            parseContractStartDate(c.cycle_start_date),
+            parseContractStartDate(c.cycle_end_date),
+            lang === "en" ? "en-GB" : "it-IT",
+          );
           payment = {
             id: p.id,
             campaignId: p.campaign_id,
             campaignName: camp?.name ?? "—",
             clientName: camp?.client_name ?? "—",
             cycleNumber: p.cycle_number,
-            cycleLabel: `Ciclo ${p.cycle_number} — ${monthNamesShort[monthIdx]} ${yr}`,
-            monthLabel: `${monthNamesFull[monthIdx]} ${yr}`,
+            cycleLabel: `${lang === "en" ? "Cycle" : "Ciclo"} ${p.cycle_number} · ${monthLabel}`,
+            monthLabel,
             dueDate,
             fixedAmount: recalc?.fixedAmount ?? Number(p.fixed_amount),
             cpmViews: recalc?.cpmViews ?? p.cpm_views,
