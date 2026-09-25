@@ -364,6 +364,12 @@ export function ReceivableTab() {
                                            <span className="text-muted-foreground">{t("Ciclo")}</span>
                                            <span>{new Date(p.cycleStartDate).toLocaleDateString("it-IT")} - {new Date(p.cycleEndDate).toLocaleDateString("it-IT")}</span>
                                         </div>
+                                         {!p.isPaid && p.showsVariable && p.paymentKind === "standard" && !p.amountOverridden && (
+                                           <div className="flex justify-between">
+                                             <span className="text-muted-foreground">{t("Stima, si aggiorna con lo scraping")}</span>
+                                             <span>{p.viewsSnapshotAt ? new Date(p.viewsSnapshotAt).toLocaleDateString("it-IT") : "—"}</span>
+                                           </div>
+                                         )}
                                          {p.showsVariable && <div className="flex justify-between">
                                           <span className="text-muted-foreground">Fisso</span>
                                           <span>{formatCurrency(p.fixedAmount)}</span>
