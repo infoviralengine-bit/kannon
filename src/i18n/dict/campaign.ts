@@ -53,6 +53,7 @@ export const campaign: Record<string, string> = {
   "Nessun ciclo di pagamento generato.": "No payment cycle generated.",
   "Ciclo": "Cycle",
   "Periodo": "Period",
+  "Date ciclo": "Cycle dates",
   "Fisso (€)": "Fixed (€)",
   "CPM (€)": "CPM (€)",
   "Totale (€)": "Total (€)",

@@ -433,7 +433,7 @@ function CyclesSection({ campaignId, campaign, cycles }: {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("Ciclo")}</TableHead>
-                <TableHead>{t("Periodo")}</TableHead>
+                <TableHead>{t("Date ciclo")}</TableHead>
                 {!isTeam && <TableHead className="text-right">{t("Fisso (€)")}</TableHead>}
                 <TableHead className="text-right">{t("Views")} <CappedBadge /></TableHead>
                 {!isTeam && <TableHead className="text-right">{t("CPM (€)")}</TableHead>}

@@ -252,6 +252,7 @@ export function ReceivableTab() {
             const rows = grouped[campaignId];
             const camp = rows[0];
             const sum = campaignSummary(rows);
+            const showVariableColumns = rows.some((payment) => payment.showsVariable);
             return (
               <AccordionItem key={campaignId} value={campaignId} className="border-0">
                 <Card>
@@ -279,8 +280,8 @@ export function ReceivableTab() {
                            <TableHead>{t("Ciclo")}</TableHead>
                            <TableHead>{t("Scadenza")}</TableHead>
                            <TableHead className="text-right">{t("Fisso (€)")}</TableHead>
-                           <TableHead className="text-right">{t("Views nuove")} <CappedBadge /></TableHead>
-                           <TableHead className="text-right">{t("CPM (€)")}</TableHead>
+                           {showVariableColumns && <TableHead className="text-right">{t("Views nuove")} <CappedBadge /></TableHead>}
+                           {showVariableColumns && <TableHead className="text-right">{t("CPM (€)")}</TableHead>}
                            <TableHead className="text-right">{t("Totale (€)")}</TableHead>
                            <TableHead>{t("Status")}</TableHead>
                            <TableHead className="text-right">{t("Azione")}</TableHead>
@@ -311,8 +312,8 @@ export function ReceivableTab() {
                                 </TableCell>
                                 <TableCell>{new Date(p.dueDate).toLocaleDateString("it-IT")}</TableCell>
                                 <TableCell className="text-right">{formatCurrency(p.fixedAmount)}</TableCell>
-                                 <TableCell className="text-right">{p.showsVariable ? formatViews(p.cpmViews) : null}</TableCell>
-                                 <TableCell className="text-right">{p.showsVariable ? formatCurrency(p.cpmAmount) : null}</TableCell>
+                                 {showVariableColumns && <TableCell className="text-right">{p.showsVariable ? formatViews(p.cpmViews) : null}</TableCell>}
+                                 {showVariableColumns && <TableCell className="text-right">{p.showsVariable ? formatCurrency(p.cpmAmount) : null}</TableCell>}
                                 <TableCell className="text-right font-semibold">
                                   {formatCurrency(p.totalAmount)}
                                   {p.amountOverridden && (
@@ -359,7 +360,7 @@ export function ReceivableTab() {
                               </TableRow>
                               {isExpanded && (
                                 <TableRow key={`${p.id}-detail`}>
-                                  <TableCell colSpan={9} className="bg-muted/30 px-6 py-4">
+                                   <TableCell colSpan={showVariableColumns ? 9 : 7} className="bg-muted/30 px-6 py-4">
                                     <div className="grid gap-3 md:grid-cols-2 text-sm">
                                       <div className="space-y-2">
                                         <div className="flex justify-between">
