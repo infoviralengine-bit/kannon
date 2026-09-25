@@ -39,6 +39,7 @@ export interface ClientPaymentRow {
   notes: string | null;
   invoiceSent: boolean;
   campaignStatus: string;
+  viewsSnapshotAt: string | null;
 }
 
 export function useClientPayments(filterMonth?: number, filterYear?: number) {
@@ -198,29 +199,9 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
             return;
           }
 
-          // Standard unpaid: first one absorbs (total - cumulativePaid), others get 0
-          // cycle_id can be null for orphaned/legacy rows → treat as non-last-cycle.
-          const cycle = p.cycle_id ? cycleMap.get(p.cycle_id) : undefined;
-          const isLast = cycle?.is_last_cycle ?? false;
-
-          let cpmViews = 0;
-          if (!residualAssigned) {
-            cpmViews = Math.max(0, totalCampaignViews - cumulativePaid);
-            residualAssigned = true;
-          }
-
-          const fixedAmount = isLast ? 0 : clientFixed;
-          let cpmAmount = clientCpm * (cpmViews / 1000);
-          if (spendCap != null && cpmAmount > spendCap) cpmAmount = spendCap;
-          const totalAmount = fixedAmount + cpmAmount;
-
-          recalculated.set(p.id, {
-            cpmViews,
-            cpmAmount,
-            fixedAmount,
-            totalAmount,
-            viewsPaidCumulative: cumulativePaid + cpmViews,
-          });
+          // Standard unpaid: amounts are computed and stored by the database
+          // (recalc_campaign_cycle_cpm) after every scraping.
+          return;
         });
       });
 
@@ -275,6 +256,7 @@ export function useClientPayments(filterMonth?: number, filterYear?: number) {
             notes: (p as any).notes ?? null,
             invoiceSent: (p as any).invoice_sent ?? false,
             campaignStatus: camp?.status ?? "completed",
+            viewsSnapshotAt: (p as any).views_snapshot_at ?? null,
           };
       });
     },
@@ -649,56 +631,8 @@ export function useCampaignCycles(campaignId: string) {
         .eq("campaign_id", campaignId);
       const realCreators = ccRows?.length ?? 0;
 
-      // ── Live recalculation for unpaid cycles ──
-      const hasUnpaid = (payments ?? []).some(p => !p.is_paid);
-      let liveViewsTotal = 0;
-      if (hasUnpaid) {
-        const { data: rpcRows } = await supabase.rpc("get_campaign_total_views", {
-          p_campaign_ids: [campaignId],
-        });
-        liveViewsTotal = Number((rpcRows as any)?.[0]?.total_views ?? 0);
-      }
-
-      // Find last paid cumulative views
-      const sortedPayments = [...(payments ?? [])].sort((a, b) => a.cycle_number - b.cycle_number);
-      let lastPaidCumulative = 0;
-      sortedPayments.forEach(p => {
-        if (p.is_paid) lastPaidCumulative = p.views_paid_cumulative ?? 0;
-      });
-
-      const unpaidPayments = sortedPayments.filter(p => !p.is_paid);
-      const lastUnpaidId = unpaidPayments.length > 0 ? unpaidPayments[unpaidPayments.length - 1].id : null;
-
+      // Unpaid cycle amounts are stored by the database (recalc_campaign_cycle_cpm).
       const recalculated = new Map<string, { cpmViews: number; cpmAmount: number; fixedAmount: number; totalAmount: number; viewsPaidCumulative: number }>();
-
-      if (hasUnpaid) {
-        const clientCpm = Number(camp?.client_cpm ?? 0);
-        const clientFixed = Number(camp?.client_fixed ?? 0);
-        const spendCap = (camp as any)?.monthly_spend_cap as number | null;
-        const totalNewViews = Math.max(0, liveViewsTotal - lastPaidCumulative);
-
-        unpaidPayments.forEach((p, idx) => {
-          const cycle = (cycles ?? []).find(c => c.id === p.cycle_id);
-          const isLast = cycle?.is_last_cycle ?? false;
-
-          if (p.id === lastUnpaidId) {
-            const prevCyclesCpmViews = unpaidPayments.slice(0, idx).reduce((s, up) => s + up.cpm_views, 0);
-            const cpmViews = Math.max(0, totalNewViews - prevCyclesCpmViews);
-            const fixedAmount = isLast ? 0 : clientFixed;
-            let cpmAmount = clientCpm * (cpmViews / 1000);
-            if (spendCap != null && cpmAmount > spendCap) cpmAmount = spendCap;
-            const totalAmount = fixedAmount + cpmAmount;
-
-            recalculated.set(p.id, {
-              cpmViews,
-              cpmAmount,
-              fixedAmount,
-              totalAmount,
-              viewsPaidCumulative: lastPaidCumulative + totalNewViews,
-            });
-          }
-        });
-      }
 
       const now = new Date();
       const todayStr = now.toISOString().slice(0, 10);
@@ -741,6 +675,7 @@ export function useCampaignCycles(campaignId: string) {
             notes: (p as any).notes ?? null,
             invoiceSent: (p as any).invoice_sent ?? false,
             campaignStatus: camp?.status ?? "completed",
+            viewsSnapshotAt: (p as any).views_snapshot_at ?? null,
           };
         }
 
