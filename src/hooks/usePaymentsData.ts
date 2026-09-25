@@ -634,7 +634,7 @@ export function useCampaignCycles(campaignId: string) {
 
       const { data: camp } = await supabase
         .from("campaigns")
-        .select("name, client_name, client_fixed, client_cpm, video_views_cap, monthly_spend_cap")
+        .select("name, client_name, client_fixed, client_cpm, video_views_cap, monthly_spend_cap, status")
         .eq("id", campaignId)
         .single();
 
