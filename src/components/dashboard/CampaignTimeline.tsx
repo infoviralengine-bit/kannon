@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { CalendarRange, Infinity as InfinityIcon, Users } from "lucide-react";
+import { CalendarRange, ChevronLeft, Infinity as InfinityIcon, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ const MONTHS_IT = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set"
 
 function shortDate(iso: string) {
   const d = new Date(iso);
-  return `${d.getDate()} ${MONTHS_IT[d.getMonth()]}`;
+  return `${d.getUTCDate()} ${MONTHS_IT[d.getUTCMonth()]}`;
 }
 
 type Props = {
@@ -30,27 +30,30 @@ export function CampaignTimeline({ selectedId, onSelect }: Props) {
 
   const scale = useMemo(() => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
     if (!campaigns.length) return null;
-    const starts = campaigns.map((c) => new Date(c.startDate).getTime());
+    const monthAgo = new Date(today);
+    monthAgo.setUTCDate(1);
+    monthAgo.setUTCMonth(monthAgo.getUTCMonth() - 1);
+    monthAgo.setUTCDate(Math.min(today.getUTCDate(), new Date(Date.UTC(monthAgo.getUTCFullYear(), monthAgo.getUTCMonth() + 1, 0)).getUTCDate()));
     const ends = campaigns.map((c) =>
       c.endDate ? new Date(c.endDate).getTime() : today.getTime() + 45 * DAY,
     );
-    const min = Math.min(...starts, today.getTime() - 30 * DAY);
+    const min = monthAgo.getTime();
     const max = Math.max(...ends, today.getTime() + 20 * DAY);
     const span = Math.max(DAY, max - min);
 
     // Tacche mensili
     const ticks: { label: string; left: number }[] = [];
     const cursor = new Date(min);
-    cursor.setDate(1);
-    cursor.setHours(0, 0, 0, 0);
+    cursor.setUTCDate(1);
+    cursor.setUTCHours(0, 0, 0, 0);
     while (cursor.getTime() <= max) {
       const left = ((cursor.getTime() - min) / span) * 100;
       if (left >= 0 && left <= 100) {
-        ticks.push({ label: `${MONTHS_IT[cursor.getMonth()]} ${String(cursor.getFullYear()).slice(2)}`, left });
+        ticks.push({ label: `${MONTHS_IT[cursor.getUTCMonth()]} ${String(cursor.getUTCFullYear()).slice(2)}`, left });
       }
-      cursor.setMonth(cursor.getMonth() + 1);
+      cursor.setUTCMonth(cursor.getUTCMonth() + 1);
     }
 
     return { min, span, ticks, todayLeft: ((today.getTime() - min) / span) * 100 };
@@ -93,7 +96,8 @@ export function CampaignTimeline({ selectedId, onSelect }: Props) {
           <div className="space-y-2">
             {/* Righello mesi */}
             <div className="relative ml-0 h-5 md:ml-[220px]">
-              {scale.ticks.map((tick) => (
+              <span className="absolute left-0 text-[10px] uppercase text-muted-foreground">{shortDate(new Date(scale.min).toISOString())}</span>
+              {scale.ticks.filter((tick) => tick.left > 7).map((tick) => (
                 <span
                   key={tick.label}
                   className="absolute -translate-x-1/2 text-[10px] uppercase tracking-wide text-muted-foreground"
@@ -107,8 +111,10 @@ export function CampaignTimeline({ selectedId, onSelect }: Props) {
             {campaigns.map((c) => {
               const startMs = new Date(c.startDate).getTime();
               const endMs = c.endDate ? new Date(c.endDate).getTime() : scale.min + scale.span;
-              const left = Math.max(0, ((startMs - scale.min) / scale.span) * 100);
-              const width = Math.max(2, ((endMs - startMs) / scale.span) * 100);
+              const clippedStart = Math.max(startMs, scale.min);
+              const clippedEnd = Math.min(endMs, scale.min + scale.span);
+              const left = ((clippedStart - scale.min) / scale.span) * 100;
+              const width = Math.max(0, ((clippedEnd - clippedStart) / scale.span) * 100);
               const isSelected = selectedId === c.id;
               const ending = c.daysLeft !== null && c.daysLeft <= 14;
 
@@ -140,17 +146,18 @@ export function CampaignTimeline({ selectedId, onSelect }: Props) {
                         style={{ left: `${tick.left}%` }}
                       />
                     ))}
-                    <div
+                    {width > 0 && <div
                       className={`absolute inset-y-1 flex items-center gap-2 overflow-hidden rounded-md px-2 ${
                         ending ? "bg-amber-500/25" : "bg-primary/25"
                       } ${isSelected ? "ring-1 ring-primary" : ""}`}
-                      style={{ left: `${left}%`, width: `${Math.min(100 - left, width)}%` }}
+                      style={{ left: `${left}%`, width: `${width}%` }}
+                      title={`${shortDate(c.startDate)}${c.endDate ? ` – ${shortDate(c.endDate)}` : ""}`}
                     >
                       <span className="truncate text-[11px] font-medium text-foreground">
-                        {shortDate(c.startDate)}
+                        {startMs < scale.min ? <ChevronLeft className="inline h-3 w-3" aria-hidden="true" /> : shortDate(c.startDate)}
                         {c.endDate ? ` – ${shortDate(c.endDate)}` : ""}
                       </span>
-                    </div>
+                    </div>}
                     <span
                       className="absolute inset-y-0 w-px bg-red-400"
                       style={{ left: `${scale.todayLeft}%` }}
