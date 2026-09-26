@@ -13,7 +13,7 @@ const MONTHS_IT = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set"
 
 function shortDate(iso: string) {
   const d = new Date(iso);
-  return `${d.getDate()} ${MONTHS_IT[d.getMonth()]}`;
+  return `${d.getUTCDate()} ${MONTHS_IT[d.getUTCMonth()]}`;
 }
 
 type Props = {
@@ -96,7 +96,8 @@ export function CampaignTimeline({ selectedId, onSelect }: Props) {
           <div className="space-y-2">
             {/* Righello mesi */}
             <div className="relative ml-0 h-5 md:ml-[220px]">
-              {scale.ticks.map((tick) => (
+              <span className="absolute left-0 text-[10px] uppercase text-muted-foreground">{shortDate(new Date(scale.min).toISOString())}</span>
+              {scale.ticks.filter((tick) => tick.left > 7).map((tick) => (
                 <span
                   key={tick.label}
                   className="absolute -translate-x-1/2 text-[10px] uppercase tracking-wide text-muted-foreground"
@@ -153,7 +154,7 @@ export function CampaignTimeline({ selectedId, onSelect }: Props) {
                       title={`${shortDate(c.startDate)}${c.endDate ? ` – ${shortDate(c.endDate)}` : ""}`}
                     >
                       <span className="truncate text-[11px] font-medium text-foreground">
-                        {startMs < scale.min ? <ChevronLeft className="inline h-3 w-3" aria-label={t("Iniziata prima della visualizzazione")} /> : shortDate(c.startDate)}
+                        {startMs < scale.min ? <ChevronLeft className="inline h-3 w-3" aria-hidden="true" /> : shortDate(c.startDate)}
                         {c.endDate ? ` – ${shortDate(c.endDate)}` : ""}
                       </span>
                     </div>}
