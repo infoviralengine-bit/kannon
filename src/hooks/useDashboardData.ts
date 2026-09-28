@@ -89,17 +89,12 @@ export interface CampaignRow {
   companyLogoUrl: string | null;
   companyName: string | null;
   status: string;
-  client_cpm: number | null;
-  client_fixed: number | null;
   totalViews: number;
-  monthViews: number;
+  minMonthlyVideos: number | null;
   creatorCount: number;
-  revenue: number;
 }
 
 export function useCampaignTable() {
-  const { start: mStart, end: mEnd } = monthRange();
-
   return useQuery({
     queryKey: ["campaign-table"],
     queryFn: async () => {
@@ -130,46 +125,10 @@ export function useCampaignTable() {
         totalViewsMap.set(r.campaign_id, r.total_views);
       });
 
-      const accountsByCampaign = new Map<string, string[]>();
-      (accounts ?? []).forEach((a) => {
-        if (!a.campaign_id) return;
-        const list = accountsByCampaign.get(a.campaign_id) ?? [];
-        list.push(a.id);
-        accountsByCampaign.set(a.campaign_id, list);
-      });
-
       const creatorMap = new Map((creators ?? []).map((c) => [c.id, c]));
 
-      // For month views we still need video data, but scoped to this month
-      // Fetch month videos with pagination to avoid 1000-row limit
-      const accIds = (accounts ?? []).map((a) => a.id);
-      // views can legitimately be null when a video hasn't been scraped yet —
-      // we treat it as 0 contribution in the reduce below.
-      let monthVideos: { tiktok_account_id: string; views: number | null }[] = [];
-      if (accIds.length) {
-        let page = 0;
-        const pageSize = 1000;
-        while (true) {
-          const { data: batch } = await supabase
-            .from("videos")
-            .select("tiktok_account_id, views")
-            .in("tiktok_account_id", accIds)
-            .gte("published_at", mStart)
-            .lt("published_at", mEnd)
-            .range(page * pageSize, (page + 1) * pageSize - 1);
-          if (!batch || batch.length === 0) break;
-          monthVideos = monthVideos.concat(batch);
-          if (batch.length < pageSize) break;
-          page++;
-        }
-      }
-
       return campaigns.map((c): CampaignRow => {
-        const campAccIds = new Set(accountsByCampaign.get(c.id) ?? []);
-
         const totalViews = totalViewsMap.get(c.id) ?? 0;
-        const campMonthVideos = monthVideos.filter((v) => campAccIds.has(v.tiktok_account_id));
-        const monthViews = campMonthVideos.reduce((s, v) => s + (v.views ?? 0), 0);
 
         // Creators = explicit assignments UNION creators owning an account linked to the campaign
         const campaignCreatorIds = new Set<string>(
@@ -182,10 +141,6 @@ export function useCampaignTable() {
           (id) => creatorMap.get(id)?.status === "active"
         );
 
-        const clientFixed = c.client_fixed ?? 0;
-        const clientCpm = (c.client_cpm ?? 0) * (monthViews / 1000);
-        const revenue = clientFixed + clientCpm;
-
         return {
           id: c.id,
           name: c.name,
@@ -193,12 +148,9 @@ export function useCampaignTable() {
           companyName: c.company_id ? companyNameMap.get(c.company_id) ?? null : null,
           companyLogoUrl: c.company_id ? companyLogoMap.get(c.company_id) ?? null : null,
           status: c.status,
-          client_cpm: c.client_cpm,
-          client_fixed: c.client_fixed,
           totalViews,
-          monthViews,
+          minMonthlyVideos: c.min_monthly_videos,
           creatorCount: activeCreators.length,
-          revenue,
         };
       });
     },
