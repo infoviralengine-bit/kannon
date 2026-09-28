@@ -17,6 +17,7 @@ export const campaign: Record<string, string> = {
   "Data fine": "End date",
   "Opzionale": "Optional",
   "Video minimi al mese": "Minimum videos per month",
+  "Video/Mese": "Videos/Month",
   "Cap (opzionali)": "Caps (optional)",
   "Cap views per video": "Views cap per video",
   "es. 100000 — vuoto = nessun cap": "e.g. 100000, empty = no cap",

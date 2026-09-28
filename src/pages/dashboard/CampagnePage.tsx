@@ -5,8 +5,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { Plus, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { formatViews, formatCurrency } from "@/lib/format";
+import { formatViews } from "@/lib/format";
 import { useCampaignTable } from "@/hooks/useDashboardData";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -201,8 +200,6 @@ export default function CampagnePage() {
   const { t } = useI18n();
   const navigate = useNavigate();
   const { data: campaigns, isLoading } = useCampaignTable();
-  const { role } = useAuth();
-  const isTeam = role === "team";
   const [filter, setFilter] = useState("active");
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -249,7 +246,7 @@ export default function CampagnePage() {
                   <TableHead>{t("Cliente")}</TableHead>
                   <TableHead>{t("Status")}</TableHead>
                   <TableHead className="text-right">{t("Views Totali")}</TableHead>
-                  {!isTeam && <TableHead className="text-right">{t("Revenue Mese")}</TableHead>}
+                  <TableHead className="text-right">{t("Video/Mese")}</TableHead>
                   <TableHead className="text-right">{t("Creator")}</TableHead>
                   <TableHead />
                 </TableRow>
@@ -268,7 +265,7 @@ export default function CampagnePage() {
                       <Badge className={statusColor[c.status] ?? ""}>{t(statusLabel[c.status] ?? c.status)}</Badge>
                     </TableCell>
                     <TableCell className="text-right">{formatViews(c.totalViews)}</TableCell>
-                    {!isTeam && <TableCell className="text-right">{formatCurrency(c.revenue)}</TableCell>}
+                    <TableCell className="text-right">{c.minMonthlyVideos == null ? "—" : formatViews(c.minMonthlyVideos)}</TableCell>
                     <TableCell className="text-right">{c.creatorCount}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/campaigns/${c.id}`)}>
