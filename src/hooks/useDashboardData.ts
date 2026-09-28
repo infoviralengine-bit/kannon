@@ -125,14 +125,6 @@ export function useCampaignTable() {
         totalViewsMap.set(r.campaign_id, r.total_views);
       });
 
-      const accountsByCampaign = new Map<string, string[]>();
-      (accounts ?? []).forEach((a) => {
-        if (!a.campaign_id) return;
-        const list = accountsByCampaign.get(a.campaign_id) ?? [];
-        list.push(a.id);
-        accountsByCampaign.set(a.campaign_id, list);
-      });
-
       const creatorMap = new Map((creators ?? []).map((c) => [c.id, c]));
 
       return campaigns.map((c): CampaignRow => {
