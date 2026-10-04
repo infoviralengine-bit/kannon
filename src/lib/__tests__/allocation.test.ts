@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { activeDays, campTotals, effectiveSlots, paint, shiftWeek, type AllocationCampaign } from '@/lib/allocation';
 
-const camp: AllocationCampaign = { id: 'easy', name: 'Easy Regalo', client_name: 'Easy', start_date: '2026-10-05', end_date: '2026-11-05', status: 'active', min_monthly_videos: 500, monthly_spend_cap: null, priority: 3, is_residual: false };
+const camp: AllocationCampaign = { id: 'easy', name: 'Easy Regalo', client_name: 'Easy', start_date: '2026-10-05', end_date: '2026-11-05', status: 'active', min_monthly_videos: 30, target_monthly_videos: 500, monthly_spend_cap: null, priority: 3, is_residual: false };
 describe('allocation', () => {
   it('fills a free stretch, stopping at another campaign', () => {
     const first = paint([null, null, null, null, null, null], 2, 'easy');
@@ -18,6 +18,10 @@ describe('allocation', () => {
     expect(campTotals([{ creator_id: 'c', paused: false, slots: ['easy', null] }], camp, '2026-11-02', 'finanz', true)).toMatchObject({ videos: 4, target: 77, accounts: 1 });
     expect(activeDays(camp, '2026-11-09')).toBe(0);
     expect(shiftWeek('2026-11-02', 1)).toBe('2026-11-09');
+  });
+  it('uses the internal target instead of the campaign minimum, falling back for other campaigns', () => {
+    expect(campTotals([], camp, '2026-11-02', null, false).target).toBe(77);
+    expect(campTotals([], {...camp, target_monthly_videos: null}, '2026-11-02', null, false).target).toBe(5);
   });
   it('excludes paused capacity and fills only implicit residual', () => {
     const r = { creator_id: 'c', paused: false, slots: [null, 'easy'] };

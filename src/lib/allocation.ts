@@ -1,6 +1,6 @@
 export type Slot = string | null;
 export type AllocationRow = { creator_id: string; slots: Slot[]; paused: boolean };
-export type AllocationCampaign = { id: string; name: string; client_name: string; company_id?: string | null; logo_url?: string | null; start_date: string; end_date: string | null; status: string; min_monthly_videos: number | null; monthly_spend_cap: number | null; priority: number; is_residual: boolean };
+export type AllocationCampaign = { id: string; name: string; client_name: string; company_id?: string | null; logo_url?: string | null; start_date: string; end_date: string | null; status: string; min_monthly_videos: number | null; target_monthly_videos: number | null; monthly_spend_cap: number | null; priority: number; is_residual: boolean };
 
 const DAY = 86400000;
 const date = (value: string) => new Date(`${value.slice(0, 10)}T00:00:00Z`);
@@ -51,7 +51,7 @@ export function campTotals(rows: AllocationRow[], campaign: AllocationCampaign, 
   const days = activeDays(campaign, week);
   const participating = rows.filter(r => effectiveSlots(r, residualId, auto).includes(campaign.id));
   const slots = participating.reduce((n, r) => n + effectiveSlots(r, residualId, auto).filter(s => s === campaign.id).length, 0);
-  const target = campaign.is_residual ? null : Math.round((campaign.min_monthly_videos ?? 0) * days / 26);
+  const target = campaign.is_residual ? null : Math.round((campaign.target_monthly_videos ?? campaign.min_monthly_videos ?? 0) * days / 26);
   return { days, slots, videos: slots * days, target, accounts: participating.length };
 }
 export function normalizeSlots(raw: unknown, capacity: number): Slot[] {

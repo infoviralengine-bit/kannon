@@ -16,8 +16,8 @@ export function useAllocationBase() {
   return useQuery({ queryKey: ['allocation-base'], queryFn: async () => {
     const [configs, campaignsConfig, allCreators, allCampaigns, accounts, groups, contractLinks, contracts] = await Promise.all([
       unwrap(supabase.from('allocation_creators').select('creator_id,daily_slots,tier')),
-      unwrap(supabase.from('allocation_campaigns').select('campaign_id,priority,is_residual,logo_url')),
-      unwrap(supabase.from('creators').select('id,name,status')),
+      unwrap(supabase.from('allocation_campaigns').select('campaign_id,priority,is_residual,logo_url,target_monthly_videos')),
+      unwrap(supabase.from('creators').select('id,name,status').eq('status', 'active')),
       unwrap(supabase.from('campaigns').select('id,name,client_name,company_id,start_date,end_date,status,min_monthly_videos,monthly_spend_cap')),
       unwrap(supabase.from('tiktok_accounts').select('creator_id,campaign_id,is_active').eq('is_active', true)),
       unwrap(supabase.from('allocation_groups').select('id,name,creator_ids').order('name')),
@@ -31,7 +31,7 @@ export function useAllocationBase() {
     const campaignsById = new Map(allCampaigns.map(c => [c.id, c]));
     return {
       creators: allCreators.map(c => { const config = configurations.get(c.id); return { id: c.id, name: c.name, status: c.status, daily_slots: config?.daily_slots ?? 0, tier: config?.tier ?? null, contracts: creatorContracts.get(c.id) ?? [] } as Premium; }).sort((a,b) => a.name.localeCompare(b.name)),
-      campaigns: campaignsConfig.flatMap(c => { const record = campaignsById.get(c.campaign_id); return record ? [{ ...record, logo_url: c.logo_url, priority: c.priority, is_residual: c.is_residual } as AllocationCampaign] : []; }).sort((a,b) => a.priority - b.priority),
+      campaigns: campaignsConfig.flatMap(c => { const record = campaignsById.get(c.campaign_id); return record ? [{ ...record, logo_url: c.logo_url, target_monthly_videos: c.target_monthly_videos, priority: c.priority, is_residual: c.is_residual } as AllocationCampaign] : []; }).sort((a,b) => a.priority - b.priority),
       accounts: new Set(accounts.filter(a => a.creator_id && a.campaign_id).map(a => `${a.creator_id}:${a.campaign_id}`)),
       groups: groups as Group[],
     };
@@ -72,6 +72,10 @@ export function useAllocationActions() {
     async tier(id: string, tier: string | null) {
       await unwrap(supabase.from('allocation_creators').update({ tier }).eq('creator_id',id));
       qc.invalidateQueries({ queryKey: ['allocation-base'] });
+    },
+    async target(id: string, target: number) {
+      await unwrap(supabase.from('allocation_campaigns').update({ target_monthly_videos: target }).eq('campaign_id', id));
+      await qc.invalidateQueries({ queryKey: ['allocation-base'] });
     },
     async createGroup(name: string, ids: string[]) {
       await unwrap(supabase.from('allocation_groups').insert({ name, creator_ids: ids }));

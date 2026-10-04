@@ -90,7 +90,7 @@ export default function AllocationPage() {
     {(base.isLoading || query.isLoading) && <p className="text-sm text-muted-foreground">{t('Caricamento...')}</p>}
     {(base.error || query.error) && <p role="alert" className="text-sm text-destructive">{(base.error ?? query.error)?.message}</p>}
     {!base.isLoading && !creators.length && <p className="text-sm text-muted-foreground">{t('Nessun creator disponibile')}</p>}
-    {query.data && <AllocationBoard key={week} week={week} campaigns={campaigns} creators={creators} rows={rows} previous={query.data.previous} accounts={base.data?.accounts ?? new Set()} groups={base.data?.groups ?? []} auto={auto} writable={writable} busy={busy} onRows={next=>persist(next,auto)} onAuto={next=>persist(rows,next)} onTier={actions.tier} onConfigure={actions.configure} onCreateGroup={actions.createGroup} onUpdateGroup={actions.updateGroup} onDeleteGroup={actions.deleteGroup}/>}
+    {query.data && <AllocationBoard key={week} week={week} campaigns={campaigns} creators={creators} rows={rows} previous={query.data.previous} accounts={base.data?.accounts ?? new Set()} groups={base.data?.groups ?? []} auto={auto} writable={writable} busy={busy} onRows={next=>persist(next,auto)} onAuto={next=>persist(rows,next)} onTier={actions.tier} onTarget={actions.target} onConfigure={actions.configure} onCreateGroup={actions.createGroup} onUpdateGroup={actions.updateGroup} onDeleteGroup={actions.deleteGroup}/>}
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     {busy && <span className="text-xs text-muted-foreground">{t('Salvataggio in corso...')}</span>}
   </div>;

@@ -7,3 +7,4 @@
 - Group Allocation by actual contract links while keeping one weekly row per creator, so overlapping contracts never double-count daily capacity.
 - Keep the Allocation color and typography tokens scoped to its workspace, so the rest of the hub retains its existing theme.
 - Mirror only campaign logo references into Allocation and synchronize them with company changes, so campaign managers can see logos without access to private CRM records.
+- Store internal monthly planning targets on Allocation campaigns separately from campaign minimums, so operational goals never alter contractual campaign values.
