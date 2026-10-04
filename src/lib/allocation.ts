@@ -25,8 +25,14 @@ export function paint(slots: Slot[], index: number, campaign: string): Slot[] {
   const next = [...slots];
   const original = next[index];
   if (original && original !== campaign) { next[index] = campaign; return next; }
+  if (original === campaign && index > 0 && next[index - 1] === campaign) {
+    let start = index;
+    while (start > 0 && next[start - 1] === campaign) start--;
+    for (let i = index; i < next.length && next[i] === campaign; i++) next[i] = null;
+    return next;
+  }
   let start = index;
-  while (start > 0 && (next[start - 1] === null || next[start - 1] === campaign)) start--;
+  while (start > 0 && next[start - 1] === null) start--;
   if (original === campaign && start === index) {
     let end = index;
     while (end < next.length && next[end] === campaign) next[end++] = null;

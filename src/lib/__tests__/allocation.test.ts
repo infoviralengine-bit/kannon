@@ -9,7 +9,7 @@ describe('allocation', () => {
     expect(paint(first, 4, 'unflat')).toEqual(['easy', 'easy', 'easy', 'unflat', 'unflat', null]);
   });
   it('shortens and clears runs, overwrites only the clicked different color', () => {
-    expect(paint(['a','a','a','a',null], 2, 'a')).toEqual(['a','a','a',null,null]);
+    expect(paint(['a','a','a','a',null], 2, 'a')).toEqual(['a','a',null,null,null]);
     expect(paint(['a','a','a',null], 0, 'a')).toEqual([null,null,null,null]);
     expect(paint(['a','a','b','b'], 2, 'a')).toEqual(['a','a','a','b']);
   });
