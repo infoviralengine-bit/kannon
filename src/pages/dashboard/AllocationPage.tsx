@@ -6,6 +6,7 @@ import { useI18n } from '@/i18n';
 import { useToast } from '@/hooks/use-toast';
 import { useAllocationActions, useAllocationBase, useAllocationWeek } from '@/hooks/useAllocation';
 import { AllocationBoard } from '@/components/allocation/AllocationBoard';
+import { AllocationCampaignStrip } from '@/components/allocation/AllocationCampaignStrip';
 import { monday, shiftWeek, type AllocationRow } from '@/lib/allocation';
 import { ROLES } from '@/lib/roles';
 
@@ -104,6 +105,7 @@ export default function AllocationPage() {
       <div><h1 className="text-2xl font-semibold">Allocation</h1><p className="text-xs text-allocation-ink/60">{t('Settimana')} {dateLabel(week)} · {new Date(`${week}T00:00:00Z`).getUTCFullYear()}</p></div>
       <div className="flex flex-wrap items-center gap-1"><Button variant="outline" size="icon" className="border-allocation-mist bg-surface text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink" title={t('Settimana precedente')} onClick={()=>go(shiftWeek(week,-1))}><ChevronLeft/></Button>{weeks.map(w=><Button key={w} variant="outline" size="sm" className={w===week?'border-allocation-ink bg-allocation-ink text-allocation-paper hover:!bg-allocation-ink/85 hover:!text-allocation-paper':'border-allocation-mist bg-surface text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink'} onClick={()=>go(w)}>{new Intl.DateTimeFormat('it-IT',{day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(`${w}T00:00:00Z`))}</Button>)}<Button variant="outline" size="icon" className="border-allocation-mist bg-surface text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink" title={t('Settimana successiva')} onClick={()=>go(shiftWeek(week,1))}><ChevronRight/></Button><Button variant="ghost" size="icon" className="text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink" title={t('Ricarica')} onClick={()=>query.refetch()}><RotateCcw/></Button></div>
     </header>
+    {!base.isLoading && <AllocationCampaignStrip week={week} campaigns={campaigns}/>}
     {(base.isLoading || query.isLoading) && <p className="text-sm text-muted-foreground">{t('Caricamento...')}</p>}
     {(base.error || query.error) && <p role="alert" className="text-sm text-destructive">{(base.error ?? query.error)?.message}</p>}
     {!base.isLoading && !creators.length && <p className="text-sm text-muted-foreground">{t('Nessun creator disponibile')}</p>}

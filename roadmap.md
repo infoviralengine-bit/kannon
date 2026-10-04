@@ -24,3 +24,4 @@ Numeri/valute/date restano it-IT. Stringhe avvolte in t("testo italiano"), dizio
 - [x] Allocation: tutti i creator registrati per contratti Premium, VE e Finanz (inclusi multi-contratto e senza contratto), planning compatto con palette Carta e segnale, loghi clienti accessibili e creazione gruppi in basso
 - [x] Allocation: sostituiti giorni/account richiesti con target mensile e settimanale, modificabili anche dalla finestra Campagne
 - [x] Allocation: titoli contratti essenziali, creator attivi prima degli inattivi e cambio settimana dopo il salvataggio automatico
+- [x] Allocation: hover leggibili, bordo selezione sull'intera scheda e durata campagne compatta sotto le settimane
