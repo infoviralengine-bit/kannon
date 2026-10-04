@@ -1,0 +1,2 @@
+ALTER TABLE public.allocation_campaigns ADD COLUMN IF NOT EXISTS target_monthly_videos integer;
+ALTER TABLE public.allocation_campaigns ADD CONSTRAINT allocation_campaigns_target_monthly_videos_nonnegative CHECK (target_monthly_videos IS NULL OR target_monthly_videos >= 0);
