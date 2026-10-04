@@ -16,4 +16,5 @@ Numeri/valute/date restano it-IT. Stringhe avvolte in t("testo italiano"), dizio
 - [x] Finance: KPI essenziali, selezione campagne non attive e mesi di riferimento sui periodi
 - [x] Cicli pagamento pre-generati + variabile aggiornata dallo scraping
 - [x] Cicli cliente: primo solo fisso, scadenze +7 giorni, finale dopo ultimo video, due cicli visibili in Da ricevere
-- [ ] Allocazione settimanale premium: piano in revisione; conservare gli account esistenti, aggiornare gli obiettivi UnFlat ed Easy Regalo a 500 solo dopo approvazione del piano; nessun creator o campagna da duplicare
+- [x] Allocazione settimanale premium: pagina Operations, dati di campagne e creator esistenti, obiettivi UnFlat/Easy Regalo a 500, pianificazione per slot, gruppi e confronto; Rosa Bávaro esclusa in attesa di identificazione
+- [ ] Chiarire con l'utente l'identità di Rosa Bávaro e il collegamento dell'account di Jennifer Villahermosa prima di toccare i rispettivi record

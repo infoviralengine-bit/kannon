@@ -13,6 +13,7 @@ import CreatorArea from "@/pages/CreatorArea";
 import ClientArea from "@/pages/ClientArea";
 import GeneralePage from "@/pages/dashboard/GeneralePage";
 import CampagnePage from "@/pages/dashboard/CampagnePage";
+import AllocationPage from "@/pages/dashboard/AllocationPage";
 import CreatorPage from "@/pages/dashboard/CreatorPage";
 import CreatorDetailPage from "@/pages/dashboard/CreatorDetailPage";
 import AccountPage from "@/pages/dashboard/AccountPage";
@@ -58,6 +59,7 @@ const App = () => (
             }>
               <Route index element={<GeneralePage />} />
               <Route path="campaigns" element={<CampagnePage />} />
+              <Route path="allocation" element={<ProtectedRoute allowedRoles={["admin", "team", "campaign_manager"]}><AllocationPage /></ProtectedRoute>} />
               <Route path="campaigns/:id" element={<CampaignDetailPage />} />
               <Route path="creators" element={<CreatorPage />} />
               <Route path="creators/:id" element={<CreatorDetailPage />} />

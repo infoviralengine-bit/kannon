@@ -58,7 +58,6 @@ export function useAllocationActions() {
   return {
     async save(week: Week, rows: AllocationRow[], auto: boolean) {
       const version = await unwrap(supabase.rpc('save_allocation_week', { p_week: week.week_start, p_version: week.version, p_auto: auto, p_rows: rows }));
-      qc.invalidateQueries({ queryKey: ['allocation-week',week.week_start] });
       return version as number;
     },
     async tier(id: string, tier: string | null) {
