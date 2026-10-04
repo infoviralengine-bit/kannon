@@ -1,0 +1,17 @@
+export const allocation: Record<string,string> = {
+  'Distribuzione capacità':'Capacity allocation', 'slot al giorno':'daily slots', 'video nella settimana':'videos this week',
+  'slot fermi':'idle slots', 'Nessuno slot fermo':'No idle slots', 'Campagne della settimana':'Campaigns this week',
+  'giorni':'days', 'Residuo':'Residual', 'Vuota':'Empty', 'Sotto target':'Below target', 'Sopra target':'Above target', 'In linea':'On track',
+  'account richiesti':'required accounts', 'Selezione creator':'Creator selection', 'selezionati':'selected',
+  'Tutti':'All', 'Con slot liberi':'With free slots', 'Nessuno':'None', 'Residuo automatico':'Automatic residual',
+  'Creator premium':'Premium creators', 'Cambia tier':'Change tier', 'Metti in pausa':'Pause', 'Riattiva':'Resume',
+  'slot':'slot', 'Libero':'Free', 'In pausa':'Paused', 'account':'accounts', 'mancanti':'missing',
+  'Gruppi':'Groups', 'Nome gruppo':'Group name', 'Crea gruppo':'Create group', 'Nessun gruppo':'No groups',
+  'creator':'creators', 'Rinomina gruppo':'Rename group', 'Rinomina':'Rename', 'Aggiungi selezionati':'Add selected',
+  'Rimuovi selezionati':'Remove selected', 'Elimina gruppo':'Delete group', 'Eliminare il gruppo?':'Delete this group?',
+  'Rimuovi membro':'Remove member', 'Confronto con la settimana precedente':'Changes from last week',
+  'Nessuna modifica rispetto alla settimana precedente':'No changes from last week', 'Operazione non riuscita':'Action failed',
+  'Settimana':'Week', 'Settimana precedente':'Previous week', 'Settimana successiva':'Next week',
+  'Oggi':'Today', 'Ricarica':'Refresh', 'Caricamento...':'Loading...', 'Nessun creator disponibile':'No creators available',
+  'Accesso non consentito':'Access denied', 'Salvataggio non riuscito':'Save failed', 'Salvataggio in corso...':'Saving...',
+};
