@@ -292,6 +292,7 @@ export default function ContractDetailPage() {
   }
 
   const typeLabel: Record<string, string> = { solo_cpm: "Solo CPM", premium: "Premium", custom: "Custom" };
+  const hasCpm = Number(contract.creator_cpm ?? 0) > 0;
 
   return (
     <div className="space-y-6">
@@ -464,7 +465,7 @@ export default function ContractDetailPage() {
                   </div>
 
                   {/* KPIs grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  <div className={`grid grid-cols-2 md:grid-cols-3 gap-3 ${hasCpm ? "lg:grid-cols-5" : "lg:grid-cols-3"}`}>
                     <div className="bg-muted/50 rounded-md p-2.5">
                       <p className="text-[11px] text-muted-foreground uppercase">Video</p>
                       <p className="text-sm font-bold">{cr.videoCount} / {cr.target}</p>
@@ -475,19 +476,20 @@ export default function ContractDetailPage() {
                     </div>
                     <div className="bg-muted/50 rounded-md p-2.5">
                       <p className="text-[11px] text-muted-foreground uppercase">Fisso</p>
-                      <p className="text-sm font-bold">
-                        {formatCurrency(cr.fixedAmount)}{" "}
-                        <span>{cr.fixedEarned ? "✅" : "❌"}</span>
-                      </p>
+                      <p className="text-sm font-bold">{formatCurrency(cr.fixedAmount)}</p>
                     </div>
-                    <div className="bg-muted/50 rounded-md p-2.5">
-                      <p className="text-[11px] text-muted-foreground uppercase">CPM ({formatCurrency(cr.cpmRate)})</p>
-                      <p className="text-sm font-bold">{formatCurrency(cr.cpmAmount)}</p>
-                    </div>
-                    <div className="bg-muted/50 rounded-md p-2.5">
-                      <p className="text-[11px] text-muted-foreground uppercase">Subtotale</p>
-                      <p className="text-sm font-bold text-primary">{formatCurrency(cr.subtotal)}</p>
-                    </div>
+                    {hasCpm && (
+                      <>
+                        <div className="bg-muted/50 rounded-md p-2.5">
+                          <p className="text-[11px] text-muted-foreground uppercase">CPM ({formatCurrency(cr.cpmRate)})</p>
+                          <p className="text-sm font-bold">{formatCurrency(cr.cpmAmount)}</p>
+                        </div>
+                        <div className="bg-muted/50 rounded-md p-2.5">
+                          <p className="text-[11px] text-muted-foreground uppercase">Subtotale</p>
+                          <p className="text-sm font-bold text-primary">{formatCurrency(cr.subtotal)}</p>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Accounts */}
