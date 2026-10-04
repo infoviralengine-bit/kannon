@@ -10,6 +10,7 @@ export async function saveAllocationTarget(campaignId: string, target: number | 
     if (error) throw error;
     return;
   }
+  if (target === null) return;
   const { data: last, error: priorityError } = await supabase.from('allocation_campaigns').select('priority').order('priority', { ascending: false }).limit(1);
   if (priorityError) throw priorityError;
   const { error } = await supabase.from('allocation_campaigns').insert({ campaign_id: campaignId, priority: (last?.[0]?.priority ?? 0) + 1, is_residual: false, target_monthly_videos: target });
