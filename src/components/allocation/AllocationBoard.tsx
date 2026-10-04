@@ -101,7 +101,7 @@ export function AllocationBoard(p: Props) {
         <div className="mb-3 flex items-center justify-between border-b border-allocation-mist pb-2"><h2 className="text-base font-semibold">{section.name === 'Senza contratto' ? t(section.name) : `${t('Contratto')} ${section.name}`}</h2><span className="text-xs text-allocation-ink/60">{section.creators.length} {t('creator')}</span></div>
         {section.creators.length === 0 ? <p className="py-3 text-sm text-allocation-ink/60">{t('Nessun creator in questa sezione')}</p> : <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
           {section.creators.map(c => {
-            const row = p.rows.find(r => r.creator_id === c.id);
+            const row = c.status === 'active' ? p.rows.find(r => r.creator_id === c.id) : undefined;
             const slots = row ? effectiveSlots(row, residual, p.auto) : [];
             const unique = [...new Set(slots.filter((s): s is string => Boolean(s)))];
             const missing = unique.filter(id => !p.accounts.has(`${c.id}:${id}`));

@@ -34,7 +34,7 @@ export default function AllocationPage() {
   const [week, setWeek] = useState(() => monday(new Date()));
   const base = useAllocationBase();
   const creators = base.data?.creators ?? [];
-  const configured = creators.filter(c => c.daily_slots > 0);
+  const configured = creators.filter(c => c.daily_slots > 0 && c.status === 'active');
   const campaigns = base.data?.campaigns ?? [];
   const query = useAllocationWeek(week,configured,campaigns,writable);
   const actions = useAllocationActions();
