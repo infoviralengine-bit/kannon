@@ -68,7 +68,7 @@
   .allocation-workspace {
     font-family: 'Manrope', sans-serif;
     color: hsl(var(--allocation-ink));
-    background: hsl(var(--allocation-paper));
+    background: hsl(var(--background));
     --accent: var(--allocation-mist);
     --accent-foreground: var(--allocation-ink);
     --ring: var(--allocation-ink);
