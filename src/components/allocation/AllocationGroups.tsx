@@ -84,7 +84,7 @@ export function AllocationGroups(p: Props) {
             const values = new Set(live.filter(r => i < r.slots.length).map(r => r.slots[i]));
             const same = values.size === 1 ? [...values][0] : undefined;
             return <button key={i} type="button" disabled={!picked || p.busy} title={same === undefined ? t('Misto') : same ? available.find(c => c.id === same)?.name : t('Libero')}
-              onClick={() => picked && assign(ids, i, same === picked ? null : picked)}
+              onClick={() => { if (!picked) return; const filled = live.length > 0 && live.every(r => i < r.slots.length && r.slots[i] === picked) && live.every(r => r.slots.slice(0, i + 1).every(s => s === picked)); assign(ids, i, filled ? null : picked); }}
               className={`h-8 flex-1 rounded-sm border border-allocation-mist text-[10px] font-semibold disabled:cursor-not-allowed ${same ? `${color(same)} text-allocation-paper` : same === null ? 'bg-allocation-paper text-allocation-ink/60' : 'bg-[repeating-linear-gradient(45deg,hsl(var(--allocation-mist))_0_4px,transparent_4px_8px)] text-allocation-ink'}`}>{i + 1}</button>;
           })}</div>
           {!picked && <p className="text-allocation-ink/60">{t('Seleziona prima una campagna')}</p>}
