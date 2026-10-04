@@ -23,3 +23,4 @@ Numeri/valute/date restano it-IT. Stringhe avvolte in t("testo italiano"), dizio
 - [ ] Verificare visivamente Allocation e il collaudo della settimana del 12 ottobre con un accesso autorizzato; l'anteprima locale rimanda al login e l'accesso Supabase non è gestito qui
 - [x] Allocation: tutti i creator registrati per contratti Premium, VE e Finanz (inclusi multi-contratto e senza contratto), planning compatto con palette Carta e segnale, loghi clienti accessibili e creazione gruppi in basso
 - [x] Allocation: sostituiti giorni/account richiesti con target mensile e settimanale, modificabili anche dalla finestra Campagne
+- [x] Allocation: titoli contratti essenziali, creator attivi prima degli inattivi e cambio settimana dopo il salvataggio automatico
