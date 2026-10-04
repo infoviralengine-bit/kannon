@@ -16,4 +16,6 @@ export const allocation: Record<string,string> = {
   'Accesso non consentito':'Access denied', 'Salvataggio non riuscito':'Save failed', 'Salvataggio in corso...':'Saving...',
   'Attendi il salvataggio':'Wait for the save to finish',
   'obiettivo settimanale a rischio':'weekly goal at risk', 'creator tier A non assegnati alla priorità principale':'tier A creators not assigned to the main priority',
+  'Contratto':'Contract', 'Senza contratto':'No contract', 'Nessun creator in questa sezione':'No creators in this section',
+  'Capacità da impostare':'Capacity not set', 'Non attivo':'Inactive', 'Slot al giorno':'Daily slots', 'Attiva':'Activate',
 };

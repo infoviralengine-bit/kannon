@@ -17,6 +17,16 @@ function dateLabel(week: string) {
 }
 
 export default function AllocationPage() {
+  useEffect(() => {
+    const id = 'allocation-fonts';
+    if (document.getElementById(id)) return;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap';
+    document.head.appendChild(link);
+    return () => { link.remove(); };
+  }, []);
   const { t } = useI18n();
   const { toast } = useToast();
   const { role } = useAuth();
