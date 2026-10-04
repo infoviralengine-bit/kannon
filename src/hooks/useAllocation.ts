@@ -35,13 +35,13 @@ export function useAllocationBase() {
 
 export function useAllocationWeek(week: string, creators: Premium[], campaigns: AllocationCampaign[], writable: boolean) {
   return useQuery({ queryKey: ['allocation-week', week], enabled: creators.length > 0 && campaigns.length > 0, queryFn: async () => {
-    let current = await unwrap(supabase.from('allocation_weeks').select('week_start,residual_auto,version').eq('week_start',week).maybeSingle());
+    let current = await unwrap(supabase.from('allocation_weeks').select('week_start,residual_auto,version').eq('week_start',week).maybeSingle()) as Week | null;
     if (!current && writable) {
       await unwrap(supabase.rpc('open_allocation_week', { p_week: week }));
-      current = await unwrap(supabase.from('allocation_weeks').select('week_start,residual_auto,version').eq('week_start',week).maybeSingle());
+      current = await unwrap(supabase.from('allocation_weeks').select('week_start,residual_auto,version').eq('week_start',week).maybeSingle()) as Week | null;
     }
     const currentRows = current ? await unwrap(supabase.from('allocation_slots').select('creator_id,slots,paused').eq('week_start',week)) : [];
-    const previous = await unwrap(supabase.from('allocation_weeks').select('week_start,residual_auto,version').lt('week_start',week).order('week_start',{ ascending: false }).limit(1).maybeSingle());
+    const previous = await unwrap(supabase.from('allocation_weeks').select('week_start,residual_auto,version').lt('week_start',week).order('week_start',{ ascending: false }).limit(1).maybeSingle()) as Week | null;
     const previousRows = previous ? await unwrap(supabase.from('allocation_slots').select('creator_id,slots,paused').eq('week_start',previous.week_start)) : [];
     const active = new Set(campaigns.filter(c => activeDays(c, week) > 0).map(c => c.id));
     const normalize = (raw: typeof currentRows): AllocationRow[] => creators.map(c => {
