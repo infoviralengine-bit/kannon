@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.auto_allocation_ve_slots() FROM PUBLIC, anon, authenticated;
