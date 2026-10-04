@@ -21,4 +21,6 @@ export const allocation: Record<string,string> = {
   'Attivi':'Active', 'Inattivi':'Inactive',
   'Obiettivo mensile':'Monthly goal',
   'video/settimana':'videos/week', 'video/mese':'videos/month',
+  'Durata campagne':'Campaign duration', 'Settimana selezionata':'Selected week',
+  'Inizio':'Start', 'Fine':'End', 'Continuativa':'Ongoing',
 };

@@ -69,6 +69,9 @@
     font-family: 'Manrope', sans-serif;
     color: hsl(var(--allocation-ink));
     background: hsl(var(--allocation-paper));
+    --accent: var(--allocation-mist);
+    --accent-foreground: var(--allocation-ink);
+    --ring: var(--allocation-ink);
   }
   .allocation-workspace h1, .allocation-workspace h2, .allocation-workspace h3 {
     font-family: 'Sora', sans-serif;
