@@ -6,6 +6,16 @@
 
 @layer base {
   :root {
+    /* Allocation workspace, scoped to the planning surface. */
+    --allocation-paper: 100 14% 95%;
+    --allocation-mist: 165 16% 85%;
+    --allocation-ink: 176 23% 15%;
+    --allocation-signal: 2 65% 55%;
+    --allocation-campaign-one: 180 38% 35%;
+    --allocation-campaign-two: 38 62% 43%;
+    --allocation-campaign-three: 211 38% 46%;
+    --allocation-campaign-four: 2 65% 55%;
+    --allocation-campaign-five: 276 30% 47%;
     /* Kannon Brand — Light theme (Soft Grey + Kannon Black + Signal Red) */
     --background: 0 0% 87%;
     --foreground: 0 0% 0%;
@@ -53,5 +63,14 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  .allocation-workspace {
+    font-family: 'Manrope', sans-serif;
+    color: hsl(var(--allocation-ink));
+    background: hsl(var(--allocation-paper));
+  }
+  .allocation-workspace h1, .allocation-workspace h2, .allocation-workspace h3 {
+    font-family: 'Sora', sans-serif;
   }
 }

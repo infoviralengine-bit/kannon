@@ -17,6 +17,17 @@ export default {
         sans: ["Inter", "system-ui", "sans-serif"],
       },
       colors: {
+        allocation: {
+          paper: "hsl(var(--allocation-paper))",
+          mist: "hsl(var(--allocation-mist))",
+          ink: "hsl(var(--allocation-ink))",
+          signal: "hsl(var(--allocation-signal))",
+          one: "hsl(var(--allocation-campaign-one))",
+          two: "hsl(var(--allocation-campaign-two))",
+          three: "hsl(var(--allocation-campaign-three))",
+          four: "hsl(var(--allocation-campaign-four))",
+          five: "hsl(var(--allocation-campaign-five))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

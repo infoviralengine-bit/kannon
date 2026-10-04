@@ -24,8 +24,9 @@ export default function AllocationPage() {
   const [week, setWeek] = useState(() => monday(new Date()));
   const base = useAllocationBase();
   const creators = base.data?.creators ?? [];
+  const configured = creators.filter(c => c.daily_slots > 0);
   const campaigns = base.data?.campaigns ?? [];
-  const query = useAllocationWeek(week,creators,campaigns,writable);
+  const query = useAllocationWeek(week,configured,campaigns,writable);
   const actions = useAllocationActions();
   const [rows, setRows] = useState<AllocationRow[]>([]);
   const [auto, setAuto] = useState(true);
@@ -71,7 +72,7 @@ export default function AllocationPage() {
   const weeks = Array.from({ length: 8 }, (_,i) => shiftWeek(monday(new Date()),i));
 
   if (!writable && role !== ROLES.CAMPAIGN_MANAGER) return <p className="p-6 text-destructive">{t('Accesso non consentito')}</p>;
-  return <div className="mx-auto w-full max-w-[1500px] space-y-5 p-4 md:p-6">
+  return <div className="allocation-workspace mx-auto w-full max-w-[1500px] min-h-screen space-y-5 p-4 md:p-6">
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div><h1 className="text-2xl font-semibold">Allocation</h1><p className="text-xs text-muted-foreground">{t('Settimana')} {dateLabel(week)} · {new Date(`${week}T00:00:00Z`).getUTCFullYear()}</p></div>
       <div className="flex flex-wrap items-center gap-1"><Button variant="outline" size="icon" title={t('Settimana precedente')} onClick={()=>go(shiftWeek(week,-1))}><ChevronLeft/></Button>{weeks.map(w=><Button key={w} variant={w===week?'default':'outline'} size="sm" onClick={()=>go(w)}>{new Intl.DateTimeFormat('it-IT',{day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(`${w}T00:00:00Z`))}</Button>)}<Button variant="outline" size="icon" title={t('Settimana successiva')} onClick={()=>go(shiftWeek(week,1))}><ChevronRight/></Button><Button variant="ghost" size="icon" title={t('Ricarica')} onClick={()=>query.refetch()}><RotateCcw/></Button></div>
@@ -79,7 +80,7 @@ export default function AllocationPage() {
     {(base.isLoading || query.isLoading) && <p className="text-sm text-muted-foreground">{t('Caricamento...')}</p>}
     {(base.error || query.error) && <p role="alert" className="text-sm text-destructive">{(base.error ?? query.error)?.message}</p>}
     {!base.isLoading && !creators.length && <p className="text-sm text-muted-foreground">{t('Nessun creator disponibile')}</p>}
-    {query.data && <AllocationBoard key={week} week={week} campaigns={campaigns} creators={creators} rows={rows} previous={query.data.previous} accounts={base.data?.accounts ?? new Set()} groups={base.data?.groups ?? []} auto={auto} writable={writable} busy={busy} onRows={next=>persist(next,auto)} onAuto={next=>persist(rows,next)} onTier={actions.tier} onCreateGroup={actions.createGroup} onUpdateGroup={actions.updateGroup} onDeleteGroup={actions.deleteGroup}/>}
+    {query.data && <AllocationBoard key={week} week={week} campaigns={campaigns} creators={creators} rows={rows} previous={query.data.previous} accounts={base.data?.accounts ?? new Set()} groups={base.data?.groups ?? []} auto={auto} writable={writable} busy={busy} onRows={next=>persist(next,auto)} onAuto={next=>persist(rows,next)} onTier={actions.tier} onConfigure={actions.configure} onCreateGroup={actions.createGroup} onUpdateGroup={actions.updateGroup} onDeleteGroup={actions.deleteGroup}/>}
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     {busy && <span className="text-xs text-muted-foreground">{t('Salvataggio in corso...')}</span>}
   </div>;
