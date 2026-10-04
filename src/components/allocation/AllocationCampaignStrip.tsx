@@ -47,6 +47,5 @@ export function AllocationCampaignStrip({ week, campaigns }: { week: string; cam
           </div>;
         })}
       </div>
-    </div>
   </section>;
 }
