@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { CompanyLogo } from '@/components/companies/CompanyLogo';
 import { useI18n } from '@/i18n';
-import { activeDays, campTotals, effectiveSlots, paint, type AllocationCampaign, type AllocationRow } from '@/lib/allocation';
+import { activeDays, campTotals, contractSection, effectiveSlots, paint, type AllocationCampaign, type AllocationRow } from '@/lib/allocation';
 import type { Group, Premium } from '@/hooks/useAllocation';
 import { AllocationGroups } from './AllocationGroups';
 
@@ -22,13 +22,6 @@ type Props = {
   onUpdateGroup: (id: string, patch: { name?: string; creator_ids?: string[] }) => Promise<void>;
   onDeleteGroup: (id: string) => Promise<void>;
 };
-
-function contractSection(names: string[]) {
-  if (names.some(n => /premium/i.test(n))) return 'Premium';
-  if (names.some(n => /^ve$/i.test(n.trim()))) return 'VE';
-  if (names.some(n => /finanz|\bfz\b/i.test(n))) return 'Finanz';
-  return 'Senza contratto';
-}
 
 export function AllocationBoard(p: Props) {
   const { t } = useI18n();
@@ -67,7 +60,7 @@ export function AllocationBoard(p: Props) {
     if (!p.writable || p.busy) return;
     p.onRows(p.rows.map(r => ids.includes(r.creator_id) ? { ...r, slots: r.slots.map(() => null) } : r));
   };
-  const sections = ['Premium','VE','Finanz','Senza contratto'].map(name => ({ name, creators: p.creators.filter(c => contractSection(c.contracts) === name).sort((a, b) => {
+  const sections = ['Premium','VE','Senza contratto'].map(name => ({ name, creators: p.creators.filter(c => contractSection(c.contracts) === name).sort((a, b) => {
     const position = (c: Premium) => {
       const row = p.rows.find(r => r.creator_id === c.id);
       return row && !row.paused ? 0 : row ? 1 : 2;

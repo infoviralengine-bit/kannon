@@ -43,6 +43,12 @@ export function paint(slots: Slot[], index: number, campaign: string): Slot[] {
   for (let i = start; i <= index; i++) next[i] = campaign;
   return next;
 }
+export function contractSection(names: string[]) {
+  if (names.some(n => /premium/i.test(n))) return 'Premium';
+  if (names.some(n => /^ve$/i.test(n.trim()))) return 'VE';
+  if (names.some(n => /finanz|\bfz\b/i.test(n))) return 'Finanz';
+  return 'Senza contratto';
+}
 export function effectiveSlots(row: AllocationRow, residualId: string | null, auto: boolean): Slot[] {
   if (row.paused) return [];
   return row.slots.map(s => s ?? (auto ? residualId : null));

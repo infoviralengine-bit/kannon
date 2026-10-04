@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAllocationActions, useAllocationBase, useAllocationWeek } from '@/hooks/useAllocation';
 import { AllocationBoard } from '@/components/allocation/AllocationBoard';
 import { AllocationCampaignStrip } from '@/components/allocation/AllocationCampaignStrip';
-import { monday, shiftWeek, type AllocationRow } from '@/lib/allocation';
+import { contractSection, monday, shiftWeek, type AllocationRow } from '@/lib/allocation';
 import { ROLES } from '@/lib/roles';
 
 function dateLabel(week: string) {
@@ -34,7 +34,7 @@ export default function AllocationPage() {
   const writable = role === ROLES.ADMIN || role === ROLES.TEAM;
   const [week, setWeek] = useState(() => monday(new Date()));
   const base = useAllocationBase();
-  const creators = base.data?.creators ?? [];
+  const creators = (base.data?.creators ?? []).filter(c => contractSection(c.contracts) !== 'Finanz');
   const configured = creators.filter(c => c.daily_slots > 0 && c.status === 'active');
   const campaigns = base.data?.campaigns ?? [];
   const query = useAllocationWeek(week,configured,campaigns,writable);

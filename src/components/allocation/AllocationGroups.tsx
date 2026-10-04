@@ -30,7 +30,7 @@ export function AllocationGroups(p: Props) {
   const [error, setError] = useState('');
   const available = p.campaigns.filter(c => activeDays(c, p.week) > 0);
   const color = (id: string | null) => { const i = available.findIndex(c => c.id === id); return i < 0 ? '' : p.colors[i % p.colors.length]; };
-  const sections = ['Premium', 'VE', 'Finanz', 'Senza contratto'].map(s => ({ s, list: p.creators.filter(c => p.sectionOf(c) === s) })).filter(x => x.list.length);
+  const sections = ['Premium', 'VE', 'Senza contratto'].map(s => ({ s, list: p.creators.filter(c => p.sectionOf(c) === s) })).filter(x => x.list.length);
 
   const open = (g: Group | 'new') => {
     setEditing(g); setError('');
