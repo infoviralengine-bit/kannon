@@ -1,6 +1,6 @@
 export type Slot = string | null;
 export type AllocationRow = { creator_id: string; slots: Slot[]; paused: boolean };
-export type AllocationCampaign = { id: string; name: string; client_name: string; start_date: string; end_date: string | null; status: string; min_monthly_videos: number | null; monthly_spend_cap: number | null; priority: number; is_residual: boolean };
+export type AllocationCampaign = { id: string; name: string; client_name: string; company_id?: string | null; logo_url?: string | null; start_date: string; end_date: string | null; status: string; min_monthly_videos: number | null; monthly_spend_cap: number | null; priority: number; is_residual: boolean };
 
 const DAY = 86400000;
 const date = (value: string) => new Date(`${value.slice(0, 10)}T00:00:00Z`);
