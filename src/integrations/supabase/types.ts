@@ -14,6 +14,160 @@ export type Database = {
   }
   public: {
     Tables: {
+      allocation_campaigns: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          is_residual: boolean
+          priority: number
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          is_residual?: boolean
+          priority: number
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          is_residual?: boolean
+          priority?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "allocation_campaigns_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: true
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      allocation_creators: {
+        Row: {
+          created_at: string
+          creator_id: string
+          daily_slots: number
+          tier: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          daily_slots: number
+          tier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          daily_slots?: number
+          tier?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "allocation_creators_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: true
+            referencedRelation: "creators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      allocation_groups: {
+        Row: {
+          created_at: string
+          creator_ids: string[]
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_ids?: string[]
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_ids?: string[]
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      allocation_slots: {
+        Row: {
+          created_at: string
+          creator_id: string
+          paused: boolean
+          slots: Json
+          updated_at: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          paused?: boolean
+          slots?: Json
+          updated_at?: string
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          paused?: boolean
+          slots?: Json
+          updated_at?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "allocation_slots_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "allocation_creators"
+            referencedColumns: ["creator_id"]
+          },
+          {
+            foreignKeyName: "allocation_slots_week_start_fkey"
+            columns: ["week_start"]
+            isOneToOne: false
+            referencedRelation: "allocation_weeks"
+            referencedColumns: ["week_start"]
+          },
+        ]
+      }
+      allocation_weeks: {
+        Row: {
+          created_at: string
+          residual_auto: boolean
+          updated_at: string
+          version: number
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          residual_auto?: boolean
+          updated_at?: string
+          version?: number
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          residual_auto?: boolean
+          updated_at?: string
+          version?: number
+          week_start?: string
+        }
+        Relationships: []
+      }
       brief_change_requests: {
         Row: {
           author_id: string
@@ -2283,6 +2437,7 @@ export type Database = {
         }
         Returns: number
       }
+      open_allocation_week: { Args: { p_week: string }; Returns: undefined }
       owns_tiktok_account: {
         Args: { _account_id: string; _user_id: string }
         Returns: boolean
@@ -2297,6 +2452,15 @@ export type Database = {
       }
       rematch_all_unmatched_videos: {
         Args: { p_days_back?: number }
+        Returns: number
+      }
+      save_allocation_week: {
+        Args: {
+          p_auto: boolean
+          p_rows: Json
+          p_version: number
+          p_week: string
+        }
         Returns: number
       }
       show_limit: { Args: never; Returns: number }
