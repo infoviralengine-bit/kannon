@@ -4,21 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CompanyLogo } from '@/components/companies/CompanyLogo';
 import { useI18n } from '@/i18n';
 import { activeDays, type AllocationCampaign, type AllocationRow, type Slot } from '@/lib/allocation';
 import type { Group, Premium } from '@/hooks/useAllocation';
 
 type Props = {
   week: string; groups: Group[]; creators: Premium[]; rows: AllocationRow[]; campaigns: AllocationCampaign[];
-  colors: string[]; sectionOf: (c: Premium) => string; writable: boolean; busy: boolean;
+  colors: string[]; sectionOf: (c: Premium) => string; writable: boolean; busy: boolean; picked: string | null;
   onRows: (rows: AllocationRow[]) => void;
   onCreate: (name: string, ids: string[]) => Promise<void>;
   onUpdate: (id: string, patch: { name?: string; creator_ids?: string[] }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 };
 
-const btn = 'border-allocation-mist bg-surface text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink';
 
 export function AllocationGroups(p: Props) {
   const { t } = useI18n();
@@ -26,7 +24,6 @@ export function AllocationGroups(p: Props) {
   const [name, setName] = useState('');
   const [members, setMembers] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
-  const [brush, setBrush] = useState<Record<string, string | null>>({});
   const [error, setError] = useState('');
   const available = p.campaigns.filter(c => activeDays(c, p.week) > 0);
   const color = (id: string | null) => { const i = available.findIndex(c => c.id === id); return i < 0 ? '' : p.colors[i % p.colors.length]; };
@@ -74,7 +71,7 @@ export function AllocationGroups(p: Props) {
       const ids = g.creator_ids.filter(id => p.creators.some(c => c.id === id));
       const live = p.rows.filter(r => ids.includes(r.creator_id) && !r.paused);
       const width = Math.max(0, ...live.map(r => r.slots.length));
-      const picked = brush[g.id] ?? null;
+      const picked = p.picked;
       const videos = new Map<string, number>();
       live.forEach(r => r.slots.forEach(s => { if (s) videos.set(s, (videos.get(s) ?? 0) + 1); }));
       return <div key={g.id} className="space-y-3 rounded-md border border-allocation-mist bg-surface p-3 text-xs">
@@ -89,7 +86,6 @@ export function AllocationGroups(p: Props) {
         </div>
         <p className="truncate text-allocation-ink/75">{ids.map(id => p.creators.find(c => c.id === id)?.name).join(', ') || '—'}</p>
         {p.writable && width > 0 && <>
-          <div className="flex flex-wrap gap-1">{available.map(c => <Button key={c.id} size="sm" variant="outline" className={`h-7 gap-1 px-2 ${btn} ${picked === c.id ? '!border-allocation-ink ring-1 ring-allocation-ink' : ''}`} onClick={() => setBrush(b => ({ ...b, [g.id]: picked === c.id ? null : c.id }))}><span className={`h-2.5 w-2.5 rounded-sm ${color(c.id)}`}/><CompanyLogo name={c.name} logoUrl={c.logo_url} className="h-4 w-4 border-0" imageClassName="p-0"/>{c.name}</Button>)}</div>
           <div className="flex gap-1">{Array.from({ length: width }, (_, i) => {
             const values = new Set(live.filter(r => i < r.slots.length).map(r => r.slots[i]));
             const same = values.size === 1 ? [...values][0] : undefined;
