@@ -23,5 +23,8 @@ export const allocation: Record<string,string> = {
   'video/settimana':'videos/week', 'video/mese':'videos/month',
   'Durata campagne':'Campaign duration', 'Settimana selezionata':'Selected week',
   'Inizio':'Start', 'Fine':'End', 'Continuativa':'Ongoing',
+  'Nuovo gruppo':'New group', 'Modifica gruppo':'Edit group', 'Svuota gruppo':'Clear group', 'Crea il primo gruppo':'Create the first group',
+  'Seleziona tutti':'Select all', 'Salva':'Save', 'Misto':'Mixed', 'Seleziona prima una campagna':'Pick a campaign first',
+  'Scegli una campagna e clicca gli slot: la divisione vale per tutto il gruppo.':'Pick a campaign and click the slots: the split applies to the whole group.',
   'Svuota creator':'Clear creator', 'Svuota contratto':'Clear contract', 'Svuota settimana':'Clear week', 'tutti i creator':'all creators', 'Svuotare gli slot di {label} per questa settimana?':'Clear the slots of {label} for this week?',
 };
