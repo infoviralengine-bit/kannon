@@ -23,7 +23,7 @@ export function useAllocationBase() {
       unwrap(supabase.from('allocation_groups').select('id,name,creator_ids').order('name')),
       unwrap(supabase.from('contract_creators').select('creator_id,contract_id')),
       unwrap(supabase.from('contracts').select('id,name')),
-      unwrap(supabase.from('companies').select('id,logo_url')),
+      supabase.from('companies').select('id,logo_url').then(({ data }) => data ?? []),
     ]);
     const configurations = new Map(configs.map(c => [c.creator_id, c]));
     const contractNames = new Map(contracts.map(c => [c.id, c.name]));
