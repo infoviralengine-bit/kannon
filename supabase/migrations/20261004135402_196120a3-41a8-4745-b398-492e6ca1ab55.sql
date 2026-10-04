@@ -1,0 +1,1 @@
+CREATE POLICY "Campaign managers see active campaign company identity" ON public.companies FOR SELECT TO authenticated USING (public.has_role(auth.uid(),'campaign_manager'::app_role) AND EXISTS (SELECT 1 FROM public.campaigns c WHERE c.company_id = companies.id AND c.status = 'active'));
