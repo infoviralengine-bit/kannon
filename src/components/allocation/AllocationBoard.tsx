@@ -65,7 +65,13 @@ export function AllocationBoard(p: Props) {
     const targets = selected.length ? selected : [creatorId];
     p.onRows(p.rows.map(r => targets.includes(r.creator_id) && !r.paused && index < r.slots.length ? { ...r, slots: paint(r.slots, index, chosen) } : r));
   };
-  const sections = ['Premium','VE','Finanz','Senza contratto'].map(name => ({ name, creators: p.creators.filter(c => contractSection(c.contracts) === name) }));
+  const sections = ['Premium','VE','Finanz','Senza contratto'].map(name => ({ name, creators: p.creators.filter(c => contractSection(c.contracts) === name).sort((a, b) => {
+    const position = (c: Premium) => {
+      const row = p.rows.find(r => r.creator_id === c.id);
+      return row && !row.paused ? 0 : row ? 1 : 2;
+    };
+    return position(a) - position(b) || a.name.localeCompare(b.name);
+  }) }));
 
   return <div className="space-y-6">
     {(risk || inverted > 0) && <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-l-2 border-warning bg-warning/10 px-3 py-2 text-xs text-allocation-ink"><AlertTriangle className="h-4 w-4 text-warning"/>{risk && <span>{risk.name}: {t('obiettivo settimanale a rischio')}</span>}{inverted > 0 && <span>{inverted} {t('creator tier A non assegnati alla priorità principale')}</span>}</div>}
@@ -101,7 +107,7 @@ export function AllocationBoard(p: Props) {
 
     <div className="space-y-7">
       {sections.map(section => <section key={section.name} aria-label={`${t('Contratto')} ${section.name}`}>
-        <div className="mb-3 flex items-center justify-between border-b border-allocation-mist pb-2"><h2 className="text-base font-semibold">{section.name === 'Senza contratto' ? t(section.name) : `${t('Contratto')} ${section.name}`}</h2><span className="text-xs text-allocation-ink/60">{section.creators.length} {t('creator')}</span></div>
+        <div className="mb-3 flex items-center justify-between border-b border-allocation-mist pb-2"><h2 className="text-base font-semibold">{section.name === 'Senza contratto' ? t(section.name) : section.name}</h2><span className="text-xs text-allocation-ink/60">{section.creators.length} {t('creator')}</span></div>
         {section.creators.length === 0 ? <p className="py-3 text-sm text-allocation-ink/60">{t('Nessun creator in questa sezione')}</p> : <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
           {section.creators.map(c => {
             const row = c.status === 'active' ? p.rows.find(r => r.creator_id === c.id) : undefined;

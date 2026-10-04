@@ -41,6 +41,7 @@ export default function AllocationPage() {
   const [rows, setRows] = useState<AllocationRow[]>([]);
   const [auto, setAuto] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [navigating, setNavigating] = useState(false);
   const [error, setError] = useState('');
   const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
   const writeChain = useRef<Promise<unknown>>(Promise.resolve());
@@ -53,31 +54,47 @@ export default function AllocationPage() {
   },[query.data,week]);
   useEffect(() => () => { if (pending.current) clearTimeout(pending.current); },[week]);
 
+  const queueSave = () => {
+    const snapshot = { ...latest.current };
+    setBusy(true);
+    const job = writeChain.current.catch(() => undefined).then(async () => {
+      try {
+        const newVersion = await actions.save({ week_start: snapshot.week, version: latest.current.version, residual_auto: snapshot.auto }, snapshot.rows, snapshot.auto);
+        latest.current.version = newVersion;
+        setError('');
+      } catch (e) {
+        const text = e instanceof Error ? e.message : t('Salvataggio non riuscito');
+        setError(text);
+        toast({ title: t('Salvataggio non riuscito'), description: text, variant: 'destructive' });
+        await query.refetch();
+        throw e;
+      } finally { setBusy(false); }
+    });
+    writeChain.current = job;
+    return job;
+  };
   const persist = (nextRows: AllocationRow[], nextAuto: boolean) => {
-    if (!writable) return;
+    if (!writable || navigating) return;
     latest.current = { ...latest.current, rows: nextRows, auto: nextAuto };
     setRows(nextRows); setAuto(nextAuto); setError('');
     if (pending.current) clearTimeout(pending.current);
-    pending.current = setTimeout(() => {
-      const snapshot = { ...latest.current };
-      setBusy(true);
-      writeChain.current = writeChain.current.catch(() => undefined).then(async () => {
-        try {
-          const newVersion = await actions.save({ week_start: snapshot.week, version: latest.current.version, residual_auto: snapshot.auto }, snapshot.rows, snapshot.auto);
-          latest.current.version = newVersion;
-          setError('');
-        } catch (e) {
-          const text = e instanceof Error ? e.message : t('Salvataggio non riuscito');
-          setError(text);
-          toast({ title: t('Salvataggio non riuscito'), description: text, variant: 'destructive' });
-          await query.refetch();
-        } finally { setBusy(false); }
-      });
-    }, 250);
+    pending.current = setTimeout(() => { pending.current = null; void queueSave().catch(() => undefined); }, 250);
   };
-  const go = (target: string) => {
-    if (pending.current || busy) { toast({ title: t('Attendi il salvataggio'), variant: 'destructive' }); return; }
-    setWeek(target);
+  const go = async (target: string) => {
+    if (target === week || navigating) return;
+    setNavigating(true);
+    try {
+      if (pending.current) {
+        clearTimeout(pending.current);
+        pending.current = null;
+        await queueSave();
+      } else {
+        await writeChain.current;
+      }
+      setWeek(target);
+    } catch {
+      // Stay on this week so the unsaved plan can be reviewed or retried.
+    } finally { setNavigating(false); }
   };
   const weeks = Array.from({ length: 8 }, (_,i) => shiftWeek(monday(new Date()),i));
 
@@ -90,7 +107,7 @@ export default function AllocationPage() {
     {(base.isLoading || query.isLoading) && <p className="text-sm text-muted-foreground">{t('Caricamento...')}</p>}
     {(base.error || query.error) && <p role="alert" className="text-sm text-destructive">{(base.error ?? query.error)?.message}</p>}
     {!base.isLoading && !creators.length && <p className="text-sm text-muted-foreground">{t('Nessun creator disponibile')}</p>}
-    {query.data && <AllocationBoard key={week} week={week} campaigns={campaigns} creators={creators} rows={rows} previous={query.data.previous} accounts={base.data?.accounts ?? new Set()} groups={base.data?.groups ?? []} auto={auto} writable={writable} busy={busy} onRows={next=>persist(next,auto)} onAuto={next=>persist(rows,next)} onTier={actions.tier} onTarget={actions.target} onConfigure={actions.configure} onCreateGroup={actions.createGroup} onUpdateGroup={actions.updateGroup} onDeleteGroup={actions.deleteGroup}/>}
+    {query.data && <AllocationBoard key={week} week={week} campaigns={campaigns} creators={creators} rows={rows} previous={query.data.previous} accounts={base.data?.accounts ?? new Set()} groups={base.data?.groups ?? []} auto={auto} writable={writable} busy={busy || navigating} onRows={next=>persist(next,auto)} onAuto={next=>persist(rows,next)} onTier={actions.tier} onTarget={actions.target} onConfigure={actions.configure} onCreateGroup={actions.createGroup} onUpdateGroup={actions.updateGroup} onDeleteGroup={actions.deleteGroup}/>}
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     {busy && <span className="text-xs text-muted-foreground">{t('Salvataggio in corso...')}</span>}
   </div>;
