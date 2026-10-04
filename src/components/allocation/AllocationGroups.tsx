@@ -71,10 +71,11 @@ export function AllocationGroups(p: Props) {
     <div className="grid gap-3 lg:grid-cols-2">{p.groups.map(g => {
       const ids = g.creator_ids.filter(id => p.creators.some(c => c.id === id));
       const live = p.rows.filter(r => ids.includes(r.creator_id) && !r.paused);
-      const width = Math.max(0, ...live.map(r => r.slots.length));
+      const effective = live.map(r => effectiveSlots(r, p.residualId, p.auto));
+      const width = Math.max(0, ...effective.map(s => s.length));
       const picked = p.picked;
       const videos = new Map<string, number>();
-      live.forEach(r => r.slots.forEach(s => { if (s) videos.set(s, (videos.get(s) ?? 0) + 1); }));
+      effective.forEach(slots => slots.forEach(s => { if (s) videos.set(s, (videos.get(s) ?? 0) + 1); }));
       return <div key={g.id} className="space-y-3 rounded-md border border-allocation-mist bg-surface p-3 text-xs">
         <div className="flex items-center gap-2">
           <strong className="mr-auto truncate text-sm">{g.name}</strong>
