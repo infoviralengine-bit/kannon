@@ -95,7 +95,7 @@ export function AllocationBoard(p: Props) {
     </section>
 
 
-    <AllocationGroups week={p.week} groups={p.groups} creators={p.creators} rows={p.rows} campaigns={p.campaigns} colors={colors} sectionOf={c => contractSection(c.contracts)} writable={p.writable} busy={p.busy} picked={chosen} onRows={p.onRows} onCreate={p.onCreateGroup} onUpdate={p.onUpdateGroup} onDelete={p.onDeleteGroup}/>
+    <AllocationGroups week={p.week} groups={p.groups} creators={p.creators} rows={p.rows} campaigns={p.campaigns} colors={colors} sectionOf={c => contractSection(c.contracts)} writable={p.writable} busy={p.busy} picked={chosen} residualId={residual} auto={p.auto} onRows={p.onRows} onCreate={p.onCreateGroup} onUpdate={p.onUpdateGroup} onDelete={p.onDeleteGroup}/>
 
     <div className="space-y-7">
       {sections.map(section => <section key={section.name} aria-label={`${t('Contratto')} ${section.name}`}>

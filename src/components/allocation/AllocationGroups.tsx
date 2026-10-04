@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useI18n } from '@/i18n';
-import { activeDays, type AllocationCampaign, type AllocationRow, type Slot } from '@/lib/allocation';
+import { activeDays, effectiveSlots, type AllocationCampaign, type AllocationRow, type Slot } from '@/lib/allocation';
 import type { Group, Premium } from '@/hooks/useAllocation';
 
 type Props = {
   week: string; groups: Group[]; creators: Premium[]; rows: AllocationRow[]; campaigns: AllocationCampaign[];
   colors: string[]; sectionOf: (c: Premium) => string; writable: boolean; busy: boolean; picked: string | null;
+  residualId: string | null; auto: boolean;
   onRows: (rows: AllocationRow[]) => void;
   onCreate: (name: string, ids: string[]) => Promise<void>;
   onUpdate: (id: string, patch: { name?: string; creator_ids?: string[] }) => Promise<void>;
@@ -70,10 +71,11 @@ export function AllocationGroups(p: Props) {
     <div className="grid gap-3 lg:grid-cols-2">{p.groups.map(g => {
       const ids = g.creator_ids.filter(id => p.creators.some(c => c.id === id));
       const live = p.rows.filter(r => ids.includes(r.creator_id) && !r.paused);
-      const width = Math.max(0, ...live.map(r => r.slots.length));
+      const effective = live.map(r => effectiveSlots(r, p.residualId, p.auto));
+      const width = Math.max(0, ...effective.map(s => s.length));
       const picked = p.picked;
       const videos = new Map<string, number>();
-      live.forEach(r => r.slots.forEach(s => { if (s) videos.set(s, (videos.get(s) ?? 0) + 1); }));
+      effective.forEach(slots => slots.forEach(s => { if (s) videos.set(s, (videos.get(s) ?? 0) + 1); }));
       return <div key={g.id} className="space-y-3 rounded-md border border-allocation-mist bg-surface p-3 text-xs">
         <div className="flex items-center gap-2">
           <strong className="mr-auto truncate text-sm">{g.name}</strong>
@@ -87,7 +89,7 @@ export function AllocationGroups(p: Props) {
         <p className="truncate text-allocation-ink/75">{ids.map(id => p.creators.find(c => c.id === id)?.name).join(', ') || '—'}</p>
         {p.writable && width > 0 && <>
           <div className="flex gap-1">{Array.from({ length: width }, (_, i) => {
-            const values = new Set(live.filter(r => i < r.slots.length).map(r => r.slots[i]));
+            const values = new Set(effective.filter(s => i < s.length).map(s => s[i]));
             const same = values.size === 1 ? [...values][0] : undefined;
             return <button key={i} type="button" disabled={!picked || p.busy} title={same === undefined ? t('Misto') : same ? available.find(c => c.id === same)?.name : t('Libero')}
               onClick={() => { if (!picked) return; const filled = live.length > 0 && live.every(r => i < r.slots.length && r.slots[i] === picked && r.slots[i + 1] !== picked); assign(ids, i, picked, filled); }}
