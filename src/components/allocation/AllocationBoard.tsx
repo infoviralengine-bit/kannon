@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { AlertTriangle, ChevronDown, Pause, Play, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,7 +65,13 @@ export function AllocationBoard(p: Props) {
     const targets = selected.length ? selected : [creatorId];
     p.onRows(p.rows.map(r => targets.includes(r.creator_id) && !r.paused && index < r.slots.length ? { ...r, slots: paint(r.slots, index, chosen) } : r));
   };
-  const sections = ['Premium','VE','Finanz','Senza contratto'].map(name => ({ name, creators: p.creators.filter(c => contractSection(c.contracts) === name) }));
+  const sections = ['Premium','VE','Finanz','Senza contratto'].map(name => ({ name, creators: p.creators.filter(c => contractSection(c.contracts) === name).sort((a, b) => {
+    const position = (c: Premium) => {
+      const row = p.rows.find(r => r.creator_id === c.id);
+      return row && !row.paused ? 0 : row ? 1 : 2;
+    };
+    return position(a) - position(b) || a.name.localeCompare(b.name);
+  }) }));
 
   return <div className="space-y-6">
     {(risk || inverted > 0) && <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-l-2 border-warning bg-warning/10 px-3 py-2 text-xs text-allocation-ink"><AlertTriangle className="h-4 w-4 text-warning"/>{risk && <span>{risk.name}: {t('obiettivo settimanale a rischio')}</span>}{inverted > 0 && <span>{inverted} {t('creator tier A non assegnati alla priorità principale')}</span>}</div>}
@@ -101,15 +107,19 @@ export function AllocationBoard(p: Props) {
 
     <div className="space-y-7">
       {sections.map(section => <section key={section.name} aria-label={`${t('Contratto')} ${section.name}`}>
-        <div className="mb-3 flex items-center justify-between border-b border-allocation-mist pb-2"><h2 className="text-base font-semibold">{section.name === 'Senza contratto' ? t(section.name) : `${t('Contratto')} ${section.name}`}</h2><span className="text-xs text-allocation-ink/60">{section.creators.length} {t('creator')}</span></div>
+        <div className="mb-3 flex items-center justify-between border-b border-allocation-mist pb-2"><h2 className="text-base font-semibold">{section.name === 'Senza contratto' ? t(section.name) : section.name}</h2><span className="text-xs text-allocation-ink/60">{section.creators.length} {t('creator')}</span></div>
         {section.creators.length === 0 ? <p className="py-3 text-sm text-allocation-ink/60">{t('Nessun creator in questa sezione')}</p> : <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
-          {section.creators.map(c => {
+          {section.creators.map((c, index) => {
             const row = c.status === 'active' ? p.rows.find(r => r.creator_id === c.id) : undefined;
+            const inactive = !row || row.paused;
+            const previous = section.creators[index - 1];
+            const previousRow = previous && p.rows.find(r => r.creator_id === previous.id);
+            const groupStart = index === 0 || (inactive && previousRow && !previousRow.paused);
             const slots = row ? effectiveSlots(row, residual, p.auto) : [];
             const unique = [...new Set(slots.filter((s): s is string => Boolean(s)))];
             const missing = unique.filter(id => !p.accounts.has(`${c.id}:${id}`));
             const picked = selected.includes(c.id);
-            return <div key={c.id} className={`min-w-0 rounded-md border bg-surface p-3 transition-colors ${picked ? 'border-allocation-ink ring-1 ring-allocation-ink' : 'border-allocation-mist'} ${row?.paused ? 'opacity-60' : ''}`}>
+            return <Fragment key={c.id}>{groupStart && <h3 className={`col-span-full text-xs font-semibold text-allocation-ink/60 ${index > 0 ? 'border-t border-allocation-mist pt-3' : ''}`}>{inactive ? t('Inattivi') : t('Attivi')}</h3>}<div className={`min-w-0 rounded-md border bg-surface p-3 transition-colors ${picked ? 'border-allocation-ink ring-1 ring-allocation-ink' : 'border-allocation-mist'} ${row?.paused ? 'opacity-60' : ''}`}>
               <div className="flex min-w-0 items-center gap-1">
                 <Button title={t('Cambia tier')} aria-label={`${t('Cambia tier')} ${c.name}`} variant="outline" size="sm" disabled={!p.writable || groupBusy || !row} className="h-7 w-7 shrink-0 border-allocation-mist p-0 text-xs text-allocation-ink" onClick={() => doAction(() => p.onTier(c.id, c.tier === 'A' ? 'B' : c.tier === 'B' ? 'C' : 'A'))}>{c.tier ?? '·'}</Button>
                 <Button variant="ghost" className="h-8 min-w-0 flex-1 justify-start truncate px-1 text-xs font-semibold text-allocation-ink" title={c.name} onClick={() => setSelected(picked ? selected.filter(id => id !== c.id) : [...selected, c.id])}>{c.name}</Button>
@@ -123,7 +133,7 @@ export function AllocationBoard(p: Props) {
                 })}</div>
                 <div className="mt-2 flex justify-between gap-1 text-[11px] text-allocation-ink/60"><span>{row.paused ? t('In pausa') : `${unique.length} ${t('account')}`}</span>{!row.paused && missing.length > 0 && <span className="flex items-center gap-0.5 text-allocation-signal" title={missing.map(id => available.find(x => x.id === id)?.name).join(', ')}><AlertTriangle className="h-3 w-3"/>{missing.length} {t('mancanti')}</span>}</div>
               </> : <div className="mt-3 flex items-center gap-2 border-t border-allocation-mist pt-2 text-xs"><span className="flex-1 text-allocation-ink/60">{c.status === 'active' ? t('Capacità da impostare') : t('Non attivo')}</span>{c.status === 'active' && p.writable && <><Input type="number" min={1} max={12} aria-label={`${t('Slot al giorno')} ${c.name}`} className="h-8 w-14 border-allocation-mist bg-allocation-paper px-1 text-center" value={capacities[c.id] ?? 5} onChange={e => setCapacities(prev => ({...prev,[c.id]:Number(e.target.value)}))}/><Button size="sm" variant="outline" className="h-8 border-allocation-ink text-allocation-ink" disabled={groupBusy || p.busy || (capacities[c.id] ?? 5) < 1 || (capacities[c.id] ?? 5) > 12} onClick={() => doAction(() => p.onConfigure(c.id, capacities[c.id] ?? 5))}>{t('Attiva')}</Button></>}</div>}
-            </div>;
+            </div></Fragment>;
           })}
         </div>}
       </section>)}
