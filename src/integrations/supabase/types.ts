@@ -19,6 +19,7 @@ export type Database = {
           campaign_id: string
           created_at: string
           is_residual: boolean
+          logo_url: string | null
           priority: number
           updated_at: string
         }
@@ -26,6 +27,7 @@ export type Database = {
           campaign_id: string
           created_at?: string
           is_residual?: boolean
+          logo_url?: string | null
           priority: number
           updated_at?: string
         }
@@ -33,6 +35,7 @@ export type Database = {
           campaign_id?: string
           created_at?: string
           is_residual?: boolean
+          logo_url?: string | null
           priority?: number
           updated_at?: string
         }
