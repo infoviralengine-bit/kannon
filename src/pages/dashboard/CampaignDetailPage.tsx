@@ -23,6 +23,7 @@ import {
 import { useCampaignCycles, type ClientPaymentRow } from "@/hooks/usePaymentsData";
 import { useCompanyOptions } from "@/hooks/useCompanies";
 import { CompanyLogo } from "@/components/companies/CompanyLogo";
+import { loadAllocationTarget, parsePlanningTarget, saveAllocationTarget } from "@/lib/allocationTargets";
 import {
   type PaymentTerms,
   DEFAULT_STANDARD, DEFAULT_TOT_SPLIT,
@@ -115,12 +116,18 @@ function EditCampaignModal({
   const [endDate, setEndDate] = useState<Date | undefined>(campaign.end_date ? new Date(campaign.end_date) : undefined);
   const [notes, setNotes] = useState(campaign.notes ?? "");
   const [minMonthlyVideos, setMinMonthlyVideos] = useState(String((campaign as any).min_monthly_videos ?? 0));
+  const [allocationTarget, setAllocationTarget] = useState("");
+  const planning = useQuery({ queryKey: ["allocation-target", campaign.id], queryFn: () => loadAllocationTarget(campaign.id) });
+  useEffect(() => { if (planning.isSuccess) setAllocationTarget(planning.data === null ? "" : String(planning.data)); }, [planning.isSuccess, planning.data]);
   const [videoViewsCap, setVideoViewsCap] = useState(campaign.video_views_cap != null ? String(campaign.video_views_cap) : "");
   const [monthlySpendCap, setMonthlySpendCap] = useState(campaign.monthly_spend_cap != null ? String(campaign.monthly_spend_cap) : "");
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!name || !companyId || !startDate) throw new Error(t("Compila i campi obbligatori"));
+      if (planning.isLoading) throw new Error(t("Caricamento..."));
+      if (planning.error) throw planning.error;
+      const planningTarget = parsePlanningTarget(allocationTarget);
       const parsedCpm = parseFloat(clientCpm);
       const newCpm = isNaN(parsedCpm) ? 0 : parsedCpm;
       const parsedFixed = parseFloat(clientFixed);
@@ -145,6 +152,8 @@ function EditCampaignModal({
       } as any).eq("id", campaign.id);
       if (error) throw error;
 
+      if (planningTarget !== planning.data) await saveAllocationTarget(campaign.id, planningTarget);
+
       // Cycles and unpaid amounts are realigned by the database trigger on campaigns.
     },
     onSuccess: () => {
@@ -153,6 +162,8 @@ function EditCampaignModal({
       qc.invalidateQueries({ queryKey: ["campaign-table"] });
       qc.invalidateQueries({ queryKey: ["campaign-cycles", campaign.id] });
       qc.invalidateQueries({ queryKey: ["client-payments"] });
+      qc.invalidateQueries({ queryKey: ["allocation-base"] });
+      qc.invalidateQueries({ queryKey: ["allocation-target", campaign.id] });
       onOpenChange(false);
     },
     onError: (e: Error) => {
@@ -231,6 +242,10 @@ function EditCampaignModal({
             <Label>{t("Video minimi al mese")}</Label>
             <Input type="number" min="0" step="1" value={minMonthlyVideos} onChange={(e) => setMinMonthlyVideos(e.target.value)} />
           </div>
+          <div className="grid gap-1.5">
+            <Label>{t("Target video mensili (Allocation)")}</Label>
+            <Input type="number" min="0" step="1" value={allocationTarget} disabled={planning.isLoading || !!planning.error} onChange={(e) => setAllocationTarget(e.target.value)} placeholder={t("Se vuoto, usa i video minimi al mese")} />
+          </div>
           <Separator />
           <p className="text-sm font-medium text-muted-foreground">{t("Cap (opzionali)")}</p>
           <div className="grid grid-cols-2 gap-4">
@@ -247,7 +262,7 @@ function EditCampaignModal({
             <Label>{t("Note")}</Label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
-          <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+          <Button onClick={() => mutation.mutate()} disabled={mutation.isPending || planning.isLoading || !!planning.error}>
             {mutation.isPending ? t("Salvataggio...") : t("Salva Modifiche")}
           </Button>
         </div>

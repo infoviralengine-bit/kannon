@@ -22,3 +22,4 @@ Numeri/valute/date restano it-IT. Stringhe avvolte in t("testo italiano"), dizio
 - [ ] Chiarire con l'utente l'identità di Rosa Bávaro e il collegamento dell'account di Jennifer Villahermosa prima di toccare i rispettivi record
 - [ ] Verificare visivamente Allocation e il collaudo della settimana del 12 ottobre con un accesso autorizzato; l'anteprima locale rimanda al login e l'accesso Supabase non è gestito qui
 - [x] Allocation: tutti i creator registrati per contratti Premium, VE e Finanz (inclusi multi-contratto e senza contratto), planning compatto con palette Carta e segnale, loghi clienti accessibili e creazione gruppi in basso
+- [x] Allocation: sostituiti giorni/account richiesti con target mensile e settimanale, modificabili anche dalla finestra Campagne

@@ -51,8 +51,9 @@ export function campTotals(rows: AllocationRow[], campaign: AllocationCampaign, 
   const days = activeDays(campaign, week);
   const participating = rows.filter(r => effectiveSlots(r, residualId, auto).includes(campaign.id));
   const slots = participating.reduce((n, r) => n + effectiveSlots(r, residualId, auto).filter(s => s === campaign.id).length, 0);
-  const target = campaign.is_residual ? null : Math.round((campaign.target_monthly_videos ?? campaign.min_monthly_videos ?? 0) * days / 26);
-  return { days, slots, videos: slots * days, target, accounts: participating.length };
+  const monthly = campaign.target_monthly_videos ?? (campaign.is_residual ? null : campaign.min_monthly_videos);
+  const target = monthly === null ? null : Math.round(monthly * days / 26);
+  return { days, slots, videos: slots * days, target };
 }
 export function normalizeSlots(raw: unknown, capacity: number): Slot[] {
   const arr = Array.isArray(raw) ? raw : [];
