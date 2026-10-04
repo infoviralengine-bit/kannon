@@ -73,7 +73,7 @@ export function AllocationGroups(p: Props) {
       const ids = g.creator_ids.filter(id => p.creators.some(c => c.id === id));
       const live = p.rows.filter(r => ids.includes(r.creator_id) && !r.paused);
       const width = Math.max(0, ...live.map(r => r.slots.length));
-      const picked = brush[g.id] ?? null;
+      const picked = p.picked;
       const videos = new Map<string, number>();
       live.forEach(r => r.slots.forEach(s => { if (s) videos.set(s, (videos.get(s) ?? 0) + 1); }));
       return <div key={g.id} className="space-y-3 rounded-md border border-allocation-mist bg-surface p-3 text-xs">
@@ -88,7 +88,6 @@ export function AllocationGroups(p: Props) {
         </div>
         <p className="truncate text-allocation-ink/75">{ids.map(id => p.creators.find(c => c.id === id)?.name).join(', ') || '—'}</p>
         {p.writable && width > 0 && <>
-          <div className="flex flex-wrap gap-1">{available.map(c => <Button key={c.id} size="sm" variant="outline" className={`h-7 gap-1 px-2 ${btn} ${picked === c.id ? '!border-allocation-ink ring-1 ring-allocation-ink' : ''}`} onClick={() => setBrush(b => ({ ...b, [g.id]: picked === c.id ? null : c.id }))}><span className={`h-2.5 w-2.5 rounded-sm ${color(c.id)}`}/><CompanyLogo name={c.name} logoUrl={c.logo_url} className="h-4 w-4 border-0" imageClassName="p-0"/>{c.name}</Button>)}</div>
           <div className="flex gap-1">{Array.from({ length: width }, (_, i) => {
             const values = new Set(live.filter(r => i < r.slots.length).map(r => r.slots[i]));
             const same = values.size === 1 ? [...values][0] : undefined;
