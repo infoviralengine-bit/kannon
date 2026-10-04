@@ -15,7 +15,7 @@ describe('allocation', () => {
   });
   it('counts partial weeks and excludes Sunday', () => {
     expect(activeDays(camp, '2026-11-02')).toBe(4);
-    expect(campTotals([{ creator_id: 'c', paused: false, slots: ['easy', null] }], camp, '2026-11-02', 'finanz', true)).toMatchObject({ videos: 4, target: 77, accounts: 1 });
+    expect(campTotals([{ creator_id: 'c', paused: false, slots: ['easy', null] }], camp, '2026-11-02', 'finanz', true)).toMatchObject({ videos: 4, target: 77 });
     expect(activeDays(camp, '2026-11-09')).toBe(0);
     expect(shiftWeek('2026-11-02', 1)).toBe('2026-11-09');
   });

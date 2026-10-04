@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { activeDays, normalizeSlots, type AllocationCampaign, type AllocationRow } from '@/lib/allocation';
+import { saveAllocationTarget } from '@/lib/allocationTargets';
 
 async function unwrap<T>(promise: PromiseLike<{ data: T | null; error: { message: string } | null }>): Promise<T> {
   const { data, error } = await promise;
@@ -74,7 +75,7 @@ export function useAllocationActions() {
       qc.invalidateQueries({ queryKey: ['allocation-base'] });
     },
     async target(id: string, target: number) {
-      await unwrap(supabase.from('allocation_campaigns').update({ target_monthly_videos: target }).eq('campaign_id', id));
+      await saveAllocationTarget(id, target);
       await qc.invalidateQueries({ queryKey: ['allocation-base'] });
     },
     async createGroup(name: string, ids: string[]) {
