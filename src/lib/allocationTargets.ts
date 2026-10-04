@@ -22,3 +22,9 @@ export function parsePlanningTarget(value: string): number | null {
   if (!/^\d+$/.test(value.trim()) || !Number.isSafeInteger(number)) throw new Error('Target non valido');
   return number;
 }
+
+export async function loadAllocationTarget(campaignId: string): Promise<number | null> {
+  const { data, error } = await supabase.from('allocation_campaigns').select('target_monthly_videos').eq('campaign_id', campaignId).maybeSingle();
+  if (error) throw error;
+  return data?.target_monthly_videos ?? null;
+}
