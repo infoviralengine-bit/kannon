@@ -21,6 +21,7 @@ export type Database = {
           is_residual: boolean
           logo_url: string | null
           priority: number
+          target_monthly_videos: number | null
           updated_at: string
         }
         Insert: {
@@ -29,6 +30,7 @@ export type Database = {
           is_residual?: boolean
           logo_url?: string | null
           priority: number
+          target_monthly_videos?: number | null
           updated_at?: string
         }
         Update: {
@@ -37,6 +39,7 @@ export type Database = {
           is_residual?: boolean
           logo_url?: string | null
           priority?: number
+          target_monthly_videos?: number | null
           updated_at?: string
         }
         Relationships: [
