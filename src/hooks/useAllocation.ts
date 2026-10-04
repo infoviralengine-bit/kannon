@@ -41,7 +41,7 @@ export function useAllocationBase() {
 }
 
 export function useAllocationWeek(week: string, creators: Premium[], campaigns: AllocationCampaign[], writable: boolean) {
-  return useQuery({ queryKey: ['allocation-week', week, creators.filter(c => c.daily_slots > 0).map(c => `${c.id}:${c.daily_slots}`).join(',')], enabled: creators.some(c => c.daily_slots > 0) && campaigns.length > 0, queryFn: async () => {
+  return useQuery({ queryKey: ['allocation-week', week, creators.filter(c => c.daily_slots > 0).map(c => `${c.id}:${c.daily_slots}`).join(',')], enabled: campaigns.length > 0, queryFn: async () => {
     let current = await unwrap(supabase.from('allocation_weeks').select('week_start,residual_auto,version').eq('week_start',week).maybeSingle()) as Week | null;
     if (!current && writable) {
       await unwrap(supabase.rpc('open_allocation_week', { p_week: week }));
