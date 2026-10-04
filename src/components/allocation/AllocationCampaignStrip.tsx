@@ -27,10 +27,10 @@ export function AllocationCampaignStrip({ week, campaigns }: { week: string; cam
   if (!visible.length) return null;
 
   return <section aria-label={t('Durata campagne')} className="border-y border-allocation-mist py-3">
-    <div className="mb-2 flex items-baseline justify-between gap-2"><h2 className="text-xs font-semibold text-allocation-ink">{t('Durata campagne')}</h2><span className="text-[11px] text-allocation-ink/60">{t('Settimana selezionata')}: {label(date(week))}</span></div>
+    <div className="mb-2 flex items-baseline justify-between gap-2"><h2 className="text-xs font-semibold text-allocation-ink">{t('Durata campagne')}</h2><span className="text-[11px] text-allocation-ink/75">{t('Settimana selezionata')}: {label(date(week))}</span></div>
     <div className="overflow-x-auto">
       <div className="min-w-[560px] space-y-1">
-        <div className="flex h-4 items-center"><div className="w-40 shrink-0"/><div className="relative h-full flex-1 text-[10px] text-allocation-ink/60"><span className="absolute left-0">{month(start)}</span>{ticks.map(tick => <span key={tick} className="absolute -translate-x-1/2" style={{ left: `${(tick - start) / span * 100}%` }}>{month(tick)}</span>)}<span className="absolute right-0">{month(end)}</span></div></div>
+        <div className="flex h-4 items-center"><div className="w-40 shrink-0"/><div className="relative h-full flex-1 text-[10px] text-allocation-ink/75"><span className="absolute left-0">{month(start)}</span>{ticks.map(tick => <span key={tick} className="absolute -translate-x-1/2" style={{ left: `${(tick - start) / span * 100}%` }}>{month(tick)}</span>)}<span className="absolute right-0">{month(end)}</span></div></div>
         {visible.map((c, i) => {
           const first = date(c.start_date);
           const last = c.end_date ? date(c.end_date) : end;
@@ -38,12 +38,12 @@ export function AllocationCampaignStrip({ week, campaigns }: { week: string; cam
           const right = Math.min(100, (Math.min(last, end) - start) / span * 100);
           return <div key={c.id} className="flex h-8 items-center gap-2">
             <div className="flex w-40 shrink-0 items-center gap-2 overflow-hidden"><CompanyLogo name={c.name} logoUrl={c.logo_url} className="!h-6 !w-6 border-allocation-mist bg-surface"/><span className="truncate text-xs font-medium text-allocation-ink" title={c.name}>{c.name}</span></div>
-            <div className="relative h-6 flex-1 bg-allocation-mist/30" title={`${c.name}: ${label(first)} – ${c.end_date ? label(last) : t('Continuativa')}`}>
+            <div className="relative h-6 flex-1 bg-allocation-mist/50" title={`${c.name}: ${label(first)} – ${c.end_date ? label(last) : t('Continuativa')}`}>
               {ticks.map(tick => <span key={tick} className="absolute inset-y-0 w-px bg-allocation-mist" style={{ left: `${(tick - start) / span * 100}%` }}/ >)}
               <span className={`absolute top-2 h-2 rounded-sm ${colors[i % colors.length]}`} style={{ left: `${left}%`, width: `${Math.max(0, right - left)}%` }} />
               {first >= start && first <= end && <span className={`absolute top-1.5 h-3 w-1 rounded-sm ${colors[i % colors.length]}`} style={{ left: `${left}%` }} title={`${t('Inizio')}: ${label(first)}`} />}
               {c.end_date && last >= start && last <= end && <span className={`absolute top-1.5 h-3 w-1 rounded-sm ${colors[i % colors.length]}`} style={{ left: `${right}%` }} title={`${t('Fine')}: ${label(last)}`} />}
-              <span className="absolute inset-y-0 w-px bg-allocation-ink/60" style={{ left: `${weekLeft}%` }} title={t('Settimana selezionata')} />
+              <span className="absolute inset-y-0 w-px bg-allocation-ink/75" style={{ left: `${weekLeft}%` }} title={t('Settimana selezionata')} />
             </div>
           </div>;
         })}

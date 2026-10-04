@@ -7,9 +7,9 @@
 @layer base {
   :root {
     /* Allocation workspace, scoped to the planning surface. */
-    --allocation-paper: 100 14% 95%;
-    --allocation-mist: 165 16% 85%;
-    --allocation-ink: 176 23% 15%;
+    --allocation-paper: 0 0% 96%;
+    --allocation-mist: 170 8% 72%;
+    --allocation-ink: 176 25% 11%;
     --allocation-signal: 2 65% 55%;
     --allocation-campaign-one: 180 38% 35%;
     --allocation-campaign-two: 38 62% 43%;
