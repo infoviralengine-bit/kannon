@@ -22,6 +22,8 @@ describe('allocation', () => {
   it('uses the internal target instead of the campaign minimum, falling back for other campaigns', () => {
     expect(campTotals([], camp, '2026-11-02', null, false).target).toBe(77);
     expect(campTotals([], {...camp, target_monthly_videos: null}, '2026-11-02', null, false).target).toBe(5);
+    expect(campTotals([], {...camp, is_residual: true, target_monthly_videos: null}, '2026-11-02', null, false).target).toBeNull();
+    expect(campTotals([], {...camp, is_residual: true, target_monthly_videos: 500}, '2026-11-02', null, false).target).toBe(77);
   });
   it('excludes paused capacity and fills only implicit residual', () => {
     const r = { creator_id: 'c', paused: false, slots: [null, 'easy'] };
