@@ -49,7 +49,7 @@ export function useAllocationWeek(week: string, creators: Premium[], campaigns: 
       return { creator_id: c.id, paused: saved?.paused ?? false, slots: normalizeSlots(saved?.slots, c.daily_slots).map(id => id && active.has(id) ? id : null) };
     });
     return { week: (current ?? { week_start: week, residual_auto: previous?.residual_auto ?? true, version: 0 }) as Week,
-      rows: normalize(currentRows.length ? currentRows : previousRows), previous: normalize(previousRows), persisted: Boolean(current) };
+      rows: normalize(current ? currentRows : previousRows), previous: normalize(previousRows), persisted: Boolean(current) };
   }});
 }
 

@@ -38,6 +38,8 @@ export function AllocationBoard(p: Props) {
   const total = p.rows.filter(r => !r.paused).reduce((n,r) => n + r.slots.length,0);
   const totals = available.map(c => campTotals(p.rows,c,p.week,residual,p.auto));
   const idle = p.rows.reduce((n,r) => n + effectiveSlots(r,residual,p.auto).filter(s => !s).length,0);
+  const risk = available.find(c => c.priority === 1 && !c.is_residual && activeDays(c,p.week)>0 && (campTotals(p.rows,c,p.week,residual,p.auto).videos < (campTotals(p.rows,c,p.week,residual,p.auto).target ?? 0)));
+  const inverted = p.rows.filter(r => !r.paused && (p.creators.find(c=>c.id===r.creator_id)?.tier === 'A') && !effectiveSlots(r,residual,p.auto).includes(available.find(c=>c.priority===1)?.id ?? '')).length;
   const changes = p.rows.filter(r => {
     const prev = p.previous.find(x => x.creator_id === r.creator_id);
     return prev && (prev.paused !== r.paused || JSON.stringify(prev.slots) !== JSON.stringify(r.slots));
@@ -68,6 +70,7 @@ export function AllocationBoard(p: Props) {
   ));
 
   return <div className="space-y-4">
+    {(risk || inverted>0) && <div className="flex flex-wrap gap-x-5 gap-y-1 border-l-2 border-warning pl-3 text-xs text-warning"><AlertTriangle className="h-4 w-4"/>{risk && <span>{risk.name}: {t('obiettivo settimanale a rischio')}</span>}{inverted>0 && <span>{inverted} {t('creator tier A non assegnati alla priorità principale')}</span>}</div>}
     <section className="space-y-2" aria-label={t('Distribuzione capacità')}>
       <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm"><div><strong className="text-xl">{tally(total)}</strong> {t('slot al giorno')} <span className="text-muted-foreground">· {tally(available.reduce((n,c,i) => n + totals[i].videos,0))} {t('video nella settimana')}</span></div><span className={idle ? 'text-destructive font-semibold' : 'text-muted-foreground'}>{idle ? `${tally(idle)} ${t('slot fermi')}` : t('Nessuno slot fermo')}</span></div>
       <div className="flex h-8 w-full overflow-hidden rounded-sm bg-muted" role="img" aria-label={t('Distribuzione capacità')}>
