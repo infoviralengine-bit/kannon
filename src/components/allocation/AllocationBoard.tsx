@@ -9,7 +9,6 @@ import { activeDays, campTotals, effectiveSlots, paint, type AllocationCampaign,
 import type { Group, Premium } from '@/hooks/useAllocation';
 
 const colors = ['bg-allocation-one','bg-allocation-two','bg-allocation-three','bg-allocation-four','bg-allocation-five'];
-const bars = ['border-allocation-one','border-allocation-two','border-allocation-three','border-allocation-four','border-allocation-five'];
 const tally = (n: number) => new Intl.NumberFormat('it-IT').format(n);
 type Props = {
   week: string; campaigns: AllocationCampaign[]; creators: Premium[]; rows: AllocationRow[]; previous: AllocationRow[];
