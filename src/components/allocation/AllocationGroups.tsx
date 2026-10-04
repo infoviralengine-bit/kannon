@@ -89,7 +89,7 @@ export function AllocationGroups(p: Props) {
         <p className="truncate text-allocation-ink/75">{ids.map(id => p.creators.find(c => c.id === id)?.name).join(', ') || '—'}</p>
         {p.writable && width > 0 && <>
           <div className="flex gap-1">{Array.from({ length: width }, (_, i) => {
-            const values = new Set(live.filter(r => i < r.slots.length).map(r => r.slots[i]));
+            const values = new Set(effective.filter(s => i < s.length).map(s => s[i]));
             const same = values.size === 1 ? [...values][0] : undefined;
             return <button key={i} type="button" disabled={!picked || p.busy} title={same === undefined ? t('Misto') : same ? available.find(c => c.id === same)?.name : t('Libero')}
               onClick={() => { if (!picked) return; const filled = live.length > 0 && live.every(r => i < r.slots.length && r.slots[i] === picked && r.slots[i + 1] !== picked); assign(ids, i, picked, filled); }}
