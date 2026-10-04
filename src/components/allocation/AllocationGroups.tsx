@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useI18n } from '@/i18n';
-import { activeDays, type AllocationCampaign, type AllocationRow, type Slot } from '@/lib/allocation';
+import { activeDays, effectiveSlots, type AllocationCampaign, type AllocationRow, type Slot } from '@/lib/allocation';
 import type { Group, Premium } from '@/hooks/useAllocation';
 
 type Props = {
   week: string; groups: Group[]; creators: Premium[]; rows: AllocationRow[]; campaigns: AllocationCampaign[];
   colors: string[]; sectionOf: (c: Premium) => string; writable: boolean; busy: boolean; picked: string | null;
+  residualId: string | null; auto: boolean;
   onRows: (rows: AllocationRow[]) => void;
   onCreate: (name: string, ids: string[]) => Promise<void>;
   onUpdate: (id: string, patch: { name?: string; creator_ids?: string[] }) => Promise<void>;
