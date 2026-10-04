@@ -292,6 +292,7 @@ export default function ContractDetailPage() {
   }
 
   const typeLabel: Record<string, string> = { solo_cpm: "Solo CPM", premium: "Premium", custom: "Custom" };
+  const hasCpm = Number(contract.creator_cpm ?? 0) > 0;
 
   return (
     <div className="space-y-6">
