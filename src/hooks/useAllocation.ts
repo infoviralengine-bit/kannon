@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { normalizeSlots, shiftWeek, type AllocationCampaign, type AllocationRow } from '@/lib/allocation';
+import { activeDays, normalizeSlots, type AllocationCampaign, type AllocationRow } from '@/lib/allocation';
 
 async function unwrap<T>(promise: PromiseLike<{ data: T | null; error: { message: string } | null }>): Promise<T> {
   const { data, error } = await promise;
@@ -43,9 +43,7 @@ export function useAllocationWeek(week: string, creators: Premium[], campaigns: 
     const currentRows = current ? await unwrap(supabase.from('allocation_slots').select('creator_id,slots,paused').eq('week_start',week)) : [];
     const previous = await unwrap(supabase.from('allocation_weeks').select('week_start,residual_auto,version').lt('week_start',week).order('week_start',{ ascending: false }).limit(1).maybeSingle());
     const previousRows = previous ? await unwrap(supabase.from('allocation_slots').select('creator_id,slots,paused').eq('week_start',previous.week_start)) : [];
-    const active = new Set(campaigns.filter(c => c.status === 'active' && c.start_date <= shiftWeek(week, 0).slice(0,10).replace(/$/, '') && (!c.end_date || c.end_date >= week)).map(c => c.id));
-    // The exact partial-week rule includes campaigns beginning before Saturday.
-    campaigns.forEach(c => { if (c.status === 'active' && c.start_date <= new Date(new Date(`${week}T00:00:00Z`).getTime() + 5 * 86400000).toISOString().slice(0,10) && (!c.end_date || c.end_date >= week)) active.add(c.id); });
+    const active = new Set(campaigns.filter(c => activeDays(c, week) > 0).map(c => c.id));
     const normalize = (raw: typeof currentRows): AllocationRow[] => creators.map(c => {
       const saved = raw.find(r => r.creator_id === c.id);
       return { creator_id: c.id, paused: saved?.paused ?? false, slots: normalizeSlots(saved?.slots, c.daily_slots).map(id => id && active.has(id) ? id : null) };
