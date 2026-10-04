@@ -64,9 +64,8 @@ export function AllocationBoard(p: Props) {
     const targets = selected.length ? selected : [creatorId];
     p.onRows(p.rows.map(r => targets.includes(r.creator_id) && !r.paused && index < r.slots.length ? { ...r, slots: paint(r.slots, index, chosen) } : r));
   };
-  const clearSlots = (ids: string[], label: string) => {
+  const clearSlots = (ids: string[]) => {
     if (!p.writable || p.busy) return;
-    if (!window.confirm(t('Svuotare gli slot di {label} per questa settimana?', { label }))) return;
     p.onRows(p.rows.map(r => ids.includes(r.creator_id) ? { ...r, slots: r.slots.map(() => null) } : r));
   };
   const sections = ['Premium','VE','Finanz','Senza contratto'].map(name => ({ name, creators: p.creators.filter(c => contractSection(c.contracts) === name).sort((a, b) => {
