@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.get_allocation_company_logos();
