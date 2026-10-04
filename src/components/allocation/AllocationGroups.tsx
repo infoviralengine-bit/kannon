@@ -50,7 +50,7 @@ export function AllocationGroups(p: Props) {
 
   const assign = (ids: string[], index: number, value: Slot) => {
     if (!p.writable || p.busy) return;
-    p.onRows(p.rows.map(r => ids.includes(r.creator_id) && !r.paused && index < r.slots.length ? { ...r, slots: r.slots.map((s, i) => i === index ? value : s) } : r));
+    p.onRows(p.rows.map(r => ids.includes(r.creator_id) && !r.paused && index < r.slots.length ? { ...r, slots: r.slots.map((s, i) => i <= index ? value : s) } : r));
   };
   const clear = (ids: string[]) => { if (p.writable && !p.busy) p.onRows(p.rows.map(r => ids.includes(r.creator_id) && !r.paused ? { ...r, slots: r.slots.map(() => null) } : r)); };
 
