@@ -1,0 +1,1 @@
+ALTER FUNCTION public.save_allocation_week(date,integer,boolean,jsonb) SECURITY INVOKER; ALTER FUNCTION public.open_allocation_week(date) SECURITY INVOKER;
