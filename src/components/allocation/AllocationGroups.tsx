@@ -48,9 +48,19 @@ export function AllocationGroups(p: Props) {
   };
   const toggle = (ids: string[], on: boolean) => setMembers(prev => on ? [...new Set([...prev, ...ids])] : prev.filter(id => !ids.includes(id)));
 
-  const assign = (ids: string[], index: number, value: Slot) => {
+  // Fills from the end of the previous campaign's block up to `index`, keeping earlier campaigns intact.
+  const fillRun = (slots: Slot[], index: number, picked: string, clear: boolean): Slot[] => {
+    const next = [...slots];
+    let start = index;
+    while (start > 0 && (next[start - 1] === null || next[start - 1] === picked)) start--;
+    if (clear) { for (let i = start; i <= index; i++) if (next[i] === picked) next[i] = null; return next; }
+    for (let i = start; i <= index; i++) next[i] = picked;
+    for (let i = index + 1; i < next.length && next[i] === picked; i++) next[i] = null;
+    return next;
+  };
+  const assign = (ids: string[], index: number, picked: string, clear: boolean) => {
     if (!p.writable || p.busy) return;
-    p.onRows(p.rows.map(r => ids.includes(r.creator_id) && !r.paused && index < r.slots.length ? { ...r, slots: r.slots.map((s, i) => i <= index ? value : s) } : r));
+    p.onRows(p.rows.map(r => ids.includes(r.creator_id) && !r.paused && index < r.slots.length ? { ...r, slots: fillRun(r.slots, index, picked, clear) } : r));
   };
   const clear = (ids: string[]) => { if (p.writable && !p.busy) p.onRows(p.rows.map(r => ids.includes(r.creator_id) && !r.paused ? { ...r, slots: r.slots.map(() => null) } : r)); };
 
@@ -84,7 +94,7 @@ export function AllocationGroups(p: Props) {
             const values = new Set(live.filter(r => i < r.slots.length).map(r => r.slots[i]));
             const same = values.size === 1 ? [...values][0] : undefined;
             return <button key={i} type="button" disabled={!picked || p.busy} title={same === undefined ? t('Misto') : same ? available.find(c => c.id === same)?.name : t('Libero')}
-              onClick={() => { if (!picked) return; const filled = live.length > 0 && live.every(r => i < r.slots.length && r.slots[i] === picked) && live.every(r => r.slots.slice(0, i + 1).every(s => s === picked)); assign(ids, i, filled ? null : picked); }}
+              onClick={() => { if (!picked) return; const filled = live.length > 0 && live.every(r => i < r.slots.length && r.slots[i] === picked && r.slots[i + 1] !== picked); assign(ids, i, picked, filled); }}
               className={`h-8 flex-1 rounded-sm border border-allocation-mist text-[10px] font-semibold disabled:cursor-not-allowed ${same ? `${color(same)} text-allocation-paper` : same === null ? 'bg-allocation-paper text-allocation-ink/60' : 'bg-[repeating-linear-gradient(45deg,hsl(var(--allocation-mist))_0_4px,transparent_4px_8px)] text-allocation-ink'}`}>{i + 1}</button>;
           })}</div>
           {!picked && <p className="text-allocation-ink/60">{t('Seleziona prima una campagna')}</p>}
