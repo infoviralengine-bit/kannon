@@ -107,6 +107,8 @@ export function AllocationBoard(p: Props) {
       <div className="ml-auto flex items-center gap-2">{p.writable && <Button size="sm" variant="outline" className="border-allocation-mist bg-surface text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink" disabled={p.busy} onClick={() => clearSlots(p.creators.map(c => c.id))}><Eraser className="mr-1 h-3 w-3"/>{t('Svuota settimana')}</Button>}<Switch checked={p.auto} onCheckedChange={p.onAuto} disabled={!p.writable || p.busy || !residual} aria-label={t('Residuo automatico')}/><span className="text-xs">{t('Residuo automatico')}</span></div>
     </section>
 
+    <AllocationGroups week={p.week} groups={p.groups} creators={p.creators} rows={p.rows} campaigns={p.campaigns} colors={colors} sectionOf={c => contractSection(c.contracts)} writable={p.writable} busy={p.busy} onRows={p.onRows} onCreate={p.onCreateGroup} onUpdate={p.onUpdateGroup} onDelete={p.onDeleteGroup}/>
+
     <div className="space-y-7">
       {sections.map(section => <section key={section.name} aria-label={`${t('Contratto')} ${section.name}`}>
         <div className="mb-3 flex items-center justify-between border-b border-allocation-mist pb-2"><h2 className="text-base font-semibold">{section.name === 'Senza contratto' ? t(section.name) : section.name}</h2><div className="flex items-center gap-2">{p.writable && section.creators.length > 0 && <Button size="sm" variant="ghost" className="h-7 text-xs text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink" disabled={p.busy} onClick={() => clearSlots(section.creators.map(c => c.id))}><Eraser className="mr-1 h-3 w-3"/>{t('Svuota contratto')}</Button>}<span className="text-xs text-allocation-ink/75">{section.creators.length} {t('creator')}</span></div></div>
