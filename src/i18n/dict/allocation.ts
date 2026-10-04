@@ -14,5 +14,6 @@ export const allocation: Record<string,string> = {
   'Settimana':'Week', 'Settimana precedente':'Previous week', 'Settimana successiva':'Next week',
   'Oggi':'Today', 'Ricarica':'Refresh', 'Caricamento...':'Loading...', 'Nessun creator disponibile':'No creators available',
   'Accesso non consentito':'Access denied', 'Salvataggio non riuscito':'Save failed', 'Salvataggio in corso...':'Saving...',
+  'Attendi il salvataggio':'Wait for the save to finish',
   'obiettivo settimanale a rischio':'weekly goal at risk', 'creator tier A non assegnati alla priorità principale':'tier A creators not assigned to the main priority',
 };

@@ -29,25 +29,22 @@ export default function AllocationPage() {
   const actions = useAllocationActions();
   const [rows, setRows] = useState<AllocationRow[]>([]);
   const [auto, setAuto] = useState(true);
-  const [version, setVersion] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
   const writeChain = useRef<Promise<unknown>>(Promise.resolve());
-  const latest = useRef({ rows, auto, version, week });
-  latest.current = { rows, auto, version, week };
+  const latest = useRef({ rows, auto, version: 0, week });
   useEffect(() => {
     if (!query.data) return;
     setRows(query.data.rows);
     setAuto(query.data.week.residual_auto);
-    setVersion(query.data.week.version);
+    latest.current = { rows: query.data.rows, auto: query.data.week.residual_auto, version: query.data.week.version, week };
   },[query.data,week]);
   useEffect(() => () => { if (pending.current) clearTimeout(pending.current); },[week]);
 
   const persist = (nextRows: AllocationRow[], nextAuto: boolean) => {
     if (!writable) return;
-    const old = { ...latest.current };
-    latest.current = { ...old, rows: nextRows, auto: nextAuto };
+    latest.current = { ...latest.current, rows: nextRows, auto: nextAuto };
     setRows(nextRows); setAuto(nextAuto); setError('');
     if (pending.current) clearTimeout(pending.current);
     pending.current = setTimeout(() => {
@@ -57,31 +54,27 @@ export default function AllocationPage() {
         try {
           const newVersion = await actions.save({ week_start: snapshot.week, version: latest.current.version, residual_auto: snapshot.auto }, snapshot.rows, snapshot.auto);
           latest.current.version = newVersion;
-          setVersion(newVersion);
           setError('');
         } catch (e) {
           const text = e instanceof Error ? e.message : t('Salvataggio non riuscito');
           setError(text);
           toast({ title: t('Salvataggio non riuscito'), description: text, variant: 'destructive' });
-          if (latest.current.week === snapshot.week) {
-            setRows(old.rows); setAuto(old.auto);
-            latest.current = { ...old };
-          }
           await query.refetch();
         } finally { setBusy(false); }
       });
     }, 250);
   };
-  const go = (weeks: number) => {
-    if (pending.current) { clearTimeout(pending.current); pending.current = null; }
-    setWeek(w => shiftWeek(w,weeks));
+  const go = (target: string) => {
+    if (pending.current || busy) { toast({ title: t('Attendi il salvataggio'), variant: 'destructive' }); return; }
+    setWeek(target);
   };
+  const weeks = Array.from({ length: 8 }, (_,i) => shiftWeek(monday(new Date()),i));
 
   if (!writable && role !== ROLES.CAMPAIGN_MANAGER) return <p className="p-6 text-destructive">{t('Accesso non consentito')}</p>;
   return <div className="mx-auto w-full max-w-[1500px] space-y-5 p-4 md:p-6">
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div><h1 className="text-2xl font-semibold">Allocation</h1><p className="text-xs text-muted-foreground">{t('Settimana')} {dateLabel(week)} · {new Date(`${week}T00:00:00Z`).getUTCFullYear()}</p></div>
-      <div className="flex items-center gap-1"><Button variant="outline" size="icon" title={t('Settimana precedente')} onClick={()=>go(-1)}><ChevronLeft/></Button><Button variant="outline" size="sm" onClick={()=>setWeek(monday(new Date()))}>{t('Oggi')}</Button><Button variant="outline" size="icon" title={t('Settimana successiva')} onClick={()=>go(1)}><ChevronRight/></Button><Button variant="ghost" size="icon" title={t('Ricarica')} onClick={()=>query.refetch()}><RotateCcw/></Button></div>
+      <div className="flex flex-wrap items-center gap-1"><Button variant="outline" size="icon" title={t('Settimana precedente')} onClick={()=>go(shiftWeek(week,-1))}><ChevronLeft/></Button>{weeks.map(w=><Button key={w} variant={w===week?'default':'outline'} size="sm" onClick={()=>go(w)}>{new Intl.DateTimeFormat('it-IT',{day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(`${w}T00:00:00Z`))}</Button>)}<Button variant="outline" size="icon" title={t('Settimana successiva')} onClick={()=>go(shiftWeek(week,1))}><ChevronRight/></Button><Button variant="ghost" size="icon" title={t('Ricarica')} onClick={()=>query.refetch()}><RotateCcw/></Button></div>
     </header>
     {(base.isLoading || query.isLoading) && <p className="text-sm text-muted-foreground">{t('Caricamento...')}</p>}
     {(base.error || query.error) && <p role="alert" className="text-sm text-destructive">{(base.error ?? query.error)?.message}</p>}
