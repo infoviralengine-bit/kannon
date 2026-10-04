@@ -11,7 +11,7 @@ import type { Group, Premium } from '@/hooks/useAllocation';
 
 type Props = {
   week: string; groups: Group[]; creators: Premium[]; rows: AllocationRow[]; campaigns: AllocationCampaign[];
-  colors: string[]; sectionOf: (c: Premium) => string; writable: boolean; busy: boolean;
+  colors: string[]; sectionOf: (c: Premium) => string; writable: boolean; busy: boolean; picked: string | null;
   onRows: (rows: AllocationRow[]) => void;
   onCreate: (name: string, ids: string[]) => Promise<void>;
   onUpdate: (id: string, patch: { name?: string; creator_ids?: string[] }) => Promise<void>;
@@ -26,7 +26,6 @@ export function AllocationGroups(p: Props) {
   const [name, setName] = useState('');
   const [members, setMembers] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
-  const [brush, setBrush] = useState<Record<string, string | null>>({});
   const [error, setError] = useState('');
   const available = p.campaigns.filter(c => activeDays(c, p.week) > 0);
   const color = (id: string | null) => { const i = available.findIndex(c => c.id === id); return i < 0 ? '' : p.colors[i % p.colors.length]; };
