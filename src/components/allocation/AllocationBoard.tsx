@@ -77,8 +77,9 @@ export function AllocationBoard(p: Props) {
 
   return <div className="space-y-6">
     <section className="space-y-3" aria-label={t('Distribuzione capacità')}>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <span className="whitespace-nowrap text-sm text-allocation-ink"><strong className="text-xl tabular-nums">{tally(total)}</strong> {t('slot al giorno')}</span>
+        <div className="ml-auto flex items-center gap-2">{p.writable && <Button size="sm" variant="outline" className="border-allocation-mist bg-surface text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink" disabled={p.busy} onClick={() => clearSlots(p.creators.map(c => c.id))}><Eraser className="mr-1 h-3 w-3"/>{t('Svuota settimana')}</Button>}<Switch checked={p.auto} onCheckedChange={p.onAuto} disabled={!p.writable || p.busy || !residual} aria-label={t('Residuo automatico')}/><span className="text-xs">{t('Residuo automatico')}</span></div>
         <div className="flex h-5 flex-1 overflow-hidden rounded bg-allocation-mist" role="img" aria-label={t('Distribuzione capacità')}>
           {available.map((c, i) => <div key={c.id} title={`${c.name}: ${counts.get(c.id) ?? 0}`} className={`${colors[i % colors.length]} h-full border-r border-allocation-paper/50 transition-[width] duration-200`} style={{ width: total ? `${100 * (counts.get(c.id) ?? 0) / total}%` : '0%' }} />)}
           {idle > 0 && <div className="h-full bg-allocation-mist" title={`${idle} ${t('slot fermi')}`} style={{ width: total ? `${100 * idle / total}%` : '0%' }} />}
