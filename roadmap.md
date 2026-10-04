@@ -18,3 +18,4 @@ Numeri/valute/date restano it-IT. Stringhe avvolte in t("testo italiano"), dizio
 - [x] Cicli cliente: primo solo fisso, scadenze +7 giorni, finale dopo ultimo video, due cicli visibili in Da ricevere
 - [x] Allocazione settimanale premium: pagina Operations, dati di campagne e creator esistenti, obiettivi UnFlat/Easy Regalo a 500, pianificazione per slot, gruppi e confronto; Rosa Bávaro esclusa in attesa di identificazione
 - [ ] Chiarire con l'utente l'identità di Rosa Bávaro e il collegamento dell'account di Jennifer Villahermosa prima di toccare i rispettivi record
+- [ ] Verificare visivamente Allocation e il collaudo della settimana del 12 ottobre con un accesso autorizzato; l'anteprima locale rimanda al login e l'accesso Supabase non è gestito qui
