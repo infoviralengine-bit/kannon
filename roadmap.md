@@ -16,3 +16,4 @@ Numeri/valute/date restano it-IT. Stringhe avvolte in t("testo italiano"), dizio
 - [x] Finance: KPI essenziali, selezione campagne non attive e mesi di riferimento sui periodi
 - [x] Cicli pagamento pre-generati + variabile aggiornata dallo scraping
 - [x] Cicli cliente: primo solo fisso, scadenze +7 giorni, finale dopo ultimo video, due cicli visibili in Da ricevere
+- [ ] Allocazione settimanale premium: in attesa di conferma sulla riconciliazione roster/account e sui volumi campagna divergenti prima di modificare i dati o costruire la sezione
