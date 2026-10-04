@@ -1,0 +1,34 @@
+# Allocation: pianificazione settimanale dei creator premium
+
+## Obiettivo e collocazione
+- Aggiungere **Allocation** in **Operations**, subito dopo **Campaigns**; pagina dedicata `/dashboard/allocation`. Mantiene navigazione, colori, tipografia e traduzione IT/EN dell'Hub. Il riferimento grafico inviato serve per la densità operativa e il colpo d'occhio, non per importare la sua interfaccia scura né i dati mostrati nello screenshot.
+- Accesso previsto: admin e team modificano la pianificazione; campaign manager la consulta, senza potere cambiare tier, gruppi o assegnazioni. Creator, clienti e operator non accedono. I permessi sono applicati anche ai dati, non soltanto al menu.
+
+## Prima dei dati: riconciliazione
+- Presentare un prospetto nominativo completo del roster Excel `Creator Roster` confrontato con creator e account TikTok effettivi: 21 venezuelani attivi unici (Rosa Bávaro una persona, due righe) e le quattro italiane indicate. Includere esplicitamente gli attivi in piattaforma non presenti nel roster, gli abbinamenti incerti e gli account discordanti. Ignorare `Summary`, inattivi e volontari. **Nessun creator o campagna duplicato, eliminato o riassegnato.** Per gli account discordanti usare quelli attualmente presenti in piattaforma, come confermato.
+- Solo dopo approvazione del piano, portare gli obiettivi mensili di UnFlat ed Easy Regalo a **500** ciascuno; Bandi Map rimane **1.500**, Finanz resta senza minimo. Non toccare date e tariffe. Se un abbinamento dei 25 premium non è univoco, segnalarlo e non iscrivere un creator sbagliato alla pianificazione.
+
+## Struttura della schermata
+1. **Testata compatta:** titolo Allocation, navigazione per lunedì–domenica sulle prossime otto settimane, settimana attiva evidenziata. Le informazioni salienti devono restare leggibili su laptop senza scorrimento orizzontale.
+2. **Barra capacità a larghezza piena:** un unico nastro proporzionale agli slot giornalieri attivi, segmenti di colore per campagna e, quando il residuo automatico è disattivato, tratteggio di allarme per slot fermi. Totale slot, video settimanali e capacità ferma leggibili anche come numeri, non solo come colore.
+3. **Campagne attive nella settimana:** una scheda compatta per campagna con cliente, produzione settimanale/target, indicatore del target, stato (vuota/sotto/in linea/sopra), numero di creator e giorni effettivi di pubblicazione. Il click sceglie il colore da assegnare. Finanz, residuale, mostra il suo volume ma non un target; con residuo automatico acceso non è selezionabile.
+4. **Banco creator:** barra strumenti persistente con selezione Tutti/A/B/C/Con slot liberi/Nessuno, numero selezionati, gruppi richiamabili e interruttore residuo automatico (acceso per default). Riquadri compatti, uno per premium, ordinabili in modo stabile per tier e nome: tier modificabile, nome selezionabile, pausa settimanale, cinque o sei tacche cliccabili, conteggio degli account richiesti e segnalazione di quelli mancanti. Non mostrare compensi o dati personali.
+5. **Pannelli richiudibili sotto il banco:** Gruppi (crea dalla selezione o vuoto, rinomina, aggiungi/rimuovi selezionati, rimuovi un membro, elimina); Differenze dalla settimana precedente (solo creator modificati, prima/dopo, pause e account necessari). Messaggio esplicito quando non ci sono differenze.
+
+### Interazione fondamentale
+- Con una campagna selezionata, il click sulla tacca `k` riempie **solo il tratto contiguo libero o della stessa campagna** fino a `k`; un'altra campagna arresta il riempimento. Cliccare dentro un tratto dello stesso colore lo accorcia; sulla prima tacca lo svuota; su tacca di un altro colore sostituisce solo quella tacca. Applicare la stessa operazione ai creator selezionati, ignorando le tacche che non possiedono.
+- Residuo automatico acceso: ogni tacca senza assegnazione esplicita va alla campagna residuale attiva, senza trasformarsi in assegnazione manuale salvata. Spento: tacche libere e spreco restano visibili, Finanz è assegnabile manualmente. Pausa esclude il creator dai totali e impedisce le modifiche alle sue tacche per quella settimana.
+- Salvataggio immediato delle modifiche con stato visibile e ripristino se il salvataggio fallisce; non lasciare che modifiche simultanee sovrascrivano silenziosamente il lavoro di altri.
+
+## Regole e avvisi
+- Usare campagne, creator e account già presenti, non elenchi hardcoded nel codice. Registrare a parte soltanto l'appartenenza confermata ai premium, capacità giornaliera (6/5), tier manuale, priorità/residuale, gruppi e righe di allocazione per settimana. La distinzione premium/volontario deve essere esplicita e persistente, non dedotta da nome, nazionalità o semplice stato `active`.
+- Giorni validi: lunedì–sabato inclusi nell'intervallo effettivo della campagna; target = minimo mensile × giorni validi / 26, espresso come riferimento coerente col ciclo contrattuale. Video prodotti = slot assegnati × giorni validi. Conteggi account = campagne distinte per creator / creator distinti per campagna. Un solo insieme di regole pure con test per date, target e gesti; calcoli aggregati verificati con i dati salvati.
+- Settimana nuova = copia della precedente, rimuovendo le campagne non più attive. Apertura e salvataggio idempotenti, così due utenti non generano due versioni diverse della stessa settimana. Avvisi non bloccanti: slot fermi, minimo Bandi Map a rischio in giorni di margine rispetto al ciclo, tier invertiti rispetto alla priorità, account mancante per coppia creator–campagna. I cap di views, quando comunicati, sono informazione per decidere, mai un'allocazione automatica.
+
+## Dettagli tecnici
+- Nuove tabelle pubbliche per configurazione premium e campagne, settimane e allocazioni, gruppi e membri; chiavi esterne agli ID esistenti, vincoli di unicità, RLS per lettura interna e scrittura admin/team, `GRANT` espliciti, timestamp e controllo server-side dei permessi. La capienza e la validità della campagna nella settimana vengono verificate lato database prima di salvare. Aggiornare il documento architetturale e la navigazione insieme.
+- La pagina si divide in componenti per barra, campagne, toolbar, griglia creator e pannelli, con hook React Query e stato locale temporaneo solo durante il salvataggio; dizionario IT/EN completo.
+- Collaudo: gesti tacca 3 e poi tacca 5 senza sovrascrivere le prime tre, selezione tier, gruppo persistente, pausa, residuo, settimana 2 novembre con Easy Regalo attiva 4 giorni, copia settimana precedente e differenze esatte. Verifica visuale desktop e viewport stretta, inclusa la composizione della settimana del 12 ottobre con 25 creator in meno di due minuti.
+
+## Confini
+- Non modificare Command Center, non creare o riassegnare account TikTok, non introdurre ottimizzazione automatica, non gestire brief o pagamenti in questa pagina. Il riferimento grafico non viene incorporato come immagine.
