@@ -64,7 +64,7 @@ export function AllocationGroups(p: Props) {
 
   return <section className="border-t border-allocation-mist pt-5" aria-label={t('Gruppi')}>
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-      <div><h2 className="text-lg font-semibold">{t('Gruppi')}</h2><p className="text-xs text-allocation-ink/75">{t('Scegli una campagna e clicca gli slot: la divisione vale per tutto il gruppo.')}</p></div>
+      <div><h2 className="text-lg font-semibold">{t('Gruppi')}</h2></div>
       {p.writable && <Button className="h-9 bg-allocation-ink text-allocation-paper hover:!bg-allocation-ink/85 hover:!text-allocation-paper" onClick={() => open('new')}><Plus className="mr-1 h-4 w-4"/>{t('Nuovo gruppo')}</Button>}
     </div>
     {p.groups.length === 0 && <button type="button" disabled={!p.writable} onClick={() => open('new')} className="flex w-full flex-col items-center gap-1 rounded-md border border-dashed border-allocation-mist bg-surface p-6 text-sm text-allocation-ink/75 hover:bg-allocation-paper"><Users className="h-5 w-5"/>{t('Nessun gruppo')} · {t('Crea il primo gruppo')}</button>}
