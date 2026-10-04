@@ -28,8 +28,7 @@ export function AllocationCampaignStrip({ week, campaigns }: { week: string; cam
 
   return <section aria-label={t('Durata campagne')} className="border-y border-allocation-mist py-3">
     <div className="mb-2 flex items-baseline justify-between gap-2"><h2 className="text-xs font-semibold text-allocation-ink">{t('Durata campagne')}</h2><span className="text-[11px] text-allocation-ink/75">{t('Settimana selezionata')}: {label(date(week))}</span></div>
-    <div className="overflow-x-auto">
-      <div className="min-w-[560px] space-y-1">
+      <div className="space-y-1">
         <div className="flex h-4 items-center"><div className="w-40 shrink-0"/><div className="relative h-full flex-1 text-[10px] text-allocation-ink/75"><span className="absolute left-0">{month(start)}</span>{ticks.map(tick => <span key={tick} className="absolute -translate-x-1/2" style={{ left: `${(tick - start) / span * 100}%` }}>{month(tick)}</span>)}<span className="absolute right-0">{month(end)}</span></div></div>
         {visible.map((c, i) => {
           const first = date(c.start_date);

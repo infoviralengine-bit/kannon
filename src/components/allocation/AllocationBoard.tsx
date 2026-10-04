@@ -46,8 +46,6 @@ export function AllocationBoard(p: Props) {
   const total = p.rows.filter(r => !r.paused).reduce((n, r) => n + r.slots.length, 0);
   const totals = available.map(c => campTotals(p.rows, c, p.week, residual, p.auto));
   const idle = p.rows.reduce((n, r) => n + effectiveSlots(r, residual, p.auto).filter(s => !s).length, 0);
-  const risk = available.find((c, i) => c.priority === 1 && !c.is_residual && totals[i].videos < (totals[i].target ?? 0));
-  const inverted = p.rows.filter(r => !r.paused && p.creators.find(c => c.id === r.creator_id)?.tier === 'A' && !effectiveSlots(r, residual, p.auto).includes(available.find(c => c.priority === 1)?.id ?? '')).length;
   const changes = p.rows.filter(r => { const prev = p.previous.find(x => x.creator_id === r.creator_id); return prev && (prev.paused !== r.paused || JSON.stringify(prev.slots) !== JSON.stringify(r.slots)); });
   const counts = useMemo(() => {
     const map = new Map<string, number>();
@@ -77,12 +75,13 @@ export function AllocationBoard(p: Props) {
   }) }));
 
   return <div className="space-y-6">
-    {(risk || inverted > 0) && <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-l-2 border-warning bg-warning/10 px-3 py-2 text-xs text-allocation-ink"><AlertTriangle className="h-4 w-4 text-warning"/>{risk && <span>{risk.name}: {t('obiettivo settimanale a rischio')}</span>}{inverted > 0 && <span>{inverted} {t('creator tier A non assegnati alla priorità principale')}</span>}</div>}
     <section className="space-y-3" aria-label={t('Distribuzione capacità')}>
-      <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm"><div><strong className="text-2xl tabular-nums">{tally(total)}</strong> {t('slot al giorno')} <span className="text-allocation-ink/75">· {tally(totals.reduce((n, c) => n + c.videos, 0))} {t('video nella settimana')}</span></div><span className={idle ? 'font-semibold text-allocation-signal' : 'text-allocation-ink/75'}>{idle ? `${tally(idle)} ${t('slot fermi')}` : t('Nessuno slot fermo')}</span></div>
-      <div className="flex h-5 w-full overflow-hidden rounded bg-allocation-mist" role="img" aria-label={t('Distribuzione capacità')}>
-        {available.map((c, i) => <div key={c.id} title={`${c.name}: ${counts.get(c.id) ?? 0}`} className={`${colors[i % colors.length]} h-full border-r border-allocation-paper/50 transition-[width] duration-200`} style={{ width: total ? `${100 * (counts.get(c.id) ?? 0) / total}%` : '0%' }} />)}
-        {idle > 0 && <div className="h-full bg-allocation-mist" title={`${idle} ${t('slot fermi')}`} style={{ width: total ? `${100 * idle / total}%` : '0%' }} />}
+      <div className="flex items-center gap-3">
+        <span className="whitespace-nowrap text-sm text-allocation-ink"><strong className="text-xl tabular-nums">{tally(total)}</strong> {t('slot al giorno')}</span>
+        <div className="flex h-5 flex-1 overflow-hidden rounded bg-allocation-mist" role="img" aria-label={t('Distribuzione capacità')}>
+          {available.map((c, i) => <div key={c.id} title={`${c.name}: ${counts.get(c.id) ?? 0}`} className={`${colors[i % colors.length]} h-full border-r border-allocation-paper/50 transition-[width] duration-200`} style={{ width: total ? `${100 * (counts.get(c.id) ?? 0) / total}%` : '0%' }} />)}
+          {idle > 0 && <div className="h-full bg-allocation-mist" title={`${idle} ${t('slot fermi')}`} style={{ width: total ? `${100 * idle / total}%` : '0%' }} />}
+        </div>
       </div>
     </section>
 
