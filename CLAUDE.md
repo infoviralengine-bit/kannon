@@ -485,3 +485,10 @@ Da fare prima del passaggio in produzione: migrazione dati da `client_name` ad a
 - Trigger: `campaigns_sync_cycles` (insert/update di date, tariffe, cap, payment_terms) e `client_payments_paid_recalc` (cambio `is_paid`).
 - `refresh_campaign_payments(uuid[], force_sync)`: chiamata da `scrape-tiktok` a fine ingestion e dal pulsante "Ricalcola cicli". Il sync da scraping avviene solo per campagne attive se `settings.auto_cycles_enabled = 'true'`.
 - Il frontend (`usePaymentsData`) legge gli importi salvati, non ricalcola più lato client.
+
+## 18. Allocation, pianificazione settimanale
+
+- `/dashboard/allocation` è la seconda voce Operations dopo Campagne. Admin e team scrivono, campaign_manager legge soltanto; gli altri ruoli non accedono.
+- `allocation_creators` configura capacità e tier solo per creator esistenti; `allocation_campaigns` configura priorità e campagna residuale; `allocation_weeks` versiona la settimana; `allocation_slots` salva solo tacche manuali e pausa; `allocation_groups` salva gruppi riutilizzabili. RLS limita lettura ai ruoli interni previsti e scrittura a staff. Non riassegnare account TikTok dalla pianificazione.
+- `open_allocation_week` copia la settimana precedente filtrando campagne non attive; `save_allocation_week` valida settimana, versioni, capienza e campagne. Le RPC devono verificare admin/team e operare con privilegi coerenti con RLS; la UI salva con versione per rilevare conflitti.
+- Le tacche vuote diventano Finanz solo a livello di visualizzazione se residual_auto è attivo. Obiettivo settimanale = min_monthly_videos × giorni attivi lunedì-sabato / 26; video pianificati = slot × giorni attivi. La coppia creator-campagna senza account esistente produce un avviso, non una modifica automatica.

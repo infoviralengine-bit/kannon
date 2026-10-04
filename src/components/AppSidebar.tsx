@@ -3,7 +3,7 @@ import {
   FileText, UserPlus, Briefcase, Building2, Wallet, FileBarChart,
   Settings, LogOut, Search, PhoneCall,
   type LucideIcon,
-  Radio,
+  Radio, LayoutGrid,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -53,6 +53,7 @@ const sidebarSections: SidebarSection[] = [
     label: "Operations",
     items: [
       { label: "Campagne", icon: Megaphone, path: "/dashboard/campaigns", roles: [...ROLE_GROUPS.STAFF, ROLES.CAMPAIGN_MANAGER] },
+      { label: "Allocation", icon: LayoutGrid, path: "/dashboard/allocation", roles: [...ROLE_GROUPS.STAFF, ROLES.CAMPAIGN_MANAGER] },
       { label: "Video Analytics", icon: BarChart3, path: "/dashboard/videos", roles: [...ROLE_GROUPS.STAFF, ROLES.CAMPAIGN_MANAGER] },
       { label: "Calendario Contenuti", icon: CalendarDays, path: "/dashboard/content-calendar", roles: [...ROLE_GROUPS.STAFF, ROLES.CAMPAIGN_MANAGER] },
     ],
