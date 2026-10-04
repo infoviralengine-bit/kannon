@@ -80,7 +80,7 @@ export function AllocationBoard(p: Props) {
       </div>
     </section>
 
-    <section className="grid grid-cols-2 gap-2 lg:grid-cols-4" aria-label={t('Campagne della settimana')}>
+    <section className="sticky top-0 z-20 -mx-1 grid grid-cols-2 gap-2 bg-background px-1 py-2 lg:grid-cols-4" aria-label={t('Campagne della settimana')}>
       {available.map((c, i) => {
         const data = totals[i]; const blocked = c.is_residual && p.auto;
         const monthlyTarget = c.target_monthly_videos ?? (c.is_residual ? null : c.min_monthly_videos);
@@ -95,7 +95,7 @@ export function AllocationBoard(p: Props) {
     </section>
 
 
-    <AllocationGroups week={p.week} groups={p.groups} creators={p.creators} rows={p.rows} campaigns={p.campaigns} colors={colors} sectionOf={c => contractSection(c.contracts)} writable={p.writable} busy={p.busy} onRows={p.onRows} onCreate={p.onCreateGroup} onUpdate={p.onUpdateGroup} onDelete={p.onDeleteGroup}/>
+    <AllocationGroups week={p.week} groups={p.groups} creators={p.creators} rows={p.rows} campaigns={p.campaigns} colors={colors} sectionOf={c => contractSection(c.contracts)} writable={p.writable} busy={p.busy} picked={chosen} onRows={p.onRows} onCreate={p.onCreateGroup} onUpdate={p.onUpdateGroup} onDelete={p.onDeleteGroup}/>
 
     <div className="space-y-7">
       {sections.map(section => <section key={section.name} aria-label={`${t('Contratto')} ${section.name}`}>

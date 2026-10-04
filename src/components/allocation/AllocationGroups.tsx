@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CompanyLogo } from '@/components/companies/CompanyLogo';
 import { useI18n } from '@/i18n';
 import { activeDays, type AllocationCampaign, type AllocationRow, type Slot } from '@/lib/allocation';
 import type { Group, Premium } from '@/hooks/useAllocation';
@@ -18,7 +17,6 @@ type Props = {
   onDelete: (id: string) => Promise<void>;
 };
 
-const btn = 'border-allocation-mist bg-surface text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink';
 
 export function AllocationGroups(p: Props) {
   const { t } = useI18n();
