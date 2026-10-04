@@ -2330,6 +2330,13 @@ export type Database = {
         Args: { p_months_ahead?: number }
         Returns: number
       }
+      get_allocation_company_logos: {
+        Args: never
+        Returns: {
+          company_id: string
+          logo_url: string
+        }[]
+      }
       get_campaign_manager_data: { Args: { p_period?: string }; Returns: Json }
       get_campaign_total_views: {
         Args: { p_campaign_ids: string[] }
