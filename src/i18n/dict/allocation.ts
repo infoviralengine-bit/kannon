@@ -23,4 +23,5 @@ export const allocation: Record<string,string> = {
   'video/settimana':'videos/week', 'video/mese':'videos/month',
   'Durata campagne':'Campaign duration', 'Settimana selezionata':'Selected week',
   'Inizio':'Start', 'Fine':'End', 'Continuativa':'Ongoing',
+  'Svuota creator':'Clear creator', 'Svuota contratto':'Clear contract', 'Svuota settimana':'Clear week', 'tutti i creator':'all creators', 'Svuotare gli slot di {label} per questa settimana?':'Clear the slots of {label} for this week?',
 };
