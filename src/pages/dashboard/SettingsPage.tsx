@@ -55,6 +55,8 @@ export default function SettingsPage() {
 
   // Delete user
   const [deletingUser, setDeletingUser] = useState<AppUser | null>(null);
+  const [resetUser, setResetUser] = useState<AppUser | null>(null);
+  const [resetPwd, setResetPwd] = useState("");
 
   const [savingApify, setSavingApify] = useState(false);
 
@@ -143,6 +145,17 @@ export default function SettingsPage() {
       await callManageUsers({ action: "disable_user", user_id: userId });
       toast({ title: t("Utente disabilitato") });
       loadAll();
+    } catch (e: any) {
+      toast({ title: t("Errore"), description: e.message, variant: "destructive" });
+    }
+  }
+
+  async function handleResetPassword() {
+    if (!resetUser) return;
+    try {
+      await callManageUsers({ action: "reset_password", user_id: resetUser.id, password: resetPwd });
+      toast({ title: t("Password aggiornata") });
+      setResetUser(null);
     } catch (e: any) {
       toast({ title: t("Errore"), description: e.message, variant: "destructive" });
     }
@@ -260,6 +273,9 @@ export default function SettingsPage() {
                       }}
                     >
                       {t("Modifica ruolo")}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => { setResetUser(u); setResetPwd(""); }}>
+                      {t("Reimposta password")}
                     </Button>
                     <Button variant="destructive" size="sm" onClick={() => handleDisable(u.id)}>
                       {t("Disabilita")}
@@ -462,6 +478,23 @@ export default function SettingsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingUser(null)}>{t("Annulla")}</Button>
             <Button onClick={handleUpdateRole}>{t("Salva")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* RESET PASSWORD */}
+      <Dialog open={!!resetUser} onOpenChange={() => setResetUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("Reimposta password")}</DialogTitle>
+            <DialogDescription>{resetUser?.email}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>{t("Nuova password")}</Label>
+            <Input type="text" value={resetPwd} onChange={(e) => setResetPwd(e.target.value)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetUser(null)}>{t("Annulla")}</Button>
+            <Button onClick={handleResetPassword} disabled={resetPwd.length < 8}>{t("Salva")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
