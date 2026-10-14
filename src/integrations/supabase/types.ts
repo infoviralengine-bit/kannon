@@ -2332,6 +2332,10 @@ export type Database = {
         Args: { p_campaign_id: string; p_cap: number; p_until: string }
         Returns: number
       }
+      delete_creator_cascade: {
+        Args: { p_creator_id: string }
+        Returns: undefined
+      }
       generate_recurring_expense_entries: {
         Args: { p_months_ahead?: number }
         Returns: number

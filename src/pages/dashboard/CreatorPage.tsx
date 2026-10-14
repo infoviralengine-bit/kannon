@@ -125,21 +125,7 @@ export default function CreatorPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (creatorId: string) => {
-      // Delete related data first, then the creator
-      const { data: accounts } = await supabase.from("tiktok_accounts").select("id").eq("creator_id", creatorId);
-      if (accounts?.length) {
-        const accountIds = accounts.map(a => a.id);
-        await supabase.from("videos").delete().in("tiktok_account_id", accountIds);
-        await supabase.from("tiktok_accounts").delete().eq("creator_id", creatorId);
-      }
-      await supabase.from("contract_signatures").delete().eq("creator_id", creatorId);
-      await supabase.from("contract_creators").delete().eq("creator_id", creatorId);
-      await supabase.from("creator_calendar").delete().eq("creator_id", creatorId);
-      await supabase.from("creator_content").delete().eq("creator_id", creatorId);
-      await supabase.from("campaign_creators").delete().eq("creator_id", creatorId);
-      await supabase.from("creator_payments").delete().eq("creator_id", creatorId);
-      await supabase.from("payments").delete().eq("creator_id", creatorId);
-      const { error } = await supabase.from("creators").delete().eq("id", creatorId);
+      const { error } = await (supabase.rpc as any)("delete_creator_cascade", { p_creator_id: creatorId });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -248,9 +234,9 @@ export default function CreatorPage() {
                       )}
                     </TableCell>
                     <TableCell className="space-x-1">
-                      {!isOperator && (
+                      {(
                         <>
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.id}`)}>{t("Apri")}</Button>
+                          {!isOperator && <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/creators/${c.id}`)}>{t("Apri")}</Button>}
                           <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: c.id, name: c.name })}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
