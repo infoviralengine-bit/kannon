@@ -87,6 +87,16 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    if (action === "reset_password") {
+      const { user_id, password } = payload;
+      if (!user_id || typeof password !== "string" || password.length < 8) {
+        return new Response(JSON.stringify({ error: "Password di almeno 8 caratteri" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(user_id, { password });
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     if (action === "delete_user") {
       const { user_id } = payload;
       if (user_id === caller.id) {
