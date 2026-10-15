@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { en } from "./en";
+import { es } from "./es";
 
 /**
  * Lightweight i18n. Source language is Italian: every UI string is written in
@@ -8,7 +9,7 @@ import { en } from "./en";
  * incrementally. Numbers, currency and dates stay in it-IT format by design.
  * Placeholders: t("Aggiornato {when}", { when: "5m" }).
  */
-export type Lang = "it" | "en";
+export type Lang = "it" | "en" | "es";
 const STORAGE_KEY = "kannon-lang";
 
 const listeners = new Set<() => void>();
@@ -22,8 +23,18 @@ let current: Lang = (() => {
 })();
 if (typeof document !== "undefined") document.documentElement.lang = current;
 
+/** Language imposed by role (e.g. Operator is always Spanish); overrides the user choice. */
+let forced: Lang | null = null;
+
 export function getLang(): Lang {
-  return current;
+  return forced ?? current;
+}
+
+export function forceLang(lang: Lang | null) {
+  if (forced === lang) return;
+  forced = lang;
+  document.documentElement.lang = getLang();
+  listeners.forEach((l) => l());
 }
 
 export function setLang(lang: Lang) {
@@ -45,7 +56,8 @@ function interpolate(s: string, vars?: Record<string, string | number>) {
 
 /** Non-reactive translate (for toasts, constants evaluated at call time). */
 export function t(it: string, vars?: Record<string, string | number>): string {
-  const base = current === "en" ? en[it] ?? it : it;
+  const lang = getLang();
+  const base = lang === "en" ? en[it] ?? it : lang === "es" ? es[it] ?? en[it] ?? it : it;
   return interpolate(base, vars);
 }
 
