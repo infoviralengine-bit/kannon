@@ -149,8 +149,9 @@ export interface TimelineCampaign {
   creatorCount: number;
 }
 
-export function useCampaignTimeline() {
+export function useCampaignTimeline(enabled = true) {
   return useQuery({
+    enabled,
     queryKey: ["command-center-timeline"],
     queryFn: async (): Promise<TimelineCampaign[]> => {
       const [campaigns, ccRows, accounts, companies] = await Promise.all([
