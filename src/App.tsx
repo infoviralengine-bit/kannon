@@ -79,7 +79,7 @@ const App = () => (
               <Route path="allocation" element={<ProtectedRoute allowedRoles={["admin", "team", "campaign_manager"]}><AllocationPage /></ProtectedRoute>} />
               <Route path="campaigns/:id" element={<CampaignDetailPage />} />
               <Route path="creators" element={<CreatorPage />} />
-              <Route path="creators/:id" element={<CreatorDetailPage />} />
+              <Route path="creators/:id" element={<ProtectedRoute allowedRoles={["admin", "team", "campaign_manager"]}><CreatorDetailPage /></ProtectedRoute>} />
               <Route path="accounts" element={<AccountPage />} />
               <Route path="accounts/:id" element={<AccountDetailPage />} />
               <Route path="payoff" element={<Navigate to="/dashboard" replace />} />
