@@ -8,6 +8,7 @@ export const es: Record<string, string> = {
   "Panoramica": "Resumen",
   "Campagne": "Campañas",
   "Analisi video": "Análisis de videos",
+  "Allocazione": "Asignación",
   "Creator": "Creadores",
   "Account": "Cuentas",
   "Nuovo": "Nuevo",
