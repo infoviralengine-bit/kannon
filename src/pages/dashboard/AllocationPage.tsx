@@ -99,7 +99,7 @@ export default function AllocationPage() {
   };
   const weeks = Array.from({ length: 8 }, (_,i) => shiftWeek(monday(new Date()),i));
 
-  if (!writable && role !== ROLES.CAMPAIGN_MANAGER) return <p className="p-6 text-destructive">{t('Accesso non consentito')}</p>;
+  if (!writable && role !== ROLES.CAMPAIGN_MANAGER && role !== ROLES.OPERATOR) return <p className="p-6 text-destructive">{t('Accesso non consentito')}</p>;
   return <div className="allocation-workspace mx-auto w-full max-w-[1500px] min-h-screen space-y-5 p-4 md:p-6">
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div><h1 className="text-2xl font-semibold">Allocation</h1><p className="text-xs text-allocation-ink/75">{t('Settimana')} {dateLabel(week)} · {new Date(`${week}T00:00:00Z`).getUTCFullYear()}</p></div>
