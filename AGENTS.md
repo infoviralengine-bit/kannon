@@ -9,3 +9,4 @@
 - Mirror only campaign logo references into Allocation and synchronize them with company changes, so campaign managers can see logos without access to private CRM records.
 - Store internal monthly planning targets on Allocation campaigns separately from campaign minimums, so operational goals never alter contractual campaign values.
 - Derive the compact Allocation campaign timeline from existing allocation campaign dates and a fixed week-centered horizon, so long campaigns do not distort the view or require extra data access.- Creators linked to a contract named VE get default Allocation capacity via a database trigger on contract links, so planning never waits on manual setup.
+- The Operator workspace reads data only through operator RPCs that return no financial fields and only active campaigns, so money values never reach that role even if table policies are broad.

@@ -19,14 +19,19 @@ function shortDate(iso: string) {
 type Props = {
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  /** Externally provided campaigns (e.g. Operator view); disables the internal query. */
+  campaigns?: TimelineCampaign[];
+  loading?: boolean;
+  emptyHref?: string;
 };
 
-export function CampaignTimeline({ selectedId, onSelect }: Props) {
+export function CampaignTimeline({ selectedId, onSelect, campaigns: external, loading, emptyHref = "/dashboard/campaigns" }: Props) {
   const { t } = useI18n();
   const navigate = useNavigate();
-  const { data, isLoading } = useCampaignTimeline();
+  const internal = useCampaignTimeline(!external);
+  const isLoading = external ? !!loading : internal.isLoading;
 
-  const campaigns: TimelineCampaign[] = data ?? [];
+  const campaigns: TimelineCampaign[] = useMemo(() => external ?? internal.data ?? [], [external, internal.data]);
 
   const scale = useMemo(() => {
     const today = new Date();
@@ -67,9 +72,11 @@ export function CampaignTimeline({ selectedId, onSelect }: Props) {
             <CalendarRange className="h-4 w-4 text-primary" />
             {t("Campagne attive nel tempo")}
           </CardTitle>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {t("Durata, giorni rimanenti e creator per ogni campagna in corso")}
-          </p>
+          {!external && (
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {t("Durata, giorni rimanenti e creator per ogni campagna in corso")}
+            </p>
+          )}
         </div>
         {selectedId && (
           <Button variant="outline" size="sm" onClick={() => onSelect(null)}>
@@ -88,7 +95,7 @@ export function CampaignTimeline({ selectedId, onSelect }: Props) {
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <CalendarRange className="mb-3 h-10 w-10 text-muted" />
             <p className="mb-4 text-sm text-muted-foreground">{t("Nessuna campagna attiva")}</p>
-            <Button size="sm" onClick={() => navigate("/dashboard/campaigns")}>
+            <Button size="sm" onClick={() => navigate(emptyHref)}>
               {t("Vai alle campagne")}
             </Button>
           </div>

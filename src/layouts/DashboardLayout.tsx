@@ -5,9 +5,19 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { LastUpdateBadge } from "@/components/topbar/LastUpdateBadge";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useRealtimeInvalidation } from "@/hooks/useRealtimeInvalidation";
+import { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { forceLang } from "@/i18n";
 
 export function DashboardLayout() {
   useRealtimeInvalidation();
+  const { role } = useAuth();
+  const isOperator = role === "operator";
+  // Operator UI is always Spanish, regardless of the saved language.
+  useEffect(() => {
+    forceLang(isOperator ? "es" : null);
+    return () => forceLang(null);
+  }, [isOperator]);
   return (
     <SidebarProvider>
       <div className="h-screen flex w-full overflow-hidden">
@@ -16,7 +26,7 @@ export function DashboardLayout() {
           <header className="h-14 flex items-center justify-between border-b border-border px-4 shrink-0">
             <SidebarTrigger />
             <div className="flex items-center gap-2">
-              <LanguageSwitcher />
+              {!isOperator && <LanguageSwitcher />}
               <LastUpdateBadge />
               <NotificationBell />
             </div>
