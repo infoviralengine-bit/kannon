@@ -15,7 +15,7 @@ export type Week = { week_start: string; residual_auto: boolean; version: number
 
 export function useAllocationBase() {
   return useQuery({ queryKey: ['allocation-base'], queryFn: async () => {
-    const [configs, campaignsConfig, allCreators, allCampaigns, accounts, groups, contractLinks, contracts] = await Promise.all([
+    const [configs, campaignsConfig, allCreators, allCampaigns, accounts, groups, contractLinks] = await Promise.all([
       unwrap(supabase.from('allocation_creators').select('creator_id,daily_slots,tier')),
       unwrap(supabase.from('allocation_campaigns').select('campaign_id,priority,is_residual,logo_url,target_monthly_videos')),
       unwrap(supabase.from('creators').select('id,name,status').eq('status', 'active')),
