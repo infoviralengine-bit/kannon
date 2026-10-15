@@ -2324,6 +2324,38 @@ export type Database = {
       }
     }
     Functions: {
+      _operator_guard: { Args: never; Returns: undefined }
+      _operator_videos: {
+        Args: {
+          p_account_ids: string[]
+          p_campaign_ids: string[]
+          p_creator_ids: string[]
+          p_format: string
+          p_from: string
+          p_min_views: number
+          p_to: string
+          p_window: string
+        }
+        Returns: {
+          account_id: string
+          campaign_id: string
+          campaign_name: string
+          caption: string
+          comments: number
+          content_tag: string
+          creator_id: string
+          creator_name: string
+          id: string
+          likes: number
+          published_at: string
+          saves: number
+          shares: number
+          tiktok_video_id: string
+          username: string
+          views: number
+          window_status: string
+        }[]
+      }
       bulk_update_video_views: {
         Args: { p_ids: string[]; p_views: number[] }
         Returns: undefined
@@ -2385,6 +2417,41 @@ export type Database = {
       }
       get_finance_dashboard: { Args: { p_period?: string }; Returns: Json }
       get_last_scrape_at: { Args: never; Returns: string }
+      get_operator_analytics: {
+        Args: {
+          p_account_ids?: string[]
+          p_campaign_ids?: string[]
+          p_creator_ids?: string[]
+          p_format?: string
+          p_from: string
+          p_min_views?: number
+          p_to: string
+          p_window?: string
+        }
+        Returns: Json
+      }
+      get_operator_campaign_detail: {
+        Args: { p_campaign_id: string }
+        Returns: Json
+      }
+      get_operator_campaigns: { Args: never; Returns: Json }
+      get_operator_video_list: {
+        Args: {
+          p_account_ids?: string[]
+          p_campaign_ids?: string[]
+          p_creator_ids?: string[]
+          p_dir?: string
+          p_format?: string
+          p_from: string
+          p_limit?: number
+          p_min_views?: number
+          p_offset?: number
+          p_sort?: string
+          p_to: string
+          p_window?: string
+        }
+        Returns: Json
+      }
       get_top_videos: {
         Args: {
           p_campaign_ids?: string[]
