@@ -76,7 +76,7 @@ const App = () => (
               <Route path="operator/campaigns/:id" element={<ProtectedRoute allowedRoles={[...OPERATOR_ONLY]}><OperatorCampaignDetailPage /></ProtectedRoute>} />
               <Route path="operator/videos" element={<ProtectedRoute allowedRoles={[...OPERATOR_ONLY]}><OperatorVideosPage /></ProtectedRoute>} />
               <Route path="campaigns" element={<CampagnePage />} />
-              <Route path="allocation" element={<ProtectedRoute allowedRoles={["admin", "team", "campaign_manager"]}><AllocationPage /></ProtectedRoute>} />
+              <Route path="allocation" element={<ProtectedRoute allowedRoles={["admin", "team", "campaign_manager", "operator"]}><AllocationPage /></ProtectedRoute>} />
               <Route path="campaigns/:id" element={<CampaignDetailPage />} />
               <Route path="creators" element={<CreatorPage />} />
               <Route path="creators/:id" element={<ProtectedRoute allowedRoles={["admin", "team", "campaign_manager"]}><CreatorDetailPage /></ProtectedRoute>} />

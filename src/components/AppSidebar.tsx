@@ -49,6 +49,7 @@ const sidebarSections: SidebarSection[] = [
       { label: "Panoramica", icon: Home, path: "/dashboard/operator", roles: [ROLES.OPERATOR] },
       { label: "Campagne", icon: Megaphone, path: "/dashboard/operator/campaigns", roles: [ROLES.OPERATOR] },
       { label: "Analisi video", icon: BarChart3, path: "/dashboard/operator/videos", roles: [ROLES.OPERATOR] },
+      { label: "Allocazione", icon: LayoutGrid, path: "/dashboard/allocation", roles: [ROLES.OPERATOR] },
     ],
   },
   {

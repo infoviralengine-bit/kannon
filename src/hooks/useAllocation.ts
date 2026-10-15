@@ -15,20 +15,18 @@ export type Week = { week_start: string; residual_auto: boolean; version: number
 
 export function useAllocationBase() {
   return useQuery({ queryKey: ['allocation-base'], queryFn: async () => {
-    const [configs, campaignsConfig, allCreators, allCampaigns, accounts, groups, contractLinks, contracts] = await Promise.all([
+    const [configs, campaignsConfig, allCreators, allCampaigns, accounts, groups, contractLinks] = await Promise.all([
       unwrap(supabase.from('allocation_creators').select('creator_id,daily_slots,tier')),
       unwrap(supabase.from('allocation_campaigns').select('campaign_id,priority,is_residual,logo_url,target_monthly_videos')),
       unwrap(supabase.from('creators').select('id,name,status').eq('status', 'active')),
       unwrap(supabase.from('campaigns').select('id,name,client_name,company_id,start_date,end_date,status,min_monthly_videos,monthly_spend_cap')),
       unwrap(supabase.from('tiktok_accounts').select('creator_id,campaign_id,is_active').eq('is_active', true)),
       unwrap(supabase.from('allocation_groups').select('id,name,creator_ids').order('name')),
-      unwrap(supabase.from('contract_creators').select('creator_id,contract_id')),
-      unwrap(supabase.from('contracts').select('id,name')),
+      unwrap((supabase.rpc as any)('get_allocation_contract_links')) as Promise<{ creator_id: string; contract_name: string }[]>,
     ]);
     const configurations = new Map(configs.map(c => [c.creator_id, c]));
-    const contractNames = new Map(contracts.map(c => [c.id, c.name]));
     const creatorContracts = new Map<string,string[]>();
-    contractLinks.forEach(link => { const name = contractNames.get(link.contract_id); if (name) creatorContracts.set(link.creator_id, [...(creatorContracts.get(link.creator_id) ?? []), name]); });
+    (contractLinks ?? []).forEach(link => { creatorContracts.set(link.creator_id, [...(creatorContracts.get(link.creator_id) ?? []), link.contract_name]); });
     const campaignsById = new Map(allCampaigns.map(c => [c.id, c]));
     return {
       creators: allCreators.map(c => { const config = configurations.get(c.id); return { id: c.id, name: c.name, status: c.status, daily_slots: config?.daily_slots ?? 0, tier: config?.tier ?? null, contracts: creatorContracts.get(c.id) ?? [] } as Premium; }).sort((a,b) => a.name.localeCompare(b.name)),

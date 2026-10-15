@@ -42,7 +42,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     const allowed =
       p === "/dashboard/creators" ||
       p.startsWith("/dashboard/accounts") ||
-      p.startsWith("/dashboard/operator");
+      p.startsWith("/dashboard/operator") ||
+      p === "/dashboard/allocation";
     if (!allowed) return <Navigate to="/dashboard/operator" replace />;
   }
   if ((role === ROLES.ADMIN || role === ROLES.TEAM) && (window.location.pathname === "/" || window.location.pathname === "/login")) {

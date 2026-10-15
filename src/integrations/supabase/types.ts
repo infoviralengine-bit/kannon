@@ -2372,6 +2372,13 @@ export type Database = {
         Args: { p_months_ahead?: number }
         Returns: number
       }
+      get_allocation_contract_links: {
+        Args: never
+        Returns: {
+          contract_name: string
+          creator_id: string
+        }[]
+      }
       get_campaign_manager_data: { Args: { p_period?: string }; Returns: Json }
       get_campaign_total_views: {
         Args: { p_campaign_ids: string[] }
