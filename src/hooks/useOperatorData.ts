@@ -1,8 +1,13 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Operator RPCs never return financial fields; views are real TikTok views.
-const rpc = supabase.rpc as any;
+const rpc = async (fn: string, args?: Record<string, unknown>) => {
+  const res = await (supabase.rpc as any)(fn, args);
+  if (res.error) { console.error(fn, res.error); toast.error(`${fn}: ${res.error.message}`); }
+  return res;
+};
 
 export interface OperatorCampaign {
   id: string;
