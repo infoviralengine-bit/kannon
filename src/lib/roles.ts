@@ -59,7 +59,7 @@ export const ROLE_DEFAULT_ROUTE: Record<AppRole, string> = {
   [ROLES.ADMIN]: "/dashboard",
   [ROLES.TEAM]: "/dashboard",
   [ROLES.CAMPAIGN_MANAGER]: "/dashboard/content-calendar",
-  [ROLES.OPERATOR]: "/dashboard/creators",
+  [ROLES.OPERATOR]: "/dashboard/operator",
   [ROLES.CREATOR]: "/creator",
   [ROLES.CLIENT]: "/client",
 };

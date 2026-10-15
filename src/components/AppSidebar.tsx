@@ -44,6 +44,14 @@ type SidebarSection = {
 
 const sidebarSections: SidebarSection[] = [
   {
+    label: "Operations",
+    items: [
+      { label: "Panoramica", icon: Home, path: "/dashboard/operator", roles: [ROLES.OPERATOR] },
+      { label: "Campagne", icon: Megaphone, path: "/dashboard/operator/campaigns", roles: [ROLES.OPERATOR] },
+      { label: "Analisi video", icon: BarChart3, path: "/dashboard/operator/videos", roles: [ROLES.OPERATOR] },
+    ],
+  },
+  {
     label: "Command Center",
     items: [
       { label: "Home", icon: Home, path: "/dashboard", roles: ROLE_GROUPS.STAFF },
@@ -111,7 +119,7 @@ export function AppSidebar() {
   const { t } = useI18n();
   const appRole = (role as AppRole | null);
 
-  const exactPaths = ["/dashboard", "/dashboard/clients"];
+  const exactPaths = ["/dashboard", "/dashboard/clients", "/dashboard/operator"];
   const isActive = (path: string) =>
     exactPaths.includes(path)
       ? location.pathname === path
@@ -136,7 +144,7 @@ export function AppSidebar() {
   const renderItem = (item: SidebarItem) => (
     <SidebarMenuItem key={item.path}>
       <SidebarMenuButton asChild isActive={isActive(item.path)}>
-        <NavLink to={item.path} end={item.path === "/dashboard"} className="flex items-center gap-2">
+        <NavLink to={item.path} end={exactPaths.includes(item.path)} className="flex items-center gap-2">
           <item.icon className="h-4 w-4" />
           {!collapsed && <span>{t(item.label)}</span>}
           {!collapsed && item.isNew && <NewBadge />}

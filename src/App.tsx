@@ -37,6 +37,19 @@ import PipelineB2BPage from "@/pages/dashboard/PipelineB2BPage";
 import CompanyDetailPage from "@/pages/dashboard/CompanyDetailPage";
 import AgendaPage from "@/pages/dashboard/AgendaPage";
 import CanaliPage from "@/pages/dashboard/CanaliPage";
+import OperatorHomePage from "@/pages/dashboard/operator/OperatorHomePage";
+import OperatorCampaignsPage from "@/pages/dashboard/operator/OperatorCampaignsPage";
+import OperatorCampaignDetailPage from "@/pages/dashboard/operator/OperatorCampaignDetailPage";
+import OperatorVideosPage from "@/pages/dashboard/operator/OperatorVideosPage";
+import { useAuth } from "@/contexts/AuthContext";
+
+const OPERATOR_ONLY = ["operator", "admin"] as const;
+
+function DashboardHome() {
+  const { role } = useAuth();
+  if (role === "operator") return <Navigate to="/dashboard/operator" replace />;
+  return <GeneralePage />;
+}
 
 const queryClient = new QueryClient();
 
@@ -57,7 +70,11 @@ const App = () => (
                 <DashboardLayout />
               </ProtectedRoute>
             }>
-              <Route index element={<GeneralePage />} />
+              <Route index element={<DashboardHome />} />
+              <Route path="operator" element={<ProtectedRoute allowedRoles={[...OPERATOR_ONLY]}><OperatorHomePage /></ProtectedRoute>} />
+              <Route path="operator/campaigns" element={<ProtectedRoute allowedRoles={[...OPERATOR_ONLY]}><OperatorCampaignsPage /></ProtectedRoute>} />
+              <Route path="operator/campaigns/:id" element={<ProtectedRoute allowedRoles={[...OPERATOR_ONLY]}><OperatorCampaignDetailPage /></ProtectedRoute>} />
+              <Route path="operator/videos" element={<ProtectedRoute allowedRoles={[...OPERATOR_ONLY]}><OperatorVideosPage /></ProtectedRoute>} />
               <Route path="campaigns" element={<CampagnePage />} />
               <Route path="allocation" element={<ProtectedRoute allowedRoles={["admin", "team", "campaign_manager"]}><AllocationPage /></ProtectedRoute>} />
               <Route path="campaigns/:id" element={<CampaignDetailPage />} />
