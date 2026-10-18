@@ -1,4 +1,6 @@
 # Project architecture decisions
+ 
+- Compute account low-view signals in an authenticated, role-scoped read-only RPC using current raw views; share its user-keyed query and detail dialog across the hub and portals to avoid financial exposure and duplicated counting logic.
 
 - Keep Allocation configurations and weekly manual slots in separate RLS-protected tables; campaign, creator, and TikTok records remain their existing sources of truth.
 - Save Allocation weeks through the versioned RPC, not direct slot writes, to preserve capacity and campaign validity checks.

@@ -1,4 +1,9 @@
 export const allocation: Record<string,string> = {
+  'Account segnalati':'Flagged accounts',
+  'Livello {n}':'Level {n}',
+  'video sotto 50 views':'videos below 50 views',
+  'Segnali non disponibili':'Signals unavailable',
+  'Nessun account segnalato':'No flagged accounts',
   'Copia dalla settimana precedente':'Copy from previous week',
   'Distribuzione capacità':'Capacity allocation', 'slot al giorno':'daily slots', 'video nella settimana':'videos this week',
   'slot fermi':'idle slots', 'Nessuno slot fermo':'No idle slots', 'Campagne della settimana':'Campaigns this week',
