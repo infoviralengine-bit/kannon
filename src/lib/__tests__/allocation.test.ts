@@ -1,8 +1,30 @@
 import { describe, expect, it } from 'vitest';
-import { activeDays, campTotals, effectiveSlots, paint, shiftWeek, type AllocationCampaign } from '@/lib/allocation';
+import { activeDays, campTotals, copyPreviousGroupRows, effectiveSlots, paint, shiftWeek, type AllocationCampaign } from '@/lib/allocation';
 
 const camp: AllocationCampaign = { id: 'easy', name: 'Easy Regalo', client_name: 'Easy', start_date: '2026-10-05', end_date: '2026-11-05', status: 'active', min_monthly_videos: 30, target_monthly_videos: 500, monthly_spend_cap: null, priority: 3, is_residual: false };
 describe('allocation', () => {
+  it('copies the previous split and pause only for group members with saved rows', () => {
+    const current = [
+      { creator_id: 'grouped', slots: [null, null, null], paused: false },
+      { creator_id: 'solo', slots: ['easy'], paused: false },
+      { creator_id: 'new', slots: ['easy'], paused: false },
+    ];
+    const previous = [
+      { creator_id: 'grouped', slots: ['easy', 'easy', null], paused: true },
+      { creator_id: 'solo', slots: [null], paused: true },
+    ];
+    expect(copyPreviousGroupRows(current, previous, ['grouped', 'new'], [camp], '2026-10-12')).toEqual([
+      { creator_id: 'grouped', slots: ['easy', 'easy', null], paused: true }, current[1], current[2],
+    ]);
+    expect(previous[0].slots).toEqual(['easy', 'easy', null]);
+  });
+  it('adapts copied slots to current capacity and removes campaigns inactive in the destination week', () => {
+    expect(copyPreviousGroupRows(
+      [{ creator_id: 'grouped', slots: [null, null, null], paused: false }],
+      [{ creator_id: 'grouped', slots: ['easy', 'ended', 'easy', 'easy'], paused: false }],
+      ['grouped'], [camp, { ...camp, id: 'ended', end_date: '2026-10-11' }], '2026-10-12',
+    )[0].slots).toEqual(['easy', null, 'easy']);
+  });
   it('fills a free stretch, stopping at another campaign', () => {
     const first = paint([null, null, null, null, null, null], 2, 'easy');
     expect(first).toEqual(['easy', 'easy', 'easy', null, null, null]);

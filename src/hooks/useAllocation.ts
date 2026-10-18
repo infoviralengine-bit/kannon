@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { activeDays, normalizeSlots, type AllocationCampaign, type AllocationRow } from '@/lib/allocation';
+import { activeDays, normalizeSlots, shiftWeek, type AllocationCampaign, type AllocationRow } from '@/lib/allocation';
 import { saveAllocationTarget } from '@/lib/allocationTargets';
 
 async function unwrap<T>(promise: PromiseLike<{ data: T | null; error: { message: string } | null }>): Promise<T> {
@@ -47,13 +47,15 @@ export function useAllocationWeek(week: string, creators: Premium[], campaigns: 
     const currentRows = current ? await unwrap(supabase.from('allocation_slots').select('creator_id,slots,paused').eq('week_start',week)) : [];
     const previous = await unwrap(supabase.from('allocation_weeks').select('week_start,residual_auto,version').lt('week_start',week).order('week_start',{ ascending: false }).limit(1).maybeSingle()) as Week | null;
     const previousRows = previous ? await unwrap(supabase.from('allocation_slots').select('creator_id,slots,paused').eq('week_start',previous.week_start)) : [];
+    const priorWeek = shiftWeek(week, -1);
+    const copyRows = previous?.week_start === priorWeek ? previousRows.map(r => ({ creator_id: r.creator_id, paused: r.paused, slots: normalizeSlots(r.slots, Array.isArray(r.slots) ? r.slots.length : 0) })) : [];
     const active = new Set(campaigns.filter(c => activeDays(c, week) > 0).map(c => c.id));
     const normalize = (raw: typeof currentRows): AllocationRow[] => creators.filter(c => c.daily_slots > 0).map(c => {
       const saved = raw.find(r => r.creator_id === c.id);
       return { creator_id: c.id, paused: saved?.paused ?? false, slots: normalizeSlots(saved?.slots, c.daily_slots).map(id => id && active.has(id) ? id : null) };
     });
     return { week: (current ?? { week_start: week, residual_auto: previous?.residual_auto ?? true, version: 0 }) as Week,
-      rows: normalize(current ? currentRows : previousRows), previous: normalize(previousRows), persisted: Boolean(current) };
+      rows: normalize(current ? currentRows : previousRows), previous: normalize(previousRows), copyRows, persisted: Boolean(current) };
   }});
 }
 

@@ -21,6 +21,7 @@ type Props = {
   onCreateGroup: (name: string, ids: string[]) => Promise<void>;
   onUpdateGroup: (id: string, patch: { name?: string; creator_ids?: string[] }) => Promise<void>;
   onDeleteGroup: (id: string) => Promise<void>;
+  canCopyGroups: boolean; onCopyGroups: () => void;
 };
 
 export function AllocationBoard(p: Props) {
@@ -95,7 +96,7 @@ export function AllocationBoard(p: Props) {
     </section>
 
 
-    <AllocationGroups week={p.week} groups={p.groups} creators={p.creators} rows={p.rows} campaigns={p.campaigns} colors={colors} sectionOf={c => contractSection(c.contracts)} writable={p.writable} busy={p.busy} picked={chosen} residualId={residual} auto={p.auto} onRows={p.onRows} onCreate={p.onCreateGroup} onUpdate={p.onUpdateGroup} onDelete={p.onDeleteGroup}/>
+    <AllocationGroups week={p.week} groups={p.groups} creators={p.creators} rows={p.rows} campaigns={p.campaigns} colors={colors} sectionOf={c => contractSection(c.contracts)} writable={p.writable} busy={p.busy} picked={chosen} residualId={residual} auto={p.auto} canCopyPrevious={p.canCopyGroups} onCopyPrevious={p.onCopyGroups} onRows={p.onRows} onCreate={p.onCreateGroup} onUpdate={p.onUpdateGroup} onDelete={p.onDeleteGroup}/>
 
     <div className="space-y-7">
       {sections.map(section => <section key={section.name} aria-label={`${t('Contratto')} ${section.name}`}>
