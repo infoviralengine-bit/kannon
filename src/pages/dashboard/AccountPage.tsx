@@ -1,3 +1,4 @@
+import { AccountSignals } from '@/components/account/AccountSignals';
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAccountList } from "@/hooks/useAccountData";
@@ -382,7 +383,7 @@ function CreatorGroup({ group, campaigns, getVideosToday, getTotalViews, navigat
                   const videosToday = getVideosToday(a.id);
                   return (
                     <TableRow key={a.id}>
-                      <TableCell className="font-medium pl-6"><TikTokLink username={a.username} /></TableCell>
+                      <TableCell className="font-medium pl-6"><div className="flex items-center gap-2"><TikTokLink username={a.username} /><AccountSignals accountId={a.id} /></div></TableCell>
                       <TableCell>{campaign?.name || "—"}</TableCell>
                       <TableCell className="text-right">{videosToday}</TableCell>
                       <TableCell className="text-right">{formatViews(getTotalViews(a.id))}</TableCell>

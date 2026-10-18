@@ -1,3 +1,4 @@
+import { AccountSignals } from '@/components/account/AccountSignals';
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useI18n } from "@/i18n";
 import { useState, useMemo } from "react";
@@ -44,6 +45,7 @@ function ClientHeader() {
       <div className="flex items-center gap-3">
         <span className="text-sm text-muted-foreground hidden sm:inline">{profile?.full_name}</span>
         <LanguageSwitcher />
+        <AccountSignals />
         <Button variant="ghost" size="sm" onClick={signOut}>
           <LogOut className="mr-2 h-4 w-4" /><SignOutLabel />
         </Button>
@@ -471,6 +473,7 @@ export default function ClientArea() {
                     <TableRow key={acc.username} className="group">
                       <TableCell>
                         <TikTokLink username={acc.username} />
+                        <AccountSignals username={acc.username} />
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{formatViews(acc.views_30d)}</TableCell>
                       <TableCell className="text-right tabular-nums">{acc.total_videos}</TableCell>

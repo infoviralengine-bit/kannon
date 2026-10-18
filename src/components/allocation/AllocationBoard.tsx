@@ -1,3 +1,4 @@
+import { AccountSignals } from '@/components/account/AccountSignals';
 import { Fragment, useMemo, useState } from 'react';
 import { AlertTriangle, ChevronDown, Eraser, Pause, Play, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -116,6 +117,7 @@ export function AllocationBoard(p: Props) {
               <div className="flex min-w-0 items-center gap-1">
                 <Button title={t('Cambia tier')} aria-label={`${t('Cambia tier')} ${c.name}`} variant="outline" size="sm" disabled={!p.writable || groupBusy || !row} className="h-7 w-7 shrink-0 border-allocation-mist p-0 text-xs text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink" onClick={() => doAction(() => p.onTier(c.id, c.tier === 'A' ? 'B' : c.tier === 'B' ? 'C' : 'A'))}>{c.tier ?? '·'}</Button>
                 <Button variant="ghost" className="h-8 min-w-0 flex-1 justify-start truncate px-1 text-xs font-semibold text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink" title={c.name} onClick={() => setSelected(picked ? selected.filter(id => id !== c.id) : [...selected, c.id])}>{c.name}</Button>
+                <AccountSignals creatorId={c.id} />
                 {row && <Button variant="ghost" size="icon" title={t('Svuota creator')} aria-label={`${t('Svuota creator')} ${c.name}`} disabled={!p.writable || p.busy || !row.slots.some(Boolean)} className="h-7 w-7 shrink-0 text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink" onClick={() => clearSlots([c.id])}><Eraser className="h-3 w-3"/></Button>}
                 {row && <Button variant="ghost" size="icon" title={row.paused ? t('Riattiva') : t('Metti in pausa')} aria-label={`${row.paused ? t('Riattiva') : t('Metti in pausa')} ${c.name}`} disabled={!p.writable || p.busy} className="h-7 w-7 shrink-0 text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink" onClick={() => p.onRows(p.rows.map(r => r.creator_id === c.id ? {...r,paused:!r.paused} : r))}>{row.paused ? <Play className="h-3 w-3"/> : <Pause className="h-3 w-3"/>}</Button>}
               </div>
