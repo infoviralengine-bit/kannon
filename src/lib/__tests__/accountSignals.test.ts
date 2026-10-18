@@ -3,7 +3,7 @@ import { beforeAll, afterAll, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync, readdirSync } from 'node:fs';
 const db = new PGlite();
-const file = readdirSync('supabase/migrations').findLast(name => readFileSync(`supabase/migrations/${name}`, 'utf8').includes('CREATE OR REPLACE FUNCTION public.low_view_video_eligible'));
+const file = readdirSync('supabase/migrations').sort().reverse().find(name => readFileSync(`supabase/migrations/${name}`, 'utf8').includes('CREATE OR REPLACE FUNCTION public.low_view_video_eligible'));
 if (!file) throw new Error('Missing account signals migration');
 const sql = readFileSync(`supabase/migrations/${file}`, 'utf8');
 beforeAll(async () => {
