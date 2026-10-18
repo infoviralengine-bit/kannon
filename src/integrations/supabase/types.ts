@@ -2372,6 +2372,7 @@ export type Database = {
         Args: { p_months_ahead?: number }
         Returns: number
       }
+      get_account_signals: { Args: never; Returns: Json }
       get_allocation_contract_links: {
         Args: never
         Returns: {
@@ -2508,6 +2509,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      low_view_video_eligible: {
+        Args: { p_now: string; p_published_at: string; p_views: number }
         Returns: boolean
       }
       match_video_to_briefs: { Args: { p_video_id: string }; Returns: number }

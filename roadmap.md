@@ -1,5 +1,6 @@
 # Roadmap
-- [ ] Segnali account: tre livelli sotto 50 views, ultimi 7 giorni e attesa 24 ore, visibili a tutti nei rispettivi account
+- [x] Segnali account: tre livelli sotto 50 views, ultimi 7 giorni e attesa 24 ore, visibili a tutti nei rispettivi account; regole e accesso verificati con test SQL
+- [ ] Verifica segnali con account collegato: bloccata perché l’anteprima usa Supabase esterno e torna al login
 - [x] Allocation: comando per copiare la distribuzione dei gruppi dalla settimana immediatamente precedente, senza modificare i creator singoli
 Numeri/valute/date restano it-IT. Stringhe avvolte in t("testo italiano"), dizionari in src/i18n/dict/*.ts.
 - [x] Rimozione onboarding creator automatico (DB, funzione, pagine, link)

@@ -1,3 +1,4 @@
+import { AccountSignals } from '@/components/account/AccountSignals';
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -85,6 +86,7 @@ export default function OperatorCampaignDetailPage() {
                     ) : <span className="text-muted-foreground">{t("Nessun account")}</span>}
                   </TableCell>
                   <TableCell>
+                    {r.account && <AccountSignals accountId={r.account.id} />}
                     {r.account && (
                       <Badge variant={r.account.is_active === false ? "outline" : "default"}>
                         {r.account.is_active === false ? t("Inattivo") : t("Attivo")}

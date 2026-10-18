@@ -1,6 +1,11 @@
 // Spanish dictionary, keyed by the Italian source string.
 // Used by the Operator role (UI forced to Spanish). Missing keys fall back to English, then Italian.
 export const es: Record<string, string> = {
+  'Account segnalati':'Cuentas señaladas',
+  'Livello {n}':'Nivel {n}',
+  'video sotto 50 views':'videos con menos de 50 views',
+  'Segnali non disponibili':'Señales no disponibles',
+  'Nessun account segnalato':'Ninguna cuenta señalada',
   // Navigation / shell
   "Command Center": "Centro de control",
   "Operations": "Operaciones",

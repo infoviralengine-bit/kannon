@@ -17,6 +17,9 @@ export default {
         sans: ["Inter", "system-ui", "sans-serif"],
       },
       colors: {
+        'signal-light': 'hsl(var(--signal-light))',
+        'signal-medium': 'hsl(var(--signal-medium))',
+        'signal-high': 'hsl(var(--signal-high))',
         allocation: {
           paper: "hsl(var(--allocation-paper))",
           mist: "hsl(var(--allocation-mist))",
