@@ -65,3 +65,14 @@ export function normalizeSlots(raw: unknown, capacity: number): Slot[] {
   const arr = Array.isArray(raw) ? raw : [];
   return Array.from({ length: capacity }, (_, i) => typeof arr[i] === 'string' ? arr[i] as string : null);
 }
+
+export function copyPreviousGroupRows(current: AllocationRow[], previous: AllocationRow[], memberIds: string[], campaigns: AllocationCampaign[], week: string): AllocationRow[] {
+  const members = new Set(memberIds);
+  const source = new Map(previous.map(row => [row.creator_id, row]));
+  const active = new Set(campaigns.filter(c => activeDays(c, week) > 0).map(c => c.id));
+  return current.map(row => {
+    const saved = source.get(row.creator_id);
+    if (!members.has(row.creator_id) || !saved) return row;
+    return { ...row, paused: saved.paused, slots: normalizeSlots(saved.slots, row.slots.length).map(id => id && active.has(id) ? id : null) };
+  });
+}

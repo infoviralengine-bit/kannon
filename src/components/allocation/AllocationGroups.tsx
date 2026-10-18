@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eraser, Pencil, Plus, Trash2, Users } from 'lucide-react';
+import { Copy, Eraser, Pencil, Plus, Trash2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -12,6 +12,7 @@ type Props = {
   week: string; groups: Group[]; creators: Premium[]; rows: AllocationRow[]; campaigns: AllocationCampaign[];
   colors: string[]; sectionOf: (c: Premium) => string; writable: boolean; busy: boolean; picked: string | null;
   residualId: string | null; auto: boolean;
+  canCopyPrevious: boolean; onCopyPrevious: () => void;
   onRows: (rows: AllocationRow[]) => void;
   onCreate: (name: string, ids: string[]) => Promise<void>;
   onUpdate: (id: string, patch: { name?: string; creator_ids?: string[] }) => Promise<void>;
@@ -65,7 +66,7 @@ export function AllocationGroups(p: Props) {
   return <section className="border-t border-allocation-mist pt-5" aria-label={t('Gruppi')}>
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
       <div><h2 className="text-lg font-semibold">{t('Gruppi')}</h2></div>
-      {p.writable && <Button className="h-9 bg-allocation-ink text-allocation-paper hover:!bg-allocation-ink/85 hover:!text-allocation-paper" onClick={() => open('new')}><Plus className="mr-1 h-4 w-4"/>{t('Nuovo gruppo')}</Button>}
+      {p.writable && <div className="flex flex-wrap gap-2"><Button variant="outline" className="h-9 border-allocation-mist bg-surface text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink" disabled={p.busy || !p.canCopyPrevious} onClick={p.onCopyPrevious}><Copy className="mr-1 h-4 w-4"/>{t('Copia dalla settimana precedente')}</Button><Button className="h-9 bg-allocation-ink text-allocation-paper hover:!bg-allocation-ink/85 hover:!text-allocation-paper" onClick={() => open('new')}><Plus className="mr-1 h-4 w-4"/>{t('Nuovo gruppo')}</Button></div>}
     </div>
     {p.groups.length === 0 && <button type="button" disabled={!p.writable} onClick={() => open('new')} className="flex w-full flex-col items-center gap-1 rounded-md border border-dashed border-allocation-mist bg-surface p-6 text-sm text-allocation-ink/75 hover:bg-allocation-paper"><Users className="h-5 w-5"/>{t('Nessun gruppo')} · {t('Crea il primo gruppo')}</button>}
     <div className="grid gap-3 lg:grid-cols-2">{p.groups.map(g => {

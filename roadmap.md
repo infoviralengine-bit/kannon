@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Allocation: comando per copiare la distribuzione dei gruppi dalla settimana immediatamente precedente, senza modificare i creator singoli
 Numeri/valute/date restano it-IT. Stringhe avvolte in t("testo italiano"), dizionari in src/i18n/dict/*.ts.
 - [x] Rimozione onboarding creator automatico (DB, funzione, pagine, link)
 - [x] Fondamenta bilingue: selettore lingua, menu, barra in alto
