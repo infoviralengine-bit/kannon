@@ -408,8 +408,8 @@ export default function ClientArea() {
           <StatCard icon={Eye} label="Visualizzazioni" value={views} />
           <StatCard icon={Heart} label="Like" value={likes} color="text-rose-500" />
           <StatCard icon={MessageCircle} label="Commenti" value={comments} color="text-sky-500" />
-          <StatCard icon={Share2} label="Condivisioni" value={shares} color="text-emerald-500" />
-          <StatCard icon={Bookmark} label="Salvataggi" value={saves} color="text-amber-500" />
+          <StatCard icon={Share2} label="Condivisioni" value={shares} color="text-success" />
+          <StatCard icon={Bookmark} label="Salvataggi" value={saves} color="text-warning" />
         </div>
 
         {/* Operational stats row */}
