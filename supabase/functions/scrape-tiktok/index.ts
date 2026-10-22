@@ -578,6 +578,8 @@ async function runScraping(
     views: number;
     likes: number;
     comments: number;
+    shares: number;
+    saves: number;
     published_at: string;
     views_cap: number | null;
     audio_id: string | null;
@@ -600,6 +602,8 @@ async function runScraping(
     const playCount = item.playCount ?? 0;
     const diggCount = item.diggCount ?? 0;
     const commentCount = item.commentCount ?? 0;
+    const shareCount = Number(item.shareCount ?? 0) || 0;
+    const collectCount = Number(item.collectCount ?? 0) || 0;
     const createTime = item.createTime ? new Date(item.createTime * 1000).toISOString() : now;
     const videoDate = new Date(createTime);
 
@@ -622,6 +626,8 @@ async function runScraping(
         views: playCount,
         likes: diggCount,
         comments: commentCount,
+        shares: shareCount,
+        saves: collectCount,
         published_at: createTime,
         views_cap: campaign.video_views_cap ?? null,
         audio_id: audioId,
@@ -676,6 +682,8 @@ async function runScraping(
         views: p.views,
         likes: p.likes,
         comments: p.comments,
+        shares: p.shares,
+        saves: p.saves,
         published_at: p.published_at,
         window_expires_at: windowExpires,
         window_closed: false,
@@ -691,6 +699,8 @@ async function runScraping(
         views: p.views,
         likes: p.likes,
         comments: p.comments,
+        shares: p.shares,
+        saves: p.saves,
         last_scraped_at: now,
       };
       if (p.audio_id !== null) payload.audio_id = p.audio_id;
