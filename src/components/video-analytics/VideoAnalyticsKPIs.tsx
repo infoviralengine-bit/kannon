@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, Film, BarChart3, Heart, Clock } from "lucide-react";
+import { Eye, Film, BarChart3, Heart, Clock, Share2, Bookmark } from "lucide-react";
 import { formatViews } from "@/lib/format";
 import type { VideoAnalyticsKPI, WindowStats } from "@/hooks/useVideoAnalytics";
 import { useI18n } from "@/i18n";
@@ -38,6 +38,18 @@ export function VideoAnalyticsKPIs({
       hint: t("{likes} like · {comments} commenti", { likes: formatViews(kpi.total_likes), comments: formatViews(kpi.total_comments) }),
     },
     {
+      icon: Share2,
+      label: t("Condivisioni"),
+      value: formatViews(Number(kpi.total_shares ?? 0)),
+      hint: t("nel periodo"),
+    },
+    {
+      icon: Bookmark,
+      label: t("Salvataggi"),
+      value: formatViews(Number(kpi.total_saves ?? 0)),
+      hint: t("nel periodo"),
+    },
+    {
       icon: Clock,
       label: t("Finestre aperte"),
       value: (windowStats.open_count + windowStats.closing_count).toLocaleString("it-IT"),
@@ -45,7 +57,7 @@ export function VideoAnalyticsKPIs({
     },
   ];
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
       {cards.map((c, i) => {
         const Icon = c.icon;
         return (

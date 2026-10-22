@@ -98,6 +98,7 @@ export const es: Record<string, string> = {
   "Likes": "Me gusta",
   "Commenti": "Comentarios",
   "Condivisioni": "Compartidos",
+  "Salvataggi": "Guardados",
   "Account con video": "Cuentas con videos",
   "Views per giorno di pubblicazione": "Views por día de publicación",
   "Top creator": "Mejores creadores",

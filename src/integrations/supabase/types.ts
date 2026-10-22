@@ -2287,6 +2287,8 @@ export type Database = {
           likes: number | null
           published_at: string | null
           raw_effective_views: number | null
+          saves: number | null
+          shares: number | null
           tiktok_account_id: string | null
           tiktok_url: string | null
           tiktok_video_id: string | null
@@ -2485,6 +2487,8 @@ export type Database = {
           likes: number
           published_at: string
           raw_views: number
+          saves: number
+          shares: number
           tiktok_url: string
           tiktok_video_id: string
           total_count: number

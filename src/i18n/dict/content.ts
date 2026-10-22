@@ -48,6 +48,8 @@ export const content: Record<string, string> = {
   "Cerca nella caption...": "Search in caption...",
   "Cerca per account, creator o campagna": "Search by account, creator or campaign",
   "Commenti": "Comments",
+  "Condivisioni": "Shares",
+  "Salvataggi": "Saves",
   "Contenuti": "Content",
   "Controlla il testo incollato.": "Check the pasted text.",
   "Copy (testo da dire) *": "Copy (script) *",

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AtSign, Eye, Film, Heart, MessageCircle, Percent, Share2, TrendingUp } from "lucide-react";
+import { AtSign, Bookmark, Eye, Film, Heart, MessageCircle, Percent, Share2, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -100,7 +100,7 @@ export default function OperatorVideosPage() {
         </CardContent>
       </Card>
 
-      <div className={`grid grid-cols-2 gap-3 md:grid-cols-4 ${isLoading ? "opacity-60" : ""}`}>
+      <div className={`grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5 ${isLoading ? "opacity-60" : ""}`}>
         <OperatorKpi icon={Eye} label={t("Views")} value={formatViews(Number(k?.views ?? 0))} />
         <OperatorKpi icon={Film} label={t("Video")} value={formatViews(Number(k?.videos ?? 0))} />
         <OperatorKpi icon={TrendingUp} label={t("Media views per video")} value={formatViews(Number(k?.avg_views ?? 0))} />
@@ -108,6 +108,7 @@ export default function OperatorVideosPage() {
         <OperatorKpi icon={Heart} label={t("Like")} value={formatViews(Number(k?.likes ?? 0))} />
         <OperatorKpi icon={MessageCircle} label={t("Commenti")} value={formatViews(Number(k?.comments ?? 0))} />
         <OperatorKpi icon={Share2} label={t("Condivisioni")} value={formatViews(Number(k?.shares ?? 0))} />
+        <OperatorKpi icon={Bookmark} label={t("Salvataggi")} value={formatViews(Number(k?.saves ?? 0))} />
         <OperatorKpi icon={AtSign} label={t("Account con video")} value={formatViews(Number(k?.accounts ?? 0))} />
       </div>
 

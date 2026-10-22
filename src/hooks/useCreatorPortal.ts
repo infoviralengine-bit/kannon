@@ -418,6 +418,8 @@ export function useCreatorPortal(selectedPeriod?: number) {
             views: v.views ?? 0,
             likes: v.likes ?? 0,
             comments: v.comments ?? 0,
+            shares: v.shares ?? 0,
+            saves: v.saves ?? 0,
             publishedAt: v.published_at,
             windowClosed: v.window_closed ?? false,
             viewsFinal: v.views_final ?? null,

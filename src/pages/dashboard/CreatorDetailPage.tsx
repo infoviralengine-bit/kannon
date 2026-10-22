@@ -359,6 +359,8 @@ export default function CreatorDetailPage() {
                         <TableHead className="text-right">{t("Views")}</TableHead>
                         <TableHead className="text-right">{t("Likes")}</TableHead>
                         <TableHead className="text-right">{t("Commenti")}</TableHead>
+                        <TableHead className="text-right">{t("Condivisioni")}</TableHead>
+                        <TableHead className="text-right">{t("Salvataggi")}</TableHead>
                         <TableHead>{t("Finestra")}</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -393,6 +395,8 @@ export default function CreatorDetailPage() {
                             <TableCell className="text-right font-medium">{effectiveViews.toLocaleString("it-IT")}</TableCell>
                             <TableCell className="text-right">{v.likes.toLocaleString("it-IT")}</TableCell>
                             <TableCell className="text-right">{v.comments.toLocaleString("it-IT")}</TableCell>
+                            <TableCell className="text-right">{v.shares.toLocaleString("it-IT")}</TableCell>
+                            <TableCell className="text-right">{v.saves.toLocaleString("it-IT")}</TableCell>
                             <TableCell><Badge className={windowClass}>{t(windowLabel)}</Badge></TableCell>
                           </TableRow>
                         );
