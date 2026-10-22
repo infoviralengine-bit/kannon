@@ -236,6 +236,14 @@ export function useClientAreaData() {
         comments_7d: number;
         comments_30d: number;
         comments_90d: number;
+        shares_1d: number;
+        shares_7d: number;
+        shares_30d: number;
+        shares_90d: number;
+        saves_1d: number;
+        saves_7d: number;
+        saves_30d: number;
+        saves_90d: number;
         videos_today: number;
         avg_videos_per_day_30d: number;
         total_videos: number;

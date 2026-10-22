@@ -57,6 +57,7 @@ export function OperatorVideoTable({ filters, title }: { filters: OperatorFilter
                 {head(t("Like"), "likes")}
                 {head(t("Commenti"), "comments")}
                 {head(t("Condivisioni"), "shares")}
+                {head(t("Salvataggi"), "saves")}
                 {head("ER%", "engagement")}
                 <TableHead>{t("Format")}</TableHead>
                 <TableHead>{t("Finestra")}</TableHead>
@@ -65,10 +66,10 @@ export function OperatorVideoTable({ filters, title }: { filters: OperatorFilter
             </TableHeader>
             <TableBody>
               {isLoading && (
-                <TableRow><TableCell colSpan={10} className="py-8 text-center text-muted-foreground">{t("Caricamento...")}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} className="py-8 text-center text-muted-foreground">{t("Caricamento...")}</TableCell></TableRow>
               )}
               {!isLoading && (data?.rows.length ?? 0) === 0 && (
-                <TableRow><TableCell colSpan={10} className="py-8 text-center text-muted-foreground">{t("Nessun video nel periodo selezionato")}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} className="py-8 text-center text-muted-foreground">{t("Nessun video nel periodo selezionato")}</TableCell></TableRow>
               )}
               {data?.rows.map((v) => (
                 <TableRow key={v.id}>
@@ -82,6 +83,7 @@ export function OperatorVideoTable({ filters, title }: { filters: OperatorFilter
                   <TableCell className="text-right tabular-nums">{formatViews(Number(v.likes))}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatViews(Number(v.comments))}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatViews(Number(v.shares))}</TableCell>
+                  <TableCell className="text-right tabular-nums">{formatViews(Number(v.saves ?? 0))}</TableCell>
                   <TableCell className="text-right tabular-nums">{Number(v.engagement_pct).toLocaleString("it-IT", { maximumFractionDigits: 2 })}%</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{v.content_tag ?? "-"}</TableCell>
                   <TableCell>

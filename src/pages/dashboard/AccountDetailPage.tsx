@@ -220,6 +220,8 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
                   <TableHead className="text-right">{t("Views")}</TableHead>
                   <TableHead className="text-right">{t("Likes")}</TableHead>
                   <TableHead className="text-right">{t("Commenti")}</TableHead>
+                  <TableHead className="text-right">{t("Condivisioni")}</TableHead>
+                  <TableHead className="text-right">{t("Salvataggi")}</TableHead>
                   <TableHead>{t("Cap")}</TableHead>
                   <TableHead>{t("Finestra")}</TableHead>
                   <TableHead>{t("Ultimo scraping")}</TableHead>
@@ -245,6 +247,8 @@ function CreatorDetail({ data }: { data: ReturnType<typeof useAccountDetail> }) 
                     <TableCell className="text-right">{formatViews(v.views || 0)}</TableCell>
                     <TableCell className="text-right">{formatViews(v.likes || 0)}</TableCell>
                     <TableCell className="text-right">{formatViews(v.comments || 0)}</TableCell>
+                    <TableCell className="text-right">{formatViews(v.shares || 0)}</TableCell>
+                    <TableCell className="text-right">{formatViews(v.saves || 0)}</TableCell>
                     <TableCell>{renderCapCell(v.views || 0)}</TableCell>
                     <TableCell>
                       {wStatus === "open" && (

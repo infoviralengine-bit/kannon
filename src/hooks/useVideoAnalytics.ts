@@ -14,6 +14,8 @@ export interface VideoAnalyticsKPI {
   total_raw_views: number;
   total_likes: number;
   total_comments: number;
+  total_shares: number;
+  total_saves: number;
   avg_views_per_video: number;
   avg_engagement_pct: number;
 }
@@ -103,13 +105,15 @@ export interface TopVideoRow {
   raw_views: number;
   likes: number;
   comments: number;
+  shares: number;
+  saves: number;
   engagement_pct: number;
   window_status: "open" | "closing" | "closed";
   tiktok_url: string;
   total_count: number;
 }
 
-export type TopVideosSortBy = "views" | "likes" | "comments" | "published" | "engagement";
+export type TopVideosSortBy = "views" | "likes" | "comments" | "shares" | "saves" | "published" | "engagement";
 
 export function useTopVideos(
   filters: VideoAnalyticsFilters,

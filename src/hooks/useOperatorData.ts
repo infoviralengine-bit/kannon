@@ -88,7 +88,7 @@ export interface Breakdown { id?: string; name: string; videos: number; views: n
 
 export interface OperatorAnalytics {
   kpis: {
-    videos: number; views: number; likes: number; comments: number; shares: number;
+    videos: number; views: number; likes: number; comments: number; shares: number; saves: number;
     avg_views: number; engagement_pct: number; creators: number; accounts: number;
   };
   daily: { date: string; videos: number; views: number }[];
@@ -110,7 +110,7 @@ export function useOperatorAnalytics(f: OperatorFilters) {
   });
 }
 
-export type OperatorSort = "views" | "likes" | "comments" | "shares" | "engagement" | "published";
+export type OperatorSort = "views" | "likes" | "comments" | "shares" | "saves" | "engagement" | "published";
 
 export interface OperatorVideo {
   id: string;
@@ -123,6 +123,7 @@ export interface OperatorVideo {
   likes: number;
   comments: number;
   shares: number;
+  saves: number;
   engagement_pct: number;
   content_tag: string | null;
   caption: string | null;

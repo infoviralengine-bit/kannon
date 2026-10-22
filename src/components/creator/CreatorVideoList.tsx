@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Video, Eye, Heart, MessageCircle, Clock, CheckCircle, ExternalLink } from "lucide-react";
+import { Video, Eye, Heart, MessageCircle, Share2, Bookmark, Clock, CheckCircle, ExternalLink } from "lucide-react";
 import { formatViews } from "@/lib/format";
 import { cleanUsername } from "@/lib/utils";
 import { useI18n } from "@/i18n";
@@ -16,6 +16,8 @@ export interface CreatorVideo {
   views: number;
   likes: number;
   comments: number;
+  shares: number;
+  saves: number;
   publishedAt: string;
   windowClosed: boolean;
   viewsFinal: number | null;
@@ -107,6 +109,12 @@ export default function CreatorVideoList({ videos, monthLabel }: Props) {
                         <TableHead className="text-right">
                           <span className="flex items-center justify-end gap-1"><MessageCircle className="h-3.5 w-3.5" /> {t("Commenti")}</span>
                         </TableHead>
+                        <TableHead className="text-right">
+                          <span className="flex items-center justify-end gap-1"><Share2 className="h-3.5 w-3.5" /> {t("Condivisioni")}</span>
+                        </TableHead>
+                        <TableHead className="text-right">
+                          <span className="flex items-center justify-end gap-1"><Bookmark className="h-3.5 w-3.5" /> {t("Salvataggi")}</span>
+                        </TableHead>
                         <TableHead className="text-center">{t("Finestra CPM")}</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -136,6 +144,8 @@ export default function CreatorVideoList({ videos, monthLabel }: Props) {
                             </TableCell>
                             <TableCell className="text-right">{formatViews(v.likes)}</TableCell>
                             <TableCell className="text-right">{formatViews(v.comments)}</TableCell>
+                            <TableCell className="text-right">{formatViews(v.shares)}</TableCell>
+                            <TableCell className="text-right">{formatViews(v.saves)}</TableCell>
                             <TableCell className="text-center">
                               {v.windowClosed ? (
                                 <Badge variant="secondary" className="text-xs gap-1">

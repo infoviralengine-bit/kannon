@@ -65,6 +65,8 @@ export function TopVideosTable({ filters }: { filters: VideoAnalyticsFilters }) 
               <TableHead className="text-right">{sortBtn("Views", "views")}</TableHead>
               <TableHead className="text-right">{sortBtn(t("Like"), "likes")}</TableHead>
               <TableHead className="text-right">{sortBtn(t("Commenti"), "comments")}</TableHead>
+              <TableHead className="text-right">{sortBtn(t("Condivisioni"), "shares")}</TableHead>
+              <TableHead className="text-right">{sortBtn(t("Salvataggi"), "saves")}</TableHead>
               <TableHead className="text-right">{sortBtn("ER%", "engagement")}</TableHead>
               <TableHead>{t("Finestra")}</TableHead>
               <TableHead></TableHead>
@@ -73,14 +75,14 @@ export function TopVideosTable({ filters }: { filters: VideoAnalyticsFilters }) 
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                   {t("Caricamento...")}
                 </TableCell>
               </TableRow>
             )}
             {!isLoading && (data?.rows.length ?? 0) === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                   {t("Nessun video nel periodo selezionato")}
                 </TableCell>
               </TableRow>
@@ -99,6 +101,8 @@ export function TopVideosTable({ filters }: { filters: VideoAnalyticsFilters }) 
                 <TableCell className="text-right font-medium">{formatViews(Number(v.effective_views))}</TableCell>
                 <TableCell className="text-right">{formatViews(Number(v.likes))}</TableCell>
                 <TableCell className="text-right">{formatViews(Number(v.comments))}</TableCell>
+                <TableCell className="text-right">{formatViews(Number(v.shares ?? 0))}</TableCell>
+                <TableCell className="text-right">{formatViews(Number(v.saves ?? 0))}</TableCell>
                 <TableCell className="text-right">{Number(v.engagement_pct).toFixed(2)}%</TableCell>
                 <TableCell>
                   <Badge variant={WINDOW_VARIANT[v.window_status] ?? "outline"}>

@@ -387,6 +387,8 @@ export interface CreatorVideoRow {
   views: number;
   likes: number;
   comments: number;
+  shares: number;
+  saves: number;
   windowClosed: boolean;
   windowExpiresAt: string | null;
   viewsFinal: number | null;
@@ -420,7 +422,7 @@ export function useCreatorVideos(creatorId: string) {
       while (true) {
         const { data: batch } = await supabase
           .from("videos")
-          .select("id, tiktok_video_id, tiktok_account_id, published_at, views, likes, comments, window_closed, window_expires_at, views_final")
+          .select("id, tiktok_video_id, tiktok_account_id, published_at, views, likes, comments, shares, saves, window_closed, window_expires_at, views_final")
           .in("tiktok_account_id", accIds)
           .order("published_at", { ascending: false })
           .range(page * pageSize, (page + 1) * pageSize - 1);
@@ -441,6 +443,8 @@ export function useCreatorVideos(creatorId: string) {
           views: v.views ?? 0,
           likes: v.likes ?? 0,
           comments: v.comments ?? 0,
+          shares: v.shares ?? 0,
+          saves: v.saves ?? 0,
           windowClosed: v.window_closed,
           windowExpiresAt: v.window_expires_at,
           viewsFinal: v.views_final,

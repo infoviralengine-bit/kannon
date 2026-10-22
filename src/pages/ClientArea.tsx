@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  LogOut, Eye, Heart, MessageCircle, Users, Video,
+  LogOut, Eye, Heart, MessageCircle, Share2, Bookmark, Users, Video,
   CalendarDays, AtSign, ExternalLink, BarChart3, Wallet, TrendingUp, Trophy,
 } from "lucide-react";
 import { cleanUsername } from "@/lib/utils";
@@ -366,6 +366,8 @@ export default function ClientArea() {
   const views = data[`views_${period}`];
   const likes = data[`likes_${period}`];
   const comments = data[`comments_${period}`];
+  const shares = Number(data[`shares_${period}`] ?? 0);
+  const saves = Number(data[`saves_${period}`] ?? 0);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -402,10 +404,12 @@ export default function ClientArea() {
         </Tabs>
 
         {/* Performance metrics */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           <StatCard icon={Eye} label="Visualizzazioni" value={views} />
           <StatCard icon={Heart} label="Like" value={likes} color="text-rose-500" />
           <StatCard icon={MessageCircle} label="Commenti" value={comments} color="text-sky-500" />
+          <StatCard icon={Share2} label="Condivisioni" value={shares} color="text-emerald-500" />
+          <StatCard icon={Bookmark} label="Salvataggi" value={saves} color="text-amber-500" />
         </div>
 
         {/* Operational stats row */}
