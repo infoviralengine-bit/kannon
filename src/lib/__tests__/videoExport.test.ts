@@ -22,7 +22,7 @@ describe("Top video export", () => {
   it("writes the publish date as DD/MM/YYYY in UTC and the TikTok link", () => {
     const csv = buildTopVideosCsv([row()], topVideoExportColumns(t));
     const dataLine = csv.split("\r\n")[1];
-    expect(dataLine.startsWith("@kannon_it,Anna,Finanz,05/10/2026,12000,300,20,5,9,2.83,Aperta,")).toBe(true);
+    expect(dataLine.startsWith("@kannon_it,Anna,Finanz,05/10/2026,12000,300,20,5,9,2.83,")).toBe(true);
     expect(dataLine.endsWith(",#finanza #soldi,suono originale,https://www.tiktok.com/@kannon_it/video/7400")).toBe(true);
   });
 

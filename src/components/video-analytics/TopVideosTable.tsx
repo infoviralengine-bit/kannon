@@ -105,6 +105,7 @@ export function TopVideosTable({ filters }: { filters: VideoAnalyticsFilters }) 
           <TableHeader>
             <TableRow>
               <TableHead>{t("Account / Creator / Campagna")}</TableHead>
+              <TableHead>{t("Caption")}</TableHead>
               <TableHead>{sortBtn(t("Pubblicato"), "published")}</TableHead>
               <TableHead className="text-right">{sortBtn("Views", "views")}</TableHead>
               <TableHead className="text-right">{sortBtn(t("Like"), "likes")}</TableHead>
@@ -112,7 +113,6 @@ export function TopVideosTable({ filters }: { filters: VideoAnalyticsFilters }) 
               <TableHead className="text-right">{sortBtn(t("Condivisioni"), "shares")}</TableHead>
               <TableHead className="text-right">{sortBtn(t("Salvataggi"), "saves")}</TableHead>
               <TableHead className="text-right">{sortBtn("ER%", "engagement")}</TableHead>
-              <TableHead>{t("Finestra")}</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
@@ -139,6 +139,16 @@ export function TopVideosTable({ filters }: { filters: VideoAnalyticsFilters }) 
                     {v.creator_name ?? "—"} · {v.campaign_name ?? "—"}
                   </div>
                 </TableCell>
+                <TableCell className="max-w-[280px]">
+                  <p className="text-sm line-clamp-2" title={v.caption ?? ""}>{v.caption || "—"}</p>
+                  {(v.hashtags?.length || v.audio_name) && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {(v.hashtags ?? []).map((h) => `#${h.replace(/^#/, "")}`).join(" ")}
+                      {v.hashtags?.length && v.audio_name ? " · " : ""}
+                      {v.audio_name ? `♪ ${v.audio_name}` : ""}
+                    </p>
+                  )}
+                </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {new Date(v.published_at).toLocaleDateString("it-IT")}
                 </TableCell>
@@ -148,11 +158,6 @@ export function TopVideosTable({ filters }: { filters: VideoAnalyticsFilters }) 
                 <TableCell className="text-right">{formatViews(Number(v.shares ?? 0))}</TableCell>
                 <TableCell className="text-right">{formatViews(Number(v.saves ?? 0))}</TableCell>
                 <TableCell className="text-right">{Number(v.engagement_pct).toFixed(2)}%</TableCell>
-                <TableCell>
-                  <Badge variant={WINDOW_VARIANT[v.window_status] ?? "outline"}>
-                    {t(WINDOW_LABEL[v.window_status] ?? v.window_status)}
-                  </Badge>
-                </TableCell>
                 <TableCell>
                   <Button variant="ghost" size="icon" asChild>
                     <a href={v.tiktok_url} target="_blank" rel="noopener" aria-label={t("Apri su TikTok")}>
