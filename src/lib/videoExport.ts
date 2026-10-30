@@ -12,8 +12,6 @@ export interface ExportColumn {
 
 type Translate = (s: string, vars?: Record<string, string | number>) => string;
 
-const WINDOW_LABEL: Record<string, string> = { open: "Aperta", closing: "In chiusura", closed: "Chiusa" };
-
 export function topVideoExportColumns(t: Translate): ExportColumn[] {
   return [
     { header: t("Account"), width: 22, get: (v) => `@${v.account_username}` },
@@ -26,7 +24,6 @@ export function topVideoExportColumns(t: Translate): ExportColumn[] {
     { header: t("Condivisioni"), width: 12, kind: "number", get: (v) => Number(v.shares ?? 0) },
     { header: t("Salvataggi"), width: 12, kind: "number", get: (v) => Number(v.saves ?? 0) },
     { header: "ER%", width: 8, kind: "percent", get: (v) => Math.round(Number(v.engagement_pct ?? 0) * 100) / 100 },
-    { header: t("Finestra"), width: 12, get: (v) => t(WINDOW_LABEL[v.window_status] ?? v.window_status) },
     { header: t("Caption"), width: 60, get: (v) => v.caption ?? "" },
     { header: t("Hashtag"), width: 30, get: (v) => (v.hashtags ?? []).map((h) => `#${h.replace(/^#/, "")}`).join(" ") },
     { header: t("Audio"), width: 25, get: (v) => v.audio_name ?? "" },
