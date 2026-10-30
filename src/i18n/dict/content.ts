@@ -209,8 +209,6 @@ export const content: Record<string, string> = {
   "Esporta": "Export",
   "{n} video esportati": "{n} videos exported",
   "Errore esportazione": "Export error",
-  "Caption": "Caption",
-  "Hashtag": "Hashtags",
   "Audio": "Audio",
   "Link TikTok": "TikTok link",
 };
