@@ -206,4 +206,11 @@ export const content: Record<string, string> = {
   "{title} aggiunto": "{title} added",
   "{views} views, {pct}% eng. medio": "{views} views, {pct}% avg eng.",
   "Nessun brief nel periodo selezionato. Crea il primo con \"+ Nuovo brief\".": "No briefs in the selected period. Create the first one with \"+ New brief\".",
+  "Esporta": "Export",
+  "{n} video esportati": "{n} videos exported",
+  "Errore esportazione": "Export error",
+  "Caption": "Caption",
+  "Hashtag": "Hashtags",
+  "Audio": "Audio",
+  "Link TikTok": "TikTok link",
 };
