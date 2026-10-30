@@ -12,8 +12,6 @@ export interface ExportColumn {
 
 type Translate = (s: string, vars?: Record<string, string | number>) => string;
 
-const WINDOW_LABEL: Record<string, string> = { open: "Aperta", closing: "In chiusura", closed: "Chiusa" };
-
 export function topVideoExportColumns(t: Translate): ExportColumn[] {
   return [
     { header: t("Account"), width: 22, get: (v) => `@${v.account_username}` },

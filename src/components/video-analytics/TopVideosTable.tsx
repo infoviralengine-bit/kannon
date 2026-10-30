@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, ExternalLink, ChevronLeft, ChevronRight, Download, Loader2 } from "lucide-react";
 import {
@@ -19,12 +18,6 @@ import { useI18n } from "@/i18n";
 
 const PAGE_SIZE = 25;
 
-const WINDOW_LABEL: Record<string, string> = { open: "Aperta", closing: "In chiusura", closed: "Chiusa" };
-const WINDOW_VARIANT: Record<string, "default" | "secondary" | "outline"> = {
-  open: "default",
-  closing: "secondary",
-  closed: "outline",
-};
 
 export function TopVideosTable({ filters }: { filters: VideoAnalyticsFilters }) {
   const { t } = useI18n();
