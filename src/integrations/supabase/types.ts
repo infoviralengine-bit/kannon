@@ -2475,14 +2475,17 @@ export type Database = {
         }
         Returns: {
           account_username: string
+          audio_name: string
           campaign_id: string
           campaign_name: string
+          caption: string
           client_name: string
           comments: number
           creator_id: string
           creator_name: string
           effective_views: number
           engagement_pct: number
+          hashtags: string[]
           id: string
           likes: number
           published_at: string
