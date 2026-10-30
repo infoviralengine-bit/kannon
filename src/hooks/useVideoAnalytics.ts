@@ -110,6 +110,9 @@ export interface TopVideoRow {
   engagement_pct: number;
   window_status: "open" | "closing" | "closed";
   tiktok_url: string;
+  caption: string | null;
+  hashtags: string[] | null;
+  audio_name: string | null;
   total_count: number;
 }
 
@@ -126,12 +129,7 @@ export function useTopVideos(
     queryKey: ["top-videos", filters, sortBy, sortDir, page, pageSize],
     queryFn: async (): Promise<{ rows: TopVideoRow[]; totalCount: number }> => {
       const { data, error } = await (supabase.rpc as any)("get_top_videos", {
-        p_from: filters.from,
-        p_to: filters.to,
-        p_campaign_ids: filters.campaignIds && filters.campaignIds.length > 0 ? filters.campaignIds : null,
-        p_creator_ids: filters.creatorIds && filters.creatorIds.length > 0 ? filters.creatorIds : null,
-        p_sort_by: sortBy,
-        p_sort_dir: sortDir,
+        ...topVideosParams(filters, sortBy, sortDir),
         p_limit: pageSize,
         p_offset: page * pageSize,
       });
@@ -140,6 +138,40 @@ export function useTopVideos(
       return { rows, totalCount: Number(rows[0]?.total_count ?? 0) };
     },
   });
+}
+
+function topVideosParams(filters: VideoAnalyticsFilters, sortBy: TopVideosSortBy, sortDir: "asc" | "desc") {
+  return {
+    p_from: filters.from,
+    p_to: filters.to,
+    p_campaign_ids: filters.campaignIds && filters.campaignIds.length > 0 ? filters.campaignIds : null,
+    p_creator_ids: filters.creatorIds && filters.creatorIds.length > 0 ? filters.creatorIds : null,
+    p_sort_by: sortBy,
+    p_sort_dir: sortDir,
+  };
+}
+
+/** All Top video rows for the current filters and sort, fetched in pages of 1000 (export). */
+export async function fetchAllTopVideos(
+  filters: VideoAnalyticsFilters,
+  sortBy: TopVideosSortBy,
+  sortDir: "asc" | "desc",
+): Promise<TopVideoRow[]> {
+  const CHUNK = 1000;
+  const all: TopVideoRow[] = [];
+  for (let offset = 0; ; offset += CHUNK) {
+    const { data, error } = await (supabase.rpc as any)("get_top_videos", {
+      ...topVideosParams(filters, sortBy, sortDir),
+      p_limit: CHUNK,
+      p_offset: offset,
+    });
+    if (error) throw error;
+    const rows = (data ?? []) as TopVideoRow[];
+    all.push(...rows);
+    const total = Number(rows[0]?.total_count ?? 0);
+    if (rows.length < CHUNK || all.length >= total) break;
+  }
+  return all;
 }
 
 export function useRefreshTikTokScraping() {
