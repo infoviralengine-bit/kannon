@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAllocationActions, useAllocationBase, useAllocationWeek } from '@/hooks/useAllocation';
 import { AllocationBoard } from '@/components/allocation/AllocationBoard';
 import { AllocationCampaignStrip } from '@/components/allocation/AllocationCampaignStrip';
-import { contractSection, copyPreviousGroupRows, monday, shiftWeek, type AllocationRow } from '@/lib/allocation';
+import { contractSection, copyPreviousWeekRows, monday, shiftWeek, type AllocationRow } from '@/lib/allocation';
 import { ROLES } from '@/lib/roles';
 
 function dateLabel(week: string) {
@@ -98,11 +98,10 @@ export default function AllocationPage() {
     } finally { setNavigating(false); }
   };
   const weeks = Array.from({ length: 8 }, (_,i) => shiftWeek(monday(new Date()),i));
-  const groupMemberIds = (base.data?.groups ?? []).flatMap(g => g.creator_ids);
-  const canCopyGroups = (query.data?.copyRows ?? []).some(r => groupMemberIds.includes(r.creator_id) && rows.some(current => current.creator_id === r.creator_id));
-  const copyGroups = () => {
-    if (!query.data || busy || navigating || !canCopyGroups) return;
-    persist(copyPreviousGroupRows(rows, query.data.copyRows, groupMemberIds, campaigns, week), auto);
+  const canCopyPrevious = (query.data?.copyRows ?? []).some(r => rows.some(current => current.creator_id === r.creator_id));
+  const copyPrevious = () => {
+    if (!query.data || busy || navigating || !canCopyPrevious) return;
+    persist(copyPreviousWeekRows(rows, query.data.copyRows, campaigns, week), auto);
   };
 
   if (!writable && role !== ROLES.CAMPAIGN_MANAGER && role !== ROLES.OPERATOR) return <p className="p-6 text-destructive">{t('Accesso non consentito')}</p>;
@@ -115,7 +114,7 @@ export default function AllocationPage() {
     {(base.isLoading || query.isLoading) && <p className="text-sm text-muted-foreground">{t('Caricamento...')}</p>}
     {(base.error || query.error) && <p role="alert" className="text-sm text-destructive">{(base.error ?? query.error)?.message}</p>}
     {!base.isLoading && !creators.length && <p className="text-sm text-muted-foreground">{t('Nessun creator disponibile')}</p>}
-    {query.data && <AllocationBoard key={week} week={week} campaigns={campaigns} creators={creators} rows={rows} previous={query.data.previous} accounts={base.data?.accounts ?? new Set()} groups={base.data?.groups ?? []} auto={auto} writable={writable} busy={busy || navigating} canCopyGroups={canCopyGroups} onCopyGroups={copyGroups} onRows={next=>persist(next,auto)} onAuto={next=>persist(rows,next)} onTier={actions.tier} onTarget={actions.target} onConfigure={actions.configure} onCreateGroup={actions.createGroup} onUpdateGroup={actions.updateGroup} onDeleteGroup={actions.deleteGroup}/>}
+    {query.data && <AllocationBoard key={week} week={week} campaigns={campaigns} creators={creators} rows={rows} previous={query.data.previous} accounts={base.data?.accounts ?? new Set()} groups={base.data?.groups ?? []} auto={auto} writable={writable} busy={busy || navigating} canCopyPrevious={canCopyPrevious} onCopyPrevious={copyPrevious} onRows={next=>persist(next,auto)} onAuto={next=>persist(rows,next)} onTier={actions.tier} onTarget={actions.target} onConfigure={actions.configure} onCreateGroup={actions.createGroup} onUpdateGroup={actions.updateGroup} onDeleteGroup={actions.deleteGroup}/>}
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     {busy && <span className="text-xs text-muted-foreground">{t('Salvataggio in corso...')}</span>}
   </div>;
