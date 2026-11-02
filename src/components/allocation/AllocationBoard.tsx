@@ -1,6 +1,6 @@
 import { AccountSignals } from '@/components/account/AccountSignals';
 import { Fragment, useMemo, useState } from 'react';
-import { AlertTriangle, ChevronDown, Eraser, Pause, Play, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Copy, Eraser, Pause, Play, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -22,7 +22,7 @@ type Props = {
   onCreateGroup: (name: string, ids: string[]) => Promise<void>;
   onUpdateGroup: (id: string, patch: { name?: string; creator_ids?: string[] }) => Promise<void>;
   onDeleteGroup: (id: string) => Promise<void>;
-  canCopyGroups: boolean; onCopyGroups: () => void;
+  canCopyPrevious: boolean; onCopyPrevious: () => void;
 };
 
 export function AllocationBoard(p: Props) {
@@ -74,7 +74,7 @@ export function AllocationBoard(p: Props) {
     <section className="space-y-3" aria-label={t('Distribuzione capacità')}>
       <div className="flex flex-wrap items-center gap-3">
         <span className="whitespace-nowrap text-sm text-allocation-ink"><strong className="text-xl tabular-nums">{tally(total)}</strong> {t('slot al giorno')}</span>
-        <div className="ml-auto flex items-center gap-2">{p.writable && <Button size="sm" variant="outline" className="border-allocation-mist bg-surface text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink" disabled={p.busy} onClick={() => clearSlots(p.creators.map(c => c.id))}><Eraser className="mr-1 h-3 w-3"/>{t('Svuota settimana')}</Button>}<Switch checked={p.auto} onCheckedChange={p.onAuto} disabled={!p.writable || p.busy || !residual} aria-label={t('Residuo automatico')}/><span className="text-xs">{t('Residuo automatico')}</span></div>
+        <div className="ml-auto flex items-center gap-2">{p.writable && <><Button size="sm" variant="outline" className="border-allocation-mist bg-surface text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink" disabled={p.busy || !p.canCopyPrevious} onClick={p.onCopyPrevious}><Copy className="mr-1 h-3 w-3"/>{t('Copia settimana precedente')}</Button><Button size="sm" variant="outline" className="border-allocation-mist bg-surface text-allocation-ink hover:!bg-allocation-mist hover:!text-allocation-ink" disabled={p.busy} onClick={() => clearSlots(p.creators.map(c => c.id))}><Eraser className="mr-1 h-3 w-3"/>{t('Svuota settimana')}</Button></>}<Switch checked={p.auto} onCheckedChange={p.onAuto} disabled={!p.writable || p.busy || !residual} aria-label={t('Residuo automatico')}/><span className="text-xs">{t('Residuo automatico')}</span></div>
         <div className="flex h-5 flex-1 overflow-hidden rounded bg-allocation-mist" role="img" aria-label={t('Distribuzione capacità')}>
           {available.map((c, i) => <div key={c.id} title={`${c.name}: ${counts.get(c.id) ?? 0}`} className={`${colors[i % colors.length]} h-full border-r border-allocation-paper/50 transition-[width] duration-200`} style={{ width: total ? `${100 * (counts.get(c.id) ?? 0) / total}%` : '0%' }} />)}
           {idle > 0 && <div className="h-full bg-allocation-mist" title={`${idle} ${t('slot fermi')}`} style={{ width: total ? `${100 * idle / total}%` : '0%' }} />}
@@ -97,7 +97,7 @@ export function AllocationBoard(p: Props) {
     </section>
 
 
-    <AllocationGroups week={p.week} groups={p.groups} creators={p.creators} rows={p.rows} campaigns={p.campaigns} colors={colors} sectionOf={c => contractSection(c.contracts)} writable={p.writable} busy={p.busy} picked={chosen} residualId={residual} auto={p.auto} canCopyPrevious={p.canCopyGroups} onCopyPrevious={p.onCopyGroups} onRows={p.onRows} onCreate={p.onCreateGroup} onUpdate={p.onUpdateGroup} onDelete={p.onDeleteGroup}/>
+    <AllocationGroups week={p.week} groups={p.groups} creators={p.creators} rows={p.rows} campaigns={p.campaigns} colors={colors} sectionOf={c => contractSection(c.contracts)} writable={p.writable} busy={p.busy} picked={chosen} residualId={residual} auto={p.auto} onRows={p.onRows} onCreate={p.onCreateGroup} onUpdate={p.onUpdateGroup} onDelete={p.onDeleteGroup}/>
 
     <div className="space-y-7">
       {sections.map(section => <section key={section.name} aria-label={`${t('Contratto')} ${section.name}`}>

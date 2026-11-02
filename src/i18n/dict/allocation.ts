@@ -4,7 +4,7 @@ export const allocation: Record<string,string> = {
   'video sotto 50 views':'videos below 50 views',
   'Segnali non disponibili':'Signals unavailable',
   'Nessun account segnalato':'No flagged accounts',
-  'Copia dalla settimana precedente':'Copy from previous week',
+  'Copia settimana precedente':'Copy previous week',
   'Distribuzione capacità':'Capacity allocation', 'slot al giorno':'daily slots', 'video nella settimana':'videos this week',
   'slot fermi':'idle slots', 'Nessuno slot fermo':'No idle slots', 'Campagne della settimana':'Campaigns this week',
   'giorni':'days', 'Residuo':'Residual', 'Vuota':'Empty', 'Sotto target':'Below target', 'Sopra target':'Above target', 'In linea':'On track',
